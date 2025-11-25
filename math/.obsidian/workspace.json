@@ -1,0 +1,187 @@
+{
+  "main": {
+    "id": "f03c7c664b3f2fa8",
+    "type": "split",
+    "children": [
+      {
+        "id": "4fe055419e4178b7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bcb33f6c84029114",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "幂级数的收敛圆盘与半径.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "幂级数的收敛圆盘与半径"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "045d0c83d76e591e",
+    "type": "split",
+    "children": [
+      {
+        "id": "ff889a6917fd4960",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "7f67caaf617a1214",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "99ee95b53b8331f2",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "58b41ba730a09ed5",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "3ba981dc12490aed",
+    "type": "split",
+    "children": [
+      {
+        "id": "f8bc4225dc91775f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "cb615349e831377c",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "math/积分因子法与分项组合.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "积分因子法与分项组合 的反向链接列表"
+            }
+          },
+          {
+            "id": "7bb1c1601000e6a4",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "math/积分因子法与分项组合.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "积分因子法与分项组合 的出链列表"
+            }
+          },
+          {
+            "id": "2fce07f9be7a957a",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "4398ac5365ddc5fb",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "math/积分因子法与分项组合.md"
+              },
+              "icon": "lucide-list",
+              "title": "积分因子法与分项组合 的大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "bases:创建新数据库": false,
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false
+    }
+  },
+  "active": "bcb33f6c84029114",
+  "lastOpenFiles": [
+    "AI工具使用详情.md",
+    "未命名 1.base",
+    "未命名.base",
+    "转置与伴随.md",
+    "行列式.md",
+    "压缩映射(Picard-Banach不动点定理）.md",
+    "math/双换元积分法.md",
+    "math/黎曼积分.md",
+    "math/积分因子法与分项组合.md",
+    "math/曲线积分法.md",
+    "math/压缩映射.md",
+    "math/解的唯一性定理.md",
+    "欢迎.md",
+    "math",
+    "常微分方程",
+    "未命名",
+    "数学分析"
+  ]
+}
