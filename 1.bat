@@ -4,68 +4,64 @@ REM 确保 CMD 窗口正确显示 UTF-8 编码的中文
 chcp 65001 >nul
 setlocal
 
-REM =================================================================
-REM                  Quartz 笔记更新和部署脚本 (支持 UTF-8)
-REM =================================================================
-
 echo.
 echo =================================================================
 echo 欢迎使用 Quartz 笔记部署脚本
-echo 脚本将执行: git add . -> git commit -> git push origin main
 echo =================================================================
 echo.
 
 REM -----------------------------------------------------------------
-REM 1. 确保在项目根目录
+REM 1. 切换目录并获取提交信息
 REM -----------------------------------------------------------------
 cd /d "%~dp0"
 echo 当前工作目录: %cd%
 echo.
 
-REM -----------------------------------------------------------------
-REM 2. 获取用户输入的提交信息
-REM -----------------------------------------------------------------
-set /p commit_msg="请输入你的 Git 提交信息 (例如: fix: 修正公式 | feat: 新增笔记): "
+set /p commit_msg="请输入你的 Git 提交信息: "
 echo.
 
 REM -----------------------------------------------------------------
-REM 3. 执行 Git ADD (添加所有变更)
+REM 2. 执行 Git ADD
 REM -----------------------------------------------------------------
 echo 正在执行: git add .
 git add .
-if %ERRORLEVEL% NEQ 0 (
+if errorlevel 1 (
     echo.
-    echo 错误: git add 失败。请检查文件权限或Git状态。
+    echo 错误: git add 失败。
     goto :end
 )
 echo Git Add 完成
 echo.
 
 REM -----------------------------------------------------------------
-REM 4. 执行 Git COMMIT (提交变更)
+REM 3. 执行 Git COMMIT
 REM -----------------------------------------------------------------
 echo 正在执行: git commit -m "%commit_msg%"
-REM 使用 %commit_msg% 变量进行提交，确保 UTF-8 内容被 Git 捕获
 git commit -m "%commit_msg%"
-if %ERRORLEVEL% NEQ 0 (
+set commit_success=!errorlevel!
+
+if %commit_success% neq 0 (
     echo.
-    echo 警告/错误: git commit 失败。最常见的原因是没有文件变动 (nothing to commit)。
-    echo 正在继续尝试 Push，以推送上次的本地提交...
+    echo 警告: git commit 失败。
+    echo 正在尝试推送，以防上次的本地提交尚未推送...
     goto :push
+) else (
+    echo Git Commit 完成
+    echo.
 )
-echo Git Commit 完成
-echo.
 
 REM -----------------------------------------------------------------
-REM 5. 执行 Git PUSH (推送到 GitHub)
+REM 4. 执行 Git PUSH
 REM -----------------------------------------------------------------
 :push
 echo 正在执行: git push origin main
 git push origin main
-if %ERRORLEVEL% NEQ 0 (
+if errorlevel 1 (
     echo.
-    echo 致命错误: git push 失败。
+    echo =================================================================
+    echo ❌ 致命错误: git push 失败。
     echo 请检查您的网络连接或Git认证信息。
+    echo =================================================================
 ) else (
     echo.
     echo =================================================================
