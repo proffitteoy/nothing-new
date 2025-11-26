@@ -8,7 +8,7 @@ import * as Plugin from "./quartz/plugins"
  */
 const config: QuartzConfig = {
   configuration: {
-    pageTitle: "我的数学与计算机知识库", // 📚 建议修改为自己的标题
+    pageTitle: "为学日益，为道日损", // 📚 建议修改为自己的标题
     pageTitleSuffix: "",
     enableSPA: true,
     enablePopovers: true,
