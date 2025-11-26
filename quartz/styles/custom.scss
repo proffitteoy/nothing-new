@@ -1,60 +1,43 @@
 @import "variables"; 
 
-// 假设您的背景图片路径是：/static/images/background.jpg
-
 // =======================================================
 // 1. 设置 body 背景图片（适用于亮色和暗色模式）
 // =======================================================
 body {
-  // 设置背景图片路径
   background-image: url("/static/images/background.jpg");
-  
-  // 调整背景图片显示方式
   background-repeat: no-repeat;
-  background-attachment: fixed; // 固定背景
-  background-size: cover;       // 覆盖整个视口
+  background-attachment: fixed; 
+  background-size: cover;       
   background-position: center center;
-
-  // 确保 body 自身是透明的，避免遮挡图片
   background-color: transparent !important;
 }
 
 
 // =======================================================
 // 2. 亮色模式下内容区域的透明化处理
-// (使用半透明背景，让图片透出，同时保证文字可读性)
 // =======================================================
 
-// 主内容区域（笔记文本、页面）
 .page, .full, .head {
-  // 使用半透明白色背景
   background-color: rgba(255, 255, 255, 0.85); 
   border-radius: 8px; 
 }
 
-// 侧边栏和目录
 .side, .toc {
-  // 使用稍微不透明一点的白色
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: 8px; 
 }
 
 
 // =======================================================
-// 3. 暗色模式下内容区域的透明化处理
-// (使用导入的 $dark 变量)
+// 3. 暗色模式下内容区域的透明化处理 (使用 $dark 变量)
 // =======================================================
 
 body.dark {
-  // 主内容区域（笔记文本）
   .page, .full, .head {
-    // 使用半透明深色背景
     background-color: rgba($dark, 0.85);
   }
 
-  // 侧边栏和目录
   .side, .toc {
-    // 使用稍微不透明一点的深色
     background-color: rgba($dark, 0.95);
   }
 }
