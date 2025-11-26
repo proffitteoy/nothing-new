@@ -1,4 +1,6 @@
 @echo off
+REM =================================================================
+REM 确保 CMD 窗口正确显示 UTF-8 编码的中文
 chcp 65001 >nul
 setlocal
 
@@ -36,7 +38,7 @@ if %ERRORLEVEL% NEQ 0 (
     echo 错误: git add 失败。请检查文件权限或Git状态。
     goto :end
 )
-echo Git Add 完成。
+echo Git Add 完成
 echo.
 
 REM -----------------------------------------------------------------
@@ -47,11 +49,11 @@ REM 使用 %commit_msg% 变量进行提交，确保 UTF-8 内容被 Git 捕获
 git commit -m "%commit_msg%"
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo 警告/错误: git commit 失败。可能是没有文件变动 (nothing to commit)。
-    echo 正在继续尝试 Push...
+    echo 警告/错误: git commit 失败。最常见的原因是没有文件变动 (nothing to commit)。
+    echo 正在继续尝试 Push，以推送上次的本地提交...
     goto :push
 )
-echo Git Commit 完成。
+echo Git Commit 完成
 echo.
 
 REM -----------------------------------------------------------------
@@ -62,7 +64,8 @@ echo 正在执行: git push origin main
 git push origin main
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo 致命错误: git push 失败。请检查网络连接或Git认证信息。
+    echo 致命错误: git push 失败。
+    echo 请检查您的网络连接或Git认证信息。
 ) else (
     echo.
     echo =================================================================
