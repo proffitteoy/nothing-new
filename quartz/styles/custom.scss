@@ -1,5 +1,6 @@
-// 确保在最顶部导入 Quartz 的全局变量
 @import "variables"; 
+
+// 假设您的背景图片路径是：/static/images/background.jpg
 
 // =======================================================
 // 1. 设置 body 背景图片（适用于亮色和暗色模式）
@@ -10,8 +11,8 @@ body {
   
   // 调整背景图片显示方式
   background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
+  background-attachment: fixed; // 固定背景
+  background-size: cover;       // 覆盖整个视口
   background-position: center center;
 
   // 确保 body 自身是透明的，避免遮挡图片
@@ -21,13 +22,14 @@ body {
 
 // =======================================================
 // 2. 亮色模式下内容区域的透明化处理
+// (使用半透明背景，让图片透出，同时保证文字可读性)
 // =======================================================
 
-// 主内容区域（笔记文本）
+// 主内容区域（笔记文本、页面）
 .page, .full, .head {
-  // 使用半透明白色背景，让背景图透出
+  // 使用半透明白色背景
   background-color: rgba(255, 255, 255, 0.85); 
-  border-radius: 8px; // 增加圆角美化内容区域
+  border-radius: 8px; 
 }
 
 // 侧边栏和目录
