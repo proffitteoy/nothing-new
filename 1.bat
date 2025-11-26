@@ -1,6 +1,5 @@
 @echo off
 REM =================================================================
-REM 确保 CMD 窗口正确显示 UTF-8 编码的中文
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
@@ -42,7 +41,7 @@ set commit_status=!errorlevel!
 
 if %commit_status% neq 0 (
     echo.
-    echo WARNING: git commit failed (Nothing to commit or minor error).
+    echo WARNING: git commit failed (Nothing to commit).
     echo Attempting Git Push now...
     goto :push
 ) else (
@@ -59,14 +58,13 @@ git push origin main
 if errorlevel 1 (
     echo.
     echo =================================================================
-    echo ❌ FATAL ERROR: Git Push Failed.
-    echo Check your network or GitHub authentication.
+    echo X FATAL ERROR: Git Push Failed. Check network/auth.
     echo =================================================================
 ) else (
     echo.
     echo =================================================================
-    echo ✅ SUCCESS: Deployment Triggered!
-    echo Site will update shortly via GitHub Actions.
+    echo V SUCCESS: Deployment Triggered!
+    echo Site will update shortly.
     echo =================================================================
 )
 
