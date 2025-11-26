@@ -1,3 +1,54 @@
 @use "./base.scss";
+@use "./base.scss"; 
 
-// put your custom CSS here!
+// =======================================================
+// 1. 设置 body 背景图片
+// =======================================================
+body {
+  background-image: url("/static/images/background.jpg");
+  background-repeat: no-repeat;
+  background-attachment: fixed; 
+  background-size: cover;       
+  background-position: center center;
+  background-color: transparent !important;
+}
+
+
+// =======================================================
+// 2. 内容区域透明化处理 (使用 CSS 变量 var(--background) 兼容双模式)
+// =======================================================
+
+// 主内容区域（笔记文本）
+.page, .full, .head {
+  // 使用 color-mix() 获取当前主题背景色并应用 85% 透明度
+  background-color: color-mix(in srgb, var(--background), transparent 15%); 
+  border-radius: 8px; 
+}
+
+// 侧边栏和目录
+.side, .toc {
+  // 获取当前主题背景色并应用 95% 透明度
+  background-color: color-mix(in srgb, var(--background), transparent 5%);
+  border-radius: 8px; 
+}
+
+// 兼容不支持 color-mix 的旧浏览器 (降级方案)
+@supports not (background-color: color-mix(in srgb, var(--background), transparent 15%)) {
+  .page, .full, .head {
+    // 亮色模式使用固定半透明白色
+    background-color: rgba(255, 255, 255, 0.85); 
+  }
+  .side, .toc {
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+  
+  body.dark {
+    // 暗色模式使用固定深色值代替 $dark
+    .page, .full, .head {
+      background-color: rgba(18, 18, 18, 0.85);
+    }
+    .side, .toc {
+      background-color: rgba(18, 18, 18, 0.95);
+    }
+  }
+}
