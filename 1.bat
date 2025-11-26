@@ -2,11 +2,11 @@
 REM =================================================================
 REM 确保 CMD 窗口正确显示 UTF-8 编码的中文
 chcp 65001 >nul
-setlocal
+setlocal enabledelayedexpansion
 
 echo.
 echo =================================================================
-echo 欢迎使用 Quartz 笔记部署脚本
+echo Quartz Deploy Script Initializing...
 echo =================================================================
 echo.
 
@@ -14,39 +14,39 @@ REM -----------------------------------------------------------------
 REM 1. 切换目录并获取提交信息
 REM -----------------------------------------------------------------
 cd /d "%~dp0"
-echo 当前工作目录: %cd%
+echo Current Directory: %cd%
 echo.
 
-set /p commit_msg="请输入你的 Git 提交信息: "
+set /p commit_msg="Enter Git Commit Message: "
 echo.
 
 REM -----------------------------------------------------------------
 REM 2. 执行 Git ADD
 REM -----------------------------------------------------------------
-echo 正在执行: git add .
+echo Running: git add .
 git add .
 if errorlevel 1 (
     echo.
-    echo 错误: git add 失败。
+    echo ERROR: git add failed. Exiting.
     goto :end
 )
-echo Git Add 完成
+echo Git Add Complete
 echo.
 
 REM -----------------------------------------------------------------
 REM 3. 执行 Git COMMIT
 REM -----------------------------------------------------------------
-echo 正在执行: git commit -m "%commit_msg%"
+echo Running: git commit -m "%commit_msg%"
 git commit -m "%commit_msg%"
-set commit_success=!errorlevel!
+set commit_status=!errorlevel!
 
-if %commit_success% neq 0 (
+if %commit_status% neq 0 (
     echo.
-    echo 警告: git commit 失败。
-    echo 正在尝试推送，以防上次的本地提交尚未推送...
+    echo WARNING: git commit failed (Nothing to commit or minor error).
+    echo Attempting Git Push now...
     goto :push
 ) else (
-    echo Git Commit 完成
+    echo Git Commit Complete
     echo.
 )
 
@@ -54,19 +54,19 @@ REM -----------------------------------------------------------------
 REM 4. 执行 Git PUSH
 REM -----------------------------------------------------------------
 :push
-echo 正在执行: git push origin main
+echo Running: git push origin main
 git push origin main
 if errorlevel 1 (
     echo.
     echo =================================================================
-    echo ❌ 致命错误: git push 失败。
-    echo 请检查您的网络连接或Git认证信息。
+    echo ❌ FATAL ERROR: Git Push Failed.
+    echo Check your network or GitHub authentication.
     echo =================================================================
 ) else (
     echo.
     echo =================================================================
-    echo ✅ 部署触发成功!
-    echo 网站将在 GitHub Actions 运行完成后自动更新。
+    echo ✅ SUCCESS: Deployment Triggered!
+    echo Site will update shortly via GitHub Actions.
     echo =================================================================
 )
 
