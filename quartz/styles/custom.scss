@@ -14,11 +14,11 @@ body {
 // =======================================================
 
 // 主内容区域（笔记文本）
-.page, .full, .head {
-  // 使用 color-mix() 实现半透明
-  background-color: color-mix(in srgb, var(--background), transparent 15%); 
-  border-radius: 8px; 
+.page, .full, .head,
+.side, .toc {
+  background-color: transparent !important;
 }
+
 
 // 侧边栏和目录
 .side, .toc {
@@ -28,19 +28,18 @@ body {
 
 // 兼容不支持 color-mix 的旧浏览器 (降级方案)
 @supports not (background-color: color-mix(in srgb, var(--background), transparent 15%)) {
-  .page, .full, .head {
-    background-color: rgba(255, 255, 255, 0.85); 
-  }
-  .side, .toc {
-    background-color: rgba(255, 255, 255, 0.95);
-  }
+.page, .full, .head,
+.side, .toc {
+  background-color: transparent !important;
+}
+
   
-  body.dark {
-    .page, .full, .head {
-      background-color: rgba(18, 18, 18, 0.85);
-    }
-    .side, .toc {
-      background-color: rgba(18, 18, 18, 0.95);
-    }
-  }
+body {
+  background-image: url("/background.jpg");
+  background-repeat: no-repeat;
+  background-attachment: fixed; 
+  background-size: cover;       
+  background-position: center center;
+  background-color: transparent !important;
+}
 }
