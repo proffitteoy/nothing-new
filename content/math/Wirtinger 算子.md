@@ -11,14 +11,14 @@ obsidian-note-status:
 
 ### 1. 定义与算子构造
 
->[!example] 定义
+>[!note] 定义
 >**Wirtinger 算子 (Wirtinger Operators)**
 >
 >基于复变量 $z = x+iy$ 与 $\bar{z} = x-iy$ 的线性变换关系，定义以下微分算子：
 >$$ \frac{\partial}{\partial z} := \frac{1}{2} \left( \frac{\partial}{\partial x} - i \frac{\partial}{\partial y} \right) $$
 >$$ \frac{\partial}{\partial \bar{z}} := \frac{1}{2} \left( \frac{\partial}{\partial x} + i \frac{\partial}{\partial y} \right) $$
 
->[!example] 定理
+>[!note] 定理
 >**全纯性的代数刻画**
 >
 >设 $f: \Omega \subseteq \mathbb{C} \to \mathbb{C}$ 为 $C^1$ 类函数（即视作 $\mathbb{R}^2 \to \mathbb{R}^2$ 时偏导数连续）。则以下命题等价：

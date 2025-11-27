@@ -5,13 +5,13 @@ obsidian-note-status:
 
 
 
-> [!example] Fubini-Tonelli定理
+> [!note] Fubini-Tonelli定理
 > 如果 $f$ 定义在 $X \times Y$ 上是可积的或者函数 $f$ 是非负可测的，那么有
 > $$
 > \int_{X\times Y}f(x,y)\,d(\mu\times\nu) = \int_{X}\left(\int_Y f(x,y) \, d\nu\right) \, d\mu = \int_Y\left(\int_X f(x,y) \, d\mu\right) \, d\nu
 > $$
 
-> [!example] Fubini-Tonelli定理的一个使用策略
+>[!note] Fubini-Tonelli定理的一个使用策略
 > 注意到，Tonelli定理只需要要求非负函数是可测函数，并不要求可积。因此有这样的策略:
 > 
 > 1.  首先使用 Tonelli 定理计算 $|f|$ 的积分，如果可测的话。如果一切顺利，那么积分是有限的，于是 Fubini 定理自然成立。
