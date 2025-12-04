@@ -215,12 +215,12 @@ sudo vi /etc/nginx/nginx.conf
 
 ## **7.2 常见故障处理**
 
-|现象|操作|禁止行为|
-|---|---|---|
-|服务挂起|`systemctl status` 检查|不得随意 restart|
-|磁盘告警|`df -h` 诊断|不得删除系统日志|
-|性能过载|`top` 定位进程|不得 kill 关键进程|
-|网络异常|`ping`、`ss -tulnp`|不得随意更改网络设置|
+| 现象   | 操作                    | 禁止行为         |
+| ---- | --------------------- | ------------ |
+| 服务挂起 | `systemctl status` 检查 | 不得随意 restart |
+| 磁盘告警 | `df -h` 诊断            | 不得删除系统日志     |
+| 性能过载 | `top` 定位进程            | 不得 kill 关键进程 |
+| 网络异常 | `ping`、`ss -tulnp`    | 不得随意更改网络设置   |
 
 ---
 
@@ -254,4 +254,58 @@ sudo nmcli networking off
 4. 禁止自行溯源排查
     
 
-> 所有进一步操作由管理员与安全人员执行
+ 所有进一步操作由管理员与安全人员执行
+
+
+## **第8章 docker的使用**
+### **8.1 `docker ps
+`**
+查看当前正在运行的 Docker 容器列表。
+##  **8.2 `systemctl status firewalld
+`**
+查看 **firewalld 防火墙服务**的状态，包括：
+
+- 是否正在运行 (active / inactive)
+- 
+- 是否开机自启
+- 
+- 日志输出
+- 
+相当于：
+`systemctl status firewalld.service`
+##  **8.3 `iptables -t nat -L -n`**
+
+查看 **NAT 表**的规则，大多数 Docker 端口映射都在这里。
+
+含义：
+
+- `-t nat`：选择 nat 表
+- 
+- `-L`：列出规则
+- 
+- `-n`：不反查 IP / 域名，提高速度
+##  **8.4`docker-compose logs`**
+
+查看 docker-compose 管理的服务日志。
+
+`docker-compose logs`
+
+或者查看某个服务：
+
+`docker-compose logs service_name`
+
+实时跟踪日志：
+
+`docker-compose logs -f`
+## **8.5 `docker-compose down`**
+停止并删除由 `docker-compose up` 启动的容器和网络
+##  **8.6 `iptables -L FORWARD -n -v`**
+查看 Linux 过滤表中 **FORWARD 链**的规则与计数
+
+- `-L FORWARD`：查看 FORWARD 链
+- 
+- `-n`：不反查 IP
+- 
+- `-v`：显示详细计数，如数据包数量、字节数等
+- 
+如果 Docker 容器网络互通有问题，通常会检查这个链是否允许 forward。
