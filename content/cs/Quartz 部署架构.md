@@ -1,6 +1,6 @@
 ---
 obsidian-note-status:
-  - colorful:archived
+  - colorful:needsUpdate
 ---
 
 >[!tip]
@@ -12,7 +12,7 @@ obsidian-note-status:
 
 ### 1. 系统初始化与环境定义
 
->[!定义]
+>[!note] 定义
 >**项目环境配置**
 >
 >设本地项目空间为 $\mathcal{P}$，目标部署环境为 GitHub Pages $\mathcal{G}$。
@@ -22,7 +22,7 @@ obsidian-note-status:
 
 ### 2. 核心配置与路由原理
 
->[!定理]
+>[!note] 定理
 >基路径同构定理
 >
 >为了使生成的静态资源在子路径部署下正确索引，配置文件 `quartz.config.ts` 中的 `baseUrl` 参数必须与远程仓库名称 $R$ 保持一致。

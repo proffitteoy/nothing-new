@@ -158,7 +158,7 @@ tar -zcvf app.tar.gz /opt/app
 |大型配置或代码|VSCode SSH Remote|
 |快速修配置|服务器终端 vi|
 
-> 当前服务器**不支持 vim/nano**，仅 vi 可用
+当前服务器**不支持 vim/nano**，仅 vi 可用
 
 ---
 
@@ -224,8 +224,7 @@ sudo vi /etc/nginx/nginx.conf
 
 ---
 
-## **7.3 异常攻击响应机制（必须执行）**
-
+## **7.3 异常攻击响应机制
 触发标准：
 
 - 暴力破解尝试明显增多
@@ -258,21 +257,17 @@ sudo nmcli networking off
 
 
 ## **第8章 docker的使用**
-### **8.1 `docker ps
-`**
+### **8.1 `docker ps`**
 查看当前正在运行的 Docker 容器列表。
-##  **8.2 `systemctl status firewalld
-`**
+
+目前已经安装了的容器包括openwebui-openwebui-1和DeepSeek-R1-Distill-Llama-70B
+##  **8.2 `systemctl status firewalld`**
 查看 **firewalld 防火墙服务**的状态，包括：
 
 - 是否正在运行 (active / inactive)
-- 
-- 是否开机自启
-- 
+- 是否开机自启。
 - 日志输出
-- 
-相当于：
-`systemctl status firewalld.service`
+相当于：```systemctl status firewalld.service```
 ##  **8.3 `iptables -t nat -L -n`**
 
 查看 **NAT 表**的规则，大多数 Docker 端口映射都在这里。
@@ -280,32 +275,28 @@ sudo nmcli networking off
 含义：
 
 - `-t nat`：选择 nat 表
-- 
 - `-L`：列出规则
-- 
 - `-n`：不反查 IP / 域名，提高速度
 ##  **8.4`docker-compose logs`**
 
-查看 docker-compose 管理的服务日志。
+查看 docker-compose 管理的服务日志：`docker-compose logs`
 
-`docker-compose logs`
+或者查看某个服务：`docker-compose logs service_name`
 
-或者查看某个服务：
-
-`docker-compose logs service_name`
-
-实时跟踪日志：
-
-`docker-compose logs -f`
+实时跟踪日志：`docker-compose logs -f`
 ## **8.5 `docker-compose down`**
 停止并删除由 `docker-compose up` 启动的容器和网络
-##  **8.6 `iptables -L FORWARD -n -v`**
+## **8.6 `iptables -L FORWARD -n -v`**
 查看 Linux 过滤表中 **FORWARD 链**的规则与计数
 
 - `-L FORWARD`：查看 FORWARD 链
-- 
 - `-n`：不反查 IP
-- 
 - `-v`：显示详细计数，如数据包数量、字节数等
-- 
 如果 Docker 容器网络互通有问题，通常会检查这个链是否允许 forward。
+
+## 第9章 **可视化平台Elastic的使用**
+数据搜索（Discover）  
+可视化图表（Visualize）  
+控制台执行 ES API（Dev Tools）  
+仪表盘（Dashboard）  
+索引管理、用户权限管理
