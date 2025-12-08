@@ -224,7 +224,7 @@ sudo vi /etc/nginx/nginx.conf
 
 ---
 
-## **7.3 异常攻击响应机制
+## 7.3 异常攻击响应机制
 触发标准：
 
 - 暴力破解尝试明显增多
@@ -256,7 +256,7 @@ sudo nmcli networking off
  所有进一步操作由管理员与安全人员执行
 
 
-## **第8章 docker的使用**
+# **第8章 docker的使用**
 ### **8.1 `docker ps`**
 查看当前正在运行的 Docker 容器列表。
 
@@ -294,7 +294,9 @@ sudo nmcli networking off
 - `-v`：显示详细计数，如数据包数量、字节数等
 如果 Docker 容器网络互通有问题，通常会检查这个链是否允许 forward。
 
-## 第9章 **可视化平台Elastic的使用**
+# 第9章 **可视化平台Elastic的使用**
+5601端口，可直接10.64.4.241:5601访问
+
 数据搜索（Discover）  
 可视化图表（Visualize）  
 控制台执行 ES API（Dev Tools）  
