@@ -1,7 +1,3 @@
----
-obsidian-note-status:
-  - colorful:needsUpdate
----
 
 >[!tip]
 >Quartz 的部署本质上是一个静态站点生成过程，其核心在于将本地的 Markdown 知识拓扑结构映射为 Web 的 HTML 路由结构。
