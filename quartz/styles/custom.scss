@@ -100,6 +100,41 @@ body::after {
     0 12px 28px rgba(0, 0, 0, 0.28);
 }
 
+.landing-intro-ime {
+  margin: 0.85rem 0 0;
+  min-height: 1.4em;
+  font-family: var(--codeFont);
+  font-size: clamp(0.78rem, 1.9vw, 0.98rem);
+  letter-spacing: 0.06em;
+  color: rgba(247, 242, 231, 0.82);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(0.12rem);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.landing-intro-ime[data-mode="typing"],
+.landing-intro-ime[data-mode="candidate"],
+.landing-intro-ime[data-mode="commit"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-intro-ime[data-mode="typing"] {
+  color: rgba(247, 242, 231, 0.8);
+}
+
+.landing-intro-ime[data-mode="candidate"] {
+  color: #f4dca7;
+}
+
+.landing-intro-ime[data-mode="commit"] {
+  color: #bde6ba;
+}
+
 .landing-intro-title::after {
   content: "";
   display: inline-block;

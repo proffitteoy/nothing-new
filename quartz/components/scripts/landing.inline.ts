@@ -5,16 +5,42 @@ const SCROLLABLE_SELECTORS = [
   ".backlinks > ul.overflow",
 ]
 
-const INTRO_TEXT = "\u4e3a\u5b66\u65e5\u76ca\u4e3a\u9053\u65e5\u635f"
-const INTRO_TYPING_DELAY = 280
-const INTRO_TYPING_INTERVAL = 220
+type IntroToken = {
+  char: string
+  pinyin?: string
+  candidates?: string
+  pauseAfter?: number
+}
+
+const INTRO_TOKENS: IntroToken[] = [
+  { char: "\u4e3a", pinyin: "wei", candidates: "1.\u4e3a 2.\u4f4d 3.\u672a" },
+  { char: "\u5b66", pinyin: "xue", candidates: "1.\u5b66 2.\u96ea 3.\u7a74", pauseAfter: 620 },
+  { char: "\u65e5", pinyin: "ri", candidates: "1.\u65e5 2.\u9a72" },
+  { char: "\u76ca", pinyin: "yi", candidates: "1.\u76ca 2.\u610f 3.\u8bae", pauseAfter: 110 },
+  { char: "\uff0c", pauseAfter: 240 },
+  { char: "\u4e3a", pinyin: "wei", candidates: "1.\u4e3a 2.\u4f4d 3.\u672a", pauseAfter: 70 },
+  { char: "\u9053", pinyin: "dao", candidates: "1.\u9053 2.\u5230 3.\u5bfc", pauseAfter: 70 },
+  { char: "\u65e5", pinyin: "ri", candidates: "1.\u65e5 2.\u9a72", pauseAfter: 70 },
+  { char: "\u635f", pinyin: "sun", candidates: "1.\u635f 2.\u7b0b 3.\u5b59", pauseAfter: 80 },
+]
+
+const INTRO_TEXT = INTRO_TOKENS.map((token) => token.char).join("")
+const INTRO_BOOT_DELAY = 280
+const INTRO_PREPARE_DELAY = 100
+const INTRO_KEY_INTERVAL = 85
+const INTRO_CANDIDATE_DELAY = 180
+const INTRO_COMMIT_DELAY = 95
+const INTRO_DEFAULT_GAP = 95
 const ROOT_LOCK_ATTR = "data-landing-lock"
+
+type ImeMode = "idle" | "typing" | "candidate" | "commit"
 
 type IntroState = {
   overlay: HTMLElement
   title: HTMLElement
-  typingTimer?: number
-  startTimer?: number
+  ime: HTMLElement
+  timers: number[]
+  composedText: string
 }
 
 let introState: IntroState | null = null
@@ -64,16 +90,83 @@ function jumpToMainContent(): boolean {
   return true
 }
 
+function scheduleIntroTask(state: IntroState, callback: () => void, delay: number) {
+  const timer = window.setTimeout(() => {
+    state.timers = state.timers.filter((activeTimer) => activeTimer !== timer)
+    callback()
+  }, delay)
+
+  state.timers.push(timer)
+}
+
 function clearIntroTimers(state: IntroState) {
-  if (state.startTimer !== undefined) {
-    window.clearTimeout(state.startTimer)
-    state.startTimer = undefined
+  for (const timer of state.timers) {
+    window.clearTimeout(timer)
   }
 
-  if (state.typingTimer !== undefined) {
-    window.clearInterval(state.typingTimer)
-    state.typingTimer = undefined
+  state.timers = []
+}
+
+function setImePrompt(state: IntroState, text: string, mode: ImeMode) {
+  state.ime.textContent = text
+  state.ime.dataset.mode = mode
+}
+
+function runIntroTyping(state: IntroState, tokenIndex: number) {
+  if (!introState || introState !== state) return
+
+  if (tokenIndex >= INTRO_TOKENS.length) {
+    setImePrompt(state, "", "idle")
+    return
   }
+
+  const token = INTRO_TOKENS[tokenIndex]
+
+  const commitCurrentToken = () => {
+    if (!introState || introState !== state) return
+
+    state.composedText += token.char
+    state.title.textContent = state.composedText
+    setImePrompt(state, token.pinyin ? `\u4e0a\u5c4f: ${token.char}` : "", token.pinyin ? "commit" : "idle")
+
+    scheduleIntroTask(state, () => {
+      if (!introState || introState !== state) return
+      setImePrompt(state, "", "idle")
+      runIntroTyping(state, tokenIndex + 1)
+    }, token.pauseAfter ?? INTRO_DEFAULT_GAP)
+  }
+
+  if (!token.pinyin) {
+    scheduleIntroTask(state, commitCurrentToken, INTRO_COMMIT_DELAY)
+    return
+  }
+
+  let letterIndex = 0
+  const typePinyin = () => {
+    if (!introState || introState !== state) return
+
+    letterIndex += 1
+    const typedPinyin = token.pinyin!.slice(0, letterIndex)
+    setImePrompt(state, `\u8f93\u5165: ${typedPinyin}`, "typing")
+
+    if (letterIndex < token.pinyin!.length) {
+      scheduleIntroTask(state, typePinyin, INTRO_KEY_INTERVAL)
+      return
+    }
+
+    if (token.candidates) {
+      scheduleIntroTask(state, () => {
+        if (!introState || introState !== state) return
+        setImePrompt(state, `\u5019\u9009: ${token.candidates}`, "candidate")
+        scheduleIntroTask(state, commitCurrentToken, INTRO_CANDIDATE_DELAY)
+      }, INTRO_KEY_INTERVAL)
+      return
+    }
+
+    scheduleIntroTask(state, commitCurrentToken, INTRO_COMMIT_DELAY)
+  }
+
+  scheduleIntroTask(state, typePinyin, INTRO_PREPARE_DELAY)
 }
 
 function destroyLandingIntro() {
@@ -116,34 +209,31 @@ function activateLandingIntro(): boolean {
   overlay.innerHTML = `
     <div class="landing-intro-inner">
       <h1 class="landing-intro-title" aria-label="${INTRO_TEXT}"></h1>
+      <p class="landing-intro-ime" data-mode="idle" aria-hidden="true"></p>
     </div>
   `
 
   const title = overlay.querySelector(".landing-intro-title") as HTMLElement | null
-  if (!title) return false
+  const ime = overlay.querySelector(".landing-intro-ime") as HTMLElement | null
+  if (!title || !ime) return false
 
   introState = {
     overlay,
     title,
+    ime,
+    timers: [],
+    composedText: "",
   }
 
   document.documentElement.setAttribute(ROOT_LOCK_ATTR, "on")
   document.body.appendChild(overlay)
+  introState.title.textContent = ""
+  setImePrompt(introState, "", "idle")
 
-  introState.startTimer = window.setTimeout(() => {
-    let currentIndex = 0
-    introState?.title && (introState.title.textContent = "")
-
-    introState!.typingTimer = window.setInterval(() => {
-      if (!introState) return
-      currentIndex += 1
-      introState.title.textContent = INTRO_TEXT.slice(0, currentIndex)
-
-      if (currentIndex >= INTRO_TEXT.length) {
-        clearIntroTimers(introState)
-      }
-    }, INTRO_TYPING_INTERVAL)
-  }, INTRO_TYPING_DELAY)
+  const activeIntro = introState
+  scheduleIntroTask(activeIntro, () => {
+    runIntroTyping(activeIntro, 0)
+  }, INTRO_BOOT_DELAY)
 
   return true
 }
@@ -230,4 +320,3 @@ document.addEventListener("nav", () => {
     destroyLandingIntro()
   })
 })
-
