@@ -87,9 +87,16 @@ body::after {
   padding: 1rem 1.6rem;
 }
 
+.landing-intro-stage {
+  position: relative;
+  display: inline-block;
+}
+
 .landing-intro-title {
+  display: inline-block;
   margin: 0;
   min-height: 1.15em;
+  white-space: pre;
   font-family: var(--titleFont);
   font-size: clamp(2rem, 6vw, 4.4rem);
   font-weight: 600;
@@ -100,20 +107,47 @@ body::after {
     0 12px 28px rgba(0, 0, 0, 0.28);
 }
 
+.landing-intro-measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: pre;
+  font-family: var(--titleFont);
+  font-size: clamp(2rem, 6vw, 4.4rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
 .landing-intro-ime {
-  margin: 0.85rem 0 0;
-  min-height: 1.4em;
+  position: fixed;
+  left: 50vw;
+  top: 60vh;
   font-family: var(--codeFont);
-  font-size: clamp(0.78rem, 1.9vw, 0.98rem);
-  letter-spacing: 0.06em;
-  color: rgba(247, 242, 231, 0.82);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: clamp(0.95rem, 2.4vw, 1.2rem);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+  color: #fbf5e8;
+  background: rgba(16, 21, 31, 0.58);
+  border: 1px dashed rgba(251, 245, 232, 0.88);
+  border-radius: 10px;
+  padding: 0.34rem 0.6rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  pointer-events: none;
   opacity: 0;
-  transform: translateY(0.12rem);
+  transform: translateY(0.18rem);
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease,
-    color 0.2s ease;
+    left 0.1s linear,
+    top 0.1s linear,
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .landing-intro-ime[data-mode="typing"],
@@ -124,15 +158,20 @@ body::after {
 }
 
 .landing-intro-ime[data-mode="typing"] {
-  color: rgba(247, 242, 231, 0.8);
+  color: #fff7e6;
+  border-color: rgba(251, 245, 232, 0.88);
 }
 
 .landing-intro-ime[data-mode="candidate"] {
-  color: #f4dca7;
+  color: #ffe6a5;
+  border-color: #ffe6a5;
+  background: rgba(31, 24, 14, 0.64);
 }
 
 .landing-intro-ime[data-mode="commit"] {
-  color: #bde6ba;
+  color: #d4f4cc;
+  border-color: #d4f4cc;
+  background: rgba(14, 31, 20, 0.62);
 }
 
 .landing-intro-title::after {

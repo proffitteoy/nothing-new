@@ -6,25 +6,27 @@ const SCROLLABLE_SELECTORS = [
 ]
 
 type IntroToken = {
-  char: string
+  text: string
   pinyin?: string
   candidates?: string
   pauseAfter?: number
 }
 
 const INTRO_TOKENS: IntroToken[] = [
-  { char: "\u4e3a", pinyin: "wei", candidates: "1.\u4e3a 2.\u4f4d 3.\u672a" },
-  { char: "\u5b66", pinyin: "xue", candidates: "1.\u5b66 2.\u96ea 3.\u7a74", pauseAfter: 620 },
-  { char: "\u65e5", pinyin: "ri", candidates: "1.\u65e5 2.\u9a72" },
-  { char: "\u76ca", pinyin: "yi", candidates: "1.\u76ca 2.\u610f 3.\u8bae", pauseAfter: 110 },
-  { char: "\uff0c", pauseAfter: 240 },
-  { char: "\u4e3a", pinyin: "wei", candidates: "1.\u4e3a 2.\u4f4d 3.\u672a", pauseAfter: 70 },
-  { char: "\u9053", pinyin: "dao", candidates: "1.\u9053 2.\u5230 3.\u5bfc", pauseAfter: 70 },
-  { char: "\u65e5", pinyin: "ri", candidates: "1.\u65e5 2.\u9a72", pauseAfter: 70 },
-  { char: "\u635f", pinyin: "sun", candidates: "1.\u635f 2.\u7b0b 3.\u5b59", pauseAfter: 80 },
+  { text: "\u4e3a", pinyin: "wei", candidates: "1.\u4e3a 2.\u4f4d 3.\u672a" },
+  { text: "\u5b66", pinyin: "xue", candidates: "1.\u5b66 2.\u96ea 3.\u7a74", pauseAfter: 620 },
+  { text: "\u65e5", pinyin: "ri", candidates: "1.\u65e5 2.\u9a72" },
+  { text: "\u76ca", pinyin: "yi", candidates: "1.\u76ca 2.\u610f 3.\u8bae", pauseAfter: 110 },
+  { text: "\uff0c", pauseAfter: 240 },
+  {
+    text: "\u4e3a\u9053\u65e5\u635f",
+    pinyin: "weidaorisun",
+    candidates: "1.\u4e3a\u9053\u65e5\u635f 2.\u4e3a\u9053\u65e5\u7b0b 3.\u4e3a\u9053\u65e5\u5b59",
+    pauseAfter: 90,
+  },
 ]
 
-const INTRO_TEXT = INTRO_TOKENS.map((token) => token.char).join("")
+const INTRO_TEXT = INTRO_TOKENS.map((token) => token.text).join("")
 const INTRO_BOOT_DELAY = 280
 const INTRO_PREPARE_DELAY = 100
 const INTRO_KEY_INTERVAL = 85
@@ -38,9 +40,11 @@ type ImeMode = "idle" | "typing" | "candidate" | "commit"
 type IntroState = {
   overlay: HTMLElement
   title: HTMLElement
+  measure: HTMLElement
   ime: HTMLElement
   timers: number[]
   composedText: string
+  previewTail: string
 }
 
 let introState: IntroState | null = null
@@ -107,9 +111,24 @@ function clearIntroTimers(state: IntroState) {
   state.timers = []
 }
 
-function setImePrompt(state: IntroState, text: string, mode: ImeMode) {
+function updateImeAnchor(state: IntroState) {
+  const visualText = state.composedText + state.previewTail
+  state.measure.textContent = visualText.length > 0 ? visualText : "\u200b"
+  const measureRect = state.measure.getBoundingClientRect()
+
+  const rawLeft = measureRect.right + 12
+  const clampedLeft = Math.min(window.innerWidth - 16, Math.max(16, rawLeft))
+  const clampedTop = Math.min(window.innerHeight - 16, measureRect.bottom + 12)
+
+  state.ime.style.left = `${Math.round(clampedLeft)}px`
+  state.ime.style.top = `${Math.round(clampedTop)}px`
+}
+
+function setImePrompt(state: IntroState, text: string, mode: ImeMode, previewTail = "") {
+  state.previewTail = previewTail
   state.ime.textContent = text
   state.ime.dataset.mode = mode
+  updateImeAnchor(state)
 }
 
 function runIntroTyping(state: IntroState, tokenIndex: number) {
@@ -125,9 +144,9 @@ function runIntroTyping(state: IntroState, tokenIndex: number) {
   const commitCurrentToken = () => {
     if (!introState || introState !== state) return
 
-    state.composedText += token.char
+    state.composedText += token.text
     state.title.textContent = state.composedText
-    setImePrompt(state, token.pinyin ? `\u4e0a\u5c4f: ${token.char}` : "", token.pinyin ? "commit" : "idle")
+    setImePrompt(state, token.pinyin ? `\u4e0a\u5c4f: ${token.text}` : "", token.pinyin ? "commit" : "idle")
 
     scheduleIntroTask(state, () => {
       if (!introState || introState !== state) return
@@ -147,7 +166,7 @@ function runIntroTyping(state: IntroState, tokenIndex: number) {
 
     letterIndex += 1
     const typedPinyin = token.pinyin!.slice(0, letterIndex)
-    setImePrompt(state, `\u8f93\u5165: ${typedPinyin}`, "typing")
+    setImePrompt(state, `\u8f93\u5165: ${typedPinyin}`, "typing", typedPinyin)
 
     if (letterIndex < token.pinyin!.length) {
       scheduleIntroTask(state, typePinyin, INTRO_KEY_INTERVAL)
@@ -157,7 +176,7 @@ function runIntroTyping(state: IntroState, tokenIndex: number) {
     if (token.candidates) {
       scheduleIntroTask(state, () => {
         if (!introState || introState !== state) return
-        setImePrompt(state, `\u5019\u9009: ${token.candidates}`, "candidate")
+        setImePrompt(state, `\u5019\u9009: ${token.candidates}`, "candidate", token.text)
         scheduleIntroTask(state, commitCurrentToken, INTRO_CANDIDATE_DELAY)
       }, INTRO_KEY_INTERVAL)
       return
@@ -208,27 +227,38 @@ function activateLandingIntro(): boolean {
   overlay.className = "landing-intro"
   overlay.innerHTML = `
     <div class="landing-intro-inner">
-      <h1 class="landing-intro-title" aria-label="${INTRO_TEXT}"></h1>
+      <div class="landing-intro-stage">
+        <h1 class="landing-intro-title" aria-label="${INTRO_TEXT}"></h1>
+        <span class="landing-intro-measure" aria-hidden="true"></span>
+      </div>
       <p class="landing-intro-ime" data-mode="idle" aria-hidden="true"></p>
     </div>
   `
 
   const title = overlay.querySelector(".landing-intro-title") as HTMLElement | null
+  const measure = overlay.querySelector(".landing-intro-measure") as HTMLElement | null
   const ime = overlay.querySelector(".landing-intro-ime") as HTMLElement | null
-  if (!title || !ime) return false
+  if (!title || !measure || !ime) return false
 
   introState = {
     overlay,
     title,
+    measure,
     ime,
     timers: [],
     composedText: "",
+    previewTail: "",
   }
 
   document.documentElement.setAttribute(ROOT_LOCK_ATTR, "on")
   document.body.appendChild(overlay)
   introState.title.textContent = ""
   setImePrompt(introState, "", "idle")
+  window.requestAnimationFrame(() => {
+    if (introState) {
+      updateImeAnchor(introState)
+    }
+  })
 
   const activeIntro = introState
   scheduleIntroTask(activeIntro, () => {
@@ -242,6 +272,11 @@ document.addEventListener("nav", () => {
   destroyLandingIntro()
   let touchStartY: number | null = null
   activateLandingIntro()
+  const onResize = () => {
+    if (introState) {
+      updateImeAnchor(introState)
+    }
+  }
 
   const onWheel = (event: WheelEvent) => {
     const deltaY = normalizeWheelDelta(event.deltaY, event.deltaMode, window.innerHeight)
@@ -310,6 +345,7 @@ document.addEventListener("nav", () => {
   document.addEventListener("touchstart", onTouchStart, { passive: true })
   document.addEventListener("touchmove", onTouchMove, { passive: false })
   document.addEventListener("touchend", onTouchEnd, { passive: true })
+  window.addEventListener("resize", onResize)
 
   window.addCleanup(() => {
     document.removeEventListener("wheel", onWheel)
@@ -317,6 +353,7 @@ document.addEventListener("nav", () => {
     document.removeEventListener("touchstart", onTouchStart)
     document.removeEventListener("touchmove", onTouchMove)
     document.removeEventListener("touchend", onTouchEnd)
+    window.removeEventListener("resize", onResize)
     destroyLandingIntro()
   })
 })
