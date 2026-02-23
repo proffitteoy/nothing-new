@@ -1,54 +1,50 @@
 import { QuartzConfig } from "./quartz/cfg"
 import * as Plugin from "./quartz/plugins"
 
-/**
- * Quartz 4 Configuration
- *
- * See https://quartz.jzhao.xyz/configuration for more information.
- */
 const config: QuartzConfig = {
   configuration: {
-    pageTitle: "为学日益，为道日损", // 📚 建议修改为自己的标题
+    pageTitle: "为学日益，为道日损",
     pageTitleSuffix: "",
     enableSPA: true,
     enablePopovers: true,
     analytics: {
       provider: "plausible",
     },
-    locale: "zh-CN", // 🌎 建议将语言环境改为中文
-    baseUrl: "math-vault", // ⭐ 关键修正：必须设置为你的仓库名
+    locale: "zh-CN",
+    baseUrl: "math-vault",
     ignorePatterns: ["private", "templates", ".obsidian"],
     defaultDateType: "modified",
     theme: {
       fontOrigin: "googleFonts",
       cdnCaching: true,
       typography: {
-        header: "Schibsted Grotesk",
-        body: "Source Sans Pro",
-        code: "IBM Plex Mono",
+        title: "Playfair Display",
+        header: "Noto Serif SC",
+        body: "Noto Serif SC",
+        code: "JetBrains Mono",
       },
       colors: {
         lightMode: {
-          light: "#faf8f8",
-          lightgray: "#e5e5e5",
-          gray: "#b8b8b8",
-          darkgray: "#4e4e4e",
-          dark: "#2b2b2b",
-          secondary: "#284b63",
-          tertiary: "#84a59d",
-          highlight: "rgba(143, 159, 169, 0.15)",
-          textHighlight: "#fff23688",
+          light: "#f3f0ea",
+          lightgray: "#ddd5c9",
+          gray: "#8f8578",
+          darkgray: "#463f35",
+          dark: "#2b251d",
+          secondary: "#3d5a80",
+          tertiary: "#5d7c9a",
+          highlight: "rgba(61, 90, 128, 0.14)",
+          textHighlight: "#ffe08a88",
         },
         darkMode: {
-          light: "#161618",
-          lightgray: "#393639",
-          gray: "#646464",
-          darkgray: "#d4d4d4",
-          dark: "#ebebec",
-          secondary: "#7b97aa",
-          tertiary: "#84a59d",
-          highlight: "rgba(143, 159, 169, 0.15)",
-          textHighlight: "#b3aa0288",
+          light: "#1a1c20",
+          lightgray: "#343a44",
+          gray: "#7f8998",
+          darkgray: "#d3d8e0",
+          dark: "#f2f4f7",
+          secondary: "#9ab5d8",
+          tertiary: "#7ea4c4",
+          highlight: "rgba(154, 181, 216, 0.16)",
+          textHighlight: "#e5cb4a88",
         },
       },
     },
@@ -88,7 +84,6 @@ const config: QuartzConfig = {
       Plugin.Static(),
       Plugin.Favicon(),
       Plugin.NotFoundPage(),
-      // Comment out CustomOgImages to speed up build time
       Plugin.CustomOgImages(),
     ],
   },

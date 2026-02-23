@@ -1,45 +1,350 @@
-@use "./base.scss";
+@use "./variables.scss" as *;
+
+:root {
+  --blog-shell: color-mix(in srgb, var(--light) 86%, transparent);
+  --blog-shell-strong: color-mix(in srgb, var(--light) 94%, transparent);
+  --blog-line: color-mix(in srgb, var(--lightgray) 75%, var(--dark) 25%);
+  --blog-shadow: 0 20px 48px rgba(15, 23, 42, 0.18);
+  --blog-accent-soft: color-mix(in srgb, var(--secondary) 16%, transparent);
+}
+
+:root[saved-theme="dark"] {
+  --blog-shell: color-mix(in srgb, var(--light) 82%, transparent);
+  --blog-shell-strong: color-mix(in srgb, var(--light) 90%, transparent);
+  --blog-line: color-mix(in srgb, var(--lightgray) 65%, var(--dark) 35%);
+  --blog-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+  --blog-accent-soft: color-mix(in srgb, var(--secondary) 24%, transparent);
+}
+
 body {
-  background-image: url("/background.jpg");
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: transparent;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  z-index: -2;
+  background-image: url("/static/background.png");
   background-repeat: no-repeat;
-  background-attachment: fixed; 
-  background-size: cover;       
   background-position: center center;
-  background-color: transparent !important;
+  background-size: cover;
 }
 
-
-// =======================================================
-// 2. 内容区域透明化处理 (使用 CSS 变量 var(--background) 兼容双模式)
-// =======================================================
-
-// 主内容区域（笔记文本）
-.page, .full, .head,
-.side, .toc {
-  background-color: transparent !important;
+body::after {
+  z-index: -1;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.04)),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.2), rgba(15, 23, 42, 0.12));
 }
 
-
-// 侧边栏和目录
-.side, .toc {
-  background-color: color-mix(in srgb, var(--background), transparent 5%);
-  border-radius: 8px; 
+.page {
+  max-width: min(1500px, 96vw);
 }
 
-// 兼容不支持 color-mix 的旧浏览器 (降级方案)
-@supports not (background-color: color-mix(in srgb, var(--background), transparent 15%)) {
-.page, .full, .head,
-.side, .toc {
-  background-color: transparent !important;
+.page > #quartz-body {
+  column-gap: 1.2rem;
+  row-gap: 1.2rem;
 }
 
-  
-body {
-  background-image: url("/background.jpg");
-  background-repeat: no-repeat;
-  background-attachment: fixed; 
-  background-size: cover;       
-  background-position: center center;
-  background-color: transparent !important;
+.page > #quartz-body .center > article.popover-hint,
+.page > #quartz-body .center > .popover-hint,
+.page > #quartz-body .center > .page-header,
+.page > #quartz-body .center > .page-footer,
+.page > #quartz-body .sidebar.left > *:not(.spacer),
+.page > #quartz-body .sidebar.right > *,
+.page > #quartz-body footer {
+  background: var(--blog-shell);
+  border: 1px solid var(--blog-line);
+  border-radius: 16px;
+  box-shadow: var(--blog-shadow);
+  backdrop-filter: blur(8px);
 }
+
+.page > #quartz-body .sidebar {
+  gap: 1rem;
+  padding-top: 2.5rem;
+}
+
+.page-title {
+  margin: 0;
+  line-height: 1.25;
+}
+
+.page > #quartz-body .sidebar.left > *:not(.spacer),
+.page > #quartz-body .sidebar.right > * {
+  padding: 1rem 1.1rem;
+}
+
+.page > #quartz-body .center > .page-header {
+  margin-top: 2.5rem;
+  padding: 1.6rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.page > #quartz-body .center > .page-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--secondary) 20%, transparent), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.05));
+}
+
+.page > #quartz-body .center > .page-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.page > #quartz-body .center > .page-header .popover-hint {
+  background: transparent;
+}
+
+.article-title {
+  font-size: clamp(1.75rem, 2.5vw, 2.4rem);
+  margin-top: 0.4rem;
+}
+
+.content-meta {
+  opacity: 0.75;
+}
+
+.page > #quartz-body .center > article.popover-hint {
+  margin-top: 1rem;
+  padding: 2rem;
+}
+
+.page > #quartz-body .center > .popover-hint {
+  margin-top: 1rem;
+  overflow: hidden;
+}
+
+.page > #quartz-body .center > .popover-hint > article {
+  margin: 0;
+  padding: 2rem 2rem 0.8rem;
+}
+
+.page > #quartz-body .center > .popover-hint > .page-listing {
+  padding: 0.25rem 2rem 1.8rem;
+}
+
+.page > #quartz-body .center > .page-footer {
+  margin-top: 1rem;
+  padding: 1rem 2rem;
+}
+
+.page > #quartz-body .center > hr {
+  display: none;
+}
+
+.page > #quartz-body .center article {
+  font-size: 1.04rem;
+  line-height: 1.9;
+}
+
+.page > #quartz-body .center article img {
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+ul.section-ul {
+  margin-top: 1.1rem;
+  display: grid;
+  gap: 0.95rem;
+}
+
+li.section-li {
+  margin-bottom: 0;
+}
+
+li.section-li > .section {
+  grid-template-columns: 8.8rem 1fr auto;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--blog-line);
+  border-radius: 12px;
+  background: var(--blog-shell-strong);
+}
+
+li.section-li > .section .meta {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+li.section-li > .section > .tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+a.internal {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  line-height: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+  text-decoration-color: color-mix(in srgb, var(--secondary) 45%, transparent);
+}
+
+a.internal.tag-link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--secondary) 34%, transparent);
+  background: var(--blog-accent-soft);
+  padding: 0.08rem 0.52rem;
+  line-height: 1.45;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+a.internal.tag-link::before {
+  margin-right: 0.08rem;
+}
+
+.breadcrumb-container,
+.content-meta {
+  margin-top: 0.35rem;
+}
+
+.tags {
+  margin-top: 0.8rem;
+}
+
+.explorer-content ul li > a {
+  display: block;
+  padding: 0.16rem 0.45rem;
+  border-radius: 8px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.explorer-content ul li > a:hover,
+.explorer-content ul li > a.active {
+  background: var(--blog-accent-soft);
+  opacity: 1;
+}
+
+.search > .search-button {
+  height: 2.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--blog-line);
+  background: var(--blog-shell-strong);
+}
+
+.search > .search-container {
+  backdrop-filter: blur(12px);
+}
+
+.search > .search-container > .search-space > * {
+  border: 1px solid var(--blog-line);
+  background: var(--blog-shell-strong);
+  box-shadow: var(--blog-shadow);
+}
+
+.backlinks > h3,
+button.toc-header > h3,
+button.desktop-explorer > h2 {
+  letter-spacing: 0.02em;
+}
+
+.darkmode,
+.readermode {
+  border: 1px solid var(--blog-line);
+  border-radius: 999px;
+  background: var(--blog-shell-strong);
+}
+
+footer {
+  margin: 1rem 0 3rem;
+  padding: 1rem 1.3rem;
+  opacity: 1;
+}
+
+footer p {
+  margin: 0;
+}
+
+footer ul {
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media all and not ($desktop) {
+  .page > #quartz-body .sidebar.right {
+    flex-direction: column;
+  }
+
+  .page > #quartz-body .sidebar.right > * {
+    max-height: none;
+  }
+}
+
+@media all and ($mobile) {
+  .page {
+    max-width: 100vw;
+  }
+
+  .page > #quartz-body {
+    row-gap: 0.85rem;
+  }
+
+  .page > #quartz-body .sidebar.left,
+  .page > #quartz-body .sidebar.right {
+    position: initial;
+    height: auto;
+    padding: 0;
+    gap: 0.75rem;
+  }
+
+  .page > #quartz-body .sidebar.left > *:not(.spacer),
+  .page > #quartz-body .sidebar.right > * {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .page > #quartz-body .center > .page-header,
+  .page > #quartz-body .center > article.popover-hint,
+  .page > #quartz-body .center > .popover-hint,
+  .page > #quartz-body .center > .page-footer,
+  .page > #quartz-body footer {
+    border-radius: 12px;
+    padding-left: 1.2rem;
+    padding-right: 1.2rem;
+  }
+
+  .page > #quartz-body .center > .popover-hint > article,
+  .page > #quartz-body .center > .popover-hint > .page-listing {
+    padding-left: 1.2rem;
+    padding-right: 1.2rem;
+  }
+
+  li.section-li > .section {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  li.section-li > .section > .tags {
+    justify-content: flex-start;
+  }
 }
