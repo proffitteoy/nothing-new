@@ -10,6 +10,7 @@ type IntroToken = {
   pinyin?: string
   candidates?: string
   pauseAfter?: number
+  freezeImeAnchor?: boolean
 }
 
 const INTRO_TOKENS: IntroToken[] = [
@@ -21,8 +22,9 @@ const INTRO_TOKENS: IntroToken[] = [
   {
     text: "\u4e3a\u9053\u65e5\u635f",
     pinyin: "weidaorisun",
-    candidates: "1.\u4e3a\u9053\u65e5\u635f 2.\u4e3a\u9053\u65e5\u7b0b 3.\u4e3a\u9053\u65e5\u5b59",
+    candidates: "1.\u4e3a\u9053\u65e5\u635f 2.\u4e3a\u9053\u65e5\u7b0b",
     pauseAfter: 90,
+    freezeImeAnchor: true,
   },
 ]
 
@@ -166,7 +168,12 @@ function runIntroTyping(state: IntroState, tokenIndex: number) {
 
     letterIndex += 1
     const typedPinyin = token.pinyin!.slice(0, letterIndex)
-    setImePrompt(state, `\u8f93\u5165: ${typedPinyin}`, "typing", typedPinyin)
+    setImePrompt(
+      state,
+      `\u8f93\u5165: ${typedPinyin}`,
+      "typing",
+      token.freezeImeAnchor ? "" : typedPinyin,
+    )
 
     if (letterIndex < token.pinyin!.length) {
       scheduleIntroTask(state, typePinyin, INTRO_KEY_INTERVAL)
@@ -176,7 +183,12 @@ function runIntroTyping(state: IntroState, tokenIndex: number) {
     if (token.candidates) {
       scheduleIntroTask(state, () => {
         if (!introState || introState !== state) return
-        setImePrompt(state, `\u5019\u9009: ${token.candidates}`, "candidate", token.text)
+        setImePrompt(
+          state,
+          `\u5019\u9009: ${token.candidates}`,
+          "candidate",
+          token.freezeImeAnchor ? "" : token.text,
+        )
         scheduleIntroTask(state, commitCurrentToken, INTRO_CANDIDATE_DELAY)
       }, INTRO_KEY_INTERVAL)
       return
