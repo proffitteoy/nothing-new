@@ -47,6 +47,70 @@ body::after {
     linear-gradient(180deg, rgba(248, 250, 252, 0.2), rgba(15, 23, 42, 0.12));
 }
 
+#quartz-root {
+  transition:
+    opacity 0.55s ease,
+    transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+:root[data-landing-lock="on"] {
+  overflow: hidden;
+}
+
+:root[data-landing-lock="on"] #quartz-root {
+  opacity: 0;
+  transform: translateY(2vh);
+  pointer-events: none;
+}
+
+.landing-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 1;
+  transition:
+    opacity 0.45s ease,
+    transform 0.55s ease;
+}
+
+.landing-intro.is-leaving {
+  opacity: 0;
+  transform: translateY(-0.8rem);
+}
+
+.landing-intro-inner {
+  text-align: center;
+  padding: 1rem 1.6rem;
+}
+
+.landing-intro-title {
+  margin: 0;
+  min-height: 1.15em;
+  font-family: var(--titleFont);
+  font-size: clamp(2rem, 6vw, 4.4rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #f7f2e7;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.landing-intro-title::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 0.2em;
+  vertical-align: -0.1em;
+  background: currentcolor;
+  animation: landing-caret-blink 1s steps(1, end) infinite;
+}
+
 .page {
   max-width: min(1500px, 96vw);
 }
@@ -134,7 +198,7 @@ body::after {
 }
 
 .scroll-down-entry::after {
-  content: "↓";
+  content: "\2193";
   animation: scroll-hint-bob 1.25s ease-in-out infinite;
 }
 
@@ -363,6 +427,17 @@ footer ul {
   }
   50% {
     transform: translateY(3px);
+  }
+}
+
+@keyframes landing-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
   }
 }
 

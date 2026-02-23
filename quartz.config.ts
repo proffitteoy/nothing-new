@@ -3,7 +3,7 @@ import * as Plugin from "./quartz/plugins"
 
 const config: QuartzConfig = {
   configuration: {
-    pageTitle: "为学日益，为道日损",
+    pageTitle: "\u4e3a\u5b66\u65e5\u76ca\uff0c\u4e3a\u9053\u65e5\u635f",
     pageTitleSuffix: "",
     enableSPA: true,
     enablePopovers: true,

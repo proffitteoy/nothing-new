@@ -14,8 +14,12 @@ const ArticleTitle: QuartzComponent = ({ fileData, displayClass }: QuartzCompone
     <div class={classNames(displayClass, "article-title-group")}>
       {title && <h1 class="article-title">{title}</h1>}
       {isHomePage && (
-        <a class="scroll-down-entry" href="#main-content" aria-label="下拉查看正文">
-          开始阅读
+        <a
+          class="scroll-down-entry"
+          href="#main-content"
+          aria-label="\u4e0b\u62c9\u67e5\u770b\u6b63\u6587"
+        >
+          {"\u5f00\u59cb\u9605\u8bfb"}
         </a>
       )}
     </div>
