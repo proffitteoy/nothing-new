@@ -1,0 +1,21 @@
+/* 星星特效优化样式 */
+canvas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+  opacity: 0.6 !important;
+}
+
+/* 确保在移动设备上隐藏特效 */
+@media (max-width: 768px) {
+  canvas {
+    display: none !important;
+  }
+}
+
+/* 深色模式下的优化 */
+[data-user-color-scheme="dark"] canvas {
+  opacity: 0.4 !important;
+}

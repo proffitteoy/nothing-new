@@ -1,3 +1,4 @@
+@use "./base.scss";
 @use "./variables.scss" as *;
 
 :root {
@@ -114,6 +115,29 @@ body::after {
   margin-top: 0.4rem;
 }
 
+.article-title-group {
+  margin-top: 0.2rem;
+}
+
+.scroll-down-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--blog-line);
+  background: var(--blog-shell-strong);
+  color: var(--secondary);
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.scroll-down-entry::after {
+  content: "↓";
+  animation: scroll-hint-bob 1.25s ease-in-out infinite;
+}
+
 .content-meta {
   opacity: 0.75;
 }
@@ -149,6 +173,22 @@ body::after {
 .page > #quartz-body .center article {
   font-size: 1.04rem;
   line-height: 1.9;
+}
+
+.page > #quartz-body .center article .callout {
+  border-radius: 12px;
+  border-color: color-mix(in srgb, var(--border) 70%, var(--blog-line) 30%);
+  background-color: color-mix(in srgb, var(--bg) 85%, var(--blog-shell-strong) 15%);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.page > #quartz-body .center article .callout-title {
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
+}
+
+.page > #quartz-body .center article .callout-content {
+  padding-bottom: 0.3rem;
 }
 
 .page > #quartz-body .center article img {
@@ -288,6 +328,16 @@ footer ul {
   margin-top: 0.6rem;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+@keyframes scroll-hint-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
 }
 
 @media all and not ($desktop) {

@@ -1,0 +1,49 @@
+/* 图片质量优化 */
+.banner {
+    /* 禁用图片平滑处理，保持锐利 */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    
+    /* 高质量背景渲染 */
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-position: center center;
+    
+    /* 优化背景尺寸计算 */
+    background-size: cover;
+    
+    /* 防止模糊 */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    
+    /* 硬件加速 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* 针对高分辨率屏幕的优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .banner {
+        /* 在高分辨率屏幕上使用更好的渲染 */
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: optimize-contrast;
+    }
+}
+
+/* 确保图片在不同尺寸下保持质量 */
+.banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: inherit;
+    background-size: inherit;
+    background-position: inherit;
+    background-repeat: inherit;
+    filter: contrast(1.1) brightness(1.05);
+    z-index: -1;
+}
