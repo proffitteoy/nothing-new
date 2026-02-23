@@ -1,5 +1,7 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 import { classNames } from "../util/lang"
+// @ts-ignore
+import landingScript from "./scripts/landing.inline"
 
 const ArticleTitle: QuartzComponent = ({ fileData, displayClass }: QuartzComponentProps) => {
   const title = fileData.frontmatter?.title
@@ -31,5 +33,7 @@ ArticleTitle.css = `
   margin: 2rem 0 0 0;
 }
 `
+
+ArticleTitle.afterDOMLoaded = landingScript
 
 export default (() => ArticleTitle) satisfies QuartzComponentConstructor
