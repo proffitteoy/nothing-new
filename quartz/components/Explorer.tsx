@@ -80,6 +80,7 @@ export default ((userOpts?: Partial<Options>) => {
           type="button"
           class="explorer-toggle mobile-explorer hide-until-loaded"
           data-mobile={true}
+          aria-expanded={false}
           aria-controls={id}
         >
           <svg
@@ -97,6 +98,7 @@ export default ((userOpts?: Partial<Options>) => {
             <line x1="4" x2="20" y1="18" y2="18" />
           </svg>
         </button>
+        <div class="explorer-backdrop" aria-hidden={true}></div>
         <button
           type="button"
           class="title-button explorer-toggle desktop-explorer"
