@@ -29,6 +29,8 @@ export const defaultContentPageLayout: PageLayout = {
     Component.PageTitle(),
     Component.MobileOnly(Component.Spacer()),
     Component.Flex({
+      wrap: "wrap",
+      gap: "0.6rem",
       components: [
         {
           Component: Component.Search(),
@@ -53,6 +55,8 @@ export const defaultListPageLayout: PageLayout = {
     Component.PageTitle(),
     Component.MobileOnly(Component.Spacer()),
     Component.Flex({
+      wrap: "wrap",
+      gap: "0.6rem",
       components: [
         {
           Component: Component.Search(),

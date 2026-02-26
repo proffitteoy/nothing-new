@@ -34,6 +34,9 @@ const INTRO_CANDIDATE_DELAY = 180
 const INTRO_COMMIT_DELAY = 95
 const INTRO_DEFAULT_GAP = 95
 const ROOT_LOCK_ATTR = "data-landing-lock"
+const BG_READY_ATTR = "data-bg-ready"
+const MOBILE_BREAKPOINT = "(max-width: 800px)"
+const BG_READY_TIMEOUT = 1200
 
 type ImeMode = "idle" | "typing" | "candidate" | "commit"
 
@@ -46,6 +49,37 @@ type IntroState = {
 }
 
 let introState: IntroState | null = null
+let backgroundDecorReady = false
+
+function canUseDesktopEffects(): boolean {
+  const connection = (navigator as any).connection
+  const saveData = connection?.saveData === true
+  const effectiveType = String(connection?.effectiveType ?? "")
+  const slowNetwork = effectiveType === "slow-2g" || effectiveType === "2g"
+  return !saveData && !slowNetwork && !window.matchMedia(MOBILE_BREAKPOINT).matches
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+}
+
+function scheduleBackgroundDecor() {
+  if (document.documentElement.hasAttribute(BG_READY_ATTR) || backgroundDecorReady) return
+  if (!canUseDesktopEffects()) return
+  backgroundDecorReady = true
+
+  const activateBackground = () => {
+    document.documentElement.setAttribute(BG_READY_ATTR, "on")
+    backgroundDecorReady = false
+  }
+
+  const maybeRequestIdleCallback = (window as any).requestIdleCallback
+  if (typeof maybeRequestIdleCallback === "function") {
+    maybeRequestIdleCallback(activateBackground, { timeout: BG_READY_TIMEOUT })
+  } else {
+    window.setTimeout(activateBackground, 360)
+  }
+}
 
 function resolveEventElement(target: EventTarget | null): Element | null {
   if (target instanceof Element) return target
@@ -81,7 +115,13 @@ function scrollWithWheel(container: HTMLElement, deltaY: number): boolean {
 }
 
 function canShowLandingIntro(): boolean {
-  return document.body.dataset.slug === "index" && window.scrollY <= 8 && !window.location.hash
+  return (
+    canUseDesktopEffects() &&
+    !prefersReducedMotion() &&
+    document.body.dataset.slug === "index" &&
+    window.scrollY <= 8 &&
+    !window.location.hash
+  )
 }
 
 function jumpToMainContent(): boolean {
@@ -243,6 +283,7 @@ function activateLandingIntro(): boolean {
 }
 
 document.addEventListener("nav", () => {
+  scheduleBackgroundDecor()
   destroyLandingIntro()
   let touchStartY: number | null = null
   activateLandingIntro()
@@ -270,8 +311,9 @@ document.addEventListener("nav", () => {
     if (!introState) return
 
     const element = resolveEventElement(event.target)
-    const tagName = element?.tagName.toLowerCase()
-    if (tagName === "input" || tagName === "textarea" || element?.isContentEditable) return
+    const targetElement = element instanceof HTMLElement ? element : null
+    const tagName = targetElement?.tagName.toLowerCase()
+    if (tagName === "input" || tagName === "textarea" || targetElement?.isContentEditable) return
 
     const shouldReveal =
       event.key === "ArrowDown" || event.key === "PageDown" || event.key === " " || event.key === "Enter"

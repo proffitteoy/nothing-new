@@ -1,0 +1,848 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <title>Ink &amp; Sakura - Interactive Portfolio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/2/2.2.1/iconify.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&amp;family=Noto+Serif+JP:wght@300;400;500;700&amp;family=Zen+Old+Mincho&amp;display=swap" rel="stylesheet">
+    <style>
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/rice-paper-2.png');
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 50;
+            mix-blend-mode: multiply;
+        }
+        .vertical-text {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 0.3em;
+        }
+        main::-webkit-scrollbar { display: none; }
+        main { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 用更柔和的 body 滚动，弱化 snap 的生硬感 */
+        html, body {
+            scroll-behavior: smooth;
+        }
+
+        /* 页面衔接柔化：给 section 顶部加一个淡淡的水墨渐变遮罩（不改结构，仅视觉缓冲） */
+        .ink-fade-top::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 15vh;
+            background: linear-gradient(to bottom, rgba(15,23,42,0.12), rgba(15,23,42,0.03), transparent);
+            opacity: 0.6;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+        .ink-fade-bottom::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 14vh;
+            background: linear-gradient(to top, rgba(15,23,42,0.12), rgba(15,23,42,0.03), transparent);
+            opacity: 0.6;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+    </style>
+</head>
+<body class="bg-[#fcfaf5] text-[#1a1a1a] h-screen overflow-hidden">
+    <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+        <defs>
+            <filter id="ink-wash">
+                <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise"></feTurbulence>
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="5"></feDisplacementMap>
+                <feGaussianBlur stdDeviation="0.5"></feGaussianBlur>
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- 背景花瓣：加强重力与形态 -->
+    <canvas id="sakura-canvas" class="fixed inset-0 z-0 w-full h-full pointer-events-none"></canvas>
+
+    <nav class="fixed top-0 w-full z-40 px-6 md:px-10 pt-6 flex justify-between items-start mix-blend-multiply">
+        <div class="flex flex-col gap-2">
+            <div class="w-12 h-12 border border-rose-700/70 rounded-lg flex items-center justify-center bg-rose-700/5 backdrop-blur-sm cursor-pointer hover:bg-rose-700 hover:text-white transition-all duration-500">
+                <span class="font-[Cinzel] text-base tracking-tight text-rose-700">花見</span>
+            </div>
+        </div>
+        <div class="flex flex-col items-end gap-1">
+            <button class="text-[0.65rem] font-[Zen Old Mincho] tracking-[0.28em] uppercase text-neutral-700 hover:text-rose-700 transition-colors">Menu</button>
+            <div class="w-20 h-px bg-neutral-900/20"></div>
+        </div>
+    </nav>
+
+    <!-- 改为 body 滚动，弱化 snap 生硬感；保留原 main 结构，但去掉 snap-mandatory -->
+    <main class="h-screen w-full overflow-y-scroll scroll-smooth relative z-10">
+
+        <!-- 1. 首页 -->
+        <section class="snap-start h-screen w-full flex flex-col justify-center items-center relative overflow-hidden ink-fade-bottom">
+            <div class="absolute bottom-0 right-[-20%] md:right-[-5%] w-[160%] md:w-[70%] h-[95%] pointer-events-none select-none opacity-80" style="filter:url('#ink-wash');">
+                <svg viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                    <path d="M520 900 C540 760, 560 640, 520 520 C480 400, 360 420, 320 320 C280 220, 340 160, 310 80 L326 96 C360 176, 320 236, 344 304 C372 382, 454 388, 504 452 C568 536, 592 628, 586 720 C582 788, 566 846, 552 900 Z" fill="#252525" opacity="0.95"></path>
+                    <path d="M320 320 C260 294, 170 305, 96 260 L114 276 C176 318, 244 316, 306 334 Z" fill="#252525" opacity="0.8"></path>
+                    <path d="M305 84 C254 46, 172 58, 84 24 L102 36 C180 76, 244 70, 292 90 Z" fill="#252525" opacity="0.75"></path>
+                    <circle cx="540" cy="320" r="18" fill="#7f1d1d" opacity="0.5"></circle>
+                    <circle cx="602" cy="260" r="12" fill="#7f1d1d" opacity="0.35"></circle>
+                </svg>
+            </div>
+
+            <div class="absolute top-1/4 left-6 md:left-16 opacity-70 pointer-events-none">
+                <h2 class="vertical-text text-2xl md:text-3xl font-[Zen Old Mincho] tracking-tight text-neutral-600 border-l border-neutral-500/30 pl-3 h-56">
+                    デジタルな庭師
+                </h2>
+            </div>
+
+            <div class="z-10 relative text-center space-y-4 md:space-y-6 max-w-4xl px-6">
+                <div class="inline-flex items-center gap-2 border-b border-rose-700/70 pb-1 mb-2">
+                    <span class="w-1 h-1 rounded-full bg-rose-700/80"></span>
+                    <span class="text-[0.7rem] tracking-[0.45em] uppercase font-[Zen Old Mincho] text-rose-700/90">Portfolio 2025</span>
+                </div>
+                <h1 class="text-4xl md:text-6xl lg:text-7xl font-[Cinzel] tracking-tight text-neutral-900/95">
+                    樱为序 · 落成荫
+                </h1>
+                <p class="text-base md:text-lg text-neutral-600 font-[Zen Old Mincho] italic max-w-lg mx-auto leading-relaxed">
+                    不恨此花飘落尽，赠君一地碧梧荫
+                </p>
+            </div>
+
+            <div class="absolute bottom-10 flex flex-col items-center gap-1">
+                <span class="text-[0.7rem] font-[Zen Old Mincho] text-neutral-500 tracking-[0.3em] uppercase">Scroll</span>
+                <span class="iconify text-neutral-500/60" data-icon="lucide:chevrons-down" style="width:1.2rem;height:1.2rem;stroke-width:1.5"></span>
+            </div>
+        </section>
+
+        <!-- 2. 花开页面：改为可与鼠标互动的“水墨樱花能量场” -->
+        <section id="bloom-section" class="snap-start h-screen w-full relative flex items-center justify-center bg-[#f8f6f1] overflow-hidden ink-fade-top ink-fade-bottom">
+            <!-- 交互画布：不改变布局，只用 canvas 替代原静态花朵图形 -->
+            <div class="relative w-full max-w-4xl aspect-video flex items-center justify-center">
+                <canvas id="bloom-canvas" class="w-full h-full rounded-[9999rem] md:rounded-[4rem] border border-neutral-300/50 bg-[#f5f1ea] shadow-inner"></canvas>
+
+                <!-- 保留原花心容器，用作文字 & 中心提示 -->
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div class="flex flex-col items-center gap-2">
+                        <span class="text-sm md:text-base font-[Zen Old Mincho] text-neutral-600 tracking-[0.3em]">
+                            鼠标轻拂 · 花气自生
+                        </span>
+                        <span class="text-xs md:text-sm font-[Zen Old Mincho] text-neutral-500">
+                            移动鼠标 / 轻触拖曳，看墨气聚散成樱
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文字说明 -->
+            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-center space-y-1">
+                <p class="text-sm md:text-base font-[Zen Old Mincho] text-neutral-600">
+                    从枝头的一点微光，到一整树的繁花
+                </p>
+                <p class="text-[0.75rem] font-[Zen Old Mincho] text-neutral-500 tracking-[0.2em] uppercase">
+                    Blooming · From Curiosity To Craft
+                </p>
+            </div>
+        </section>
+
+        <!-- 3. 我是谁 -->
+        <section class="snap-start min-h-screen w-full flex items-center justify-center bg-[#fcfaf5] px-6 md:px-16 py-16 relative ink-fade-top ink-fade-bottom">
+            <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div class="space-y-6 lg:col-span-1">
+                    <span class="text-[0.7rem] tracking-[0.35em] uppercase font-[Zen Old Mincho] text-rose-700">About</span>
+                    <h2 class="text-3xl md:text-4xl font-[Cinzel] tracking-tight text-neutral-900">
+                        我是谁
+                    </h2>
+                    <p class="text-base md:text-lg font-[Zen Old Mincho] text-neutral-700 leading-relaxed">
+                        我把数据当作树，把代码当作枝，把每一个小项目当作一朵花。
+                        花开是可视化的瞬间，花落是知识落地的时刻。
+                    </p>
+                    <p class="text-sm md:text-base font-[Zen Old Mincho] text-neutral-500 leading-relaxed">
+                        目前专注于数据可视化、前端工程化与技术写作，希望用温和但有力量的作品，
+                        让抽象的数字生出形状、故事和情感。
+                    </p>
+                </div>
+
+                <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1 h-6 bg-neutral-900/80"></span>
+                            <h3 class="text-base md:text-lg font-[Zen Old Mincho] tracking-tight text-neutral-900">
+                                成长轨迹
+                            </h3>
+                        </div>
+                        <div class="space-y-5">
+                            <div class="flex gap-3">
+                                <div class="mt-1 w-[0.1rem] bg-neutral-300 rounded-full"></div>
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[0.75rem] font-[Zen Old Mincho] text-neutral-500">2020</span>
+                                        <span class="text-sm font-[Zen Old Mincho] text-neutral-800">开始系统学习前端与可视化</span>
+                                    </div>
+                                    <p class="text-xs font-[Zen Old Mincho] text-neutral-500">
+                                        从静态图表到交互叙事，一步一步寻找数据与叙事的平衡。
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="mt-1 w-[0.1rem] bg-neutral-300 rounded-full"></div>
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[0.75rem] font-[Zen Old Mincho] text-neutral-500">2022</span>
+                                        <span class="text-sm font-[Zen Old Mincho] text-neutral-800">数据产品与仪表盘设计实践</span>
+                                    </div>
+                                    <p class="text-xs font-[Zen Old Mincho] text-neutral-500">
+                                        面向真实业务场景，搭建从数据源到可视化的完整链路。
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="mt-1 w-[0.1rem] bg-neutral-300 rounded-full"></div>
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[0.75rem] font-[Zen Old Mincho] text-neutral-500">Now</span>
+                                        <span class="text-sm font-[Zen Old Mincho] text-neutral-800">把技术写成可复用的花园</span>
+                                    </div>
+                                    <p class="text-xs font-[Zen Old Mincho] text-neutral-500">
+                                        积累长期维护的博客与项目模板，让灵感可以反复开花。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1 h-6 bg-rose-700/80"></span>
+                            <h3 class="text-base md:text-lg font-[Zen Old Mincho] tracking-tight text-neutral-900">
+                                技术画像
+                            </h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 text-xs md:text-sm font-[Zen Old Mincho]">
+                            <div class="rounded-lg border border-neutral-200 bg-white/70 px-3 py-2 flex items-center justify-between">
+                                <span class="text-neutral-700">数据可视化</span>
+                                <span class="text-[0.7rem] text-neutral-500">D3 / ECharts</span>
+                            </div>
+                            <div class="rounded-lg border border-neutral-200 bg-white/70 px-3 py-2 flex items-center justify-between">
+                                <span class="text-neutral-700">前端工程</span>
+                                <span class="text-[0.7rem] text-neutral-500">Vue / React</span>
+                            </div>
+                            <div class="rounded-lg border border-neutral-200 bg-white/70 px-3 py-2 flex items-center justify-between">
+                                <span class="text-neutral-700">数据分析</span>
+                                <span class="text-[0.7rem] text-neutral-500">Python / SQL</span>
+                            </div>
+                            <div class="rounded-lg border border-neutral-200 bg-white/70 px-3 py-2 flex items-center justify-between">
+                                <span class="text-neutral-700">信息设计</span>
+                                <span class="text-[0.7rem] text-neutral-500">Storytelling</span>
+                            </div>
+                            <div class="rounded-lg border border-neutral-200 bg-white/70 px-3 py-2 flex items-center justify-between col-span-2">
+                                <span class="text-neutral-700">写作与长期主义</span>
+                                <span class="text-[0.7rem] text-neutral-500">Blog / Notes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 代表作 -->
+        <section class="snap-start min-h-screen w-full bg-[#f4f2ec] px-6 md:px-16 py-16 flex items-center justify-center relative ink-fade-top ink-fade-bottom">
+            <div class="w-full max-w-6xl space-y-10">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                    <div class="space-y-3">
+                        <span class="text-[0.7rem] tracking-[0.35em] uppercase font-[Zen Old Mincho] text-rose-700">
+                            Works
+                        </span>
+                        <h2 class="text-3xl md:text-4xl font-[Cinzel] tracking-tight text-neutral-900">
+                            代表作 · 数据与故事
+                        </h2>
+                        <p class="text-sm md:text-base font-[Zen Old Mincho] text-neutral-700 max-w-xl leading-relaxed">
+                            一些已经开过花的项目：有可视化图表，也有完整的数据分析链路。
+                            这里的卡片仅是载体，你可以把自己的图表与截图替换进去。
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-[0.7rem] font-[Zen Old Mincho] text-neutral-600">
+                        <span class="px-3 py-1 rounded-full border border-neutral-300 bg-white/60">Dashboard</span>
+                        <span class="px-3 py-1 rounded-full border border-neutral-300 bg-white/60">Storytelling</span>
+                        <span class="px-3 py-1 rounded-full border border-neutral-300 bg-white/60">Exploratory</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <article class="group rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden flex flex-col">
+                        <div class="h-48 md:h-56 bg-neutral-900/90 text-neutral-100 relative overflow-hidden">
+                            <div class="absolute inset-4 rounded-xl border border-amber-100/20 bg-gradient-to-br from-neutral-900/60 via-neutral-900/40 to-neutral-900/80 p-3 flex flex-col gap-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="iconify" data-icon="lucide:bar-chart-3" style="width:1rem;height:1rem;stroke-width:1.5"></span>
+                                        <span class="text-xs font-mono text-neutral-200">traffic_insights</span>
+                                    </div>
+                                    <span class="text-[0.65rem] text-emerald-300/90">+18.3%</span>
+                                </div>
+                                <div class="flex-1 grid grid-cols-6 gap-1 items-end">
+                                    <div class="bg-emerald-400/70 rounded-sm" style="height:36%"></div>
+                                    <div class="bg-emerald-300/80 rounded-sm" style="height:68%"></div>
+                                    <div class="bg-emerald-500/90 rounded-sm" style="height:82%"></div>
+                                    <div class="bg-emerald-300/70 rounded-sm" style="height:54%"></div>
+                                    <div class="bg-emerald-400/80 rounded-sm" style="height:73%"></div>
+                                    <div class="bg-emerald-200/90 rounded-sm" style="height:41%"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[0.65rem] text-neutral-300">Jan — Jun</span>
+                                    <span class="text-[0.65rem] text-neutral-400">hover for details</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-5 md:p-6 flex-1 flex flex-col gap-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <h3 class="text-base md:text-lg font-[Zen Old Mincho] tracking-tight text-neutral-900">
+                                    城市流量呼吸图
+                                </h3>
+                                <span class="text-[0.7rem] font-[Zen Old Mincho] text-neutral-500 uppercase tracking-[0.18em]">
+                                    Viz · 01
+                                </span>
+                            </div>
+                            <p class="text-sm font-[Zen Old Mincho] text-neutral-600 leading-relaxed">
+                                通过多维数据（时段、地铁站点、天气）构建的交互式仪表盘，
+                                把「通勤高峰」变成一张可以“呼吸”的城市脉搏图。
+                            </p>
+                            <div class="mt-1 flex flex-wrap gap-2 text-[0.7rem] font-[Zen Old Mincho] text-neutral-600">
+                                <span class="px-2 py-1 rounded-full border border-neutral-300">D3.js</span>
+                                <span class="px-2 py-1 rounded-full border border-neutral-300">Vue</span>
+                                <span class="px-2 py-1 rounded-full border border-neutral-300">City Data</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="group rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden flex flex-col">
+                        <div class="h-48 md:h-56 bg-neutral-950 text-neutral-100 relative overflow-hidden">
+                            <div class="absolute inset-5 rounded-xl border border-sky-200/25 bg-gradient-to-br from-slate-900/70 to-slate-900/40 p-4 flex flex-col gap-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="iconify" data-icon="lucide:workflow" style="width:1rem;height:1rem;stroke-width:1.5"></span>
+                                        <span class="text-xs font-mono text-neutral-200">funnel_analysis.ipynb</span>
+                                    </div>
+                                    <span class="text-[0.65rem] text-sky-300/90">A/B tested</span>
+                                </div>
+                                <div class="flex-1 flex items-center justify-between gap-2">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="rounded-full w-6 h-6 bg-sky-400/70"></span>
+                                        <span class="w-px flex-1 bg-sky-400/40"></span>
+                                        <span class="text-[0.65rem] text-neutral-300">Raw</span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="rounded-full w-6 h-6 bg-sky-300/70"></span>
+                                        <span class="w-px flex-1 bg-sky-300/40"></span>
+                                        <span class="text-[0.65rem] text-neutral-300">Clean</span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="rounded-full w-6 h-6 bg-sky-200/80"></span>
+                                        <span class="w-px flex-1 bg-sky-200/40"></span>
+                                        <span class="text-[0.65rem] text-neutral-300">Model</span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="rounded-full w-6 h-6 bg-emerald-300/80"></span>
+                                        <span class="w-px flex-1 bg-emerald-300/40"></span>
+                                        <span class="text-[0.65rem] text-neutral-300">Insight</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-end gap-2 text-[0.65rem] text-neutral-400">
+                                    <span>Python</span>
+                                    <span>·</span>
+                                    <span>SQL</span>
+                                    <span>·</span>
+                                    <span>Notebook</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-5 md:p-6 flex-1 flex flex-col gap-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <h3 class="text-base md:text-lg font-[Zen Old Mincho] tracking-tight text-neutral-900">
+                                    转化漏斗的复盘实验
+                                </h3>
+                                <span class="text-[0.7rem] font-[Zen Old Mincho] text-neutral-500 uppercase tracking-[0.18em]">
+                                    Data · 02
+                                </span>
+                            </div>
+                            <p class="text-sm font-[Zen Old Mincho] text-neutral-600 leading-relaxed">
+                                通过用户行为日志重建完整转化路径，对关键节点做 A/B 测试，
+                                最终把整体转化率提升了一个“肉眼可见”的台阶。
+                            </p>
+                            <div class="mt-1 flex flex-wrap gap-2 text-[0.7rem] font-[Zen Old Mincho] text-neutral-600">
+                                <span class="px-2 py-1 rounded-full border border-neutral-300">Python</span>
+                                <span class="px-2 py-1 rounded-full border border-neutral-300">SQL</span>
+                                <span class="px-2 py-1 rounded-full border border-neutral-300">Experiment</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 博客 -->
+        <section class="snap-start min-h-screen w-full flex items-center justify-center p-4 md:p-12 relative bg-[#f8f6f1] ink-fade-top ink-fade-bottom">
+            <div class="w-full max-w-6xl flex flex-col lg:flex-row gap-10 items-center justify-center">
+                <div class="lg:w-1/3 space-y-6">
+                    <div class="space-y-2">
+                        <span class="text-[0.7rem] text-rose-700 font-[Zen Old Mincho] tracking-[0.35em] uppercase">Blog</span>
+                        <h3 class="text-2xl md:text-3xl font-[Cinzel] tracking-tight text-neutral-900">nothing-new</h3>
+                    </div>
+                    <p class="text-base font-[Zen Old Mincho] text-neutral-700 leading-relaxed">
+                        这是一个长期积累的花园：有学习记录、有思考碎片，也有反复打磨的文章。
+                        名叫 <span class="underline decoration-rose-700/60 underline-offset-2">nothing-new</span>，
+                        却试图认真记录每一次“旧事重讲”的过程。
+                    </p>
+                    <p class="text-sm font-[Zen Old Mincho] text-neutral-500 leading-relaxed">
+                        你现在看到的是一个嵌入版本，点击右下角按钮可以跳转到完整站点。
+                        这里的代码结构保持原样，方便你后续自由迭代。
+                    </p>
+                </div>
+
+                <div class="lg:w-2/3 w-full h-[60vh] bg-white rounded-xl shadow-2xl border border-neutral-900/10 flex flex-col overflow-hidden relative group">
+                    <div class="h-8 bg-[#f0f0f0] border-b border-[#ddd] flex items-center px-3 gap-2 select-none">
+                        <div class="flex gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-full bg-[#ff5f56] border border-[#e0443e]"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e] border border-[#dea123]"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-[#27c93f] border border-[#1aab29]"></div>
+                        </div>
+                        <div class="flex-1 text-center text-[0.65rem] text-gray-400 font-mono">nothing-new.icu</div>
+                    </div>
+
+                    <div class="flex-1 bg-white relative overflow-hidden group">
+                        <iframe src="https://nothing-new.icu/" class="w-full h-full border-0 grayscale-[18%] hover:grayscale-0 transition-all duration-700" title="My Blog" loading="lazy">
+                        </iframe>
+
+                        <a href="https://nothing-new.icu/" target="_blank" class="absolute bottom-4 right-4 bg-neutral-900 text-white px-4 py-2 text-[0.75rem] font-[Zen Old Mincho] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center gap-2">
+                            <span>全屏访问</span>
+                            <span class="iconify" data-icon="lucide:external-link" style="width:0.9rem;height:0.9rem;stroke-width:1.5"></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 结尾页：引导向上滑 + 樱花树破土而出 -->
+        <section id="ending-section" class="snap-start h-screen w-full flex flex-col items-center justify-center relative bg-neutral-900 text-neutral-100 overflow-hidden">
+            <!-- 地面 + 樱花树（用 stroke-dash 做生长动画） -->
+            <div class="absolute bottom-0 inset-x-0 h-40">
+                <svg id="tree-svg" viewBox="0 0 800 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="ground-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0b1120"></stop>
+                            <stop offset="100%" stop-color="#020617"></stop>
+                        </linearGradient>
+                        <radialGradient id="sakura-bloom" cx="50%" cy="40%" r="50%">
+                            <stop offset="0%" stop-color="#fee2e2" stop-opacity="1"></stop>
+                            <stop offset="40%" stop-color="#fb7185" stop-opacity="0.9"></stop>
+                            <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0.0"></stop>
+                        </radialGradient>
+                    </defs>
+                    <rect x="0" y="60" width="800" height="140" fill="url(#ground-grad)"></rect>
+
+                    <!-- 樱花树主干 + 枝条：stroke-dasharray 控制破土而出的动画 -->
+                    <g id="sakura-tree" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                        <!-- 主干 -->
+                        <path id="trunk-path" d="M400 150 C402 130, 404 112, 406 92 C408 76, 410 64, 412 52" stroke="#f1f5f9" stroke-width="2.4"></path>
+                        <!-- 左枝 -->
+                        <path id="branch-left" d="M408 110 C392 102, 380 94, 370 84" stroke="#e5e7eb" stroke-width="1.8"></path>
+                        <!-- 右枝 -->
+                        <path id="branch-right" d="M410 100 C428 94, 442 88, 454 80" stroke="#e5e7eb" stroke-width="1.8"></path>
+                    </g>
+
+                    <!-- 樱花云朵：opacity 控制绽放 -->
+                    <g id="sakura-clouds" opacity="0">
+                        <circle cx="412" cy="56" r="22" fill="url(#sakura-bloom)"></circle>
+                        <circle cx="392" cy="68" r="18" fill="url(#sakura-bloom)"></circle>
+                        <circle cx="434" cy="66" r="18" fill="url(#sakura-bloom)"></circle>
+                        <circle cx="378" cy="80" r="12" fill="url(#sakura-bloom)"></circle>
+                        <circle cx="448" cy="82" r="12" fill="url(#sakura-bloom)"></circle>
+                    </g>
+
+                    <!-- 落在地面的花瓣 -->
+                    <ellipse cx="380" cy="150" rx="10" ry="4" fill="#fb7185" opacity="0.9"></ellipse>
+                    <ellipse cx="420" cy="152" rx="11" ry="4" fill="#fecaca" opacity="0.9"></ellipse>
+                    <ellipse cx="360" cy="142" rx="9" ry="3.5" fill="#fda4af" opacity="0.9"></ellipse>
+                    <ellipse cx="440" cy="145" rx="8.5" ry="3" fill="#fecaca" opacity="0.9"></ellipse>
+                </svg>
+            </div>
+
+            <div class="relative z-10 text-center space-y-4 px-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full border border-neutral-700/80 mb-2">
+                    <span class="font-[Zen Old Mincho] text-lg tracking-tight text-emerald-300">根</span>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-[Cinzel] tracking-tight">
+                    花落为泥，根向下生长
+                </h2>
+                <p class="max-w-xl mx-auto text-sm md:text-base font-[Zen Old Mincho] text-neutral-300 leading-relaxed">
+                    所有你刚刚看到的页面，只是一次“花开”的快照。
+                    真正重要的是那些悄无声息地累积：每一篇笔记、每一次重构、每一张看似不起眼的小图表。
+                </p>
+                <p class="max-w-xl mx-auto text-sm md:text-base font-[Zen Old Mincho] text-neutral-400 leading-relaxed">
+                    向上轻轻滑动，在离开之前，看一棵新的樱花树从泥土中长出。
+                </p>
+                <a href="mailto:me@example.com" class="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full border border-emerald-400/70 text-xs md:text-sm font-[Zen Old Mincho] text-emerald-200 hover:bg-emerald-400/10 transition-colors">
+                    <span class="iconify" data-icon="lucide:pen-line" style="width:0.95rem;height:0.95rem;stroke-width:1.5"></span>
+                    <span>写信给我</span>
+                </a>
+            </div>
+
+            <!-- 向上滑动提示（中式水墨式简洁） -->
+            <div id="slide-up-hint" class="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-80">
+                <span class="text-[0.75rem] font-[Zen Old Mincho] text-neutral-400 tracking-[0.3em]">
+                    向上轻拂 · 樱树自生
+                </span>
+                <span class="iconify text-neutral-500/70" data-icon="lucide:chevron-up" style="width:1.1rem;height:1.1rem;stroke-width:1.5"></span>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // ===== 花瓣物理：加强重力与形态感 =====
+        const canvas = document.getElementById('sakura-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, petals = [];
+
+        const PETAL_COLORS = [
+            { r: 255, g: 255, b: 255, a: 0.92 },
+            { r: 253, g: 226, b: 230, a: 0.86 },
+            { r: 251, g: 113, b: 133, a: 0.7 }
+        ];
+
+        function resize() {
+            const dpr = window.devicePixelRatio || 1;
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Petal {
+            constructor() { this.init(true); }
+            init(randomY = false) {
+                this.x = Math.random() * width;
+                this.y = randomY ? Math.random() * height : -40;
+                this.z = Math.random() * 0.9 + 0.4;
+                this.size = (Math.random() * 22 + 20) * this.z;
+                this.color = PETAL_COLORS[Math.floor(Math.random() * PETAL_COLORS.length)];
+                this.vx = (Math.random() - 0.5) * 1.2 + (this.x < width / 2 ? 0.4 : -0.4);
+                this.vy = (Math.random() * 1.4 + 1.4) * this.z + 0.6;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.018;
+                this.flip = Math.random() * Math.PI;
+                this.flipSpeed = (Math.random() - 0.5) * 0.035;
+                this.windOffset = Math.random() * 1000;
+            }
+            update(t) {
+                const wind = Math.sin((t + this.windOffset) * 0.00025) * 0.4;
+                this.x += this.vx + wind * this.z;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+                this.flip += this.flipSpeed;
+                if (this.y > height + 60 || this.x > width + 60 || this.x < -60) {
+                    this.init();
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.scale(1, Math.cos(this.flip));
+
+                const s = this.size;
+                ctx.beginPath();
+                ctx.moveTo(0, -s / 2.3);
+                ctx.bezierCurveTo(
+                    s / 2.1, -s / 2.1,
+                    s * 0.9, -s * 0.05,
+                    0, s * 0.95
+                );
+                ctx.bezierCurveTo(
+                    -s * 0.9, -s * 0.05,
+                    -s / 2.1, -s / 2.1,
+                    0, -s / 2.3
+                );
+
+                const c = this.color;
+                ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},${c.a})`;
+                if (this.z < 0.6) {
+                    ctx.shadowBlur = 1.5;
+                    ctx.shadowColor = "rgba(255,255,255,0.5)";
+                }
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(0, -s / 3.2);
+                ctx.quadraticCurveTo(0, 0, 0, s * 0.7);
+                ctx.strokeStyle = `rgba(248,113,113,${0.2 * this.z})`;
+                ctx.lineWidth = 0.6;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        const PETAL_COUNT = 70;
+        for (let i = 0; i < PETAL_COUNT; i++) petals.push(new Petal());
+
+        function loop(t) {
+            ctx.clearRect(0, 0, width, height);
+            petals.forEach(p => { p.update(t); p.draw(); });
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+
+        // ===== 第二页：鼠标交互的“水墨樱花能量场” =====
+        const bloomCanvas = document.getElementById('bloom-canvas');
+        const bloomCtx = bloomCanvas.getContext('2d');
+        let bloomWidth, bloomHeight;
+        let bloomParticles = [];
+        let mouse = { x: 0, y: 0, down: false, inside: false };
+
+        function resizeBloomCanvas() {
+            const rect = bloomCanvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            bloomWidth = rect.width;
+            bloomHeight = rect.height;
+            bloomCanvas.width = bloomWidth * dpr;
+            bloomCanvas.height = bloomHeight * dpr;
+            bloomCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+        window.addEventListener('resize', resizeBloomCanvas);
+        resizeBloomCanvas();
+
+        class BloomParticle {
+            constructor(x, y) {
+                this.x = x + (Math.random() - 0.5) * 10;
+                this.y = y + (Math.random() - 0.5) * 10;
+                this.r = Math.random() * 14 + 8;
+                this.alpha = 0.0;
+                this.life = Math.random() * 120 + 120;
+                this.age = 0;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 0.4 + 0.1;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed - 0.05;
+            }
+            update() {
+                this.age++;
+                const progress = this.age / this.life;
+                this.alpha = progress < 0.3 
+                    ? progress / 0.3 * 0.9 
+                    : (1 - progress) * 0.9;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy -= 0.0005;
+                return this.age < this.life;
+            }
+            draw(ctx) {
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.r
+                );
+                gradient.addColorStop(0, `rgba(254,226,226,${this.alpha})`);
+                gradient.addColorStop(0.4, `rgba(252,165,165,${this.alpha * 0.9})`);
+                gradient.addColorStop(1, `rgba(127,29,29,0)`);
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.save();
+                ctx.strokeStyle = `rgba(127,29,29,${this.alpha * 0.4})`;
+                ctx.lineWidth = 0.6;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - this.r * 0.6);
+                ctx.quadraticCurveTo(this.x, this.y, this.x, this.y + this.r * 0.9);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function addBloomParticles(x, y, count) {
+            for (let i = 0; i < count; i++) {
+                bloomParticles.push(new BloomParticle(x, y));
+            }
+        }
+
+        bloomCanvas.addEventListener('pointerenter', (e) => {
+            mouse.inside = true;
+        });
+        bloomCanvas.addEventListener('pointerleave', (e) => {
+            mouse.inside = false;
+            mouse.down = false;
+        });
+        bloomCanvas.addEventListener('pointerdown', (e) => {
+            mouse.down = true;
+        });
+        bloomCanvas.addEventListener('pointerup', (e) => {
+            mouse.down = false;
+        });
+        bloomCanvas.addEventListener('pointermove', (e) => {
+            const rect = bloomCanvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+            if (mouse.inside) {
+                const intensity = mouse.down ? 14 : 6;
+                addBloomParticles(mouse.x, mouse.y, intensity);
+            }
+        });
+
+        function renderBloom() {
+            bloomCtx.clearRect(0, 0, bloomWidth, bloomHeight);
+
+            bloomCtx.save();
+            bloomCtx.fillStyle = 'rgba(15,23,42,0.05)';
+            bloomCtx.fillRect(0, 0, bloomWidth, bloomHeight);
+            bloomCtx.restore();
+
+            bloomParticles = bloomParticles.filter(p => {
+                const alive = p.update();
+                if (alive) p.draw(bloomCtx);
+                return alive;
+            });
+
+            requestAnimationFrame(renderBloom);
+        }
+        renderBloom();
+
+        // ===== 结尾页：樱花树破土而出动画 =====
+        const endingSection = document.getElementById('ending-section');
+        const treeSvg = document.getElementById('tree-svg');
+        const trunkPath = document.getElementById('trunk-path');
+        const branchLeft = document.getElementById('branch-left');
+        const branchRight = document.getElementById('branch-right');
+        const sakuraClouds = document.getElementById('sakura-clouds');
+        const slideUpHint = document.getElementById('slide-up-hint');
+
+        let treeDrawn = false;
+        let treeProgress = 0; // 0 ~ 1
+
+        function prepareStroke(path) {
+            const len = path.getTotalLength();
+            path.style.strokeDasharray = len;
+            path.style.strokeDashoffset = len;
+            return len;
+        }
+
+        let trunkLen, leftLen, rightLen;
+        function initTreeStrokes() {
+            trunkLen = prepareStroke(trunkPath);
+            leftLen = prepareStroke(branchLeft);
+            rightLen = prepareStroke(branchRight);
+            sakuraClouds.style.opacity = 0;
+        }
+        initTreeStrokes();
+
+        // 根据 progress 更新树的生长状态
+        function updateTree(progress) {
+            // 主干先长，再到枝，再开花
+            const trunkEnd = 0.5;
+            const branchEnd = 0.8;
+
+            const trunkP = Math.min(progress / trunkEnd, 1);
+            trunkPath.style.strokeDashoffset = trunkLen * (1 - trunkP);
+
+            const branchP = progress < trunkEnd ? 0 : Math.min((progress - trunkEnd) / (branchEnd - trunkEnd), 1);
+            branchLeft.style.strokeDashoffset = leftLen * (1 - branchP);
+            branchRight.style.strokeDashoffset = rightLen * (1 - branchP);
+
+            if (progress >= branchEnd) {
+                const bloomP = (progress - branchEnd) / (1 - branchEnd);
+                sakuraClouds.style.opacity = Math.min(bloomP, 1);
+            } else {
+                sakuraClouds.style.opacity = 0;
+            }
+        }
+
+        // 监听结尾区滚动 + 上滑手势，驱动 progress
+        let lastY = 0;
+        let touchStartY = null;
+
+        function handleWheelForTree(e) {
+            if (!endingSection) return;
+            const rect = endingSection.getBoundingClientRect();
+            const visible = rect.top < window.innerHeight && rect.bottom > 0;
+            if (!visible) return;
+
+            // 鼠标向上滑（滚轮向上） -> 增加 progress
+            const deltaY = e.deltaY;
+            const direction = deltaY < 0 ? 1 : -1;
+            treeProgress += direction * 0.04;
+            treeProgress = Math.max(0, Math.min(1, treeProgress));
+            updateTree(treeProgress);
+
+            if (treeProgress >= 0.99 && !treeDrawn) treeDrawn = true;
+
+            // 渐隐“向上滑动”提示
+            slideUpHint.style.opacity = (1 - treeProgress) * 0.9;
+        }
+
+        function handleTouchStart(e) {
+            if (!endingSection) return;
+            const rect = endingSection.getBoundingClientRect();
+            const visible = rect.top < window.innerHeight && rect.bottom > 0;
+            if (!visible) return;
+            touchStartY = e.touches[0].clientY;
+        }
+
+        function handleTouchMove(e) {
+            if (touchStartY == null) return;
+            if (!endingSection) return;
+            const rect = endingSection.getBoundingClientRect();
+            const visible = rect.top < window.innerHeight && rect.bottom > 0;
+            if (!visible) return;
+
+            const currentY = e.touches[0].clientY;
+            const diff = touchStartY - currentY; // 上滑为正
+            const direction = diff > 0 ? 1 : -1;
+            const magnitude = Math.min(Math.abs(diff) / 80, 1);
+            treeProgress += direction * 0.05 * magnitude;
+            treeProgress = Math.max(0, Math.min(1, treeProgress));
+            updateTree(treeProgress);
+            slideUpHint.style.opacity = (1 - treeProgress) * 0.9;
+        }
+
+        function handleTouchEnd() {
+            touchStartY = null;
+        }
+
+        window.addEventListener('wheel', handleWheelForTree, { passive: true });
+        window.addEventListener('touchstart', handleTouchStart, { passive: true });
+        window.addEventListener('touchmove', handleTouchMove, { passive: true });
+        window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+        // 初次进入结尾页时，给一个很轻微的自动生长引导
+        const endingObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        let autoProgress = 0;
+                        const step = () => {
+                            autoProgress += 0.02;
+                            treeProgress = Math.min(treeProgress + 0.015, 0.2);
+                            updateTree(treeProgress);
+                            slideUpHint.style.opacity = (1 - treeProgress) * 0.9;
+                            if (autoProgress < 1 && treeProgress < 0.2) {
+                                requestAnimationFrame(step);
+                            }
+                        };
+                        requestAnimationFrame(step);
+                    }
+                });
+            },
+            { threshold: 0.3 }
+        );
+        endingObserver.observe(endingSection);
+    </script>
+
+</body></html>

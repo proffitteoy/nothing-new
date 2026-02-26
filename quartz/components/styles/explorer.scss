@@ -2,17 +2,8 @@
 
 @media all and ($mobile) {
   .page > #quartz-body {
-    // Shift page position when toggling Explorer on mobile.
-    & > :not(.sidebar.left:has(.explorer)) {
-      transition: transform 300ms ease-in-out;
-    }
-    &.lock-scroll > :not(.sidebar.left:has(.explorer)) {
-      transform: translateX(100dvw);
-      transition: transform 300ms ease-in-out;
-    }
-
     // Sticky top bar (stays in place when scrolling down on mobile).
-    .sidebar.left:has(.explorer) {
+    .sidebar.left {
       box-sizing: border-box;
       position: sticky;
       background-color: var(--light);
@@ -49,11 +40,13 @@
   @media all and ($mobile) {
     order: -1;
     height: initial;
-    overflow: hidden;
+    overflow: visible;
     flex-shrink: 0;
-    align-self: flex-start;
+    align-self: stretch;
     margin-top: auto;
     margin-bottom: auto;
+    width: 100%;
+    position: relative;
   }
 
   button.mobile-explorer {
@@ -222,6 +215,7 @@ li:has(> .folder-outer:not(.open)) > .folder-container > svg {
       & > .explorer-content {
         transform: translateX(-100vw);
         visibility: hidden;
+        pointer-events: none;
       }
     }
 
@@ -231,13 +225,14 @@ li:has(> .folder-outer:not(.open)) > .folder-container > svg {
       & > .explorer-content {
         transform: translateX(0);
         visibility: visible;
+        pointer-events: auto;
       }
     }
 
     .explorer-content {
       box-sizing: border-box;
       z-index: 100;
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       margin-top: 0;
@@ -248,11 +243,13 @@ li:has(> .folder-outer:not(.open)) > .folder-container > svg {
       transition:
         transform 200ms ease,
         visibility 200ms ease;
-      overflow: hidden;
-      padding: 4rem 0 2rem 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: max(3.8rem, env(safe-area-inset-top)) 1rem max(2rem, env(safe-area-inset-bottom)) 1rem;
       height: 100dvh;
       max-height: 100dvh;
       visibility: hidden;
+      pointer-events: none;
     }
 
     .mobile-explorer {
@@ -270,5 +267,6 @@ li:has(> .folder-outer:not(.open)) > .folder-container > svg {
 .mobile-no-scroll {
   @media all and ($mobile) {
     overscroll-behavior: none;
+    overflow: hidden;
   }
 }

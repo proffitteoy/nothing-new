@@ -19,21 +19,60 @@ type FolderState = {
   collapsed: boolean
 }
 
+const MOBILE_BREAKPOINT = "(max-width: 800px)"
 let currentExplorerState: Array<FolderState>
+
+function isMobileViewport(): boolean {
+  return window.matchMedia(MOBILE_BREAKPOINT).matches
+}
+
+function isElementVisible(el: HTMLElement): boolean {
+  const maybeCheckVisibility = (el as any).checkVisibility
+  if (typeof maybeCheckVisibility === "function") {
+    try {
+      return !!maybeCheckVisibility.call(el)
+    } catch {
+      // fall through to computed style checks
+    }
+  }
+
+  const style = window.getComputedStyle(el)
+  return style.display !== "none" && style.visibility !== "hidden" && el.offsetParent !== null
+}
+
+function shouldUseMobileExplorer(toggle: HTMLElement): boolean {
+  return isMobileViewport() && isElementVisible(toggle)
+}
+
+function setMobileScrollLock(locked: boolean) {
+  document.documentElement.classList.toggle("mobile-no-scroll", locked)
+}
+
+function setExplorerExpanded(explorer: HTMLElement, expanded: boolean) {
+  explorer.classList.toggle("collapsed", !expanded)
+  explorer.setAttribute("aria-expanded", expanded ? "true" : "false")
+
+  const explorerContent = explorer.querySelector(".explorer-content")
+  if (explorerContent) {
+    explorerContent.setAttribute("aria-expanded", expanded ? "true" : "false")
+  }
+
+  const toggles = explorer.querySelectorAll(".explorer-toggle") as NodeListOf<HTMLElement>
+  for (const toggle of toggles) {
+    toggle.setAttribute("aria-expanded", expanded ? "true" : "false")
+  }
+}
+
 function toggleExplorer(this: HTMLElement) {
   const nearestExplorer = this.closest(".explorer") as HTMLElement
   if (!nearestExplorer) return
-  const explorerCollapsed = nearestExplorer.classList.toggle("collapsed")
-  nearestExplorer.setAttribute(
-    "aria-expanded",
-    nearestExplorer.getAttribute("aria-expanded") === "true" ? "false" : "true",
-  )
+  const isExpanded = !nearestExplorer.classList.contains("collapsed")
+  const nextExpanded = !isExpanded
+  setExplorerExpanded(nearestExplorer, nextExpanded)
 
-  if (!explorerCollapsed) {
+  if (this.dataset.mobile === "true") {
     // Stop <html> from being scrollable when mobile explorer is open
-    document.documentElement.classList.add("mobile-no-scroll")
-  } else {
-    document.documentElement.classList.remove("mobile-no-scroll")
+    setMobileScrollLock(nextExpanded)
   }
 }
 
@@ -271,29 +310,42 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
 
   // if mobile hamburger is visible, collapse by default
   for (const explorer of document.getElementsByClassName("explorer")) {
-    const mobileExplorer = explorer.querySelector(".mobile-explorer")
-    if (!mobileExplorer) return
+    const explorerRoot = explorer as HTMLElement
+    const mobileExplorer = explorerRoot.querySelector(".mobile-explorer") as HTMLElement | null
+    if (!mobileExplorer) continue
 
-    if (mobileExplorer.checkVisibility()) {
-      explorer.classList.add("collapsed")
-      explorer.setAttribute("aria-expanded", "false")
-
+    if (shouldUseMobileExplorer(mobileExplorer)) {
+      setExplorerExpanded(explorerRoot, false)
       // Allow <html> to be scrollable when mobile explorer is collapsed
-      document.documentElement.classList.remove("mobile-no-scroll")
+      setMobileScrollLock(false)
+    } else {
+      setExplorerExpanded(explorerRoot, true)
     }
 
     mobileExplorer.classList.remove("hide-until-loaded")
   }
 })
 
-window.addEventListener("resize", function () {
-  // Desktop explorer opens by default, and it stays open when the window is resized
-  // to mobile screen size. Applies `no-scroll` to <html> in this edge case.
-  const explorer = document.querySelector(".explorer")
-  if (explorer && !explorer.classList.contains("collapsed")) {
-    document.documentElement.classList.add("mobile-no-scroll")
-    return
+window.addEventListener("resize", () => {
+  let shouldLockScroll = false
+
+  for (const explorer of document.getElementsByClassName("explorer")) {
+    const explorerRoot = explorer as HTMLElement
+    const mobileExplorer = explorerRoot.querySelector(".mobile-explorer") as HTMLElement | null
+    if (!mobileExplorer) continue
+
+    const useMobileExplorer = shouldUseMobileExplorer(mobileExplorer)
+    if (!useMobileExplorer) {
+      setExplorerExpanded(explorerRoot, true)
+      continue
+    }
+
+    if (!explorerRoot.classList.contains("collapsed")) {
+      shouldLockScroll = true
+    }
   }
+
+  setMobileScrollLock(shouldLockScroll)
 })
 
 function setFolderState(folderElement: HTMLElement, collapsed: boolean) {

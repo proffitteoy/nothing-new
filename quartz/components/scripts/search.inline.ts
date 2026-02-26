@@ -50,6 +50,7 @@ const fetchContentCache: Map<FullSlug, Element[]> = new Map()
 const contextWindowWords = 30
 const numSearchResults = 8
 const numTagResults = 5
+const SEARCH_WARMUP_DELAY = 1500
 
 const tokenizeTerm = (term: string) => {
   const tokens = term.split(/\s+/).filter((t) => t.trim() !== "")
@@ -165,6 +166,13 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
   if (!searchLayout) return
 
   const idDataMap = Object.keys(data) as FullSlug[]
+  const ensureIndexReady = async () => {
+    if (indexPopulated) return
+    if (!indexPopulatePromise) {
+      indexPopulatePromise = fillDocument(data)
+    }
+    await indexPopulatePromise
+  }
   const appendLayout = (el: HTMLElement) => {
     searchLayout.appendChild(el)
   }
@@ -200,6 +208,8 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
     if (sidebar) sidebar.style.zIndex = "1"
     container.classList.add("active")
     searchBar.focus()
+    // Start building search index only when search is actually used.
+    void ensureIndexReady()
   }
 
   let currentHover: HTMLInputElement | null = null
@@ -399,6 +409,7 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
 
   async function onType(e: HTMLElementEventMap["input"]) {
     if (!searchLayout || !index) return
+    await ensureIndexReady()
     currentSearchTerm = (e.target as HTMLInputElement).value
     searchLayout.classList.toggle("display-results", currentSearchTerm !== "")
     searchType = currentSearchTerm.startsWith("#") ? "tags" : "basic"
@@ -463,7 +474,11 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
   window.addCleanup(() => searchBar.removeEventListener("input", onType))
 
   registerEscapeHandler(container, hideSearch)
-  await fillDocument(data)
+  if (!indexPopulated && !indexPopulatePromise) {
+    scheduleIdle(() => {
+      void ensureIndexReady()
+    }, SEARCH_WARMUP_DELAY)
+  }
 }
 
 /**
@@ -472,14 +487,26 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
  * @param data data to fill index with
  */
 let indexPopulated = false
+let indexPopulatePromise: Promise<void> | null = null
+function scheduleIdle(task: () => void, timeout: number) {
+  const maybeRequestIdleCallback = (window as any).requestIdleCallback
+  if (typeof maybeRequestIdleCallback === "function") {
+    maybeRequestIdleCallback(task, { timeout })
+    return
+  }
+
+  window.setTimeout(task, timeout)
+}
+
 async function fillDocument(data: ContentIndex) {
   if (indexPopulated) return
   let id = 0
   const promises: Array<Promise<unknown>> = []
   for (const [slug, fileData] of Object.entries<ContentDetails>(data)) {
+    const docId = id++
     promises.push(
-      index.addAsync(id++, {
-        id,
+      index.addAsync(docId, {
+        id: docId,
         slug: slug as FullSlug,
         title: fileData.title,
         content: fileData.content,
