@@ -30,7 +30,7 @@ export default function ThemeToggle() {
       ) : (
         <Sun className="h-5 w-5" />
       )}
-      <span className="sr-only">Toggle theme</span>
+      <span className="sr-only">切换主题</span>
     </Button>
   );
 }
