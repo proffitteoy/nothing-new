@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { skills } from "@/lib/data";
 import { motion } from "framer-motion";
 import MotionWrapper from "./MotionWrapper";
@@ -46,15 +46,10 @@ const skillCategoryVariants = {
 
 export default function SkillsSection() {
   return (
-    <section
-      id="skills"
-      className="py-12 bg-gradient-to-b from-background to-muted/20"
-    >
+    <section id="skills" className="py-12 bg-gradient-to-b from-background to-muted/20">
       <div className="container max-w-4xl mx-auto px-6 md:px-4">
         <MotionWrapper>
-          <h2 className="text-2xl font-bold mb-8 text-center md:text-left">
-            🛠️ 技能栈
-          </h2>
+          <h2 className="text-2xl font-bold mb-8 text-center md:text-left">🧰 能力与工具</h2>
         </MotionWrapper>
 
         <motion.div
@@ -80,7 +75,7 @@ export default function SkillsSection() {
           <motion.div variants={skillCategoryVariants}>
             <GlassCard className="p-4">
               <h3 className="text-lg font-medium mb-3 text-center md:text-left flex items-center">
-                <span className="mr-2 text-xl">🎨</span> 前端开发
+                <span className="mr-2 text-xl">📊</span> 数据分析与建模
               </h3>
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {skills.frontendDevelopment.map((skill, index) => (
@@ -93,7 +88,7 @@ export default function SkillsSection() {
           <motion.div variants={skillCategoryVariants}>
             <GlassCard className="p-4">
               <h3 className="text-lg font-medium mb-3 text-center md:text-left flex items-center">
-                <span className="mr-2 text-xl">⚙️</span> 后端开发
+                <span className="mr-2 text-xl">🧠</span> 拓扑与算法能力
               </h3>
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {skills.backendDevelopment.map((skill, index) => (
@@ -106,7 +101,7 @@ export default function SkillsSection() {
           <motion.div variants={skillCategoryVariants}>
             <GlassCard className="p-4">
               <h3 className="text-lg font-medium mb-3 text-center md:text-left flex items-center">
-                <span className="mr-2 text-xl">🗄️</span> 数据库与存储
+                <span className="mr-2 text-xl">🗂️</span> 数据处理与实验
               </h3>
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {skills.databaseAndStorage.map((skill, index) => (
@@ -119,7 +114,7 @@ export default function SkillsSection() {
           <motion.div variants={skillCategoryVariants}>
             <GlassCard className="p-4">
               <h3 className="text-lg font-medium mb-3 text-center md:text-left flex items-center">
-                <span className="mr-2 text-xl">☁️</span> 云服务与 DevOps
+                <span className="mr-2 text-xl">🤖</span> AI 应用与工程化
               </h3>
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {skills.cloudAndDevOps.map((skill, index) => (
@@ -132,7 +127,7 @@ export default function SkillsSection() {
           <motion.div variants={skillCategoryVariants}>
             <GlassCard className="p-4">
               <h3 className="text-lg font-medium mb-3 text-center md:text-left flex items-center">
-                <span className="mr-2 text-xl">🧰</span> 工具与服务
+                <span className="mr-2 text-xl">🛠️</span> 常用工具
               </h3>
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {skills.toolsAndServices.map((skill, index) => (

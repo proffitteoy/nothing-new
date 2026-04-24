@@ -8,6 +8,8 @@ const navItems = [
   { id: "profile", label: "个人信息", icon: "👤" },
   { id: "education", label: "教育背景", icon: "🎓" },
   { id: "projects", label: "项目经历", icon: "🚀" },
+  { id: "awards", label: "竞赛奖项", icon: "🏆" },
+  { id: "skills", label: "能力与工具", icon: "🧰" },
 ];
 
 export default function GlassHeader() {

@@ -1,4 +1,5 @@
 ﻿import { personalInfo } from "@/lib/data";
+import profilePhoto from "@/assets/profile.jpg";
 import { Mail, Github, MapPin, Globe, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import MotionWrapper from "./MotionWrapper";
@@ -118,7 +119,7 @@ export default function HeroSection() {
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
               <img
-                src={personalInfo.profilePicture}
+                src={profilePhoto.src}
                 alt="李炫良"
                 className="w-48 md:w-60 rounded-full relative ring-2 ring-purple-500/50"
                 style={{ objectFit: "cover" }}
