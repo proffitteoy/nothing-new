@@ -22,14 +22,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: '' 
+          cache: ''
 
       - name: Install dependencies cleanly
         run: |
-          # 确保每次都从零开始安装，避免缓存问题
+          # Install root dependencies from a clean state
           rm -rf node_modules package-lock.json
           npm cache clean --force
           npm install
+
+      - name: Install portfolio dependencies
+        run: npm --prefix my-portfolio install
+
+      - name: Build portfolio
+        run: npm --prefix my-portfolio run build
 
       - name: Build Quartz
         run: npx quartz build
