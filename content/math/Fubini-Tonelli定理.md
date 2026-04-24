@@ -1,6 +1,8 @@
 ---
 obsidian-note-status:
   - colorful:completed
+tags:
+  - 分析
 ---
 
 

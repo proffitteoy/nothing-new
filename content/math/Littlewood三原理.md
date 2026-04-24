@@ -1,6 +1,8 @@
 ---
 obsidian-note-status:
   - colorful:completed
+tags:
+  - 分析
 ---
 
 >[!note] Littlewood三原则

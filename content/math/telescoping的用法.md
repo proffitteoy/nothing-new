@@ -1,6 +1,9 @@
 ---
 obsidian-note-status:
   - colorful:completed
+tags:
+  - 思想
+  - 分析
 ---
 # 分母裂项
 高中一堆，最熟悉的。

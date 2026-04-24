@@ -1,6 +1,8 @@
 ---
 obsidian-note-status:
   - colorful:completed
+tags:
+  - 代数
 ---
 
 我们通过给出一种用矩阵求解 Fibonacci 数列通项公式的方法来引出一般 $n$ 次矩阵的求法。
