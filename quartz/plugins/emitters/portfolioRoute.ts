@@ -2,7 +2,6 @@ import fs from "fs"
 import path from "path"
 import { FilePath } from "../../util/path"
 import { QuartzEmitterPlugin } from "../types"
-import { glob } from "../../util/glob"
 
 type Options = {
   sourceDir: string
@@ -10,8 +9,26 @@ type Options = {
 }
 
 const defaultOptions: Options = {
-  sourceDir: "portfolio",
+  sourceDir: "my-portfolio/dist",
   targetDir: "portfolio",
+}
+
+async function* copyDir(
+  sourcePath: string,
+  targetRoot: string,
+): AsyncGenerator<FilePath> {
+  const entries = await fs.promises.readdir(sourcePath, { withFileTypes: true })
+  for (const entry of entries) {
+    const src = path.join(sourcePath, entry.name)
+    const dest = path.join(targetRoot, entry.name)
+    if (entry.isDirectory()) {
+      yield* copyDir(src, dest)
+    } else {
+      await fs.promises.mkdir(path.dirname(dest), { recursive: true })
+      await fs.promises.copyFile(src, dest)
+      yield dest as FilePath
+    }
+  }
 }
 
 export const PortfolioRoute: QuartzEmitterPlugin<Partial<Options>> = (userOpts) => {
@@ -36,14 +53,7 @@ export const PortfolioRoute: QuartzEmitterPlugin<Partial<Options>> = (userOpts) 
         return
       }
 
-      const files = await glob("**/*", sourcePath, [])
-      for (const relativePath of files) {
-        const sourceFile = path.join(sourcePath, relativePath)
-        const targetFile = path.join(targetRoot, relativePath)
-        await fs.promises.mkdir(path.dirname(targetFile), { recursive: true })
-        await fs.promises.copyFile(sourceFile, targetFile)
-        yield targetFile as FilePath
-      }
+      yield* copyDir(sourcePath, targetRoot)
     },
     async *partialEmit() {},
   }

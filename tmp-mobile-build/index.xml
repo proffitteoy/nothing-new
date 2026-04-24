@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+    <channel>
+      <title>为学日益，为道日损</title>
+      <link>https://math-vault</link>
+      <description>最近的10条笔记 on 为学日益，为道日损</description>
+      <generator>Quartz -- quartz.jzhao.xyz</generator>
+      <item>
+    <title>CCCP 与 DCA</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/CCCP-%E4%B8%8E-DCA</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/CCCP-%E4%B8%8E-DCA</guid>
+    <description><![CDATA[ 1. ]]></description>
+    <pubDate>Wed, 01 Apr 2026 07:42:46 GMT</pubDate>
+  </item><item>
+    <title>凸化松弛</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E5%87%B8%E5%8C%96%E6%9D%BE%E5%BC%9B</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E5%87%B8%E5%8C%96%E6%9D%BE%E5%BC%9B</guid>
+    <description><![CDATA[ 1. ]]></description>
+    <pubDate>Wed, 01 Apr 2026 07:42:46 GMT</pubDate>
+  </item><item>
+    <title>对智能算法的优化</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E5%AF%B9%E6%99%BA%E8%83%BD%E7%AE%97%E6%B3%95%E7%9A%84%E4%BC%98%E5%8C%96</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E5%AF%B9%E6%99%BA%E8%83%BD%E7%AE%97%E6%B3%95%E7%9A%84%E4%BC%98%E5%8C%96</guid>
+    <description><![CDATA[ 通用的智能算法面临诸多问题，如收敛速度慢，精度差等。为了缩短计算时间提高精度，可以从以下两大方面对智能算法进行优化： 非凸优化到凸优化 Tip 沿用实分析中好坏集的思想，在非凸集中人为构造多若干好集，缩小搜索范围，甚至人为求解。 1. ]]></description>
+    <pubDate>Wed, 01 Apr 2026 07:42:46 GMT</pubDate>
+  </item><item>
+    <title>局部近似求解</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E5%B1%80%E9%83%A8%E8%BF%91%E4%BC%BC%E6%B1%82%E8%A7%A3</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E5%B1%80%E9%83%A8%E8%BF%91%E4%BC%BC%E6%B1%82%E8%A7%A3</guid>
+    <description><![CDATA[ 1. ]]></description>
+    <pubDate>Wed, 01 Apr 2026 07:42:46 GMT</pubDate>
+  </item><item>
+    <title>无导数局部优化</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E6%97%A0%E5%AF%BC%E6%95%B0%E5%B1%80%E9%83%A8%E4%BC%98%E5%8C%96</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E6%97%A0%E5%AF%BC%E6%95%B0%E5%B1%80%E9%83%A8%E4%BC%98%E5%8C%96</guid>
+    <description><![CDATA[ 1. ]]></description>
+    <pubDate>Wed, 01 Apr 2026 07:42:46 GMT</pubDate>
+  </item><item>
+    <title>智能算法</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E6%99%BA%E8%83%BD%E7%AE%97%E6%B3%95</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E6%99%BA%E8%83%BD%E7%AE%97%E6%B3%95</guid>
+    <description><![CDATA[ 方法与覆盖范围 这些方法的共同点是：把问题统一成（可带约束的）最优化任务，在“目标函数可能不可导、变量可能离散/组合、搜索空间多峰/非凸、模型是黑盒”的场景下，依赖随机性与启发式规则进行近似全局搜索，而不是依赖解析解或梯度。 从学术上，它们通常被归入“元启发式（metaheuristics）”。你可以把它们理解为：围绕“如何产生候选解 + 如何接受/保留候选解”的一套可复用框架，把大量不同工程/组合问题映射到同一类搜索过程里。 遗传算法 它到底是什么 遗传算法是典型的“群体演化”随机优化：维护一组候选解（种群），让高适应度个体更可能被保留/繁殖，并通过交叉与变异产生新个体，使种群在代际更新中逐... ]]></description>
+    <pubDate>Wed, 01 Apr 2026 07:42:46 GMT</pubDate>
+  </item><item>
+    <title>基于计算几何与带阈值启发式搜索的无人机无源定位模型</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E5%9F%BA%E4%BA%8E%E8%AE%A1%E7%AE%97%E5%87%A0%E4%BD%95%E4%B8%8E%E5%B8%A6%E9%98%88%E5%80%BC%E5%90%AF%E5%8F%91%E5%BC%8F%E6%90%9C%E7%B4%A2%E7%9A%84%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%97%A0%E6%BA%90%E5%AE%9A%E4%BD%8D%E6%A8%A1%E5%9E%8B</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E5%9F%BA%E4%BA%8E%E8%AE%A1%E7%AE%97%E5%87%A0%E4%BD%95%E4%B8%8E%E5%B8%A6%E9%98%88%E5%80%BC%E5%90%AF%E5%8F%91%E5%BC%8F%E6%90%9C%E7%B4%A2%E7%9A%84%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%97%A0%E6%BA%90%E5%AE%9A%E4%BD%8D%E6%A8%A1%E5%9E%8B</guid>
+    <description><![CDATA[ 一、论文核心 1、 主要方法 纯方位无源定位模型建立 极坐标代数法：在极坐标系下通过正弦定理列出三角方程进行代数求解,。 计算几何法：深入发掘“等角对等弦”的几何性质，将定位问题转化为两圆轨迹求交点,。利用旋转矩阵和向量叉积确定圆心，并利用几何对称性避开复杂的联立方程，降低求解难度,,。 最小发射信号无人机需求判定 通过量化误差范围（如极径误差 \le 15m，极角误差 \le 1^\circ）进行分类讨论。 采用遍历编号情况的方法，判断夹角误差区间的交集是否为空，以此在编号未知的情况下确定发射信号的无人机编号。 编队调整方案策略 带阈值的启发式搜索算法：在IDA^*算法启发下设计，通过对以后... ]]></description>
+    <pubDate>Tue, 24 Mar 2026 14:06:24 GMT</pubDate>
+  </item><item>
+    <title>拉普拉斯变换</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E6%8B%89%E6%99%AE%E6%8B%89%E6%96%AF%E5%8F%98%E6%8D%A2</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E6%8B%89%E6%99%AE%E6%8B%89%E6%96%AF%E5%8F%98%E6%8D%A2</guid>
+    <description><![CDATA[  核心思路 把“求导”变成“乘法”，从而大幅降低线性微分方程的求解难度。 1. ]]></description>
+    <pubDate>Tue, 24 Mar 2026 14:06:24 GMT</pubDate>
+  </item><item>
+    <title>波浪能装置输出功率最大化模型</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E6%B3%A2%E6%B5%AA%E8%83%BD%E8%A3%85%E7%BD%AE%E8%BE%93%E5%87%BA%E5%8A%9F%E7%8E%87%E6%9C%80%E5%A4%A7%E5%8C%96%E6%A8%A1%E5%9E%8B</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E6%B3%A2%E6%B5%AA%E8%83%BD%E8%A3%85%E7%BD%AE%E8%BE%93%E5%87%BA%E5%8A%9F%E7%8E%87%E6%9C%80%E5%A4%A7%E5%8C%96%E6%A8%A1%E5%9E%8B</guid>
+    <description><![CDATA[ 1. ]]></description>
+    <pubDate>Tue, 24 Mar 2026 14:06:24 GMT</pubDate>
+  </item><item>
+    <title>遗传算法</title>
+    <link>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E9%81%97%E4%BC%A0%E7%AE%97%E6%B3%95</link>
+    <guid>https://math-vault/%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1/%E8%AF%BB%E4%BC%98%E7%A7%80%E8%AE%BA%E6%96%87%E6%9D%82%E8%AE%B0/%E9%81%97%E4%BC%A0%E7%AE%97%E6%B3%95</guid>
+    <description><![CDATA[ 1. ]]></description>
+    <pubDate>Tue, 24 Mar 2026 14:06:24 GMT</pubDate>
+  </item>
+    </channel>
+  </rss>
