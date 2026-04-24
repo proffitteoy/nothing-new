@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { projects } from "@/lib/data";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Github } from "lucide-react";
@@ -16,7 +16,7 @@ export default function ProjectsSection() {
           </h2>
         </MotionWrapper>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {projects.map((project, index) => (
             <MotionWrapper key={project.title} delay={index * 0.2}>
               <GlassCard className="group overflow-hidden dark:border-purple-500/10 h-full flex flex-col">
@@ -24,9 +24,10 @@ export default function ProjectsSection() {
                   <CardTitle className="text-center md:text-left group-hover:text-purple-500 transition-colors duration-300">
                     {project.title}
                   </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">时间：{project.period}</p>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <ul className="list-disc ml-4 space-y-1 text-sm group-hover:space-y-2 transition-all duration-300">
+                  <ul className="list-disc ml-4 space-y-2 text-sm">
                     {project.description.map((desc, i) => (
                       <motion.li
                         key={i}
@@ -51,7 +52,7 @@ export default function ProjectsSection() {
                     whileTap={{ scale: 0.95 }}
                   >
                     <Github className="h-4 w-4 mr-2 group-hover/link:rotate-12 transition-transform duration-300" />
-                    查看 GitHub 仓库
+                    查看 GitHub：proffitteoy
                   </motion.a>
                 </CardFooter>
               </GlassCard>

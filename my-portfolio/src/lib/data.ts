@@ -1,135 +1,88 @@
-export const personalInfo = {
-  name: "你的名字",
-  location: "中国·上海",
-  email: "hello@example.com",
-  github: "https://github.com/yourname",
-  linkedin: "https://linkedin.com/in/yourname",
+﻿export const personalInfo = {
+  name: "李炫良",
+  location: "广东，中国",
+  phone: "19210109091",
+  email: "84025375@qq.com",
+  github: "https://github.com/proffitteoy",
+  website: "https://nothing-new.icu",
   profilePicture: "/profile.jpeg",
+  jobTarget: "数据分析 / 数据建模",
   heroDescription:
-    "专注于 Web 前端与全栈工程实践，擅长把复杂需求拆解为稳定、可维护、可扩展的产品能力。关注工程效率、用户体验与长期架构演进。",
+    "专注于数据分析与数据建模方向，关注拓扑数据分析、信息传播建模与 AI Agent 工程化落地。",
 };
-
-export const workExperience = [
-  {
-    company: "星海科技（上海）有限公司",
-    location: "上海，中国",
-    position: "高级前端工程师",
-    period: "2023.03 - 至今",
-    achievements: [
-      "主导公司核心管理平台重构，首屏加载时间降低约 45%。",
-      "推动 TypeScript 全量落地，线上类型相关缺陷显著下降。",
-      "设计组件库与设计令牌规范，统一 6 条业务线视觉与交互。",
-      "搭建前端 CI 质量门禁（Lint、测试、构建），缩短发布周期。",
-      "与后端协同制定接口规范，减少联调返工并提升交付稳定性。",
-      "牵头性能治理专项，持续跟踪 Web Vitals 并建立周报机制。",
-    ],
-  },
-  {
-    company: "云桥数据科技",
-    location: "杭州，中国",
-    position: "全栈开发工程师",
-    period: "2021.07 - 2023.02",
-    achievements: [
-      "负责数据分析平台的前后端开发，支持多团队并发使用。",
-      "落地权限与审计模块，满足企业级合规与安全要求。",
-      "实现自动化报表与任务调度能力，显著降低人工维护成本。",
-    ],
-  },
-  {
-    company: "北辰实验室",
-    location: "南京，中国",
-    position: "软件开发实习生",
-    period: "2020.06 - 2021.06",
-    achievements: [
-      "参与实验平台功能开发与缺陷修复，积累工程协作经验。",
-      "编写技术文档与测试用例，提升团队交接效率与可维护性。",
-    ],
-  },
-];
 
 export const education = [
   {
-    institution: "华东理工大学",
-    location: "上海，中国",
-    degree: "软件工程 学士",
-    period: "2016 - 2020",
+    institution: "广东金融学院",
+    location: "广东，中国",
+    degree: "金融数学（本科在读）",
+    period: "2024.09 - 至今",
     achievements: [
-      "担任技术社团负责人，组织多场技术分享与项目实践。",
-      "参与校级创新项目并获得优秀结题评价。",
-      "多次获得学业奖学金与综合素质奖。",
+      "预计毕业时间：2028 年 7 月",
+      "GPA：3.15 / 4.00",
+      "核心课程：数学分析、概率论与数理统计",
+      "自学课程：高等/抽象代数、实/复/泛函分析",
     ],
   },
 ];
-
-export const skills = {
-  programmingLanguages: ["JavaScript", "TypeScript", "Python", "Go", "SQL", "Bash"],
-  frontendDevelopment: [
-    "React",
-    "Next.js",
-    "Astro",
-    "Tailwind CSS",
-    "Vite",
-    "HTML5",
-    "CSS3",
-  ],
-  backendDevelopment: ["Node.js", "Express", "NestJS", "REST API"],
-  databaseAndStorage: ["PostgreSQL", "MySQL", "Redis", "Prisma"],
-  cloudAndDevOps: ["Docker", "GitHub Actions", "Nginx", "Linux"],
-  toolsAndServices: ["Git", "Figma", "Postman", "Sentry", "Plausible", "Notion"],
-};
 
 export const projects = [
   {
-    title: "个人知识花园系统",
-    github: "https://github.com/yourname/knowledge-garden",
+    title: "拓扑数据分析在 A 股市场中的应用",
+    period: "2025 - 至今",
+    github: "https://github.com/proffitteoy",
     description: [
-      "基于静态站点生成器构建，支持 Markdown 写作与全文检索。",
-      "实现标签分类、目录导航与反向链接，提升内容可探索性。",
-      "增加自动化部署流程，支持推送后自动发布。",
-      "通过缓存与资源压缩优化，提升页面加载速度。",
-      "支持 SEO 元数据与站点地图自动生成。",
+      "构建股票时间序列点云，计算 0/1 维持续同调（Persistent Homology），生成持久图与瓶颈距离。",
+      "基于 Gudhi 等 TDA 工具库实现批量计算流程，将拓扑距离转化为可用于监督学习的结构化特征。",
+      "探索拓扑特征在市场状态区分、相似性度量中的判别能力，并分析其与传统统计特征的互补性。",
+      "针对大规模历史数据场景，分析算法复杂度瓶颈，尝试缓存与批处理策略以提升工程可扩展性。",
     ],
   },
   {
-    title: "团队协作看板平台",
-    github: "https://github.com/yourname/team-kanban",
+    title: "基于持久同调的 AIGC 信息流传播事件点云拓扑研究",
+    period: "2026",
+    github: "https://github.com/proffitteoy",
     description: [
-      "提供任务分组、拖拽排序、筛选与搜索等核心能力。",
-      "接入角色权限模型，满足多人协作下的访问控制。",
-      "实现活动日志与通知机制，保障任务流转可追踪。",
-      "封装复用组件与表单校验方案，提升开发一致性。",
-      "支持暗色主题与响应式布局，覆盖多端使用场景。",
+      "面向 AIGC 与非 AIGC 信息流，构建传播事件点云表示与传播树结构化数据流程，将传播时间、层级深度、局部分支强度等信息统一映射为可计算的拓扑分析对象。",
+      "基于 Vietoris--Rips 复形与持久同调提取传播结构的拓扑签名，形成持久图、持久景观等表示，并构造可用于监督学习与组间比较的数值特征。",
+      "围绕特征提取与实验流程完成模块化整理与工程优化，降低计算冗余并提升实验复现性，为后续开展 AIGC 信息流识别、传播模式比较与风险预警研究提供方法基础。",
+    ],
+  },
+  {
+    title: "AI 驱动的智能应用与 Agent 系统开发",
+    period: "2025 - 至今",
+    github: "https://github.com/proffitteoy",
+    description: [
+      "设计并实现面向财报分析的 RAG 工作流，完成文档解析、分块检索、关键信息抽取与问答链路构建，提升长文档金融信息获取效率与可追溯性。",
+      "开发医疗脏文本处理 Agent，面向高噪声、多说话人、口语化 ASR 场景，完成术语纠错、角色重构、上下文语义修复与结构化输出，增强复杂医疗文本的可用性。",
+      "搭建 ChatAI 前端交互网站，围绕上下文工程实现对话记忆、阶段总结、项目级会话管理与文件增强检索等功能，提升长对话场景下的信息组织与交互体验。",
+      "参与代码仓库智能分析工具开发，支持 GitHub / 本地项目解析、关键函数调用链分析、模块级可视化与历史快照持久化，提升复杂工程代码理解与结构梳理效率。",
     ],
   },
 ];
 
-export const awards = [
-  {
-    name: "全国高校软件创新大赛",
-    issuer: "中国软件行业协会",
-    date: "2024.11",
-    type: "国家级",
-    position: "一等奖",
-  },
-  {
-    name: "华东地区开源应用挑战赛",
-    issuer: "开源技术联盟",
-    date: "2024.06",
-    type: "国际",
-    position: "优秀项目奖",
-  },
-  {
-    name: "企业数字化创新黑客松",
-    issuer: "星海科技",
-    date: "2023.12",
-    type: "国家级",
-    position: "冠军",
-  },
-  {
-    name: "高校程序设计竞赛",
-    issuer: "华东理工大学",
-    date: "2019.10",
-    type: "国家级",
-    position: "二等奖",
-  },
-];
+// Keep compatibility for optional sections not used on the resume page.
+export const workExperience: Array<{
+  company: string;
+  location: string;
+  position: string;
+  period: string;
+  achievements: string[];
+}> = [];
+
+export const skills = {
+  programmingLanguages: [] as string[],
+  frontendDevelopment: [] as string[],
+  backendDevelopment: [] as string[],
+  databaseAndStorage: [] as string[],
+  cloudAndDevOps: [] as string[],
+  toolsAndServices: [] as string[],
+};
+
+export const awards: Array<{
+  name: string;
+  issuer: string;
+  date: string;
+  type: string;
+  position: string;
+}> = [];

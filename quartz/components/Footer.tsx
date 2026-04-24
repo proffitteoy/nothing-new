@@ -20,7 +20,13 @@ export default ((opts?: Options) => {
         <ul>
           {Object.entries(links).map(([text, link]) => (
             <li>
-              <a href={link}>{text}</a>
+              <a
+                href={link}
+                data-router-ignore={link.startsWith("/portfolio") ? "true" : undefined}
+                data-no-popover={link.startsWith("/portfolio") ? "true" : undefined}
+              >
+                {text}
+              </a>
             </li>
           ))}
         </ul>

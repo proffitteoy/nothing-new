@@ -1,15 +1,13 @@
-import ThemeToggle from "./ui/theme-toggle";
+﻿import ThemeToggle from "./ui/theme-toggle";
 import { personalInfo } from "@/lib/data";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
-  { id: "experience", label: "工作经历", icon: "💼" },
-  { id: "skills", label: "技能栈", icon: "🛠️" },
-  { id: "projects", label: "项目经历", icon: "🚀" },
-  { id: "awards", label: "荣誉奖项", icon: "🏆" },
+  { id: "profile", label: "个人信息", icon: "👤" },
   { id: "education", label: "教育背景", icon: "🎓" },
+  { id: "projects", label: "项目经历", icon: "🚀" },
 ];
 
 export default function GlassHeader() {

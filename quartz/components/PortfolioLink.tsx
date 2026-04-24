@@ -23,7 +23,7 @@ export default ((opts?: Partial<PortfolioLinkOptions>) => {
         <h3>{options.title}</h3>
         <ul>
           <li>
-            <a href={options.href} class="internal">
+            <a href={options.href} class="internal" data-router-ignore="true" data-no-popover="true">
               {options.label}
             </a>
           </li>
@@ -35,4 +35,3 @@ export default ((opts?: Partial<PortfolioLinkOptions>) => {
   PortfolioLink.css = style
   return PortfolioLink
 }) satisfies QuartzComponentConstructor<Partial<PortfolioLinkOptions>>
-
