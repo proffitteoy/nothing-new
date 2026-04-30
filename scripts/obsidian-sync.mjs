@@ -131,6 +131,7 @@ async function initializeIncludeFile(config, state, options) {
   return {
     ...state,
     version: 2,
+    managedFiles: includeLines.slice(),
     discoveredNotes,
   }
 }
