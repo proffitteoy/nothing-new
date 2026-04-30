@@ -14,6 +14,12 @@
   "scripts": {
     "quartz": "./quartz/bootstrap-cli.mjs",
     "docs": "npx quartz build --serve -d docs",
+    "sync:obsidian": "node scripts/obsidian-sync.mjs",
+    "sync:obsidian:check": "node scripts/obsidian-sync.mjs --check",
+    "sync:obsidian:dry": "node scripts/obsidian-sync.mjs --dry-run",
+    "sync:obsidian:init": "node scripts/obsidian-sync.mjs --init-from-content",
+    "sync:obsidian:review": "node scripts/obsidian-sync.mjs --review",
+    "sync:obsidian:review:all": "node scripts/obsidian-sync.mjs --review --all",
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
     "test": "tsx --test",

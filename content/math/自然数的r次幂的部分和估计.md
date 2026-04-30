@@ -3,7 +3,7 @@ tags:
   - math
   - 微积分
 ---
-
+		
 > [!question] 问题0
 > 求极限:
 > $$\lim_{N \to \infty} N\sum_{n>N} \frac{1}{n^2}$$

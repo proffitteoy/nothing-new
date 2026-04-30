@@ -1,0 +1,4 @@
+# 默认每行都是相对 E:/math 的字面路径。
+# 如需写 glob，请显式加前缀，例如：
+# glob: misc/private/**
+# glob: **/未命名*.md

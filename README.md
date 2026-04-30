@@ -9,6 +9,12 @@ Quartz v4 features a from-the-ground rewrite focusing on end-user extensibility 
 
 [Join the Discord Community](https://discord.gg/cRFFHYye7t)
 
+## Local Workflow
+
+- Obsidian 到博客的单向同步说明见 [docs/obsidian-sync.md](docs/obsidian-sync.md)。
+- `npm run sync:obsidian` 会先扫描新建或改动过但尚未决策的笔记，再询问是否纳入博客。
+- 如果 PowerShell 拦截了 `npm`，直接运行 [同步博客.bat](同步博客.bat)。
+
 ## Sponsors
 
 <p align="center">
