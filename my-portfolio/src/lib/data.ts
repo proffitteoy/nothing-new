@@ -172,7 +172,7 @@ export const awards = [
     issuer: "COMAP",
     date: "2026",
     type: "国际",
-    position: "奖项待补充",
+    position: "H奖",
   },
   {
     name: "全国大学生统计建模大赛",
@@ -200,7 +200,7 @@ export const awards = [
     issuer: "广东省政务服务和数据管理局",
     date: "2026",
     type: "省级",
-    position: "决赛",
+    position: "复赛获奖",
   },
 ];
 
