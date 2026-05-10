@@ -148,3 +148,8 @@ misc/reverse/666.md
 misc/reverse/走迷宫.md
 misc/reverse/Reversing-x64Elf-100.md
 script/从菲尔兹奖看现代数学中拓扑学和复分析的发展--mathpix扫描识别版.md
+ai/ManiMind/阶段一/前端骨架的实现.md
+ai/ManiMind/阶段一/总目标.md
+ai/ManiMind/阶段一/leader的状态搭建.md
+ai/ManiMind/阶段一/worker的POC实现.md
+ai/ManiMind/总目标.md
