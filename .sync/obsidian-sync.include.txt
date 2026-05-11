@@ -153,3 +153,12 @@ ai/ManiMind/阶段一/总目标.md
 ai/ManiMind/阶段一/leader的状态搭建.md
 ai/ManiMind/阶段一/worker的POC实现.md
 ai/ManiMind/总目标.md
+ai/ManiMind/阶段二/二、tts.md
+ai/ManiMind/阶段二/三、初次测试.md
+ai/ManiMind/阶段二/四、现状分析.md
+ai/ManiMind/阶段二/一、链路的链接与闭环.md
+ai/ManiMind/阶段三/前端设计与成品.md
+ai/ManiMind/阶段一/二、leader的状态搭建.md
+ai/ManiMind/阶段一/三、worker的POC实现.md
+ai/ManiMind/阶段一/四、前端骨架的实现.md
+ai/ManiMind/阶段一/一、总目标.md
