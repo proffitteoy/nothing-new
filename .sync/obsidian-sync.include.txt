@@ -162,3 +162,13 @@ ai/ManiMind/阶段一/二、leader的状态搭建.md
 ai/ManiMind/阶段一/三、worker的POC实现.md
 ai/ManiMind/阶段一/四、前端骨架的实现.md
 ai/ManiMind/阶段一/一、总目标.md
+ai/ManiMind/阶段二/初次测试.md
+ai/ManiMind/阶段二/链路的链接与闭环.md
+ai/ManiMind/阶段二/现状分析.md
+ai/ManiMind/阶段二/tts.md
+ai/ManiMind/阶段零/环境配置.md
+ai/ManiMind/阶段零/总目标.md
+ai/ManiMind/阶段三/后端逻辑优化.md
+ai/ManiMind/阶段三/角色重构与现状分析.md
+ai/ManiMind/阶段三/前端设计.md
+ai/ManiMind/阶段四/Harness Engineering.md

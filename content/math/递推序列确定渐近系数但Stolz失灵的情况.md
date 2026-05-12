@@ -23,7 +23,7 @@ tags:
 
 第一节中Stolz之所以会失效是因为$\sin(x)$的渐近展开的第一项就是$x$，反过来我们倒是可以利用这一点。
 
-对$\sin(a_n)$做渐近展开，我们知道$$\begin{aligned}a_{n+1}&=a_n -\frac{1}{n+1}\left(a_n -\frac{1}{6}a_n^3+o(a_n^3)\right)\\&= \frac{n}{n+1}a_n \left(1+\frac{1}{6n}a_n^2\right)+o\left(\frac{a_n^3}{n+1}\right)\end{aligned}$$此时我们想到，要是可以通过不等式把最后的尾巴(余项)去掉就好了，这样我们可以得到$a_{n+1},a_n$的迭代的不等式，就像[[Re0微积分1：用牛顿迭代法求算术平方根#3. 误差分析]]中的不等式那样，这样我们就可以通过迭代最终得到$a_n$的一个不等式。
+对$\sin(a_n)$做渐近展开，我们知道$$\begin{aligned}a_{n+1}&=a_n -\frac{1}{n+1}\left(a_n -\frac{1}{6}a_n^3+o(a_n^3)\right)\\&= \frac{n}{n+1}a_n \left(1+\frac{1}{6n}a_n^2\right)+o\left(\frac{a_n^3}{n+1}\right)\end{aligned}$$此时我们想到，要是可以通过不等式把最后的尾巴(余项)去掉就好了，这样我们可以得到$a_{n+1},a_n$的迭代的不等式，就像[[math/Re0微积分1：用牛顿迭代法求算术平方根#3. 误差分析]]中的不等式那样，这样我们就可以通过迭代最终得到$a_n$的一个不等式。
 
 那么如何甩掉最后的尾巴呢？自然是从把$\sin(x)$的渐近展开变成不等式开始。考虑$$\sin(x)\geq x-\frac{x^3}{6},x\geq 0$$于是我们得到$$a_{n+1}\leq \frac{n}{n+1}a_n \left(1+\frac{1}{6n}a_n^2\right)$$
 

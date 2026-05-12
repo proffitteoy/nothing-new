@@ -5,7 +5,12 @@ export default {
   excludeFile: ".sync/obsidian-sync.exclude.txt",
   stateFile: ".sync/obsidian-sync-state.json",
   reviewPatterns: ["**/*.md"],
-  defaultIgnores: [".obsidian/**", "**/.obsidian/**"],
+  defaultIgnores: [
+    ".obsidian/**",
+    "**/.obsidian/**",
+    "笔记共享vault/**",
+    "**/笔记共享vault/**",
+  ],
   extraIncludes: [
     // 默认按字面路径处理；只有带 glob: 前缀时才按通配符处理。
     // "math/新文章.md",
