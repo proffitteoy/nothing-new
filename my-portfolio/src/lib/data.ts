@@ -26,9 +26,19 @@ export const education = [
 
 export const projects = [
   {
+    title: "BDC2026：A 股收益预测与组合生成建模 pipeline",
+    period: "2026",
+    github: "https://github.com/proffitteoy/BDC2026",
+    description: [
+      "面向 A 股收益预测任务，构建四阶段量化建模流程，覆盖横截面因子研究、滚动窗口构建、分层式信号生成与最终持仓权重生成。",
+      "在信号生成阶段结合因子标准化、横截面 rank 化、cluster 聚合、PCA 压缩、KMeans 市场状态识别与 LGBM / CatBoost 排序模型，形成多分支预测与融合框架。",
+      "设计 OOF 权重搜索、分状态 regime 权重覆盖、滚动指标评估与提交结果生成流程，沉淀从数据处理、模型训练到组合输出的完整竞赛工程经验。"
+    ],
+  },
+  {
     title: "拓扑数据分析在 A 股市场中的应用",
     period: "2025 - 至今",
-    github: "https://github.com/proffitteoy",
+    github: "https://github.com/proffitteoy/Sliding-Windows",
     description: [
       "基于 Sliding Window Embedding 将股票收益率序列映射为高维点云，使用持续同调刻画时间序列中的周期性、结构稳定性与多尺度形态特征。",
       "围绕 0/1 维持续同调构建拓扑特征体系，提取最大持久性、总持久性、持久熵、Betti 曲线面积、Persistence Landscape 与 Silhouette 等结构摘要。",
@@ -44,29 +54,18 @@ export const projects = [
     description: [
       "面向社交媒体谣言早期识别任务，构建谣言/非谣言传播树的结构化处理流程，将传播时间、相对层级深度与局部扩散潜势映射为三维事件点云，形成可计算的拓扑分析对象。",
       "基于 Alpha / Vietoris--Rips 复形与持久同调提取传播结构的 H0/H1 维拓扑签名，构造持久图、总持久性、Top-k 持久性等数值特征，用于传播模式比较、结构差异分析与监督学习建模。",
-      "完成多早期窗口下的拓扑特征批量计算、统计检验、效应量分析与分类验证流程，结合随机森林/stacking 模型评估拓扑特征在谣言早期识别与传播机制解释中的有效性。",
-    ]
+      "完成多早期窗口下的拓扑特征批量计算、统计检验、效应量分析与分类验证流程，结合随机森林/stacking 模型评估拓扑特征在谣言早期识别与传播机制解释中的有效性。"
+    ],
   },
   {
-  title: "基于拓扑数据分析的聚类算法研究与实现",
-  period: "2025 - 至今",
-  github: "https://github.com/proffitteoy",
-  description: [
-    "研究并实现面向复杂点云与非线性结构数据的拓扑聚类算法流程，覆盖数据预处理、距离度量设计、邻域图构建、连通结构提取、聚类标签生成与可视化分析。",
-    "引入持久同调、多尺度连通分支与拓扑特征描述，刻画簇在不同尺度下的生成、合并与消亡过程，用于识别非凸簇、链式簇和传统距离聚类难以捕捉的复杂结构。",
-    "将算法结果与 K-Means、DBSCAN、HDBSCAN 等方法进行对比，结合持久图、条形码、邻域图和降维嵌入图分析聚类稳定性与结构可解释性。",
-    "完成参数实验、结果缓存、指标统计与批量可视化模块，为传播结构分析、金融时序状态识别和复杂系统建模中的结构发现任务提供方法基础。"
-    ]
-  },
-  {
-    title: "Iris-Terminal：知识库增强型 ChatAI 前端交互系统",
+    title: "基于拓扑数据分析的聚类算法研究与实现",
     period: "2025 - 至今",
-    github: "https://github.com/proffitteoy/Iris-Terminal",
+    github: "https://github.com/proffitteoy/TILO-PRC",
     description: [
-      "搭建面向长对话与知识库问答的 ChatAI 前端交互系统，围绕项目级会话管理、阶段总结、对话记忆与文件增强检索，提升复杂任务中的上下文组织能力。",
-      "设计渐进式信息披露交互方式，将用户问题、历史上下文、文件内容与知识库索引进行统一组织，支持更稳定的多轮问答与任务追踪。",
-      "探索 Obsidian 知识库与传统检索系统的结合方式，为后续接入 PostgreSQL、向量检索与 RAG 问答链路预留工程接口。",
-      "面向个人知识管理与科研辅助场景，构建可扩展的 AI 对话工作台，用于项目复盘、资料检索、阶段总结与知识沉淀。"
+      "研究并实现面向复杂点云与非线性结构数据的拓扑聚类算法流程，覆盖数据预处理、距离度量设计、邻域图构建、连通结构提取、聚类标签生成与可视化分析。",
+      "引入持久同调、多尺度连通分支与拓扑特征描述，刻画簇在不同尺度下的生成、合并与消亡过程，用于识别非凸簇、链式簇和传统距离聚类难以捕捉的复杂结构。",
+      "将算法结果与 K-Means、DBSCAN、HDBSCAN 等方法进行对比，结合持久图、条形码、邻域图和降维嵌入图分析聚类稳定性与结构可解释性。",
+      "完成参数实验、结果缓存、指标统计与批量可视化模块，为传播结构分析、金融时序状态识别和复杂系统建模中的结构发现任务提供方法基础。"
     ],
   },
   {
@@ -81,14 +80,14 @@ export const projects = [
     ],
   },
   {
-    title: "GitVisual-LLM：代码仓库智能分析与结构可视化工具",
+    title: "Iris-Terminal：知识库增强型 ChatAI 前端交互系统",
     period: "2025 - 至今",
-    github: "https://github.com/proffitteoy/gitvisual-llm",
+    github: "https://github.com/proffitteoy/Iris-Terminal",
     description: [
-      "开发面向 GitHub 与本地项目的代码仓库智能分析工具，支持项目结构解析、关键文件识别、函数调用链分析与模块关系梳理。",
-      "结合 LLM 对代码语义、模块职责与工程结构进行辅助解释，将复杂仓库转化为更易理解的结构化摘要与可视化结果。",
-      "实现项目历史快照与分析结果持久化，便于对比不同版本下的模块变化、结构演化与关键逻辑调整。",
-      "面向代码审计、项目接手与工程知识沉淀场景，提升复杂代码库的阅读效率、结构理解能力与文档化水平。"
+      "搭建面向长对话与知识库问答的 ChatAI 前端交互系统，围绕项目级会话管理、阶段总结、对话记忆与文件增强检索，提升复杂任务中的上下文组织能力。",
+      "设计渐进式信息披露交互方式，将用户问题、历史上下文、文件内容与知识库索引进行统一组织，支持更稳定的多轮问答与任务追踪。",
+      "探索 Obsidian 知识库与传统检索系统的结合方式，为后续接入 PostgreSQL、向量检索与 RAG 问答链路预留工程接口。",
+      "面向个人知识管理与科研辅助场景，构建可扩展的 AI 对话工作台，用于项目复盘、资料检索、阶段总结与知识沉淀。"
     ],
   },
   {
@@ -102,6 +101,29 @@ export const projects = [
     ],
   },
   {
+    title: "Competition Q&A Website：高校竞赛问答与报名管理平台",
+    period: "2026",
+    github: "https://github.com/GDUF-quantitative/competition-Q-A-website",
+    description: [
+      "开发面向高校学科竞赛场景的问答与管理平台，覆盖竞赛展示、问题讨论、报名管理、通知发布、用户中心与后台管理等核心功能。",
+      "基于 Next.js / TypeScript 构建前端与服务端渲染应用，结合 Supabase PostgreSQL 与 Drizzle ORM 完成数据建模、Schema 管理、种子数据初始化与业务查询封装。",
+      "设计竞赛、报名、问答、通知、用户角色与操作审计等业务模块，支持管理员、内容编辑、竞赛负责人和学生用户等多角色使用场景。",
+      "围绕 Vercel 部署、Supabase 数据库连接、环境变量配置、构建错误排查与生产环境访问优化，完成从本地开发到在线部署的完整工程实践。",
+      "面向校园竞赛组织与信息服务场景，沉淀动态 Web 应用的权限控制、数据持久化、后台管理、前端展示与部署运维经验。"
+    ],
+  },
+  {
+    title: "GitVisual-LLM：代码仓库智能分析与结构可视化工具",
+    period: "2025 - 至今",
+    github: "https://github.com/proffitteoy/gitvisual-llm",
+    description: [
+      "开发面向 GitHub 与本地项目的代码仓库智能分析工具，支持项目结构解析、关键文件识别、函数调用链分析与模块关系梳理。",
+      "结合 LLM 对代码语义、模块职责与工程结构进行辅助解释，将复杂仓库转化为更易理解的结构化摘要与可视化结果。",
+      "实现项目历史快照与分析结果持久化，便于对比不同版本下的模块变化、结构演化与关键逻辑调整。",
+      "面向代码审计、项目接手与工程知识沉淀场景，提升复杂代码库的阅读效率、结构理解能力与文档化水平。"
+    ],
+  },
+  {
     title: "NightShift：Android + WebView 嵌入式 AI 应用实验",
     period: "2026",
     github: "https://github.com/proffitteoy/nightshift",
@@ -109,16 +131,6 @@ export const projects = [
       "开发由后端服务、Android 客户端和嵌入式 Tab3 前端组成的移动端 AI 应用原型，探索 Web 前端能力在 Android WebView 场景下的集成方式。",
       "后端采用 api、services、repositories、clients、models、prompts 分层结构，Android 端基于 MainActivity、Fragment 与 Navigation 组织多 Tab 交互流程。",
       "围绕 Tab3 静态资源构建、后端环境变量注入、GitHub token 隔离与 Android 调试构建流程，完成移动端 AI 工具链的工程化整合。"
-    ],
-  },
-  {
-    title: "BDC2026：A 股收益预测与组合生成建模 pipeline",
-    period: "2026",
-    github: "https://github.com/proffitteoy/BDC2026",
-    description: [
-      "面向 A 股收益预测任务，构建四阶段量化建模流程，覆盖横截面因子研究、滚动窗口构建、分层式信号生成与最终持仓权重生成。",
-      "在信号生成阶段结合因子标准化、横截面 rank 化、cluster 聚合、PCA 压缩、KMeans 市场状态识别与 LGBM / CatBoost 排序模型，形成多分支预测与融合框架。",
-      "设计 OOF 权重搜索、分状态 regime 权重覆盖、滚动指标评估与提交结果生成流程，沉淀从数据处理、模型训练到组合输出的完整竞赛工程经验。"
     ],
   },
 ];
