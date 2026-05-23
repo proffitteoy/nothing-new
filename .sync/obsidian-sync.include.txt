@@ -172,3 +172,5 @@ ai/ManiMind/阶段三/后端逻辑优化.md
 ai/ManiMind/阶段三/角色重构与现状分析.md
 ai/ManiMind/阶段三/前端设计.md
 ai/ManiMind/阶段四/Harness Engineering.md
+数学建模/读优秀论文杂记/二维守恒型方程的差分放缩.md
+数学建模/读优秀论文杂记/ARIMA-LSTM 混合时间序列模型.md
