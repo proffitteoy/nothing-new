@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -22,17 +22,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: ''
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            my-portfolio/package-lock.json
 
-      - name: Install dependencies cleanly
-        run: |
-          # Install root dependencies from a clean state
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
-          npm install
+      - name: Install root dependencies
+        run: npm ci
 
       - name: Install portfolio dependencies
-        run: npm --prefix my-portfolio install
+        run: npm --prefix my-portfolio ci
 
       - name: Build portfolio
         run: npm --prefix my-portfolio run build

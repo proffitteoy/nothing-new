@@ -13,6 +13,10 @@
   },
   "scripts": {
     "quartz": "./quartz/bootstrap-cli.mjs",
+    "build": "node quartz/bootstrap-cli.mjs build",
+    "build:all": "npm --prefix my-portfolio run build && node quartz/bootstrap-cli.mjs build",
+    "dev": "node quartz/bootstrap-cli.mjs build --serve",
+    "dev:all": "npm --prefix my-portfolio run build && node quartz/bootstrap-cli.mjs build --serve",
     "docs": "npx quartz build --serve -d docs",
     "sync:obsidian": "node scripts/obsidian-sync.mjs",
     "sync:obsidian:check": "node scripts/obsidian-sync.mjs --check",
