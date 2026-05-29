@@ -1,1 +1,0 @@
-import{j as o,m as e}from"./proxy.FrA7DawR.js";import"./index.BnmvxsyM.js";const a={hidden:{opacity:0,y:20},visible:(i=0)=>({opacity:1,y:0,transition:{duration:.6,delay:i,ease:"easeOut"}})};function p({children:i,delay:t=0,...n}){return o.jsx(e.div,{initial:"hidden",whileInView:"visible",viewport:{once:!0,margin:"-100px"},variants:a,custom:t,...n,children:i})}export{p as M};

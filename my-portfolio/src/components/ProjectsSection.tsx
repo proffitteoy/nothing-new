@@ -6,6 +6,72 @@ import { GlassCard } from "./ui/glass-card";
 import MotionWrapper from "./MotionWrapper";
 import { motion } from "framer-motion";
 
+const showcaseImagePool = [
+  "/图片/1.1.png",
+  "/图片/1.2.png",
+  "/图片/1.3.png",
+  "/图片/1.4.png",
+  "/图片/1.5.png",
+  "/图片/1.6.png",
+  "/图片/2.1.png",
+  "/图片/3.1.png",
+  "/图片/3.2.png",
+  "/图片/3.3.png",
+  "/图片/3.4.png",
+  "/图片/3.5.png",
+  "/图片/4.1.png",
+  "/图片/4.2.png",
+  "/图片/5.1.png",
+  "/图片/6.1.png",
+  "/图片/7.1.png",
+];
+
+const showcaseFallbackImage =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 400'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23d946ef'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='640' height='400' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-size='28'%3EProject Preview%3C/text%3E%3C/svg%3E";
+
+function getProjectShowcaseImages(projectIndex: number): string[] {
+  const windowSize = 6;
+  const offset = (projectIndex * 2) % showcaseImagePool.length;
+  return Array.from({ length: windowSize }, (_, idx) => {
+    return showcaseImagePool[(offset + idx) % showcaseImagePool.length];
+  });
+}
+
+function ProjectShowcase({ title, images }: { title: string; images: string[] }) {
+  const duplicatedImages = [...images, ...images];
+  const trackStyle = {
+    "--showcase-duration": `${Math.max(16, images.length * 3.2)}s`,
+  } as React.CSSProperties;
+
+  return (
+    <div className="project-showcase" aria-label={`${title} 项目展示`}>
+      <div className="project-showcase-header">
+        <span className="project-showcase-title">项目展示</span>
+        <span className="project-showcase-tip">悬停可暂停</span>
+      </div>
+      <div className="project-showcase-viewport" role="region" aria-label={`${title} 项目展示照片`}>
+        <div className="project-showcase-track" style={trackStyle}>
+          {duplicatedImages.map((imageSrc, imageIndex) => (
+            <figure key={`${title}-${imageSrc}-${imageIndex}`} className="project-showcase-item">
+              <img
+                src={imageSrc}
+                alt={`${title} 展示图 ${((imageIndex % images.length) + 1).toString()}`}
+                loading="lazy"
+                decoding="async"
+                className="project-showcase-image"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = showcaseFallbackImage;
+                }}
+              />
+            </figure>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProjectsSection() {
   return (
     <section id="projects" className="py-12 relative">
@@ -41,6 +107,7 @@ export default function ProjectsSection() {
                       </motion.li>
                     ))}
                   </ul>
+                  <ProjectShowcase title={project.title} images={getProjectShowcaseImages(index)} />
                 </CardContent>
                 <CardFooter className="flex justify-center md:justify-start items-center border-t border-border/30 bg-gradient-to-r from-purple-500/5 to-pink-500/5">
                   <motion.a

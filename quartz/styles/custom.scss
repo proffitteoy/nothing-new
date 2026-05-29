@@ -7,6 +7,12 @@
   --blog-line: color-mix(in srgb, var(--lightgray) 75%, var(--dark) 25%);
   --blog-shadow: 0 20px 48px rgba(15, 23, 42, 0.18);
   --blog-accent-soft: color-mix(in srgb, var(--secondary) 16%, transparent);
+  --blog-focus-ring: color-mix(in srgb, var(--secondary) 62%, white 38%);
+  --blog-reading-gradient: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--secondary) 74%, #ffffff 26%),
+    color-mix(in srgb, var(--tertiary) 70%, #ffffff 30%)
+  );
 }
 
 :root[saved-theme="dark"] {
@@ -15,6 +21,12 @@
   --blog-line: color-mix(in srgb, var(--lightgray) 65%, var(--dark) 35%);
   --blog-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
   --blog-accent-soft: color-mix(in srgb, var(--secondary) 24%, transparent);
+  --blog-focus-ring: color-mix(in srgb, var(--secondary) 72%, #dbeafe 28%);
+  --blog-reading-gradient: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--secondary) 78%, #eff6ff 22%),
+    color-mix(in srgb, var(--tertiary) 74%, #eef2ff 26%)
+  );
 }
 
 body {
@@ -63,6 +75,35 @@ body::after {
   transition:
     opacity 0.55s ease,
     transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+#quartz-root::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20500;
+  width: 100%;
+  height: 3px;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: var(--blog-reading-gradient);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--secondary) 38%, transparent);
+  pointer-events: none;
+  opacity: 0;
+}
+
+@supports (animation-timeline: scroll(root block)) {
+  #quartz-root::before {
+    opacity: 1;
+    animation: blog-scroll-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--blog-focus-ring);
+  outline-offset: 2px;
 }
 
 :root[data-landing-lock="on"] {
@@ -342,6 +383,43 @@ body[data-slug="index"] .page > #quartz-body .center > article#main-content {
   line-height: 1.9;
 }
 
+.page > #quartz-body .center article :is(p, li) {
+  text-wrap: pretty;
+}
+
+.page > #quartz-body .center article :is(h2, h3, h4) {
+  scroll-margin-top: 5.6rem;
+}
+
+.page > #quartz-body .center article h2 {
+  margin-top: 2.4rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--blog-line) 70%, transparent);
+}
+
+.page > #quartz-body .center article h3 {
+  margin-top: 1.9rem;
+  padding-left: 0.55rem;
+  border-left: 3px solid color-mix(in srgb, var(--secondary) 52%, transparent);
+}
+
+.page > #quartz-body .center article pre {
+  border: 1px solid color-mix(in srgb, var(--blog-line) 72%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--blog-shell-strong) 82%, var(--bg) 18%);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+}
+
+.page > #quartz-body .center article pre code {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--secondary) 45%, transparent) transparent;
+}
+
+.page > #quartz-body .center article table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
 .page > #quartz-body .center article .callout {
   border-radius: 12px;
   border-color: color-mix(in srgb, var(--border) 70%, var(--blog-line) 30%);
@@ -381,6 +459,16 @@ li.section-li > .section {
   border: 1px solid var(--blog-line);
   border-radius: 12px;
   background: var(--blog-shell-strong);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+li.section-li > .section:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--secondary) 50%, var(--blog-line) 50%);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
 }
 
 li.section-li > .section .meta {
@@ -504,6 +592,15 @@ footer ul {
   }
   50% {
     transform: translateY(3px);
+  }
+}
+
+@keyframes blog-scroll-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
   }
 }
 

@@ -118,3 +118,115 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .project-showcase {
+    margin-top: 1.1rem;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, var(--foreground) 18%);
+    background:
+      linear-gradient(145deg, color-mix(in srgb, var(--card) 92%, transparent), color-mix(in srgb, var(--card) 76%, transparent)),
+      radial-gradient(circle at 8% 20%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 56%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--background) 60%, transparent),
+      0 12px 26px -18px color-mix(in srgb, var(--foreground) 40%, transparent);
+    overflow: hidden;
+  }
+
+  .project-showcase-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.8rem 0.35rem;
+  }
+
+  .project-showcase-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    color: color-mix(in srgb, var(--foreground) 72%, var(--muted-foreground) 28%);
+    text-transform: uppercase;
+  }
+
+  .project-showcase-tip {
+    font-size: 0.7rem;
+    color: color-mix(in srgb, var(--muted-foreground) 88%, transparent);
+  }
+
+  .project-showcase-viewport {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.45rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted-foreground) 40%, transparent) transparent;
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .project-showcase-viewport::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .project-showcase-viewport::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--muted-foreground) 42%, transparent);
+    border-radius: 999px;
+  }
+
+  .project-showcase-track {
+    --showcase-duration: 20s;
+    display: flex;
+    gap: 0.7rem;
+    width: max-content;
+    padding: 0 0.7rem 0.35rem;
+    animation: project-showcase-marquee var(--showcase-duration) linear infinite;
+    will-change: transform;
+  }
+
+  .project-showcase-viewport:hover .project-showcase-track,
+  .project-showcase-viewport:focus-within .project-showcase-track {
+    animation-play-state: paused;
+  }
+
+  .project-showcase-item {
+    margin: 0;
+    width: clamp(9.5rem, 21vw, 12.8rem);
+    aspect-ratio: 16 / 10;
+    flex: 0 0 auto;
+    border-radius: 0.7rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+    background: color-mix(in srgb, var(--muted) 80%, transparent);
+    box-shadow: 0 8px 18px -14px color-mix(in srgb, var(--foreground) 55%, transparent);
+  }
+
+  .project-showcase-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition:
+      transform 0.35s ease,
+      filter 0.35s ease;
+  }
+
+  .project-showcase-item:hover .project-showcase-image {
+    transform: scale(1.04);
+    filter: saturate(1.05) contrast(1.03);
+  }
+}
+
+@keyframes project-showcase-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 0.35rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-showcase-track {
+    animation: none;
+  }
+}
