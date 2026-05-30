@@ -37,7 +37,7 @@ jobs:
         run: npm --prefix my-portfolio run build
 
       - name: Build Quartz
-        run: npx quartz build
+        run: node quartz/bootstrap-cli.mjs build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

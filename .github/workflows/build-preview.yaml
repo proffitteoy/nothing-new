@@ -34,7 +34,7 @@ jobs:
         run: npm run check
 
       - name: Build Quartz
-        run: npx quartz build -d docs -v
+        run: node quartz/bootstrap-cli.mjs build -d docs -v
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v5
