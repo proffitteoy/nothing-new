@@ -193,6 +193,7 @@
     width: clamp(9.5rem, 21vw, 12.8rem);
     aspect-ratio: 16 / 10;
     flex: 0 0 auto;
+    position: relative;
     border-radius: 0.7rem;
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
@@ -200,17 +201,57 @@
     box-shadow: 0 8px 18px -14px color-mix(in srgb, var(--foreground) 55%, transparent);
   }
 
-  .project-showcase-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+  .project-showcase-placeholder {
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(135deg, transparent 0 46%, color-mix(in srgb, var(--border) 65%, transparent) 47% 53%, transparent 54%),
+      linear-gradient(45deg, transparent 0 46%, color-mix(in srgb, var(--border) 65%, transparent) 47% 53%, transparent 54%),
+      linear-gradient(145deg, color-mix(in srgb, var(--muted) 92%, transparent), color-mix(in srgb, var(--card) 76%, transparent));
+  }
+
+  .project-showcase-placeholder::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      110deg,
+      transparent 0%,
+      color-mix(in srgb, var(--background) 28%, transparent) 45%,
+      transparent 72%
+    );
+    transform: translateX(-120%);
+    animation: project-showcase-sheen 2.8s ease-in-out infinite;
+  }
+
+  .project-showcase-placeholder-number,
+  .project-showcase-placeholder-text {
+    position: relative;
+    z-index: 1;
+  }
+
+  .project-showcase-placeholder-number {
+    align-self: end;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: color-mix(in srgb, var(--foreground) 48%, transparent);
+  }
+
+  .project-showcase-placeholder-text {
+    align-self: start;
+    margin-top: 0.1rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: color-mix(in srgb, var(--muted-foreground) 86%, transparent);
+  }
+
+  .project-showcase-placeholder {
     transition:
       transform 0.35s ease,
       filter 0.35s ease;
   }
 
-  .project-showcase-item:hover .project-showcase-image {
+  .project-showcase-placeholder:hover {
     transform: scale(1.04);
     filter: saturate(1.05) contrast(1.03);
   }
@@ -225,8 +266,19 @@
   }
 }
 
+@keyframes project-showcase-sheen {
+  0%,
+  55% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .project-showcase-track {
+  .project-showcase-track,
+  .project-showcase-placeholder::before {
     animation: none;
   }
 }
