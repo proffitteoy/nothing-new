@@ -48,7 +48,7 @@ Vercel 项目保持仓库根目录部署：
 ```txt
 Root Directory: ./
 Framework Preset: Next.js
-Install Command: npm install --prefix site
+Install Command: npm install && npm install --prefix site
 Build Command: npm run build
 Output Directory: site/.next
 ```
