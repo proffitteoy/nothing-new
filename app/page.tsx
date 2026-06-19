@@ -68,7 +68,7 @@ export default function Home() {
     },
     {
       title: '友链',
-      description: '和参考站一致的友链展示与申请格式。',
+      description: '展示友站，新增申请请去仓库提 Issue。',
       href: '/friends',
       icon: UsersRound,
       tone: 'from-fuchsia-500/20 to-pink-400/20',
@@ -123,7 +123,7 @@ export default function Home() {
                             <Icon className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
                           </div>
                           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
-                            Open
+                            进入
                           </span>
                         </div>
                         <div>

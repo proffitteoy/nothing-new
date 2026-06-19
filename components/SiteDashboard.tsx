@@ -8,7 +8,7 @@ export default function SiteDashboard() {
   const [timeStr, setTimeStr] = useState('');
   const [uptimeStr, setUptimeStr] = useState('');
 
-  // 🌟 从配置中读取建站时间
+  // 从配置中读取稳定运行起算时间
   const START_DATE = new Date(siteConfig.buildDate || '2026-03-23T00:00:00').getTime();
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function SiteDashboard() {
           <span>系统已稳定运行：<span className="text-indigo-600 dark:text-indigo-400 font-black">{uptimeStr}</span></span>
         </div>
 
-        {/* 技术栈徽章 (🌟 动态映射 siteConfig 里的数组) */}
+        {/* 技术栈徽章 */}
         <div className="flex gap-2">
           {siteConfig.footerBadges?.map((badge, index) => (
             <span
@@ -62,18 +62,6 @@ export default function SiteDashboard() {
             </span>
           ))}
         </div>
-
-        {/* 备案信息 (🌟 从 siteConfig 读取链接和名称) */}
-        {siteConfig.icpConfig && (
-          <a
-            href={siteConfig.icpConfig.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-indigo-500 transition-colors border-b border-dashed border-slate-400 dark:border-slate-500 pb-0.5"
-          >
-            {siteConfig.icpConfig.name}
-          </a>
-        )}
 
       </div>
     </div>

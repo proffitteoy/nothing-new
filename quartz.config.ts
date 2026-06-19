@@ -15,7 +15,7 @@ const config: QuartzConfig = {
     ignorePatterns: ["private", "templates", ".obsidian"],
     defaultDateType: "modified",
     theme: {
-      fontOrigin: "googleFonts",
+      fontOrigin: "local",
       cdnCaching: true,
       typography: {
         title: "Playfair Display",
@@ -85,7 +85,6 @@ const config: QuartzConfig = {
       Plugin.Static(),
       Plugin.Favicon(),
       Plugin.NotFoundPage(),
-      Plugin.CustomOgImages(),
     ],
   },
 }

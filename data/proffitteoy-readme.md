@@ -1,122 +1,48 @@
-<div align="center">
+# 项目总览
 
-<img src="https://capsule-render.vercel.app/api?type=waving&height=260&color=0:020617,35:1e3a8a,70:7c3aed,100:db2777&text=proffitteoy&fontColor=ffffff&fontSize=58&fontAlignY=36&desc=Applied%20Mathematics%20%C2%B7%20TDA%20%C2%B7%20Agent%20Systems%20%C2%B7%20Research%20Infrastructure&descAlignY=58&descSize=17&animation=fadeIn" alt="proffitteoy animated profile banner" />
+这里不是简历墙，而是一个持续演化的项目索引：把数学学习、数据建模、智能体工程和个人研究工具放在同一张地图里，方便回看、复盘和继续扩展。
 
-<br />
+> 目标很简单：让每个公开仓库都能说明它解决了什么问题、用到了什么方法、下一步准备往哪里走。
 
-<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=24&duration=2600&pause=700&color=38BDF8&center=true&vCenter=true&width=880&lines=Applied+Mathematics+Student;Topological+Data+Analysis+%2F+Mathematical+Modeling;Building+AI-native+Research+Systems;From+Proofs+to+Pipelines%2C+from+Models+to+Agents" alt="Typing SVG introduction" />
+## 技术雷达
 
-<br />
-
-<img src="https://komarev.com/ghpvc/?username=proffitteoy&style=for-the-badge&color=0ea5e9" alt="Profile views" />
-<img src="https://img.shields.io/github/followers/proffitteoy?style=for-the-badge&logo=github&color=7c3aed" alt="GitHub followers" />
-<a href="https://nothing-new.icu/">
-  <img src="https://img.shields.io/badge/Site-nothing--new.icu-db2777?style=for-the-badge" alt="Personal site" />
-</a>
-
-</div>
-
----
-
-## Tech Radar
-
-<div align="center">
-
-<img src="https://skillicons.dev/icons?i=python,ts,js,react,nextjs,tailwind,postgres,sqlite,prisma,docker,git,github,linux,vscode" alt="Tech stack icons" />
-
-<br />
-<br />
-
-<img src="https://img.shields.io/badge/Mathematics-Structural_Modeling-0f172a?style=for-the-badge" alt="Mathematics structural modeling" />
-<img src="https://img.shields.io/badge/TDA-Persistent_Homology-1e3a8a?style=for-the-badge" alt="TDA persistent homology" />
-<img src="https://img.shields.io/badge/AI-RAG_%2F_Agent_Workflow-7c3aed?style=for-the-badge" alt="AI RAG and agent workflow" />
-<img src="https://img.shields.io/badge/Data-PostgreSQL_%2F_SQLite-db2777?style=for-the-badge" alt="PostgreSQL and SQLite" />
-
-</div>
-
----
-
-## Project Constellation
-
-<table>
-<tr>
-<td width="50%">
-
-### Research / Math
-
-<a href="https://github.com/proffitteoy/early-rumor-propagation-tda">
-  <img src="https://github-readme-stats.vercel.app/api/pin/?username=proffitteoy&repo=early-rumor-propagation-tda&theme=tokyonight&hide_border=true" alt="early-rumor-propagation-tda pinned repository card" />
-</a>
-
-<a href="https://github.com/proffitteoy/TILO-PRC">
-  <img src="https://github-readme-stats.vercel.app/api/pin/?username=proffitteoy&repo=TILO-PRC&theme=tokyonight&hide_border=true" alt="TILO-PRC pinned repository card" />
-</a>
-
-</td>
-<td width="50%">
-
-### AI / Engineering
-
-<a href="https://github.com/proffitteoy/Iris-Terminal">
-  <img src="https://github-readme-stats.vercel.app/api/pin/?username=proffitteoy&repo=Iris-Terminal&theme=tokyonight&hide_border=true" alt="Iris-Terminal pinned repository card" />
-</a>
-
-<a href="https://github.com/proffitteoy/gitvisual-llm">
-  <img src="https://github-readme-stats.vercel.app/api/pin/?username=proffitteoy&repo=gitvisual-llm&theme=tokyonight&hide_border=true" alt="gitvisual-llm pinned repository card" />
-</a>
-
-</td>
-</tr>
-</table>
-
----
-
-## Mission Control
-
-| Track | Signal | Public artifact |
+| 方向 | 关注点 | 常用工具 |
 | --- | --- | --- |
-| Topological Data Analysis | Persistent homology, propagation trees, topology-guided features | [`early-rumor-propagation-tda`](https://github.com/proffitteoy/early-rumor-propagation-tda) |
-| Topology-guided Algorithms | Graph clustering, PRC, TILO, structure-aware partitioning | [`TILO-PRC`](https://github.com/proffitteoy/TILO-PRC) |
-| AI Research Workspace | Local-first chat, files, retrieval, memory, Obsidian integration | [`Iris-Terminal`](https://github.com/proffitteoy/Iris-Terminal) |
-| Agent Orchestration | Context packaging, review loops, generated artifacts | [`ManiMind`](https://github.com/proffitteoy/ManiMind) |
-| Developer Tools | Repository visualization, function graphs, LLM-assisted engineering | [`gitvisual-llm`](https://github.com/proffitteoy/gitvisual-llm) |
-| Security Platform | WAF logs, incident analysis, policy loop, action audit | [`waf-incident-platform`](https://github.com/proffitteoy/waf-incident-platform) |
+| 数学建模 | 特征构造、优化建模、统计检验、时间序列 | Python、R、数值计算工具 |
+| 拓扑数据分析 | 持久同调、传播结构、拓扑特征 | 图算法、矩阵计算、可视化工具 |
+| 智能体工程 | 本地工作流、检索增强、记忆管理、任务编排 | TypeScript、React、数据库、脚本自动化 |
+| 研究基础设施 | 笔记同步、文档生成、仓库分析、实验复现 | Next.js、Quartz、命令行工具 |
 
----
+## 项目星图
 
-## GitHub Telemetry
+### 研究与数学
 
-<div align="center">
+| 项目 | 内容 | 入口 |
+| --- | --- | --- |
+| 早期谣言传播的拓扑分析 | 用拓扑特征刻画传播树结构，尝试把持久同调用到早期传播判断里。 | [查看项目](https://github.com/proffitteoy/early-rumor-propagation-tda) |
+| 拓扑引导的划分算法 | 围绕图聚类、结构划分和排序目标做算法实验。 | [查看项目](https://github.com/proffitteoy/TILO-PRC) |
+| 计算化学辅助工具 | 整合常见计算流程，服务于个人实验数据处理和结果复查。 | [查看项目](https://github.com/heiehiehi/Computational_Chemistry_Tool) |
 
-<img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=proffitteoy&theme=tokyonight" alt="GitHub profile details" />
+### 智能工具与工程
 
-<br />
+| 项目 | 内容 | 入口 |
+| --- | --- | --- |
+| 本地研究工作台 | 面向本地优先的对话、文件、检索、记忆和笔记联动。 | [查看项目](https://github.com/proffitteoy/Iris-Terminal) |
+| 智能体编排实验 | 关注上下文打包、任务拆分、审阅循环和生成物沉淀。 | [查看项目](https://github.com/proffitteoy/ManiMind) |
+| 仓库可视化分析 | 把代码结构、函数关系和语言模型辅助阅读结合起来。 | [查看项目](https://github.com/proffitteoy/gitvisual-llm) |
+| 安全事件分析平台 | 面向日志检索、事件分析、策略复盘和操作审计的实验平台。 | [查看项目](https://github.com/proffitteoy/waf-incident-platform) |
 
-<img width="49%" src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=proffitteoy&theme=tokyonight" alt="Repositories per language" />
-<img width="49%" src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=proffitteoy&theme=tokyonight" alt="Most committed languages" />
+## 当前主线
 
-<br />
+| 主线 | 正在推进的事情 |
+| --- | --- |
+| 数学学习 | 把零散证明、竞赛题、分析学笔记整理成可检索的知识库。 |
+| 数据建模 | 沉淀从数据清洗、特征工程到模型解释的复用流程。 |
+| 智能体系统 | 让个人工作流具备更稳定的上下文管理和任务闭环。 |
+| 博客基础设施 | 保留 Quartz 的文章渲染能力，同时用 Next.js 承担主页与交互层。 |
 
-<img width="49%" src="./assets/generated/github-stats-summary.svg" alt="GitHub stats summary" />
-<img width="49%" src="./assets/generated/productive-time-summary.svg" alt="Productive time summary" />
+## 长期方向
 
-</div>
-
----
-
-## Long-term Direction
-
-```text
-Applied Mathematics
-  -> Topological Data Analysis
-  -> Data Modeling
-  -> AI Agent Systems
-  -> Research Tools
-  -> Open Source Infrastructure
-```
-
-<div align="center">
-
-<img src="https://capsule-render.vercel.app/api?type=waving&height=130&section=footer&color=0:020617,35:1e3a8a,70:7c3aed,100:db2777" alt="Profile footer wave" />
-
-</div>
+1. 用数学结构理解数据，而不是只堆模型。
+2. 用工具减少重复劳动，把注意力留给证明、建模和判断。
+3. 把公开项目写成可复现、可复盘、可继续接力的研究记录。

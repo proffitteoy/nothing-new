@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import BackButton from '../../components/BackButton';
 import { friendsData } from '../../data/friends';
-import Comments from '../../components/Comments'; // 🌟 引入你的 Gitalk 组件
-import { siteConfig } from '../../siteConfig'; // 🌟 引入刚刚更新的全局配置文件
+import { siteConfig } from '../../siteConfig';
 
 // Framer Motion 动画变体：交错子元素
 const containerVariants = {
@@ -25,8 +24,8 @@ export default function FriendsBoard() {
   // 🌟 控制复制按钮的状态
   const [isCopied, setIsCopied] = useState(false);
 
-  // 🌟 直接从 siteConfig 读取申请格式
   const applyFormat = siteConfig.friendLinkApplyFormat;
+  const issueUrl = siteConfig.friendLinkIssueUrl;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(applyFormat);
@@ -109,7 +108,7 @@ export default function FriendsBoard() {
           ✨ 建立神经连接
         </h2>
         <p className="text-xs md:text-base text-slate-600 dark:text-slate-400 font-serif mb-4 md:mb-6">
-          欢迎各位大佬交换友链！请一键复制下方格式，并在底部的 Gitalk 留言板申请：
+          欢迎交换友链。请复制下方格式，然后去仓库提交 Issue：
         </p>
 
         {/* 代码展示框 & 一键复制按钮 */}
@@ -137,33 +136,14 @@ export default function FriendsBoard() {
 
         <div className="mt-6 md:mt-8">
           <a
-            href="#gitalk-container"
+            href={issueUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-block px-6 py-2.5 md:px-8 md:py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-full text-sm md:text-base font-bold tracking-widest transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/30"
           >
-            前往留言区申请 👇
+            去仓库提 Issue
           </a>
         </div>
-      </motion.div>
-
-      {/* Gitalk 评论区 */}
-      <motion.div
-        id="gitalk-container"
-        className="mt-12 md:mt-16 scroll-mt-24 px-2 md:px-0"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        <div className="flex items-center justify-center gap-2 md:gap-3 mb-4 md:mb-6">
-          <span className="w-8 md:w-12 h-[1px] bg-slate-300 dark:bg-slate-700"></span>
-          <h3 className="text-sm md:text-xl font-bold text-slate-800 dark:text-gray-200 tracking-widest uppercase">
-            终端留言板
-          </h3>
-          <span className="w-8 md:w-12 h-[1px] bg-slate-300 dark:bg-slate-700"></span>
-        </div>
-
-        {/* 渲染评论组件 */}
-        <Comments />
       </motion.div>
 
     </div>

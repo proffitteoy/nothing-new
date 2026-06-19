@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, RefreshCcw, ListMusic, Mic2, Disc3, Volume2, VolumeX, Search, X, MessageSquare } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, RefreshCcw, ListMusic, Mic2, Disc3, Volume2, VolumeX, Search, X } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import { useMusic } from '../../components/MusicProvider';
-import Comments from '../../components/Comments';
 
 export default function MusicClient() {
   const {
@@ -266,16 +265,6 @@ export default function MusicClient() {
             </div>
           </div>
 
-          {/* ====== 留言板 ====== */}
-          <div className="mt-8 md:mt-12 mb-20 bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-[32px] md:rounded-[40px] shadow-2xl border border-white/40 dark:border-white/10 overflow-hidden transition-colors duration-700 relative">
-             <div className="px-5 sm:px-8 md:px-16 py-8 md:py-12 relative">
-                <div className="flex items-center gap-3 mb-6 md:mb-8 border-b border-slate-300/50 dark:border-slate-700 pb-4 md:pb-6">
-                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-indigo-500/10 flex items-center justify-center"><MessageSquare className="text-indigo-500 w-5 h-5 md:w-6 md:h-6" /></div>
-                   <div><h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">乐迷留言板</h3><p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium">听着这首歌，你想到了什么？</p></div>
-                </div>
-                <div className="relative"><Comments /></div>
-             </div>
-          </div>
         </div>
       </PageTransition>
 

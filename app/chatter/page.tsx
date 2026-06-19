@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function ChatterPage() {
   return (
-    <div className="min-h-screen relative pb-10">
+    <div className="h-screen relative overflow-hidden">
       <Navbar />
       <PageTransition>
         <QuartzFrame src="/blog/misc/" title="杂谈" />
