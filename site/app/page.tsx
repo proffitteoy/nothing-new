@@ -14,7 +14,7 @@ import { TagChip } from "@/components/tag-chip"
 import { buildContentAssetUrl, getAllTags, getPublishedPosts } from "@/lib/blog/content"
 import type { BlogPost } from "@/lib/blog/types"
 import { formatDate } from "@/lib/format"
-import { profile, siteChannels } from "@/lib/profile"
+import { profile } from "@/lib/profile"
 
 const postCovers = [
   "图片/1.1.png",
@@ -61,7 +61,7 @@ export default async function HomePage() {
 
           <AsideCard icon={<MessageCircle className="h-4 w-4" />} title="公告">
             <p className="text-sm leading-7 text-[color:var(--muted)]">
-              这里不再让 Quartz 当主页。主页回到个人站点，博客继续承载公开笔记和长期归档。
+              Quartz 和 Obsidian 笔记系统继续保留；这个首页只负责做个人站点入口和栏目导航。
             </p>
           </AsideCard>
 
@@ -173,11 +173,8 @@ function AuthorCard({
         <a href={profile.github} aria-label="GitHub">
           <Github className="h-5 w-5" />
         </a>
-        {siteChannels.slice(0, 2).map((channel) => (
-          <Link key={channel.title} href={channel.href}>
-            {channel.title}
-          </Link>
-        ))}
+        <Link href="/projects">项目</Link>
+        <Link href="/music">音乐</Link>
       </div>
     </section>
   )

@@ -1,12 +1,6 @@
 import Link from "next/link"
+import { navLinks } from "@/lib/profile"
 import { ThemeToggle } from "./theme-toggle"
-
-const primaryLinks = [
-  { href: "/", label: "首页" },
-  { href: "/blog", label: "博客" },
-  { href: "/portfolio", label: "项目" },
-  { href: "/#now", label: "现在" },
-]
 
 export function SiteHeader() {
   return (
@@ -25,7 +19,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
-          {primaryLinks.map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -44,7 +38,7 @@ export function SiteHeader() {
             </summary>
             <div className="absolute right-6 top-16 w-44 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)]/95 p-3 shadow-2xl backdrop-blur-xl">
               <nav className="flex flex-col gap-2">
-                {primaryLinks.map((link) => (
+                {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

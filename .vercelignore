@@ -8,6 +8,6 @@ my-portfolio/node_modules
 my-portfolio/dist
 quartz/.quartz-cache
 tmp-mobile-build
-public
+/public
 prof
 heiehiehi.github.io-main

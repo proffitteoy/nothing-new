@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { profile } from "@/lib/profile"
+import { navLinks, profile } from "@/lib/profile"
 
 export function SiteFooter() {
   return (
@@ -9,17 +9,16 @@ export function SiteFooter() {
           <p className="text-xs uppercase tracking-[0.28em] text-[color:var(--muted)]">Personal Site</p>
           <h2 className="text-lg font-semibold text-[color:var(--foreground)]">{profile.name}</h2>
           <p className="max-w-2xl text-sm leading-7 text-[color:var(--muted)]">
-            一个长期写作、项目记录和知识整理入口。博客内容继续来自 Obsidian，主页负责个人站点表达。
+            主站负责入口、项目、音乐、杂谈、友链和关于；Quartz 与 Obsidian 内容层继续保留给笔记系统。
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-[color:var(--muted)]">
-          <Link href="/blog" className="transition hover:text-[color:var(--foreground)]">
-            博客
-          </Link>
-          <Link href="/portfolio" className="transition hover:text-[color:var(--foreground)]">
-            项目
-          </Link>
+          {navLinks.map((link) => (
+            <Link key={link.href} href={link.href} className="transition hover:text-[color:var(--foreground)]">
+              {link.label}
+            </Link>
+          ))}
           <a href={profile.github} className="transition hover:text-[color:var(--foreground)]">
             GitHub
           </a>
