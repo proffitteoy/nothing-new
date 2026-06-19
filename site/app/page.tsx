@@ -1,147 +1,151 @@
-import Link from "next/link"
-import { PostCard } from "@/components/post-card"
-import { getAllTags, getPublishedPosts } from "@/lib/blog/content"
-import { highlightAreas, profile, selectedProjects } from "@/lib/profile"
+import fs from 'fs';
+import path from 'path';
+import Link from 'next/link';
+import { BookOpen, FolderGit2, MessageCircle, Music2, UserRound, UsersRound } from 'lucide-react';
 
-export default async function HomePage() {
-  const posts = await getPublishedPosts()
-  const tags = await getAllTags()
-  const recentPosts = posts.slice(0, 6)
+import Navbar from '../components/Navbar';
+import PageTransition from '../components/PageTransition';
+import { siteConfig } from '../siteConfig';
+import CloudPlayer from '../components/CloudPlayer';
+import ProfileCard from '../components/ProfileCard';
+import SiteDashboard from '../components/SiteDashboard';
+import LyricBar from '../components/LyricBar';
+import { ToastProvider } from '../components/ToastProvider';
+
+function countQuartzPages(directory: string) {
+  if (!fs.existsSync(directory)) return 0;
+
+  let total = 0;
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      total += countQuartzPages(fullPath);
+    } else if (
+      entry.name.endsWith('.html') &&
+      entry.name !== 'index.html' &&
+      entry.name !== '404.html'
+    ) {
+      total += 1;
+    }
+  }
+
+  return total;
+}
+
+export default function Home() {
+  const quartzBlogDir = path.join(process.cwd(), 'public', 'blog');
+  const quartzMiscDir = path.join(quartzBlogDir, 'misc');
+  const blogCount = countQuartzPages(quartzBlogDir);
+  const chatterCount = countQuartzPages(quartzMiscDir);
+  const legacyEntrances = [
+    {
+      title: '项目',
+      description: 'GitHub profile README 与项目星图。',
+      href: '/projects',
+      icon: FolderGit2,
+      tone: 'from-sky-500/20 to-indigo-500/20',
+    },
+    {
+      title: '音乐',
+      description: '固定收藏的四首网易云音乐。',
+      href: '/music',
+      icon: Music2,
+      tone: 'from-rose-500/20 to-orange-400/20',
+    },
+    {
+      title: '杂谈',
+      description: 'Quartz 原版 misc 笔记，不改变文章渲染。',
+      href: '/chatter',
+      icon: MessageCircle,
+      tone: 'from-emerald-500/20 to-teal-400/20',
+    },
+    {
+      title: '博客',
+      description: '完整接入原来的 Quartz 博客。',
+      href: '/legacy',
+      icon: BookOpen,
+      tone: 'from-cyan-500/20 to-blue-400/20',
+    },
+    {
+      title: '友链',
+      description: '和参考站一致的友链展示与申请格式。',
+      href: '/friends',
+      icon: UsersRound,
+      tone: 'from-fuchsia-500/20 to-pink-400/20',
+    },
+    {
+      title: '关于',
+      description: '原版简介中未在项目页重复展示的内容。',
+      href: '/about',
+      icon: UserRound,
+      tone: 'from-amber-500/20 to-lime-400/20',
+    },
+  ];
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-14 px-6 py-12 md:py-20">
-      <section className="glass-panel overflow-hidden px-8 py-12 md:px-12 md:py-16">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-7">
-            <p className="section-eyebrow">Knowledge-first personal website</p>
-            <div className="space-y-5">
-              <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-white md:text-6xl">
-                把 <span className="text-gradient">Obsidian 笔记</span>、项目经历和长期研究写进同一个站点。
-              </h1>
-              <p className="max-w-3xl text-base leading-8 text-zinc-300 md:text-lg">
-                {profile.intro}
-              </p>
-            </div>
+    <ToastProvider>
+      <div className="min-h-screen relative pb-10">
+        <Navbar />
+        <PageTransition>
+          {/* 🌟 调整整体容器的内边距，适应手机端更小的屏幕 */}
+          <div className="w-full max-w-6xl mx-auto mt-24 sm:mt-28 px-4 sm:px-6 lg:px-10 relative z-10">
+            <main className="flex flex-col gap-6 w-full mt-6">
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/blog"
-                className="inline-flex items-center rounded-full bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
-              >
-                浏览博客
-              </Link>
-              <a
-                href={profile.github}
-                className="inline-flex items-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-sm text-zinc-100 transition hover:border-cyan-300/40 hover:bg-white/10"
-              >
-                GitHub
-              </a>
-            </div>
+              {/* 第一行：个人信息 + 播放器 */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+                {/* 手机上占满1列，电脑上占7列 */}
+                <div className="col-span-1 lg:col-span-7 flex flex-col">
+                    <ProfileCard postCount={blogCount} chatterCount={chatterCount} photoCount={siteConfig.cloudMusicIds.length}/>
+                </div>
+                {/* 手机上占满1列，电脑上占5列 */}
+                <div className="col-span-1 lg:col-span-5 flex flex-col">
+                    <CloudPlayer/>
+                </div>
+              </div>
+
+              {/* 歌词栏 */}
+              <div className="w-full mt-[-10px]"><LyricBar/></div>
+
+              {/* 核心入口：只保留指定栏目 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+                {legacyEntrances.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="group relative overflow-hidden rounded-3xl bg-white/45 dark:bg-slate-800/50 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl p-6 min-h-[170px] transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
+                    >
+                      <div className={`absolute inset-0 bg-gradient-to-br ${item.tone} opacity-70 group-hover:opacity-100 transition-opacity duration-500`} />
+                      <div className="relative z-10 flex h-full flex-col justify-between gap-8">
+                        <div className="flex items-center justify-between">
+                          <div className="w-12 h-12 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-white/50 dark:border-white/10 flex items-center justify-center shadow-sm">
+                            <Icon className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
+                            Open
+                          </span>
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
+                            {item.title}
+                          </h2>
+                          <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* 底部数据面板 */}
+              <div className="w-full mt-4"><SiteDashboard/></div>
+            </main>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="glass-panel p-6">
-              <p className="section-eyebrow">Current focus</p>
-              <h2 className="mt-3 text-2xl font-semibold text-white">{profile.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-zinc-400">
-                个人主页不再和笔记引擎绑死，内容层保留，站点层单独演化。
-              </p>
-            </div>
-            <div className="glass-panel grid gap-5 p-6 sm:grid-cols-3 lg:grid-cols-3">
-              <div>
-                <p className="text-3xl font-semibold text-white">{posts.length}</p>
-                <p className="mt-1 text-sm text-zinc-500">公开文章</p>
-              </div>
-              <div>
-                <p className="text-3xl font-semibold text-white">{tags.length}</p>
-                <p className="mt-1 text-sm text-zinc-500">主题标签</p>
-              </div>
-              <div>
-                <p className="text-3xl font-semibold text-white">{selectedProjects.length}</p>
-                <p className="mt-1 text-sm text-zinc-500">精选项目</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="focus" className="space-y-6">
-        <div className="space-y-3">
-          <p className="section-eyebrow">Focus areas</p>
-          <h2 className="text-3xl font-semibold text-white">当前重点方向</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {highlightAreas.map((area, index) => (
-            <div key={area} className="glass-panel p-6">
-              <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-                {String(index + 1).padStart(2, "0")}
-              </p>
-              <p className="mt-3 text-lg font-medium text-white">{area}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="projects" className="space-y-6">
-        <div className="space-y-3">
-          <p className="section-eyebrow">Selected work</p>
-          <h2 className="text-3xl font-semibold text-white">主站首页展示的项目切片</h2>
-        </div>
-        <div className="grid gap-5 lg:grid-cols-2">
-          {selectedProjects.map((project) => (
-            <a
-              key={project.title}
-              href={project.href}
-              className="glass-panel group block p-6 transition hover:-translate-y-0.5 hover:border-cyan-300/25"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <h3 className="text-xl font-semibold text-white transition group-hover:text-cyan-200">
-                  {project.title}
-                </h3>
-                <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-zinc-300">
-                  {project.tag}
-                </span>
-              </div>
-              <p className="mt-4 text-sm leading-7 text-zinc-400">{project.description}</p>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-3">
-            <p className="section-eyebrow">Recent writing</p>
-            <h2 className="text-3xl font-semibold text-white">最新公开笔记</h2>
-          </div>
-          <Link href="/blog" className="text-sm text-cyan-200 transition hover:text-cyan-100">
-            查看全部文章
-          </Link>
-        </div>
-        <div className="grid gap-5 lg:grid-cols-2">
-          {recentPosts.map((post) => (
-            <PostCard key={post.slug} post={post} />
-          ))}
-        </div>
-      </section>
-
-      <section id="contact" className="glass-panel grid gap-6 px-8 py-8 md:grid-cols-[1fr_auto] md:items-end">
-        <div>
-          <p className="section-eyebrow">Contact</p>
-          <h2 className="mt-3 text-3xl font-semibold text-white">如果你想聊项目、研究或站点架构</h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400">
-            这个站点接下来会逐步把博客、项目、研究主题和工具实验收束到同一套 Next.js 结构下。
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 text-sm text-zinc-300">
-          <a href={`mailto:${profile.email}`} className="transition hover:text-white">
-            {profile.email}
-          </a>
-          <a href={profile.github} className="transition hover:text-white">
-            {profile.github}
-          </a>
-        </div>
-      </section>
-    </div>
-  )
+        </PageTransition>
+      </div>
+    </ToastProvider>
+  );
 }
