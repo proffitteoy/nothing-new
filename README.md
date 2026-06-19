@@ -34,6 +34,19 @@ npm run start
 
 这些命令现在都会转发到 `site/`。
 
+## Vercel 部署
+
+这个仓库按“仓库根目录部署，实际应用在 `site/`”来配置：
+
+- `vercel.json`
+  指定 Vercel 使用 Next.js，安装 `site/` 依赖，并通过根目录的 `npm run build` 构建。
+- `site/next.config.ts`
+  将 file tracing 根目录设为仓库根目录，并把 `content/` 纳入 Vercel 函数追踪范围。
+- `content/`
+  保持为主站的内容源，部署时会随仓库进入构建环境，也可通过 `CONTENT_ROOT` 环境变量覆盖路径。
+
+Vercel Project 可以直接连接整个仓库，不需要把 Root Directory 改成 `site/`。如果改成 `site/`，运行时读取仓库根目录 `content/` 会更容易出问题。
+
 如果还需要运行旧版 Quartz：
 
 ```bash

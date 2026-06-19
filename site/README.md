@@ -30,7 +30,12 @@ npm install
 npm run dev
 ```
 
+## Vercel
+
+仓库根目录已经提供 `vercel.json`，推荐在 Vercel 里直接选择整个仓库作为项目根目录，由根目录脚本转发到 `site/` 构建。
+
+`site/next.config.ts` 会把 file tracing root 提升到仓库根目录，并显式包含 `../content/**/*`，这样文章资源路由和后续动态 API 可以在 Vercel 函数中读取内容文件。
+
 ## 已知限制
 
-- 这套主站还没有做完整构建验证，因为当前线程里 `npm install` 需要额外放行。
 - `content/` 资源目前通过 Next route handler 提供，部署时要确保运行环境能访问仓库内的内容文件。

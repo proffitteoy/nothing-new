@@ -10,7 +10,7 @@ export function TagChip({ tag }: { tag: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-zinc-300 transition hover:border-cyan-300/40 hover:text-white"
+      className="inline-flex items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface-soft)] px-3 py-1 text-xs text-[color:var(--muted)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--foreground)]"
     >
       #{tag}
     </Link>

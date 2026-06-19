@@ -1,7 +1,8 @@
+import { existsSync } from "node:fs"
 import fs from "node:fs/promises"
 import path from "node:path"
 
-const CONTENT_ROOT = path.resolve(process.cwd(), "..", "content")
+const CONTENT_ROOT = resolveContentRoot()
 
 const mimeMap: Record<string, string> = {
   ".png": "image/png",
@@ -48,4 +49,20 @@ export async function GET(_request: Request, context: RouteContext) {
   } catch {
     return new Response("Not Found", { status: 404 })
   }
+}
+
+function resolveContentRoot() {
+  const candidates = [
+    process.env.CONTENT_ROOT,
+    path.resolve(process.cwd(), "content"),
+    path.resolve(process.cwd(), "..", "content"),
+  ].filter(Boolean) as string[]
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  return candidates[0] ?? path.resolve(process.cwd(), "content")
 }

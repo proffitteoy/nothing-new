@@ -22,8 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             __html: `
               (function () {
                 var stored = localStorage.getItem("theme");
-                var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-                document.documentElement.dataset.theme = stored || (systemDark ? "dark" : "light");
+                document.documentElement.dataset.theme = stored || "light";
               })();
             `,
           }}

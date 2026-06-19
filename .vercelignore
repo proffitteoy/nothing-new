@@ -1,0 +1,13 @@
+.git
+.sync
+.obsidian
+node_modules
+site/node_modules
+site/.next
+my-portfolio/node_modules
+my-portfolio/dist
+quartz/.quartz-cache
+tmp-mobile-build
+public
+prof
+heiehiehi.github.io-main

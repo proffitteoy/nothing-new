@@ -40,8 +40,8 @@ export default async function BlogTagPage({ params }: PageProps) {
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-12 md:py-16">
       <section className="glass-panel p-8">
         <p className="section-eyebrow">Tag archive</p>
-        <h1 className="mt-3 text-4xl font-semibold text-white">#{titleFromTag(tagPath)}</h1>
-        <p className="mt-4 text-sm leading-8 text-zinc-400">共 {posts.length} 篇公开文章。</p>
+        <h1 className="mt-3 text-4xl font-semibold text-[color:var(--foreground)]">#{titleFromTag(tagPath)}</h1>
+        <p className="mt-4 text-sm leading-8 text-[color:var(--muted)]">共 {posts.length} 篇公开文章。</p>
       </section>
 
       <section className="grid gap-5 lg:grid-cols-2">

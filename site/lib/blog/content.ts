@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs"
 import fs from "node:fs/promises"
 import path from "node:path"
 import matter from "gray-matter"
@@ -12,7 +13,7 @@ import {
   toPosix,
 } from "./slug"
 
-const CONTENT_ROOT = path.resolve(process.cwd(), "..", "content")
+const CONTENT_ROOT = resolveContentRoot()
 
 type RuntimeCache = {
   posts: BlogPost[]
@@ -65,6 +66,22 @@ export async function getAllTags() {
 
 export function buildContentAssetUrl(relativePath: string) {
   return encodeURI(`/content/${toPosix(relativePath)}`)
+}
+
+function resolveContentRoot() {
+  const candidates = [
+    process.env.CONTENT_ROOT,
+    path.resolve(process.cwd(), "content"),
+    path.resolve(process.cwd(), "..", "content"),
+  ].filter(Boolean) as string[]
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  return candidates[0] ?? path.resolve(process.cwd(), "content")
 }
 
 async function buildRuntime(): Promise<BlogRuntime> {

@@ -51,14 +51,14 @@ export default async function BlogPostPage({ params }: PageProps) {
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-12 md:py-16">
       <article className="glass-panel overflow-hidden">
-        <div className="border-b border-white/8 px-8 py-8 md:px-12 md:py-10">
-          <Link href="/blog" className="section-eyebrow transition hover:text-white">
+        <div className="border-b border-[color:var(--border)] px-8 py-8 md:px-12 md:py-10">
+          <Link href="/blog" className="section-eyebrow transition hover:text-[color:var(--foreground)]">
             返回博客
           </Link>
-          <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
+          <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-[color:var(--foreground)] md:text-5xl">
             {post.title}
           </h1>
-          <div className="mt-6 flex flex-wrap gap-4 text-sm text-zinc-400">
+          <div className="mt-6 flex flex-wrap gap-4 text-sm text-[color:var(--muted)]">
             <span>{post.section}</span>
             <span>{formatDate(post.updatedAt)}</span>
             <span>{post.readingMinutes} 分钟阅读</span>
@@ -81,14 +81,14 @@ export default async function BlogPostPage({ params }: PageProps) {
         <section className="space-y-5">
           <div className="space-y-2">
             <p className="section-eyebrow">Related notes</p>
-            <h2 className="text-2xl font-semibold text-white">同一主题下的继续阅读</h2>
+            <h2 className="text-2xl font-semibold text-[color:var(--foreground)]">同一主题下的继续阅读</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {relatedPosts.map((item) => (
-              <Link key={item.slug} href={item.url} className="glass-panel p-5 transition hover:border-cyan-300/20">
-                <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{item.section}</p>
-                <h3 className="mt-3 text-lg font-medium text-white">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-zinc-400">{item.description}</p>
+              <Link key={item.slug} href={item.url} className="glass-panel p-5 transition hover:border-[color:var(--accent)]">
+                <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">{item.section}</p>
+                <h3 className="mt-3 text-lg font-medium text-[color:var(--foreground)]">{item.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.description}</p>
               </Link>
             ))}
           </div>

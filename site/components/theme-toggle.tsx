@@ -31,7 +31,7 @@ export function ThemeToggle() {
       type="button"
       aria-label="切换主题"
       onClick={toggleTheme}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/8 text-zinc-100 transition hover:border-cyan-300/40 hover:bg-white/14"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface-soft)] text-[color:var(--foreground)] transition hover:border-[color:var(--accent)]"
     >
       {theme === "dark" ? <SunMedium className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
