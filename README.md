@@ -6,8 +6,8 @@
 
 - `content/`：博客与笔记正文，继续作为日常写作目录。
 - `quartz/`：原版 Quartz 引擎，负责把 `content/` 渲染成静态博客。
-- `site/`：Next.js 主站，包含首页、项目、音乐、杂谈、博客、友链和关于页面。
-- `site/public/blog/`：构建时生成的 Quartz 静态站，不需要手动维护。
+- `app/`、`components/`、`data/`：Next.js 主站，包含首页、项目、音乐、杂谈、博客、友链和关于页面。
+- `public/blog/`：构建时生成的 Quartz 静态站，不需要手动维护。
 
 ## 常用命令
 
@@ -25,14 +25,14 @@ npm run start
 npm run quartz:build:site
 ```
 
-它会从 `content/` 生成原版 Quartz 页面到 `site/public/blog/`，然后 Next 主站通过“博客”和“杂谈”标签页内嵌访问 `/blog/` 与 `/blog/misc/`。
+它会从 `content/` 生成原版 Quartz 页面到 `public/blog/`，然后 Next 主站通过“博客”和“杂谈”标签页内嵌访问 `/blog/` 与 `/blog/misc/`。
 
 ## Vercel 部署
 
-在 Vercel 中导入这个仓库时，建议将 Root Directory 设为 `site`。`site/vercel.json` 已经配置了安装和构建命令：
+在 Vercel 中导入这个仓库时，Root Directory 保持仓库根目录即可，不要设为 `site`。
 
-- 安装根 Quartz 依赖和 `site` 主站依赖。
+- 根 `package.json` 同时包含 Quartz 和 Next.js 依赖。
 - 构建前从根目录 `content/` 生成 Quartz 静态站。
-- 构建并部署 `site` 里的 Next.js 主站。
+- 然后构建并部署根目录里的 Next.js 主站。
 
 日常写博客只需要维护 `content/`，不需要手动复制 Quartz 产物。
