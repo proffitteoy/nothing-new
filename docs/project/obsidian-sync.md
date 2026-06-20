@@ -1,6 +1,10 @@
+---
+title: Obsidian 同步到博客
+---
+
 # Obsidian 同步到博客
 
-这个仓库提供了一套单向同步脚本，把 `E:\math` 里的公开内容同步到 [content](/F:/my%20blog/content)。
+这个仓库提供了一套单向同步脚本，把 `E:\math` 里的公开内容同步到 `content/`。
 
 目标是把“写作”和“发布”分开：
 
@@ -10,10 +14,13 @@
 
 ## 文件说明
 
-- [obsidian-sync.config.mjs](/F:/my%20blog/obsidian-sync.config.mjs)：同步根目录和运行参数
-- [.sync/obsidian-sync.include.txt](/F:/my%20blog/.sync/obsidian-sync.include.txt)：允许同步的路径或 glob
-- [.sync/obsidian-sync.exclude.txt](/F:/my%20blog/.sync/obsidian-sync.exclude.txt)：显式禁止同步的路径或 glob
-- `.sync/obsidian-sync-state.json`：运行时状态文件，记录已管理文件和笔记扫描快照，不提交到 git
+- `obsidian-sync.config.mjs`：同步根目录和运行参数。
+- `.sync/obsidian-sync.include.txt`：允许同步的路径或 glob。
+- `.sync/obsidian-sync.exclude.txt`：显式禁止同步的路径或 glob。
+- `.sync/obsidian-sync-state.json`：运行时状态文件，记录已管理文件和笔记扫描快照，不提交到 git。
+- `scripts/obsidian-sync.mjs`：实际同步脚本。
+- `同步博客.bat`：Windows 双击入口，自动审阅新/改动笔记后再同步。
+- `审阅未决笔记.bat`：Windows 双击入口，只做决策，不执行同步。
 
 ## 常用命令
 
@@ -31,11 +38,6 @@ npm run sync:obsidian:review:all
 ```bash
 npm.cmd run sync:obsidian
 ```
-
-仓库根目录也提供了两个 Windows 批处理入口：
-
-- [同步博客.bat](/F:/my%20blog/同步博客.bat)：自动审阅新/改动笔记后再同步
-- [审阅未决笔记.bat](/F:/my%20blog/审阅未决笔记.bat)：只做决策，不执行同步
 
 ## 推荐工作流
 

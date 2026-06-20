@@ -1,5 +1,5 @@
-import path from "node:path";
-import { readFile } from "node:fs/promises";
+﻿import path from "node:path";
+import { readFile, stat } from "node:fs/promises";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +11,24 @@ type BlogRouteContext = {
 };
 
 const blogOutputDir = path.join(process.cwd(), "public", "blog");
+const contentTypes: Record<string, string> = {
+  ".avif": "image/avif",
+  ".css": "text/css; charset=utf-8",
+  ".gif": "image/gif",
+  ".html": "text/html; charset=utf-8",
+  ".ico": "image/x-icon",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".js": "application/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".ttf": "font/ttf",
+  ".webp": "image/webp",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".xml": "application/xml; charset=utf-8",
+};
 
 function resolveBlogFilePath(...segments: string[]) {
   const targetPath = path.normalize(path.join(blogOutputDir, ...segments));
@@ -30,8 +48,11 @@ function getCandidatePaths(pathSegments: string[]) {
 
   const lastSegment = pathSegments[pathSegments.length - 1];
   const parentSegments = pathSegments.slice(0, -1);
+  const hasExtension = path.extname(lastSegment) !== "";
 
   return [
+    resolveBlogFilePath(...pathSegments),
+    ...(hasExtension ? [resolveBlogFilePath("图片", lastSegment)] : []),
     resolveBlogFilePath(...pathSegments, "index.html"),
     resolveBlogFilePath(...parentSegments, `${lastSegment}.html`),
   ];
@@ -42,7 +63,15 @@ async function readFirstExistingFile(filePaths: Array<string | null>) {
     if (!filePath) continue;
 
     try {
-      return await readFile(filePath, "utf8");
+      const fileStat = await stat(filePath);
+      if (!fileStat.isFile()) {
+        continue;
+      }
+
+      return {
+        content: await readFile(filePath),
+        filePath,
+      };
     } catch (error) {
       if (
         typeof error === "object" &&
@@ -60,26 +89,41 @@ async function readFirstExistingFile(filePaths: Array<string | null>) {
   return null;
 }
 
-function createHtmlResponse(content: string, status = 200) {
+function getContentType(filePath: string) {
+  return contentTypes[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
+}
+
+function createFileResponse(content: Buffer, filePath: string, status = 200) {
   return new Response(content, {
     status,
     headers: {
       "access-control-allow-origin": "*",
       "cache-control": "public, max-age=0, must-revalidate",
-      "content-type": "text/html; charset=utf-8",
+      "content-type": getContentType(filePath),
+    },
+  });
+}
+
+function createTextResponse(content: string, status = 200) {
+  return new Response(content, {
+    status,
+    headers: {
+      "access-control-allow-origin": "*",
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "text/plain; charset=utf-8",
     },
   });
 }
 
 async function resolveBlogResponse(context: BlogRouteContext) {
   const { path: pathSegments = [] } = await context.params;
-  const content = await readFirstExistingFile(getCandidatePaths(pathSegments));
+  const file = await readFirstExistingFile(getCandidatePaths(pathSegments));
 
-  if (!content) {
-    return createHtmlResponse("Not Found", 404);
+  if (!file) {
+    return createTextResponse("Not Found", 404);
   }
 
-  return createHtmlResponse(content);
+  return createFileResponse(file.content, file.filePath);
 }
 
 export async function GET(_request: Request, context: BlogRouteContext) {

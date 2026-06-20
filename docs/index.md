@@ -4,6 +4,10 @@ title: Welcome to Quartz 4
 
 Quartz is a fast, batteries-included static-site generator that transforms Markdown content into fully functional websites. Thousands of students, developers, and teachers are [[showcase|already using Quartz]] to publish personal notes, websites, and [digital gardens](https://jzhao.xyz/posts/networked-thought) to the web.
 
+## 📌 Repository Notes
+
+This repository also contains a Next.js main site and local publishing scripts. See [[project/index|project documentation]] for workflows specific to this blog repository.
+
 ## 🪴 Get Started
 
 Quartz requires **at least [Node](https://nodejs.org/) v22** and `npm` v10.9.2 to function correctly. Ensure you have this installed on your machine before continuing.

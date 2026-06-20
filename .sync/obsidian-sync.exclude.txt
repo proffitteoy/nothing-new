@@ -6,3 +6,11 @@
 未命名 1.md
 未命名 2.md
 未命名 3.md
+面试记录一.md
+未命名.md
+git常用语句.md
+misc/1/后续研究摘要.md
+misc/1/审稿prompt.md
+script/1/服务器现状.md
+script/1/服务器gudhi使用指南.md
+script/1/论文现状.md

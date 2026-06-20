@@ -19,3 +19,4 @@ private/
 .replit
 replit.nix
 .sync/obsidian-sync-state.json
+.sync/tmp-*/
