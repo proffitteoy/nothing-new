@@ -8,6 +8,14 @@ import { KatexOptions } from "katex"
 import { Options as MathjaxOptions } from "rehype-mathjax/svg"
 //@ts-ignore
 import { Options as TypstOptions } from "@myriaddreamin/rehype-typst"
+import fs from "fs"
+import { createRequire } from "module"
+
+const require = createRequire(import.meta.url)
+const katexCopyTexScript = fs.readFileSync(
+  require.resolve("katex/dist/contrib/copy-tex.min.js"),
+  "utf8",
+)
 
 interface Options {
   renderEngine: "katex" | "mathjax" | "typst"
@@ -52,9 +60,9 @@ export const Latex: QuartzTransformerPlugin<Partial<Options>> = (opts) => {
             js: [
               {
                 // fix copy behaviour: https://github.com/KaTeX/KaTeX/blob/main/contrib/copy-tex/README.md
-                src: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/copy-tex.min.js",
+                script: katexCopyTexScript,
                 loadTime: "afterDOMReady",
-                contentType: "external",
+                contentType: "inline",
               },
             ],
           }
