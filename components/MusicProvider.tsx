@@ -82,23 +82,35 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
-    const staticPlaylist = siteConfig.cloudMusicIds.map((songId, index) => ({
-      id: songId,
-      title: `网易云音乐 ${index + 1}`,
-      artist: '网易云音乐',
-      cover: siteConfig.defaultPostCover || 'https://bu.dusays.com/2026/03/24/69c24230a5ff8.jpg',
-      src: `https://music.163.com/song/media/outer/url?id=${songId}.mp3`,
-      lrcUrl: null,
-      lyrics: [],
-    }));
+    const fetchMusicData = async () => {
+      try {
+        const res = await fetch(`/api/music?ids=${siteConfig.cloudMusicIds.join(',')}`);
+        const rawResults = await res.json();
 
-    if (isMounted) {
-      if (staticPlaylist.length > 0) {
-        setPlaylist(staticPlaylist);
-        setCurrentLyric("♪ 纯享音乐 ♪");
+        const mergedPlaylist = rawResults
+          .filter((song: any) => song && song.url && !song.error)
+          .map((song: any) => ({
+            id: song.id || Math.random().toString(),
+            title: song.name || '未知歌曲',
+            artist: song.artist || song.author || '未知歌手',
+            cover: song.cover || song.pic || 'https://bu.dusays.com/2026/03/24/69c24230a5ff8.jpg',
+            src: song.url,
+            lrcUrl: null,
+            lyrics: song.lrc ? parseLrc(song.lrc) : []
+          }));
+
+        if (isMounted) {
+          if (mergedPlaylist.length > 0) setPlaylist(mergedPlaylist);
+          else setCurrentLyric("云端链路受阻");
+          setIsLoading(false);
+        }
+      } catch (error) {
+        if (isMounted) { setCurrentLyric("网络初始化失败"); setIsLoading(false); }
       }
-      setIsLoading(false);
-    }
+    };
+
+    if (siteConfig.cloudMusicIds?.length > 0) fetchMusicData();
+    else setIsLoading(false);
 
     return () => { isMounted = false; };
   }, []);

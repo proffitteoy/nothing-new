@@ -13,7 +13,7 @@ export default function LegacyBlogPage() {
     <div className="h-screen relative overflow-hidden">
       <Navbar />
       <PageTransition>
-        <QuartzFrame src="/blog/" title="Quartz 博客" />
+        <QuartzFrame src="/blog/index.html" title="Quartz 博客" />
       </PageTransition>
     </div>
   );

@@ -40,7 +40,7 @@ export default function Home() {
   const legacyEntrances = [
     {
       title: '项目',
-      description: 'GitHub profile README 与项目星图。',
+      description: '直接展示 proffitteoy/proffitteoy README。',
       href: '/projects',
       icon: FolderGit2,
       tone: 'from-sky-500/20 to-indigo-500/20',

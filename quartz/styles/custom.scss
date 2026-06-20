@@ -52,7 +52,7 @@ body::before {
 }
 
 :root[data-bg-ready="on"] body::before {
-  background-image: url("/static/background.png");
+  background-image: url("./static/background.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;

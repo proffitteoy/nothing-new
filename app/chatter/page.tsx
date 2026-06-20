@@ -13,7 +13,7 @@ export default function ChatterPage() {
     <div className="h-screen relative overflow-hidden">
       <Navbar />
       <PageTransition>
-        <QuartzFrame src="/blog/misc/" title="杂谈" />
+        <QuartzFrame src="/blog/misc/index.html" title="杂谈" />
       </PageTransition>
     </div>
   );

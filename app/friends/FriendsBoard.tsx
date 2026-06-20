@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import BackButton from '../../components/BackButton';
 import { friendsData } from '../../data/friends';
 import { siteConfig } from '../../siteConfig';
 
 // Framer Motion 动画变体：交错子元素
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -15,7 +15,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 30, scale: 0.9 },
   show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
@@ -26,6 +26,7 @@ export default function FriendsBoard() {
 
   const applyFormat = siteConfig.friendLinkApplyFormat;
   const issueUrl = siteConfig.friendLinkIssueUrl;
+  const fallbackAvatar = siteConfig.avatarUrl;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(applyFormat);
@@ -74,7 +75,20 @@ export default function FriendsBoard() {
               <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-5 relative z-10 mb-2 md:mb-4">
 
                 <div className="w-10 h-10 md:w-16 md:h-16 rounded-full p-[2px] md:p-1 bg-gradient-to-tr from-indigo-500/50 to-purple-500/50 shadow-sm md:shadow-md group-hover:rotate-[360deg] transition-transform duration-1000 ease-in-out flex-shrink-0">
-                  <img src={friend.avatar} alt={friend.name} className="w-full h-full rounded-full object-cover bg-white" />
+                  <img
+                    src={friend.avatar || fallbackAvatar}
+                    alt={friend.name}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    onError={(event) => {
+                      const image = event.currentTarget;
+                      if (image.getAttribute('src') !== fallbackAvatar) {
+                        image.src = fallbackAvatar;
+                      }
+                    }}
+                    className="w-full h-full rounded-full object-cover bg-white"
+                  />
                 </div>
 
                 <div className="flex-1 overflow-hidden w-full">

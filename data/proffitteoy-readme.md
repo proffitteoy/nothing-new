@@ -1,48 +1,83 @@
-# 项目总览
+<p align="center">
+  <img
+    src="https://capsule-render.vercel.app/api?type=waving&height=220&color=0:0f172a,50:2563eb,100:9333ea&text=proffitteoy&fontColor=ffffff&fontSize=48&fontAlignY=38&desc=Math%20%7C%20AI%20Agents%20%7C%20Developer%20Tools&descAlignY=58"
+    alt="proffitteoy profile banner"
+  />
+</p>
 
-这里不是简历墙，而是一个持续演化的项目索引：把数学学习、数据建模、智能体工程和个人研究工具放在同一张地图里，方便回看、复盘和继续扩展。
+## Building AI-native research tools, mathematical workflows, and calm interfaces.
 
-> 目标很简单：让每个公开仓库都能说明它解决了什么问题、用到了什么方法、下一步准备往哪里走。
+<p align="center">
+  <a href="https://github.com/proffitteoy">
+    <img
+      src="https://img.shields.io/github/followers/proffitteoy?style=for-the-badge&logo=github&label=Follow"
+      alt="GitHub followers"
+    />
+  </a>
+  <img
+    src="https://img.shields.io/badge/Focus-Agent%20Systems-2563eb?style=for-the-badge"
+    alt="Focus: Agent Systems"
+  />
+  <img
+    src="https://img.shields.io/badge/Stack-Next.js%20%7C%20TypeScript%20%7C%20Python-9333ea?style=for-the-badge"
+    alt="Stack: Next.js, TypeScript, Python"
+  />
+</p>
 
-## 技术雷达
+I care about small systems that compound: local-first assistants, reproducible research notes, mathematical modeling pipelines, and developer tools that make the next experiment easier to start.
 
-| 方向 | 关注点 | 常用工具 |
-| --- | --- | --- |
-| 数学建模 | 特征构造、优化建模、统计检验、时间序列 | Python、R、数值计算工具 |
-| 拓扑数据分析 | 持久同调、传播结构、拓扑特征 | 图算法、矩阵计算、可视化工具 |
-| 智能体工程 | 本地工作流、检索增强、记忆管理、任务编排 | TypeScript、React、数据库、脚本自动化 |
-| 研究基础设施 | 笔记同步、文档生成、仓库分析、实验复现 | Next.js、Quartz、命令行工具 |
+### Current threads
 
-## 项目星图
+- AI agent workflows for retrieval, memory, planning, and code review.
+- Mathematical modeling and topology-inspired analysis.
+- Personal knowledge infrastructure with Next.js, Quartz, and automation scripts.
+- Interfaces that feel quiet, readable, and useful over a long period of time.
 
-### 研究与数学
+### Toolbelt
 
-| 项目 | 内容 | 入口 |
-| --- | --- | --- |
-| 早期谣言传播的拓扑分析 | 用拓扑特征刻画传播树结构，尝试把持久同调用到早期传播判断里。 | [查看项目](https://github.com/proffitteoy/early-rumor-propagation-tda) |
-| 拓扑引导的划分算法 | 围绕图聚类、结构划分和排序目标做算法实验。 | [查看项目](https://github.com/proffitteoy/TILO-PRC) |
-| 计算化学辅助工具 | 整合常见计算流程，服务于个人实验数据处理和结果复查。 | [查看项目](https://github.com/heiehiehi/Computational_Chemistry_Tool) |
+<p align="center">
+  <img
+    src="https://skillicons.dev/icons?i=ts,react,nextjs,tailwind,python,postgres,sqlite,git,github,docker"
+    alt="TypeScript, React, Next.js, Tailwind CSS, Python, PostgreSQL, SQLite, Git, GitHub, Docker"
+  />
+</p>
 
-### 智能工具与工程
+### Projects I keep returning to
 
-| 项目 | 内容 | 入口 |
-| --- | --- | --- |
-| 本地研究工作台 | 面向本地优先的对话、文件、检索、记忆和笔记联动。 | [查看项目](https://github.com/proffitteoy/Iris-Terminal) |
-| 智能体编排实验 | 关注上下文打包、任务拆分、审阅循环和生成物沉淀。 | [查看项目](https://github.com/proffitteoy/ManiMind) |
-| 仓库可视化分析 | 把代码结构、函数关系和语言模型辅助阅读结合起来。 | [查看项目](https://github.com/proffitteoy/gitvisual-llm) |
-| 安全事件分析平台 | 面向日志检索、事件分析、策略复盘和操作审计的实验平台。 | [查看项目](https://github.com/proffitteoy/waf-incident-platform) |
+| Area              | Project                                                                                   | Notes                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Knowledge systems | [math-vault](https://github.com/proffitteoy/math-vault)                                   | Personal site and long-running note infrastructure.                                     |
+| Agent tooling     | [Iris-Terminal](https://github.com/proffitteoy/Iris-Terminal)                             | Local research terminal for conversation, files, retrieval, and notes.                  |
+| Agent experiments | [ManiMind](https://github.com/proffitteoy/ManiMind)                                       | Context packaging, task decomposition, review loops, and generated artifact management. |
+| Code analysis     | [gitvisual-llm](https://github.com/proffitteoy/gitvisual-llm)                             | Repository visualization paired with language-model assisted reading.                   |
+| Security analysis | [waf-incident-platform](https://github.com/proffitteoy/waf-incident-platform)             | Experimental platform for log search, incident analysis, and audit trails.              |
+| Data + topology   | [early-rumor-propagation-tda](https://github.com/proffitteoy/early-rumor-propagation-tda) | Using topological signals to inspect early rumor propagation structure.                 |
 
-## 当前主线
+### GitHub signals
 
-| 主线 | 正在推进的事情 |
-| --- | --- |
-| 数学学习 | 把零散证明、竞赛题、分析学笔记整理成可检索的知识库。 |
-| 数据建模 | 沉淀从数据清洗、特征工程到模型解释的复用流程。 |
-| 智能体系统 | 让个人工作流具备更稳定的上下文管理和任务闭环。 |
-| 博客基础设施 | 保留 Quartz 的文章渲染能力，同时用 Next.js 承担主页与交互层。 |
+<p align="center">
+  <img
+    src="https://github-readme-stats.vercel.app/api?username=proffitteoy&show_icons=true&theme=tokyonight&hide_border=true"
+    alt="proffitteoy GitHub stats"
+  />
+  <img
+    src="https://github-readme-stats.vercel.app/api/top-langs/?username=proffitteoy&layout=compact&theme=tokyonight&hide_border=true"
+    alt="proffitteoy top languages"
+  />
+</p>
 
-## 长期方向
+<p align="center">
+  <img
+    src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=proffitteoy&theme=tokyonight"
+    alt="proffitteoy GitHub profile summary"
+  />
+</p>
 
-1. 用数学结构理解数据，而不是只堆模型。
-2. 用工具减少重复劳动，把注意力留给证明、建模和判断。
-3. 把公开项目写成可复现、可复盘、可继续接力的研究记录。
+### How I like to build
+
+```text
+reduce repeated work
+keep context close
+write the experiment down
+make the interface calm enough to live with
+```
