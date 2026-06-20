@@ -96,7 +96,7 @@ button.desktop-explorer {
   display: none;
 }
 
-.explorer-content {
+.explorer > .explorer-content {
   list-style: none;
   flex: 1 1 auto;
   min-height: 0;
@@ -124,7 +124,8 @@ button.desktop-explorer {
   }
 
   & > .explorer-ul {
-    max-height: 100%;
+    max-height: none;
+    overflow: visible;
   }
 
   .folder-outer {

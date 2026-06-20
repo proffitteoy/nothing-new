@@ -59,6 +59,10 @@ function setExplorerExpanded(explorer: HTMLElement, expanded: boolean) {
   }
 }
 
+function getExplorerScrollContainer(explorer: Document | HTMLElement): HTMLElement | null {
+  return explorer.querySelector(".explorer-content") as HTMLElement | null
+}
+
 function closeExplorer(explorer: HTMLElement) {
   setExplorerExpanded(explorer, false)
   setMobileScrollLock(false)
@@ -339,10 +343,12 @@ async function setupExplorer(currentSlug: FullSlug) {
     }
     explorerUl.insertBefore(fragment, explorerUl.firstChild)
 
+    const explorerScrollContainer = getExplorerScrollContainer(explorer)
+
     // restore explorer scrollTop position if it exists
     const scrollTop = sessionStorage.getItem("explorerScrollTop")
-    if (scrollTop) {
-      explorerUl.scrollTop = parseInt(scrollTop)
+    if (scrollTop && explorerScrollContainer) {
+      explorerScrollContainer.scrollTop = parseInt(scrollTop)
     } else {
       // try to scroll to the active element if it exists
       const activeElement = explorerUl.querySelector(".active")
@@ -393,7 +399,7 @@ async function setupExplorer(currentSlug: FullSlug) {
 
 document.addEventListener("prenav", async () => {
   // save explorer scrollTop position
-  const explorer = document.querySelector(".explorer-ul")
+  const explorer = getExplorerScrollContainer(document)
   if (!explorer) return
   sessionStorage.setItem("explorerScrollTop", explorer.scrollTop.toString())
 })
