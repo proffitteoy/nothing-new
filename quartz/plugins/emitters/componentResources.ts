@@ -18,6 +18,13 @@ import {
 import { Features, transform } from "lightningcss"
 import { transform as transpile } from "esbuild"
 import { write } from "./helpers"
+import fs from "fs"
+import path from "path"
+import { createRequire } from "module"
+
+const require = createRequire(import.meta.url)
+const katexCssPath = require.resolve("katex/dist/katex.min.css")
+const katexFontDir = path.join(path.dirname(katexCssPath), "fonts")
 
 type ComponentResources = {
   css: string[]
@@ -322,10 +329,12 @@ export const ComponentResources: QuartzEmitterPlugin = () => {
       // as the "nav" event gets triggered here and we should make sure
       // that everyone else had the chance to register a listener for it
       addGlobalPageResources(ctx, componentResources)
+      const katexStylesheet = await fs.promises.readFile(katexCssPath, "utf8")
 
       const stylesheet = joinStyles(
         ctx.cfg.configuration.theme,
         googleFontsStyleSheet,
+        katexStylesheet,
         ...componentResources.css,
         styles,
       )
@@ -353,6 +362,15 @@ export const ComponentResources: QuartzEmitterPlugin = () => {
           include: Features.MediaQueries,
         }).code.toString(),
       })
+
+      for (const fontFile of await fs.promises.readdir(katexFontDir)) {
+        yield write({
+          ctx,
+          slug: joinSegments("fonts", fontFile) as FullSlug,
+          ext: "",
+          content: await fs.promises.readFile(path.join(katexFontDir, fontFile)),
+        })
+      }
 
       yield write({
         ctx,

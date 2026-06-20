@@ -59,14 +59,6 @@ export const friendsData: Friend[] = [
     themeColor: "rgba(148, 163, 184, 0.5)",
   },
   {
-    id: "wuzuizuiyan",
-    name: "雾醉醉言",
-    description: "雾里醉语，且行切记。",
-    avatar: "https://i.ibb.co/vvXLPFCh/avatar.jpg",
-    url: "https://www.wuzuizuiyan.cn",
-    themeColor: "rgba(34, 197, 94, 0.5)",
-  },
-  {
     id: "lygalaxy",
     name: "冷月笙寒的小窝",
     description: "发现巷子里的那颗星星(技术与生活分享)",
@@ -89,5 +81,13 @@ export const friendsData: Friend[] = [
     avatar: "https://funingna-wakawaka.github.io/images/0.png",
     url: "https://funingna-wakawaka.github.io/",
     themeColor: "rgba(251, 191, 36, 0.5)",
+  },
+  {
+    id: "mmzming",
+    name: "MmzMing的知识库",
+    description: "哈基米，南北绿豆",
+    avatar: "https://i.stardots.io/784774835/StarDots-2026052116374135506.jpg",
+    url: "https://tblog.mmzhiku.xyz",
+    themeColor: "rgba(99, 102, 241, 0.5)",
   },
 ]

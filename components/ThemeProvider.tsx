@@ -1,58 +1,39 @@
-"use client";
-import { createContext, useContext, useEffect, useState } from 'react';
+"use client"
+import { createContext, useContext, useEffect, useState } from "react"
 
-const ThemeContext = createContext({ isDark: true, toggleTheme: () => {} });
+const ThemeContext = createContext({ isDark: false, toggleTheme: () => {} })
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // 默认设为 true，这样在读取到配置前，如果是夜间模式就不会闪烁
-  const [isDark, setIsDark] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  // 默认日间模式；用户手动切换后仍然尊重本地保存的偏好
+  const [isDark, setIsDark] = useState(false)
 
   useEffect(() => {
-    // 标记组件已挂载，避免 hydration 报错
-    setMounted(true);
-
     // 从 localStorage 读取真实状态
-    const savedTheme = localStorage.getItem('blog-theme');
-    // 如果没有记录，默认给深色模式（流萤飞舞）
-    const isDarkMode = savedTheme !== 'light';
-    setIsDark(isDarkMode);
+    const savedTheme = localStorage.getItem("blog-theme")
+    // 如果没有记录，默认保持日间模式
+    const isDarkMode = savedTheme === "dark"
+    const timeoutId = window.setTimeout(() => setIsDark(isDarkMode), 0)
 
-    const root = document.documentElement;
-    if (isDarkMode) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-  }, []);
+    return () => window.clearTimeout(timeoutId)
+  }, [])
 
   // 极其重要：监听 isDark 状态，只要它变了，立刻强制更新 html 标签，防止路由切换丢失
   useEffect(() => {
-    if (!mounted) return;
-    const root = document.documentElement;
+    const root = document.documentElement
     if (isDark) {
-      root.classList.add('dark');
+      root.classList.add("dark")
     } else {
-      root.classList.remove('dark');
+      root.classList.remove("dark")
     }
-  }, [isDark, mounted]);
+  }, [isDark])
 
   const toggleTheme = () => {
-    const newDark = !isDark;
-    setIsDark(newDark);
-    localStorage.setItem('blog-theme', newDark ? 'dark' : 'light');
-  };
-
-  // 在客户端挂载完成前，为了防止闪屏，先隐藏内容
-  if (!mounted) {
-    return <div className="invisible">{children}</div>;
+    const newDark = !isDark
+    setIsDark(newDark)
+    localStorage.setItem("blog-theme", newDark ? "dark" : "light")
   }
 
-  return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ isDark, toggleTheme }}>{children}</ThemeContext.Provider>
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => useContext(ThemeContext)

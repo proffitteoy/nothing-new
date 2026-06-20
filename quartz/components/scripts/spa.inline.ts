@@ -24,11 +24,6 @@ const isSamePage = (url: URL): boolean => {
   return sameOrigin && samePath
 }
 
-// Portfolio pages are standalone static pages with a different DOM structure.
-// Let the browser do a full navigation instead of Quartz SPA morphing.
-const shouldBypassSpa = (url: URL): boolean =>
-  url.pathname === "/portfolio" || url.pathname.startsWith("/portfolio/")
-
 const getOpts = ({ target }: Event): { url: URL; scroll?: boolean } | undefined => {
   if (!isElement(target)) return
   if (target.attributes.getNamedItem("target")?.value === "_blank") return
@@ -38,7 +33,6 @@ const getOpts = ({ target }: Event): { url: URL; scroll?: boolean } | undefined 
   const { href } = a
   if (!isLocalUrl(href)) return
   const url = new URL(href)
-  if (shouldBypassSpa(url)) return
   return { url, scroll: "routerNoscroll" in a.dataset ? false : undefined }
 }
 

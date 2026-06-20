@@ -25,7 +25,7 @@ npm run start
 npm run quartz:build:site
 ```
 
-它会从 `content/` 生成原版 Quartz 页面到 `public/blog/`，然后 Next 主站通过“博客”和“杂谈”标签页内嵌访问 `/blog/` 与 `/blog/misc/`。
+它会从 `content/` 生成原版 Quartz 页面到 `public/blog/`，然后 Next 主站通过“博客”内嵌访问 `/blog/`，并让“杂谈”直接展示 `misc` 下的第一篇顶层文章。
 
 ## Vercel 部署
 

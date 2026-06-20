@@ -42,7 +42,7 @@ export const siteConfig = {
     photos: 128, // 照片墙数量可以手动写死或动态计算
   },
   chatterTitle: "杂谈", // 你可以改成任何你喜欢的名字
-  chatterDescription: "保留 Quartz 原版渲染的 misc 笔记。",
+  chatterDescription: "直接展示 Quartz misc 笔记中的第一篇文章。",
 
   // 👇 【新增】：全局背景弹幕配置
   danmakuList: [
