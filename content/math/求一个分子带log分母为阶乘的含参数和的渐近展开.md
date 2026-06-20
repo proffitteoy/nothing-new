@@ -8,7 +8,11 @@ tags:
 > 令$$S_n:=\sum_{k\geq 0}\frac{\log(n+(-2)^k)}{k!}$$求$$\lim_{n\to \infty} n(S_n-e\log(n))$$
 
 
-首先我们经过简单的变形，我们发现$$\begin{align}S_n &= \sum_{k \geq 0} \frac{\log(n)}{k!} + \sum_{k \geq 0} \frac{\log(1+\frac{(-2)^k}{n})}{k!} \\ &=e\log(n) +\sum_{k \geq 0} \frac{\log(1+\frac{(-2)^k}{n})}{k!} \end{align}$$所以如果我们令$$T_n:=\sum_{k \geq 0} \frac{\log(1+\frac{(-2)^k}{n})}{k!}$$原本的问题无非就是要我们得到$T_n$的精度为$o(1/n)$级别的估计，从而计算得到最初的极限。
+首先我们经过简单的变形，我们发现
+$$
+\begin{align}S_n &= \sum_{k \geq 0} \frac{\log(n)}{k!} + \sum_{k \geq 0} \frac{\log(1+\frac{(-2)^k}{n})}{k!} \\ &=e\log(n) +\sum_{k \geq 0} \frac{\log(1+\frac{(-2)^k}{n})}{k!} \end{align}
+$$
+所以如果我们令$$T_n:=\sum_{k \geq 0} \frac{\log(1+\frac{(-2)^k}{n})}{k!}$$原本的问题无非就是要我们得到$T_n$的精度为$o(1/n)$级别的估计，从而计算得到最初的极限。
 
 ### 1. 逐项+分段估计$T_n$
 
@@ -18,7 +22,11 @@ tags:
 
 其中第一段：
 
-$$\begin{align} \sum_{0\leq k < t_n} \frac{\log(1+\frac{(-2)^k}{n})}{k!} &= \sum_{0\leq k < t_n} \frac{1}{k!}\left(\frac{(-2)^k}{n} - \frac{4^k}{2n^2} + O\left(\frac{8^k}{n^3}\right)\right) \\ &= \frac{1}{n} \left(e^{-2} - \sum_{k \geq t_n} \frac{(-2)^k}{k!} \right) - \frac{1}{2n^2} \left(e^{4} - \sum_{k \geq t_n} \frac{4^k}{k!}\right) + O\left(\frac{e^8 -\sum_{k \geq t_n} \frac{8^k}{k!}}{n^3}\right)\end{align}$$
+
+$$
+\begin{align} \sum_{0\leq k < t_n} \frac{\log(1+\frac{(-2)^k}{n})}{k!} &= \sum_{0\leq k < t_n} \frac{1}{k!}\left(\frac{(-2)^k}{n} - \frac{4^k}{2n^2} + O\left(\frac{8^k}{n^3}\right)\right) \\ &= \frac{1}{n} \left(e^{-2} - \sum_{k \geq t_n} \frac{(-2)^k}{k!} \right) - \frac{1}{2n^2} \left(e^{4} - \sum_{k \geq t_n} \frac{4^k}{k!}\right) + O\left(\frac{e^8 -\sum_{k \geq t_n} \frac{8^k}{k!}}{n^3}\right)\end{align}
+$$
+
 
 为了能得到更简单的渐近结果，我们现在需要统一处理形如$\sum_{k\geq t_n}\frac{2^{Nk}}{k!}$形式的和。对于这样的和，我们有下面的结果：
 
@@ -29,10 +37,18 @@ $$\begin{align} \sum_{0\leq k < t_n} \frac{\log(1+\frac{(-2)^k}{n})}{k!} &= \sum
 * 事实上我们只需要证明，对任意正整数$N$都有$$ \lim_{n \to +\infty} n^2 \sum_{k \geq t_n} \frac{2^{Nk}}{k!} = 0$$我们可以考虑使用[[math/Cesaro-Stolz定理]]去证明它。首先分子部分$$\sum_{k \geq t_n} \frac{2^{Nk}}{k!} \to 0 $$然后分母部分$\frac{1}{n^2} \to 0$且是严格单调的。现在令$g(k) = \frac{2^{Nk}}{k!} ,\Delta_n =  \sum_{k \geq t_n} g(k) - \sum_{k \geq t_{n+1}} g(k)$于是$g(n)\geq \Delta_n \geq 0$那么$$\frac{\Delta_n}{\frac{1}{n^2} - \frac{1}{(n+1)^2}} = \frac{n^2(n+1)^2}{2n+1} \Delta_n \leq \frac{n^2(n+1)^2 }{2n+1} \frac{2^{Nn}}{n!} < \frac{n^2(n+1)^2 }{2n+1} \frac{2^{Nn}}{4^{Nn}} \to 0$$上面的最后一步是因为$\lim_{n \to +\infty} \frac{4^{Nk}}{k!} = 0$所以对足够大的$k$，$k! > 4^{Nk}$。于是综上所述，利用Stolz-Cesaro定理我们有$$\lim_{n \to +\infty} n^2 \sum_{k \geq t_n} \frac{2^{Nk}}{k!} = \lim_{n \to +\infty} \frac{\Delta_n}{\frac{1}{n^2} - \frac{1}{(n+1)^2}} = 0 $$
 那么现在我们利用"引理1.1"于是我们得到:
 
-$$ \begin{align} \sum_{0\leq k < t_n} \frac{\log(1+\frac{(-2)^k}{n})}{k!} &= \frac{1}{n} \left(e^{-2} - \sum_{k \geq t_n} \frac{(-2)^k}{n} \right) - \frac{1}{2n^2} \left(e^{4} - \sum_{k \geq t_n} \frac{4^k}{k!}\right) + O\left(\frac{e^8 -\sum_{k \geq t_n} \frac{8^k}{k!}}{n^3}\right)\\&= \frac{1}{n} \left(e^{-2} - o\left(\frac{1}{n^2}\right) \right) - \frac{1}{2n^2} \left(e^{4} - o\left(\frac{1}{n^2}\right)\right) + O\Bigg(\frac{e^8 -o\big(\frac{1}{n^2}\big)}{n^3}\Bigg)\\&= \frac{1}{n} e^{-2} - \frac{1}{2n^2} e^{4} + O\left(\frac{1}{n^3}\right)\end{align}$$
+
+$$
+\begin{align} \sum_{0\leq k < t_n} \frac{\log(1+\frac{(-2)^k}{n})}{k!} &= \frac{1}{n} \left(e^{-2} - \sum_{k \geq t_n} \frac{(-2)^k}{n} \right) - \frac{1}{2n^2} \left(e^{4} - \sum_{k \geq t_n} \frac{4^k}{k!}\right) + O\left(\frac{e^8 -\sum_{k \geq t_n} \frac{8^k}{k!}}{n^3}\right)\\&= \frac{1}{n} \left(e^{-2} - o\left(\frac{1}{n^2}\right) \right) - \frac{1}{2n^2} \left(e^{4} - o\left(\frac{1}{n^2}\right)\right) + O\Bigg(\frac{e^8 -o\big(\frac{1}{n^2}\big)}{n^3}\Bigg)\\&= \frac{1}{n} e^{-2} - \frac{1}{2n^2} e^{4} + O\left(\frac{1}{n^3}\right)\end{align}
+$$
 
 
-最后我们还需要估计$T_n$的尾部$$R_n:=\sum_{k \geq t_n} \frac{\log(1+\frac{(-2)^k}{n})}{k!}$$这部分我们借助于"引理1.1"，然后用简单的逐项估计即可$$ \begin{align}R_n &< \sum_{k \geq t_n} \frac{\frac{(-2)^k}{n}}{k!}\\ &< \frac{1}{n} \sum_{k \geq t_n} \frac{(-2)^k}{k!} \\&= \frac{1}{n} o\big(\frac{1}{n^2}\big) = o\big(\frac{1}{n^3}\big) \end{align}$$
+
+最后我们还需要估计$T_n$的尾部$$R_n:=\sum_{k \geq t_n} \frac{\log(1+\frac{(-2)^k}{n})}{k!}$$这部分我们借助于"引理1.1"，然后用简单的逐项估计即可
+$$
+\begin{align}R_n &< \sum_{k \geq t_n} \frac{\frac{(-2)^k}{n}}{k!}\\ &< \frac{1}{n} \sum_{k \geq t_n} \frac{(-2)^k}{k!} \\&= \frac{1}{n} o\big(\frac{1}{n^2}\big) = o\big(\frac{1}{n^3}\big) \end{align}
+$$
+
 
 综上所述：
 

@@ -98,9 +98,12 @@ button.desktop-explorer {
 
 .explorer-content {
   list-style: none;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
   overflow-y: auto;
   margin-top: 0.5rem;
+  overscroll-behavior: contain;
 
   & ul {
     list-style: none;
@@ -118,6 +121,10 @@ button.desktop-explorer {
         color: var(--tertiary);
       }
     }
+  }
+
+  & > .explorer-ul {
+    max-height: 100%;
   }
 
   .folder-outer {
