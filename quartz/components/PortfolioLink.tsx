@@ -8,11 +8,6 @@ interface PortfolioLinkOptions {
   href: string
 }
 
-const defaultOptions: PortfolioLinkOptions = {
-  title: "快捷入口",
-  label: "个人主页",
-  href: "/portfolio/",
-}
 
 export default ((opts?: Partial<PortfolioLinkOptions>) => {
   const options: PortfolioLinkOptions = { ...defaultOptions, ...opts }

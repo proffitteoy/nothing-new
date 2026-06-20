@@ -79,6 +79,6 @@ export const siteConfig = {
   ],
   friendLinkIssueUrl: "https://github.com/proffitteoy/math-vault/issues/new",
   friendLinkApplyFormat:
-    "名称：阿的宝藏之地\n简介：记录项目、音乐、杂谈、友链、关于与博客。\n链接：https://nothing-new.icu\n头像：https://bu.dusays.com/2026/06/20/6a361fc5c68ff.jpg",
+    "名称：阿的宝藏之地\n简介：记录项目、数学思考与杂谈。\n链接：https://nothing-new.icu\n头像：https://bu.dusays.com/2026/06/20/6a361fc5c68ff.jpg",
   enableLevelSystem: true,
 }
