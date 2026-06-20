@@ -3,11 +3,11 @@ export interface Friend { id: string; name: string; url: string; description: st
 
 export const friendsData: Friend[] = [
   {
-    "id": "ixiqiu",
-    "name": "汐湫的小屋",
-    "description": "在心灵深处遇见自己",
-    "avatar": "https://bu.dusays.com/2024/11/04/6728d6722ca4c.jpg",
-    "url": "https://www.ixiqiu.cn",
+    "id": "mibai",
+    "name": "米白 の 宝藏之地",
+    "description": "在代码、二次元与摄影间穿梭的普通人。近期正埋头于 修图与全栈开发。",
+    "avatar": "https://bu.dusays.com/2026/05/10/69fff19d7b60d.jpg",
+    "url": "https://www.mibai.xyz/",
     "themeColor": "rgba(14, 165, 233, 0.5)"
   },
 ];

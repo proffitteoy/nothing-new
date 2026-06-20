@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return {
+      afterFiles: [
+        { source: "/blog", destination: "/blog/index.html" },
+        { source: "/blog/:path*", destination: "/blog/:path*/index.html" },
+        { source: "/blog/:path*", destination: "/blog/:path*.html" },
+      ],
+    };
+  },
   async redirects() {
     return [
       { source: "/timeline", destination: "/legacy", permanent: false },
