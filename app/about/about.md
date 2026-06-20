@@ -1,10 +1,10 @@
 ---
 title: 关于我
-date: '2026-06-19'
+date: "2026-06-19"
 tags: []
-mood: ''
-cover: /avatar.jpg
-description: ''
+mood: ""
+cover: /about-cover.png
+description: ""
 ---
 
 # 关于我

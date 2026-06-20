@@ -1,14 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return {
-      afterFiles: [
-        { source: "/blog", destination: "/blog/index.html" },
-        { source: "/blog/:path*", destination: "/blog/:path*/index.html" },
-        { source: "/blog/:path*", destination: "/blog/:path*.html" },
-      ],
-    };
+  outputFileTracingIncludes: {
+    "/blog/\\[\\[\\.\\.\\.path\\]\\]": ["./public/blog/**/*"],
   },
   async redirects() {
     return [
