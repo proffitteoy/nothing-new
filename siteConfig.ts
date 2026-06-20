@@ -36,7 +36,7 @@ export const siteConfig = {
     google: "",
     email: "84025375@qq.com",
     qq: "84025375",
-    wechat: "84025375",
+    wechat: "-84025375",
   },
   counts: {
     photos: 128, // 照片墙数量可以手动写死或动态计算
