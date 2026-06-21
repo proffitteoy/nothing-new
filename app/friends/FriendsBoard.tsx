@@ -134,7 +134,7 @@ export default function FriendsBoard() {
                     </h2>
                     <div className="text-[9px] md:text-xs font-bold text-indigo-500/70 dark:text-indigo-400/70 tracking-widest uppercase mt-0.5 md:mt-1 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                      Online
+                      在线
                     </div>
                   </div>
                 </div>
@@ -160,7 +160,7 @@ export default function FriendsBoard() {
           ✨ 建立神经连接
         </h2>
         <p className="text-xs md:text-base text-slate-600 dark:text-slate-400 font-serif mb-4 md:mb-6">
-          欢迎交换友链。请复制下方格式，然后去仓库提交 Issue：
+          欢迎交换友链。请复制下方格式，然后到仓库提交友链申请：
         </p>
 
         {/* 代码展示框 & 一键复制按钮 */}
@@ -211,7 +211,7 @@ export default function FriendsBoard() {
             rel="noopener noreferrer"
             className="inline-block px-6 py-2.5 md:px-8 md:py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-full text-sm md:text-base font-bold tracking-widest transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/30"
           >
-            去仓库提 Issue
+            提交友链申请
           </a>
         </div>
       </motion.div>

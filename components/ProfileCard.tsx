@@ -31,7 +31,7 @@ export default function ProfileCard({
           <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 p-1 shadow-lg flex-shrink-0 transition-transform duration-500 group-hover:rotate-3">
             <img
               src={siteConfig.avatarUrl}
-              alt="avatar"
+              alt="头像"
               className="w-full h-full rounded-lg md:rounded-xl object-cover bg-white"
             />
           </div>

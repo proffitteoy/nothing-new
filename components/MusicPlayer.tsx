@@ -175,7 +175,7 @@ export default function CloudPlayer({ songIds }: { songIds: string[] }) {
       <div className="md:col-span-5 rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col items-center justify-center transition-colors duration-700 h-[220px]">
         <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         {/* 【修改点】：文字加入 dark:text-white */}
-        <span className="text-slate-800 dark:text-white font-bold tracking-widest animate-pulse text-sm">CONNECTING...</span>
+        <span className="text-slate-800 dark:text-white font-bold tracking-widest animate-pulse text-sm">连接音乐云端中...</span>
       </div>
     );
   }
@@ -208,13 +208,13 @@ export default function CloudPlayer({ songIds }: { songIds: string[] }) {
 
         <div className="flex items-center gap-5 relative z-10 mb-6 mt-2">
           <div className={`w-20 h-20 rounded-full border-2 border-white/50 shadow-lg flex-shrink-0 overflow-hidden relative ${isPlaying ? 'animate-[spin_6s_linear_infinite]' : ''}`}>
-            <img src={currentSong.cover} alt="cover" className="w-full h-full object-cover" />
+            <img src={currentSong.cover} alt="专辑封面" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white/80 backdrop-blur-sm rounded-full border border-gray-300 shadow-inner"></div>
           </div>
           <div className="flex-col overflow-hidden w-full">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 tracking-widest uppercase bg-white/50 dark:bg-slate-900/50 px-2 py-0.5 rounded-sm shadow-sm transition-colors duration-700">Cloud Music</span>
+              <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 tracking-widest bg-white/50 dark:bg-slate-900/50 px-2 py-0.5 rounded-sm shadow-sm transition-colors duration-700">云端音乐</span>
               <span className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-white/40 dark:bg-slate-700/50 px-2 rounded-full transition-colors duration-700">{currentIndex + 1} / {playlist.length}</span>
             </div>
             {/* 【修改点】：歌曲标题和歌手加上暗色模式字体 */}

@@ -5,7 +5,7 @@ import { siteConfig } from '@/siteConfig';
 
 export const metadata = {
   title: "博客 | " + siteConfig.title,
-  description: "原版 Quartz 博客文章",
+  description: "原有博客文章",
 };
 
 export default function LegacyBlogPage() {

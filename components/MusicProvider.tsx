@@ -264,6 +264,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
 export const useMusic = () => {
   const context = useContext(MusicContext);
-  if (!context) throw new Error("useMusic must be used within MusicProvider");
+  if (!context) throw new Error("useMusic 必须在 MusicProvider 内部使用");
   return context;
 };

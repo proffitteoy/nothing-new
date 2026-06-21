@@ -5,7 +5,7 @@ export const siteConfig = {
   title: "阿的宝藏之地",
   faviconUrl: "/avatar.jpg",
   authorName: "阿",
-  bio: "把数学学习、研究笔记、数据建模项目和 Agent 工程实践放进同一个长期演化的个人站点里。",
+  bio: "把数学学习、研究笔记、数据建模项目和智能体工程实践放进同一个长期演化的个人站点里。",
 
   navTitle: "阿",
 
@@ -42,19 +42,19 @@ export const siteConfig = {
     photos: 128, // 照片墙数量可以手动写死或动态计算
   },
   chatterTitle: "杂谈", // 你可以改成任何你喜欢的名字
-  chatterDescription: "直接展示 Quartz misc 笔记中的第一篇文章。",
+  chatterDescription: "直接展示杂谈笔记中的第一篇文章。",
 
   // 👇 【新增】：全局背景弹幕配置
   danmakuList: [
     "在干嘛呢？",
     "有笨蛋嘛？",
     "前方高能反应！",
-    "GROMACS 跑起来了吗？",
-    "MD 模拟什么时候才能出图啊",
-    "Graph Neural Networks 炼丹中...",
-    "BUG 修复进度 99%",
+    "分子模拟跑起来了吗？",
+    "分子动力学模拟什么时候才能出图啊",
+    "图神经网络炼丹中……",
+    "漏洞修复进度 99%",
     "今天背单词了吗？",
-    "Tailwind CSS 拯救前端",
+    "样式工具正在拯救前端",
     "写算法中",
     "睡大觉中",
     "到底在干嘛？",

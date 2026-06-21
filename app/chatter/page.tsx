@@ -51,7 +51,7 @@ function getFirstMiscArticle() {
 
 export const metadata = {
   title: "杂谈 | " + siteConfig.title,
-  description: "直接展示 Quartz misc 笔记中的第一篇文章",
+  description: "直接展示杂谈笔记中的第一篇文章",
 };
 
 export default function ChatterPage() {

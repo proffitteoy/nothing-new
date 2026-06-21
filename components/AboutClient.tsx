@@ -14,20 +14,20 @@ export default function AboutClient({
     <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-[40px] shadow-2xl border border-white/40 dark:border-white/10 overflow-hidden transition-colors duration-700 relative">
 
       <div className="w-full h-40 sm:h-48 md:h-64 relative bg-slate-200 dark:bg-slate-700 overflow-hidden group">
-        <img src={coverImage} alt="About Hero" className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105" />
+        <img src={coverImage} alt="关于页封面" className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
       </div>
 
       <div className="px-5 sm:px-8 md:px-16 pb-10 md:pb-16 relative">
         <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-2xl overflow-hidden -mt-12 md:-mt-16 relative z-20 bg-white">
-          <img src={siteConfig.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+          <img src={siteConfig.avatarUrl} alt="头像" className="w-full h-full object-cover" />
         </div>
 
         {/* 🌟 核心修复区：手机端排版优雅适配 */}
         <div className="mt-4 md:mt-6 mb-6 md:mb-8 relative flex flex-col md:flex-row md:items-end justify-between gap-5 md:gap-4">
           <div className="text-center md:text-left">
             <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-1 md:mb-3 transition-colors duration-700">关于我</h1>
-            <p className="text-sm md:text-lg text-indigo-600 dark:text-indigo-400 font-bold tracking-widest uppercase transition-colors duration-700">Hello World, I'm {siteConfig.authorName}</p>
+            <p className="text-sm md:text-lg text-indigo-600 dark:text-indigo-400 font-bold tracking-widest uppercase transition-colors duration-700">你好，我是 {siteConfig.authorName}</p>
           </div>
 
           <div className="px-4 md:px-5 py-2 rounded-xl md:rounded-2xl text-xs md:text-sm font-black bg-indigo-500 text-white shadow-md">

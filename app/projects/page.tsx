@@ -4,8 +4,8 @@ import ProjectsBoard from './ProjectsBoard';
 import {siteConfig} from "@/siteConfig";
 
 export const metadata = {
-  title: "GitHub README | " + siteConfig.title,
-  description: "直接展示 proffitteoy/proffitteoy 个人主页 README",
+  title: "项目矩阵 | " + siteConfig.title,
+  description: "展示中文项目简介与常回看的仓库。",
 };
 
 export default function ProjectsPage() {

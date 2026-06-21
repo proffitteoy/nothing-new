@@ -11,12 +11,10 @@ import rehypeStringify from "rehype-stringify"
 import BackButton from "../../components/BackButton"
 
 const PROFILE_REPO_URL = "https://github.com/proffitteoy/proffitteoy"
-const PROFILE_README_RAW_URL =
-  "https://raw.githubusercontent.com/proffitteoy/proffitteoy/main/README.md"
 const PROFILE_README_RAW_BASE = "https://raw.githubusercontent.com/proffitteoy/proffitteoy/main/"
 const PROFILE_README_BLOB_BASE = "https://github.com/proffitteoy/proffitteoy/blob/main/"
 
-type ReadmeSource = "github" | "local"
+type ReadmeSource = "local"
 
 function readLocalReadme() {
   const readmePath = path.join(process.cwd(), "data", "proffitteoy-readme.md")
@@ -28,22 +26,7 @@ function readLocalReadme() {
 }
 
 async function loadProjectsReadme(): Promise<{ markdown: string; source: ReadmeSource }> {
-  try {
-    const response = await fetch(PROFILE_README_RAW_URL, {
-      headers: { Accept: "text/markdown; charset=utf-8" },
-      next: { revalidate: 60 * 60 },
-      signal: AbortSignal.timeout(5000),
-    })
-
-    if (!response.ok) {
-      throw new Error(`GitHub README request failed: ${response.status}`)
-    }
-
-    const markdown = await response.text()
-    return { markdown: markdown.trim() || readLocalReadme(), source: "github" }
-  } catch {
-    return { markdown: readLocalReadme(), source: "local" }
-  }
+  return { markdown: readLocalReadme(), source: "local" }
 }
 
 function getStringProperty(value: Properties[keyof Properties]) {
@@ -169,18 +152,18 @@ export default async function ProjectsBoard() {
         <div className="p-5 md:p-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-black tracking-[0.32em] text-cyan-300 mb-4 uppercase">
-              GitHub Profile README
+              个人项目自述
             </p>
             <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">
-              proffitteoy/proffitteoy
+              项目矩阵
             </h1>
             <p className="mt-3 max-w-2xl text-sm md:text-base leading-8 text-slate-300">
-              项目页直接同步 GitHub 个人主页仓库 README，并在站内做适配排版。
+              这里整理常回看的项目、研究工具与个人知识库建设记录。
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex w-fit items-center justify-center rounded-full border border-slate-400/30 bg-white/5 px-4 py-2 text-xs font-black text-slate-200">
-              {readme.source === "github" ? "GitHub 同步" : "本地缓存"}
+              中文本地版
             </span>
             <a
               href={PROFILE_REPO_URL}
@@ -188,7 +171,7 @@ export default async function ProjectsBoard() {
               rel="noopener noreferrer"
               className="inline-flex w-fit items-center justify-center rounded-full border border-cyan-300/40 bg-cyan-300/10 px-5 py-2 text-sm font-black text-cyan-100 transition-colors duration-300 hover:bg-cyan-300/20"
             >
-              打开仓库
+              打开 GitHub
             </a>
           </div>
         </div>

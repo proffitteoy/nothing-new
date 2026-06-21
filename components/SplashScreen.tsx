@@ -54,14 +54,14 @@ export default function SplashScreen() {
                 className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-60 blur-[3px]"
               />
               <div className="relative w-full h-full rounded-full p-1.5 bg-white dark:bg-slate-900 shadow-xl">
-                <img src={siteConfig.avatarUrl} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                <img src={siteConfig.avatarUrl} alt="头像" className="w-full h-full rounded-full object-cover" />
               </div>
             </div>
 
             <h1 className="text-2xl font-black text-slate-800 dark:text-white mb-2 tracking-[0.2em] uppercase">
               {siteConfig.authorName}
             </h1>
-            <p className="text-[10px] font-black text-slate-400 tracking-[0.5em] mb-12">INITIALIZING SYSTEM</p>
+            <p className="text-[10px] font-black text-slate-400 tracking-[0.5em] mb-12">正在初始化站点</p>
 
             <div className="w-40 h-[1.5px] bg-slate-200 dark:bg-slate-800 relative">
               <motion.div
