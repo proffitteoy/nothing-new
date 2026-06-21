@@ -58,7 +58,7 @@ body::before {
   background-size: cover;
 }
 
-@media all and ($mobile), (prefers-reduced-data: reduce) {
+@media (prefers-reduced-data: reduce) {
   :root[data-bg-ready="on"] body::before {
     background-image: none;
   }
@@ -69,6 +69,12 @@ body::after {
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.04)),
     linear-gradient(180deg, rgba(248, 250, 252, 0.2), rgba(15, 23, 42, 0.12));
+}
+
+:root[saved-theme="dark"] body::after {
+  background:
+    radial-gradient(circle at top, rgba(129, 140, 248, 0.18), rgba(15, 23, 42, 0.02)),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.52), rgba(2, 6, 23, 0.42));
 }
 
 #quartz-root {
@@ -564,9 +570,20 @@ button.desktop-explorer > h2 {
 
 .darkmode,
 .readermode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
   border: 1px solid var(--blog-line);
   border-radius: 999px;
   background: var(--blog-shell-strong);
+}
+
+.darkmode svg,
+.readermode svg {
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 footer {
@@ -650,21 +667,46 @@ footer ul {
     position: fixed;
     top: max(0.9rem, env(safe-area-inset-top));
     left: max(0.7rem, env(safe-area-inset-left));
+    right: max(0.7rem, env(safe-area-inset-right));
     z-index: 104;
-    display: block;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     width: auto;
     height: auto;
     pointer-events: none;
   }
 
-  .page > #quartz-body .sidebar.left > :not(.explorer) {
+  .page > #quartz-body .sidebar.left > .page-title,
+  .page > #quartz-body .sidebar.left > .spacer {
     display: none !important;
   }
 
   .page > #quartz-body .sidebar.left > .explorer {
+    order: 1;
     width: auto;
     min-width: auto;
     pointer-events: auto;
+  }
+
+  .page > #quartz-body .sidebar.left > .flex-component {
+    order: 2;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    width: auto;
+    max-width: calc(100vw - 5rem);
+    padding: 0;
+    gap: 0.45rem !important;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: auto;
+  }
+
+  .page > #quartz-body .sidebar.left > .flex-component > div {
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
   }
 
   .page > #quartz-body .sidebar.left .mobile-explorer {
@@ -691,6 +733,14 @@ footer ul {
   .page > #quartz-body .sidebar.left > .explorer {
     width: auto;
     justify-self: start;
+  }
+
+  .page > #quartz-body .sidebar.left > .flex-component .search {
+    max-width: 8.8rem;
+  }
+
+  .page > #quartz-body .sidebar.left > .flex-component .search > .search-button {
+    padding-right: 0.75rem;
   }
 
   .page > #quartz-body .center > .page-header,
@@ -737,5 +787,18 @@ footer ul {
   .page > #quartz-body .sidebar.right > *,
   .page > #quartz-body footer {
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  }
+
+  .page > #quartz-body .sidebar.left > .flex-component {
+    width: auto;
+    max-width: calc(100vw - 5rem);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :root[reader-mode="on"] .page > #quartz-body .sidebar.left {
+    opacity: 1;
   }
 }

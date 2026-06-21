@@ -51,12 +51,16 @@ type IntroState = {
 let introState: IntroState | null = null
 let backgroundDecorReady = false
 
-function canUseDesktopEffects(): boolean {
+function canUseBackgroundImage(): boolean {
   const connection = (navigator as any).connection
   const saveData = connection?.saveData === true
   const effectiveType = String(connection?.effectiveType ?? "")
   const slowNetwork = effectiveType === "slow-2g" || effectiveType === "2g"
-  return !saveData && !slowNetwork && !window.matchMedia(MOBILE_BREAKPOINT).matches
+  return !saveData && !slowNetwork
+}
+
+function canUseDesktopEffects(): boolean {
+  return canUseBackgroundImage() && !window.matchMedia(MOBILE_BREAKPOINT).matches
 }
 
 function prefersReducedMotion(): boolean {
@@ -65,7 +69,7 @@ function prefersReducedMotion(): boolean {
 
 function scheduleBackgroundDecor() {
   if (document.documentElement.hasAttribute(BG_READY_ATTR) || backgroundDecorReady) return
-  if (!canUseDesktopEffects()) return
+  if (!canUseBackgroundImage()) return
   backgroundDecorReady = true
 
   const activateBackground = () => {
@@ -169,13 +173,21 @@ function runIntroTyping(state: IntroState, tokenIndex: number) {
 
     state.composedText += token.text
     state.title.textContent = state.composedText
-    setImePrompt(state, token.pinyin ? `\u4e0a\u5c4f: ${token.text}` : "", token.pinyin ? "commit" : "idle")
+    setImePrompt(
+      state,
+      token.pinyin ? `\u4e0a\u5c4f: ${token.text}` : "",
+      token.pinyin ? "commit" : "idle",
+    )
 
-    scheduleIntroTask(state, () => {
-      if (!introState || introState !== state) return
-      setImePrompt(state, "", "idle")
-      runIntroTyping(state, tokenIndex + 1)
-    }, token.pauseAfter ?? INTRO_DEFAULT_GAP)
+    scheduleIntroTask(
+      state,
+      () => {
+        if (!introState || introState !== state) return
+        setImePrompt(state, "", "idle")
+        runIntroTyping(state, tokenIndex + 1)
+      },
+      token.pauseAfter ?? INTRO_DEFAULT_GAP,
+    )
   }
 
   if (!token.pinyin) {
@@ -197,11 +209,15 @@ function runIntroTyping(state: IntroState, tokenIndex: number) {
     }
 
     if (token.candidates) {
-      scheduleIntroTask(state, () => {
-        if (!introState || introState !== state) return
-        setImePrompt(state, `\u5019\u9009: ${token.candidates}`, "candidate")
-        scheduleIntroTask(state, commitCurrentToken, INTRO_CANDIDATE_DELAY)
-      }, INTRO_KEY_INTERVAL)
+      scheduleIntroTask(
+        state,
+        () => {
+          if (!introState || introState !== state) return
+          setImePrompt(state, `\u5019\u9009: ${token.candidates}`, "candidate")
+          scheduleIntroTask(state, commitCurrentToken, INTRO_CANDIDATE_DELAY)
+        },
+        INTRO_KEY_INTERVAL,
+      )
       return
     }
 
@@ -275,9 +291,13 @@ function activateLandingIntro(): boolean {
   setImePrompt(introState, "", "idle")
 
   const activeIntro = introState
-  scheduleIntroTask(activeIntro, () => {
-    runIntroTyping(activeIntro, 0)
-  }, INTRO_BOOT_DELAY)
+  scheduleIntroTask(
+    activeIntro,
+    () => {
+      runIntroTyping(activeIntro, 0)
+    },
+    INTRO_BOOT_DELAY,
+  )
 
   return true
 }
@@ -316,7 +336,10 @@ document.addEventListener("nav", () => {
     if (tagName === "input" || tagName === "textarea" || targetElement?.isContentEditable) return
 
     const shouldReveal =
-      event.key === "ArrowDown" || event.key === "PageDown" || event.key === " " || event.key === "Enter"
+      event.key === "ArrowDown" ||
+      event.key === "PageDown" ||
+      event.key === " " ||
+      event.key === "Enter"
     if (!shouldReveal) return
 
     if (revealLandingIntro(true)) {
