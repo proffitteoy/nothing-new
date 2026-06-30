@@ -5,6 +5,8 @@ tags:
   - 大学数学竞赛
   - 中学数学竞赛
   - 考研
+obsidian-note-status:
+  - colorful:completed
 ---
 
 > [!question] 问题1
@@ -35,7 +37,7 @@ tags:
 
 #### 1.3 制造telescoping sum
 
-^b1fe7b
+
 
 > [!tip] 想法2.3.1:利用concave性制造的telescoping sum
 > 详细参考[[逐项估计#^d27913]]，借助对数函数的concave性质，我们得到$$\log(2n)-\log(2n-1)\geq \frac{\log(2n+1)-\log(2n-1)}{2}$$而后者是一个telescoping sum，其和的精度正好符合“问题2”的要求。
@@ -46,17 +48,12 @@ tags:
 
 ### 2. 此问题与$\Gamma$函数之间的关系
 
-从上面的“核心想法”的角度来看，第1节，第2.1，2.2节中的解法的基本出发点都是：“认为$P_N$或者$\log(P_N)$其本身不是一个简单的或者我们熟悉的形式，因此需要放缩成一个新的简单的或者熟悉的形式”。
+从上面的“核心想法”的角度来看，基本出发点都是：“认为$P_N$或者$\log(P_N)$其本身不是一个简单的或者我们熟悉的形式，因此需要放缩成一个新的简单的或者熟悉的形式”。
 
 而这一节的解法的出发点则是：“$P_N$真的不熟悉吗？不！其实$P_N$我们还是比较熟悉的！”并且最后的结果告诉我们，这样做精度能达到更好。
-$$P_N=\prod_{n=1}^{N}\left(1-\frac{1}{2n}\right)=\frac{1}{\sqrt{\pi}}\frac{\Gamma(N+1/2)}{\Gamma(N+1)}$$这个结果可以从Wallis公式(参考[[math/Wallis公式,正弦函数Hadamard分解互相之间的关系]])其中一个步骤得到:$$P_N=\frac{2}{\pi}\int_{0}^{\frac{\pi}{2}}\sin(t)^{2N}dt$$考虑到这个积分和beta函数之间的关系:$$\beta(z_1,z_2)=2\int_{0}^{\frac{\pi}{2}}\sin(t)^{2z_1-1}\cos(t)^{2z_2-1}dt$$所以上述的乘积我们可以写成$$P_N=\frac{1}{\pi}\beta(N+\frac{1}{2},\frac{1}{2})=\frac{1}{\pi}\frac{\Gamma(N+\frac{1}{2})\Gamma(\frac{1}{2})}{\Gamma(N+1)}$$此时如果我们用Gautschi不等式:
+$$P_N=\prod_{n=1}^{N}\left(1-\frac{1}{2n}\right)=\frac{1}{\sqrt{\pi}}\frac{\Gamma(N+1/2)}{\Gamma(N+1)}$$这个结果可以从Wallis公式其中一个步骤得到:$$P_N=\frac{2}{\pi}\int_{0}^{\frac{\pi}{2}}\sin(t)^{2N}dt$$考虑到这个积分和beta函数之间的关系:$$\beta(z_1,z_2)=2\int_{0}^{\frac{\pi}{2}}\sin(t)^{2z_1-1}\cos(t)^{2z_2-1}dt$$所以上述的乘积我们可以写成$$P_N=\frac{1}{\pi}\beta(N+\frac{1}{2},\frac{1}{2})=\frac{1}{\pi}\frac{\Gamma(N+\frac{1}{2})\Gamma(\frac{1}{2})}{\Gamma(N+1)}$$此时如果我们用Gautschi不等式:
 
 > [!note] Gautschi不等式,1959
 > 当$s\in(0,1),x>0$的时候:$$x^{1-s}<\frac{\Gamma(x+1)}{\Gamma(x+s)}<(1+x)^{1-s}$$
 
 放在此问题当中$s=1/2$:$$\frac{1}{\sqrt{\pi(N+1)}}<P_N<\frac{1}{\sqrt{\pi N}}$$那么自然$$P_N<\frac{1}{\sqrt{\pi N}}<\frac{1}{\sqrt{2N}}$$
-#### 2.1 证明这个不等式:Gautschi不等式
-
-这个不等式的主要原理是利用$\Gamma(x),x>0$的对数下凸性，即：
-
-令$g(x)=\log\left(\Gamma(x)\right)$那么:$$g(tu+(1-t)v)<tg(u)+(1-t)g(v),u\neq v$$对于这一点，我们只需要计算$g(x)$的二阶导数即可。$$g^{(2)}(x)=\frac{\Gamma^{(2)}(x)\Gamma(x)-\Gamma^{\prime}(x)^2}{\Gamma(x)^2}$$考虑到$$\begin{aligned}\Gamma^{(k)}&=\int_{0}^{\infty}\log(t)^kt^{x-1}e^{-t}dt,\forall k\in\mathbb{N}\\&=\int_{0}^{\infty}\log(t)^kh^2(x,t)dt\end{aligned}$$由Cauchy - Schwarz不等式可以知道:$$\begin{aligned}\Gamma^{(2)}(x)\Gamma(x)&=||\log(t)h(x,t)||^2\cdot||1\cdot h(x,t)||^2\\&>\braket{\log(t)h(x,t),h(x,t)}\\&=\int_{0}^{\infty}\log(t)h^2(x,t)dt\\&=\Gamma'(x)\end{aligned}$$对数下凸性自然也可以写成:$$\Gamma(tu+(1-t)v)<\Gamma(u)^t\Gamma(v)^{1-t}$$1.  令$u=x,v=x+1,t=1-s$那么:$$\begin{aligned}\Gamma(s+x)&<\Gamma(x)^{1-s}\Gamma(x+1)^{s}=x^{s-1}\Gamma(x+1)\end{aligned}$$2.  反过来令$u=x+s,v=x+s+1,t=s$得到:$$\Gamma(x+1)<\Gamma(x+s)^s\Gamma(x+s+1)^{1-s}=(x+s)^{1-s}\Gamma(x+s)$$
