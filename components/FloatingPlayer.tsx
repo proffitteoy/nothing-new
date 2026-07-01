@@ -3,19 +3,13 @@
 import { usePathname } from 'next/navigation';
 import { useMusic } from './MusicProvider';
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
 
 export default function FloatingPlayer() {
   const pathname = usePathname();
   const { currentSong, isPlaying, togglePlay, nextSong, currentLyric, isLoading } = useMusic();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // 这里只拦截还没有初始化的情况，不拦截首页
-  if (!isMounted || isLoading || !currentSong) return null;
+  if (isLoading || !currentSong) return null;
 
   // 【核心修复】：判断是否在首页。在首页时我们让它隐身，但不销毁它！
   const isHidden = pathname === '/';
@@ -56,6 +50,8 @@ export default function FloatingPlayer() {
         {/* 控制按钮 */}
         <div className="flex items-center gap-2 ml-1">
           <button
+            type="button"
+            aria-label={isPlaying ? "暂停浮动播放器" : "播放浮动播放器"}
             onClick={(e) => { e.stopPropagation(); togglePlay(); }}
             onPointerDown={(e) => e.stopPropagation()}
             className="w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
@@ -63,6 +59,8 @@ export default function FloatingPlayer() {
             {isPlaying ? <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> : <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>}
           </button>
           <button
+            type="button"
+            aria-label="浮动播放器下一首"
             onClick={(e) => { e.stopPropagation(); nextSong(); }}
             onPointerDown={(e) => e.stopPropagation()}
             className="text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors cursor-pointer"

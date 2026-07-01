@@ -6,35 +6,35 @@ import { siteConfig } from '../siteConfig';
 
 export default function SplashScreen() {
   const [show, setShow] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash') === 'true';
+    const exitSplash = () => {
+      setShow(false);
+      try {
+        sessionStorage.setItem('hasSeenSplash', 'true');
+      } catch {
+        // 主内容已默认可见，存储失败不影响进入站点。
+      }
+    };
+
+    let hasSeenSplash = false;
+    try {
+      hasSeenSplash = sessionStorage.getItem('hasSeenSplash') === 'true';
+    } catch {
+      hasSeenSplash = true;
+    }
 
     if (!hasSeenSplash) {
-      setShow(true);
-      const timer = setTimeout(() => {
+      const enterTimer = setTimeout(() => setShow(true), 0);
+      const exitTimer = setTimeout(() => {
         exitSplash();
       }, 2200);
-      return () => clearTimeout(timer);
-    } else {
-      // 容错处理：确保直接访问时类名存在
-      document.documentElement.classList.add('splash-seen');
+      return () => {
+        clearTimeout(enterTimer);
+        clearTimeout(exitTimer);
+      };
     }
   }, []);
-
-  const exitSplash = () => {
-    setShow(false);
-    sessionStorage.setItem('hasSeenSplash', 'true');
-
-    // 【核心解封】：动画快结束时，给 html 加上类名，CSS 会自动把内容显示出来
-    setTimeout(() => {
-      document.documentElement.classList.add('splash-seen');
-    }, 500);
-  };
-
-  if (!isMounted) return null;
 
   return (
     <AnimatePresence>

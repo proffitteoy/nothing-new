@@ -103,3 +103,30 @@ P3：降低视觉层级重复
 3. 给音乐 Provider 增加状态机和加载失败恢复 UI。
 4. 补播放器、浮动播放器、移动导航的 aria 与键盘语义。
 5. 基于 Mineradio 思路重构音源 adapter 与歌词/队列组件，而不是直接搬代码。
+
+## 2026-07-01 实施跟进
+
+已完成：
+- Splash 不再 gate 主内容：`#app-mount-root` 默认可见，`SplashScreen` 仅作为可退出的覆盖层；`sessionStorage` 不可用时不会阻塞站点。
+- 音乐状态机补齐：`MusicProvider` 区分 `loading / ready / empty / error`，失败和空列表会暴露错误文案与 `retryMusic`。
+- 首页播放器和 `/music` 页面补齐可恢复状态：加载失败/空列表时显示明确说明与重试入口，首页播放器增加“完整播放器”入口，避免整卡点击和内部控件冲突。
+- 播放器语义增强：播放/暂停、上一首、下一首、播放模式、进度、音量、搜索、清空搜索、浮动播放器等控件补齐 `aria-label` 或当前状态说明。
+- 歌词 seek 改为按钮语义：当前歌词使用 `aria-current`，点击歌词通过 `seekToPercent` 跳转，不再伪造 input change 事件。
+- 移动导航补齐可访问性：触发器增加 `aria-label / aria-expanded / aria-controls`，圆盘弹层增加 dialog 语义，支持 Escape 关闭，当前页面标记 `aria-current`。
+- 全局增加 `prefers-reduced-motion: reduce` 降级，降低唱片旋转、pulse、spin、bounce 等动效对敏感用户的影响。
+
+验证：
+- `npm.cmd run lint`：通过，0 errors；剩余 16 个 warning 为既有 `<img>` 优化建议和 `obsidian-sync.config.mjs` 匿名默认导出提示。
+- `npm.cmd run typecheck`：通过。
+- `npm.cmd run build`：通过。Quartz 输出到 `public/blog`，Next.js 16.2.1 生产构建成功。
+- 本地 3002 旧服务 `/` 与 `/music` 均返回 200；Browser DOM 检查首页确认 `#app-mount-root` 默认可见、无 Next 错误层、无页面 console error。`/music` 在该旧服务上 9 秒后仍停留在“唤醒音频引擎中...”，因此不作为最新构建截图证据。
+- `next start --port 3003` 前台诊断可在约 1 秒内 Ready；但沙箱外后台启动审批因额度限制被拒绝，未能用浏览器对最新 build 产物完成新截图验证。
+
+未纳入本轮：
+- Vercel 上 dependabot PR 的 `js-yaml`/Quartz 构建失败属于依赖升级发布链路问题，建议单独处理 PR #21。
+- `<img>` 切换到 `next/image` 涉及远程图片域名、尺寸和缓存策略，建议作为后续性能专项处理。
+- Browser 插件没有拿到最新构建的音乐页截图证据；音乐页以 lint/typecheck/build 通过、HTTP 200 和代码级语义检查作为当前验证依据。
+
+Vercel / GitHub 复核：
+- Vercel `math-vault` 最新 production 部署 `dpl_5uaCkRHJV12bvdUGHkQXG9dTBPfN` 为 `READY`，对应 `main` 分支提交 `6625f169b4d8413ae15feaf0d90df50e9f1dd2d9`，提交信息 `6.30`。
+- GitHub PR #21 仍为 open、未合并、mergeable；head commit `004e6260766d0751035893621d988aee84bfd685` 的 Vercel status 为 `failure`，对应失败部署 `dpl_GRnyc8CLySZc1Rcvk7VTBN3tQgHh`。

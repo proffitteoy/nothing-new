@@ -94,7 +94,10 @@ function getContentType(filePath: string) {
 }
 
 function createFileResponse(content: Buffer, filePath: string, status = 200) {
-  return new Response(content, {
+  const body = new Uint8Array(content.byteLength);
+  body.set(content);
+
+  return new Response(body, {
     status,
     headers: {
       "access-control-allow-origin": "*",

@@ -7,12 +7,12 @@ export default function LyricBar() {
   const [displayedLyric, setDisplayedLyric] = useState("");
 
   useEffect(() => {
-    setDisplayedLyric("");
     let i = 0;
     const targetText = currentLyric || "";
-    if (!targetText) return;
+    const resetTimer = window.setTimeout(() => setDisplayedLyric(""), 0);
+    if (!targetText) return () => window.clearTimeout(resetTimer);
 
-    const typingInterval = setInterval(() => {
+    const typingInterval = window.setInterval(() => {
       if (i <= targetText.length) {
         setDisplayedLyric(targetText.slice(0, i));
         i++;
@@ -21,7 +21,10 @@ export default function LyricBar() {
       }
     }, 50);
 
-    return () => clearInterval(typingInterval);
+    return () => {
+      window.clearTimeout(resetTimer);
+      window.clearInterval(typingInterval);
+    };
   }, [currentLyric]);
 
   if (!currentSong) return null;

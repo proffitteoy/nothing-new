@@ -30,20 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
-              #app-mount-root { opacity: 0; visibility: hidden; pointer-events: none; }
-              html.splash-seen #app-mount-root { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
-            `
-          }}
-        />
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (sessionStorage.getItem('hasSeenSplash') === 'true') {
-                  document.documentElement.classList.add('splash-seen');
-                }
-              } catch (e) {}
+              #app-mount-root { opacity: 1; visibility: visible; pointer-events: auto; }
             `
           }}
         />

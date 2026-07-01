@@ -10,8 +10,6 @@ export default function ClickEffect() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let ripples: any[] = [];
-
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -59,6 +57,8 @@ export default function ClickEffect() {
         ctx.fill();
       }
     }
+
+    const ripples: Ripple[] = [];
 
     const handleClick = (e: MouseEvent) => {
       ripples.push(new Ripple(e.clientX, e.clientY));

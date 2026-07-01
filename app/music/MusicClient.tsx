@@ -2,48 +2,42 @@
 
 import { useEffect, useRef, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, RefreshCcw, ListMusic, Mic2, Disc3, Volume2, VolumeX, Search, X } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, RefreshCcw, Disc3, Volume2, VolumeX, Search, X } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
-import { useMusic } from '../../components/MusicProvider';
+import { useMusic, type LyricLine } from '../../components/MusicProvider';
 
 export default function MusicClient() {
   const {
     playlist, currentSong, isPlaying, progress, currentTime, duration, currentLyric,
-    isLoading, togglePlay, nextSong, prevSong, handleSeek,
+    isLoading, togglePlay, nextSong, prevSong, handleSeek, seekToPercent,
     playSong,
     playMode, togglePlayMode,
-    volume, setVolume, isMuted, toggleMute
+    volume, setVolume, isMuted, toggleMute,
+    musicStatus, musicError, retryMusic
   } = useMusic();
 
   const lyricContainerRef = useRef<HTMLDivElement>(null);
-  const activeLyricRef = useRef<HTMLDivElement>(null);
+  const activeLyricRef = useRef<HTMLButtonElement>(null);
   const [activeTab, setActiveTab] = useState<'lyrics' | 'playlist'>('lyrics');
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [parsedLyrics, setParsedLyrics] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!currentSong) {
-      setParsedLyrics([]);
-      return;
-    }
+  const parsedLyrics = useMemo<LyricLine[]>(() => {
+    if (!currentSong) return [];
 
     const rawLrc = currentSong.lrc || currentSong.lyric || (typeof currentSong.lyrics === 'string' ? currentSong.lyrics : '');
 
     if (Array.isArray(currentSong.lyrics) && currentSong.lyrics.length > 0) {
-      setParsedLyrics(currentSong.lyrics);
-      return;
+      return currentSong.lyrics;
     }
 
     if (!rawLrc || typeof rawLrc !== 'string') {
-      setParsedLyrics([]);
-      return;
+      return [];
     }
 
     const lines = rawLrc.split('\n');
-    const parsed = [];
+    const parsed: LyricLine[] = [];
     const timeExp = /\[(\d{2,}):(\d{2})(?:[.:](\d{2,3}))?\]/g;
     let hasValidTime = false;
 
@@ -62,15 +56,15 @@ export default function MusicClient() {
     }
 
     if (hasValidTime) {
-      setParsedLyrics(parsed.sort((a, b) => a.time - b.time));
-    } else {
-      setParsedLyrics(lines.map(l => ({ time: -1, text: l.trim() })).filter(l => l.text));
+      return parsed.sort((a, b) => a.time - b.time);
     }
-  }, [currentSong?.id, currentSong?.lyric, currentSong?.lrc, currentSong?.lyrics]);
+
+    return lines.map(l => ({ time: -1, text: l.trim() })).filter(l => l.text);
+  }, [currentSong]);
 
   const activeLyricIndex = useMemo(() => {
     if (!parsedLyrics.length) return -1;
-    let idx = parsedLyrics.findIndex((l: any) => l.time > currentTime) - 1;
+    let idx = parsedLyrics.findIndex((l) => l.time > currentTime) - 1;
     if (idx === -2) idx = parsedLyrics.length - 1;
     return Math.max(0, idx);
   }, [currentTime, parsedLyrics]);
@@ -91,6 +85,12 @@ export default function MusicClient() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const playModeLabel = {
+    loop: '列表循环',
+    single: '单曲循环',
+    random: '随机播放',
+  }[playMode];
+
   const getPlayModeIcon = () => {
     switch (playMode) {
       case 'loop': return <Repeat size={18} className="text-slate-500 hover:text-indigo-500 md:w-5 md:h-5" />;
@@ -107,19 +107,36 @@ export default function MusicClient() {
   const filteredPlaylist = useMemo(() => {
     if (!searchQuery.trim()) return playlist;
     const lowerQuery = searchQuery.toLowerCase();
-    return playlist.filter((song: any) =>
+    return playlist.filter((song) =>
       (song.title || song.name || '').toLowerCase().includes(lowerQuery) ||
       (song.artist || song.author || '').toLowerCase().includes(lowerQuery)
     );
   }, [playlist, searchQuery]);
 
   if (isLoading || !currentSong) {
+    const isRecoverable = musicStatus === 'error' || musicStatus === 'empty';
     return (
       <div className="min-h-screen relative pb-32 flex flex-col">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center animate-pulse gap-4">
-          <Disc3 size={48} className="text-indigo-500 animate-spin" />
-          <span className="font-black text-slate-500 tracking-widest text-sm">唤醒音频引擎中...</span>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center" role="status" aria-live="polite">
+          <Disc3 size={48} className={`text-indigo-500 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
+          <span className={`font-black text-slate-500 tracking-widest text-sm ${isLoading ? 'animate-pulse' : ''}`}>
+            {isLoading ? '唤醒音频引擎中...' : musicStatus === 'error' ? '音乐云端连接失败' : '暂无可播放音乐'}
+          </span>
+          {!isLoading && (
+            <p className="max-w-sm text-xs font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+              {musicError || '可以稍后重试，或先继续浏览其他内容。'}
+            </p>
+          )}
+          {isRecoverable && (
+            <button
+              type="button"
+              onClick={retryMusic}
+              className="mt-2 rounded-full bg-indigo-500 px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-600"
+            >
+              重试连接
+            </button>
+          )}
         </div>
       </div>
     );
@@ -167,27 +184,27 @@ export default function MusicClient() {
 
               <div className="w-full mt-auto relative z-20">
                 <div className="w-full flex flex-col gap-1.5 mb-6 md:mb-8 px-1 md:px-3">
-                  <input type="range" min="0" max="100" value={progress || 0} onChange={handleSeek} className="w-full h-1 md:h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #4f46e5 ${progress}%, rgba(0, 0, 0, 0.15) 0)` }} />
+                  <input type="range" min="0" max="100" aria-label="播放进度" value={progress || 0} onChange={handleSeek} className="w-full h-1 md:h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #4f46e5 ${progress}%, rgba(0, 0, 0, 0.15) 0)` }} />
                   <div className="flex justify-between text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 tabular-nums"><span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span></div>
                 </div>
                 <div className="w-full flex items-center justify-between px-1 md:px-2 lg:px-4">
-                  <button onClick={togglePlayMode} className="p-2 transition-transform hover:scale-110">{getPlayModeIcon()}</button>
+                  <button type="button" aria-label={`切换播放模式，当前为${playModeLabel}`} title={playModeLabel} onClick={togglePlayMode} className="p-2 transition-transform hover:scale-110">{getPlayModeIcon()}</button>
                   <div className="flex items-center gap-3 md:gap-4 lg:gap-6">
-                    <button onClick={prevSong} className="p-2 text-slate-700 dark:text-slate-300 hover:text-indigo-500 transition-transform hover:scale-110"><SkipBack size={24} className="md:w-7 md:h-7" fill="currentColor" /></button>
-                    <button onClick={togglePlay} className="w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center bg-indigo-500 text-white rounded-full hover:scale-105 shadow-xl shadow-indigo-500/40">
+                    <button type="button" aria-label="上一首" onClick={prevSong} className="p-2 text-slate-700 dark:text-slate-300 hover:text-indigo-500 transition-transform hover:scale-110"><SkipBack size={24} className="md:w-7 md:h-7" fill="currentColor" aria-hidden="true" /></button>
+                    <button type="button" aria-label={isPlaying ? "暂停" : "播放"} onClick={togglePlay} className="w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center bg-indigo-500 text-white rounded-full hover:scale-105 shadow-xl shadow-indigo-500/40">
                       {isPlaying ? <Pause size={28} className="md:w-8 md:h-8" fill="currentColor" /> : <Play size={28} className="md:w-8 md:h-8 ml-1" fill="currentColor" />}
                     </button>
-                    <button onClick={nextSong} className="p-2 text-slate-700 dark:text-slate-300 hover:text-indigo-500 transition-transform hover:scale-110"><SkipForward size={24} className="md:w-7 md:h-7" fill="currentColor" /></button>
+                    <button type="button" aria-label="下一首" onClick={nextSong} className="p-2 text-slate-700 dark:text-slate-300 hover:text-indigo-500 transition-transform hover:scale-110"><SkipForward size={24} className="md:w-7 md:h-7" fill="currentColor" aria-hidden="true" /></button>
                   </div>
                   <div className="flex items-center" onMouseLeave={() => setShowVolumeSlider(false)}>
                     <AnimatePresence>
                       {showVolumeSlider && (
                         <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 80, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="hidden md:flex overflow-hidden items-center mr-2 bg-white/30 dark:bg-black/20 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/20">
-                          <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : (volume || 0)} onChange={(e) => setVolume && setVolume(Number(e.target.value))} className="w-16 h-1 appearance-none rounded-full cursor-pointer" style={{ background: `linear-gradient(to right, #4f46e5 ${(volume || 0) * 100}%, rgba(0, 0, 0, 0.15) 0)` }} />
+                          <input type="range" min="0" max="1" step="0.01" aria-label="音量" value={isMuted ? 0 : (volume || 0)} onChange={(e) => setVolume && setVolume(Number(e.target.value))} className="w-16 h-1 appearance-none rounded-full cursor-pointer" style={{ background: `linear-gradient(to right, #4f46e5 ${(volume || 0) * 100}%, rgba(0, 0, 0, 0.15) 0)` }} />
                         </motion.div>
                       )}
                     </AnimatePresence>
-                    <button onClick={() => setShowVolumeSlider(!showVolumeSlider)} onDoubleClick={toggleMute} className={`p-2 rounded-full transition-all ${showVolumeSlider ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-500 hover:text-indigo-500'}`}>{isMuted || volume === 0 ? <VolumeX size={18} className="md:w-5 md:h-5"/> : <Volume2 size={18} className="md:w-5 md:h-5" />}</button>
+                    <button type="button" aria-label={isMuted || volume === 0 ? "打开音量控制，当前静音" : "打开音量控制"} title="单击调节音量，双击静音" onClick={() => setShowVolumeSlider(!showVolumeSlider)} onDoubleClick={toggleMute} className={`p-2 rounded-full transition-all ${showVolumeSlider ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-500 hover:text-indigo-500'}`}>{isMuted || volume === 0 ? <VolumeX size={18} className="md:w-5 md:h-5" aria-hidden="true"/> : <Volume2 size={18} className="md:w-5 md:h-5" aria-hidden="true" />}</button>
                   </div>
                 </div>
               </div>
@@ -196,8 +213,8 @@ export default function MusicClient() {
             {/* ====== 右侧/底部：歌词与歌单面板 ====== */}
             <div className="md:col-span-7 flex flex-col bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-[32px] shadow-2xl relative transition-colors duration-700 overflow-hidden h-[450px] md:h-auto shrink-0">
               <div className="flex items-center justify-center gap-1 p-1 mt-4 md:mt-6 mx-auto bg-white/50 dark:bg-slate-900/50 rounded-full shadow-inner border border-white/40 w-48 md:w-64 z-20 shrink-0">
-                <button onClick={() => setActiveTab('lyrics')} className={`flex-1 py-1.5 md:py-2 rounded-full font-black text-xs md:text-[13px] transition-all ${activeTab === 'lyrics' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500'}`}>歌词</button>
-                <button onClick={() => setActiveTab('playlist')} className={`flex-1 py-1.5 md:py-2 rounded-full font-black text-xs md:text-[13px] transition-all ${activeTab === 'playlist' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500'}`}>歌单</button>
+                <button type="button" aria-pressed={activeTab === 'lyrics'} onClick={() => setActiveTab('lyrics')} className={`flex-1 py-1.5 md:py-2 rounded-full font-black text-xs md:text-[13px] transition-all ${activeTab === 'lyrics' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500'}`}>歌词</button>
+                <button type="button" aria-pressed={activeTab === 'playlist'} onClick={() => setActiveTab('playlist')} className={`flex-1 py-1.5 md:py-2 rounded-full font-black text-xs md:text-[13px] transition-all ${activeTab === 'playlist' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500'}`}>歌单</button>
               </div>
 
               <div className="flex-1 relative mt-2 flex flex-col overflow-hidden">
@@ -208,15 +225,17 @@ export default function MusicClient() {
                     <div ref={lyricContainerRef} className="h-full overflow-y-auto no-scrollbar scroll-smooth relative px-4 md:px-6 lyric-mask-container">
                         <div className="py-[30vh] md:py-[35vh] flex flex-col gap-4 md:gap-6 text-center lg:px-10">
                             {parsedLyrics.length > 0 ? (
-                              parsedLyrics.map((line: any, index: number) => {
+                              parsedLyrics.map((line, index) => {
                                 const isActive = index === activeLyricIndex;
                                 return (
-                                  <div key={index} ref={isActive ? activeLyricRef : null}
-                                    className={`transition-all duration-700 cursor-pointer px-2 md:px-4 rounded-2xl ${isActive ? 'opacity-100 scale-105 py-2 md:py-3 bg-white/10' : 'opacity-20 hover:opacity-40'}`}
-                                    onClick={() => duration > 0 && handleSeek({ target: { value: String((line.time / duration) * 100) } } as any)}
+                                  <button type="button" key={index} ref={isActive ? activeLyricRef : null}
+                                    aria-current={isActive ? 'true' : undefined}
+                                    aria-label={line.time >= 0 ? `跳转到歌词：${line.text}` : `歌词：${line.text}`}
+                                    className={`w-full transition-all duration-700 cursor-pointer px-2 md:px-4 rounded-2xl ${isActive ? 'opacity-100 scale-105 py-2 md:py-3 bg-white/10' : 'opacity-20 hover:opacity-40'}`}
+                                    onClick={() => line.time >= 0 && duration > 0 && seekToPercent((line.time / duration) * 100)}
                                   >
                                     <p className={`font-black tracking-tight leading-relaxed transition-all duration-700 ${isActive ? 'text-lg md:text-2xl text-indigo-600 dark:text-indigo-400' : 'text-sm md:text-lg text-slate-700 dark:text-slate-300'}`} style={isActive ? { textShadow: '0 0 20px rgba(99,102,241,0.15)' } : {}}>{line.text}</p>
-                                  </div>
+                                  </button>
                                 );
                               })
                             ) : (
@@ -236,16 +255,16 @@ export default function MusicClient() {
                     <div className="relative w-full max-w-md mx-auto group mb-4 md:mb-8 shrink-0">
                       <div className="absolute inset-0 bg-indigo-500/5 blur-xl group-focus-within:bg-indigo-500/10 transition-all rounded-full" />
                       <Search className="w-4 h-4 md:w-5 md:h-5 absolute left-4 top-1/2 -translate-y-1/2 z-10 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                      <input type="text" placeholder="搜索音轨..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-10 md:h-12 pl-10 md:pl-12 pr-10 md:pr-12 bg-white/30 dark:bg-slate-900/60 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-full text-xs md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/40 shadow-inner transition-all" />
-                      {searchQuery && (<button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-black/10 rounded-full transition-colors"><X size={14} className="text-slate-500" /></button>)}
+                      <input type="text" aria-label="搜索音轨" placeholder="搜索音轨..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-10 md:h-12 pl-10 md:pl-12 pr-10 md:pr-12 bg-white/30 dark:bg-slate-900/60 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-full text-xs md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/40 shadow-inner transition-all" />
+                      {searchQuery && (<button type="button" aria-label="清空搜索" onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-black/10 rounded-full transition-colors"><X size={14} className="text-slate-500" aria-hidden="true" /></button>)}
                     </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2 md:gap-2.5">
                       <AnimatePresence mode='popLayout'>
-                        {filteredPlaylist.map((song: any) => {
-                          const originalIndex = playlist.findIndex((s: any) => s.id === song.id);
+                        {filteredPlaylist.map((song) => {
+                          const originalIndex = playlist.findIndex((s) => s.id === song.id);
                           const isPlayingThis = (song.id === currentSong.id);
                           return (
-                            <motion.div layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} key={song.id} onClick={() => handlePlaySong(originalIndex)} className={`group flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-2xl cursor-pointer transition-all border ${isPlayingThis ? 'bg-white/60 dark:bg-slate-700/80 shadow-md border-indigo-500/30' : 'border-transparent hover:bg-white/30 dark:hover:bg-slate-700/40'}`}>
+                            <motion.button type="button" layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} key={song.id} onClick={() => handlePlaySong(originalIndex)} className={`group flex w-full items-center justify-between p-3 md:p-4 rounded-xl md:rounded-2xl cursor-pointer text-left transition-all border ${isPlayingThis ? 'bg-white/60 dark:bg-slate-700/80 shadow-md border-indigo-500/30' : 'border-transparent hover:bg-white/30 dark:hover:bg-slate-700/40'}`}>
                               <div className="flex items-center gap-3 md:gap-4 w-[85%]">
                                 <div className="relative w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-lg md:rounded-xl overflow-hidden shadow-sm">
                                   <img src={song.cover || song.pic} alt="歌曲封面" className="w-full h-full object-cover" />
@@ -253,7 +272,7 @@ export default function MusicClient() {
                                 </div>
                                 <div className="flex flex-col truncate"><span className={`text-sm md:text-[15px] font-black truncate ${isPlayingThis ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-slate-200'}`}>{song.title || song.name}</span><span className="text-[10px] md:text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">{song.artist || song.author}</span></div>
                               </div>
-                            </motion.div>
+                            </motion.button>
                           );
                         })}
                       </AnimatePresence>

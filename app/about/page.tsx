@@ -28,7 +28,9 @@ export default async function AboutPage() {
   try {
     const fileContents = fs.readFileSync(fullPath, 'utf8');
     // 🌟 改为 let，以便进行文本预清洗
-    let { data, content } = matter(fileContents);
+    const parsed = matter(fileContents);
+    const { data } = parsed;
+    let { content } = parsed;
     if (data.cover) coverImage = data.cover;
 
     // ==========================================
@@ -57,7 +59,6 @@ export default async function AboutPage() {
       .use(remarkMath)
       .use(remarkRehype, { allowDangerousHtml: true })
       // 🌟 核心修复：开启自动语言侦测，并限制语言白名单！
-      // @ts-ignore
       .use(rehypeHighlight, {
         detect: true,
         ignoreMissing: true,

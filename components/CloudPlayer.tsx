@@ -12,16 +12,19 @@ const formatTime = (time: number) => {
 };
 
 export default function CloudPlayer() {
-  const { playlist, currentSong, isPlaying, progress, currentTime, duration, currentLyric, isLoading, togglePlay, nextSong, prevSong, handleSeek } = useMusic();
+  const {
+    playlist, currentSong, isPlaying, progress, currentTime, duration, currentLyric,
+    isLoading, musicStatus, musicError, togglePlay, nextSong, prevSong, handleSeek, retryMusic
+  } = useMusic();
   const [displayedLyric, setDisplayedLyric] = useState("");
   // 🌟 初始化路由
   const router = useRouter();
 
   useEffect(() => {
     let i = 0;
-    setDisplayedLyric("");
     const target = currentLyric || "";
-    if (!target) return;
+    const resetTimer = setTimeout(() => setDisplayedLyric(""), 0);
+    if (!target) return () => clearTimeout(resetTimer);
 
     const typingInterval = setInterval(() => {
       if (i <= target.length) {
@@ -32,26 +35,46 @@ export default function CloudPlayer() {
       }
     }, 50);
 
-    return () => clearInterval(typingInterval);
+    return () => {
+      clearTimeout(resetTimer);
+      clearInterval(typingInterval);
+    };
   }, [currentLyric]);
 
   if (isLoading) {
     return (
-      <div className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col items-center justify-center transition-colors duration-700">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <div className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col items-center justify-center transition-colors duration-700" role="status" aria-live="polite">
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" aria-hidden="true"></div>
         <span className="text-slate-800 dark:text-white font-bold tracking-widest animate-pulse text-sm">连接音乐云端中...</span>
       </div>
     );
   }
 
   if (playlist.length === 0 || !currentSong) {
+    const isError = musicStatus === 'error';
     return (
-      <div className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col items-center justify-center transition-all duration-700">
+      <div className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col items-center justify-center text-center transition-all duration-700" role="status" aria-live="polite">
         <div className="w-16 h-16 mb-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shadow-inner opacity-50">
-          <svg className="w-8 h-8 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          <svg className="w-8 h-8 text-slate-400" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
         </div>
-        <span className="text-slate-500 dark:text-slate-400 font-bold tracking-widest text-xs">暂无可播放音乐</span>
-        <span className="text-[10px] text-slate-400 mt-1">请检查播放列表或网络连接</span>
+        <span className="text-slate-500 dark:text-slate-400 font-bold tracking-widest text-xs">{isError ? '音乐云端连接失败' : '暂无可播放音乐'}</span>
+        <span className="text-[10px] text-slate-400 mt-1">{musicError || '请检查播放列表或网络连接'}</span>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            onClick={retryMusic}
+            className="rounded-full bg-indigo-500 px-4 py-2 text-xs font-black text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-600"
+          >
+            重试连接
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/music')}
+            className="rounded-full bg-white/50 px-4 py-2 text-xs font-black text-slate-700 border border-white/60 transition hover:bg-white/70 dark:bg-slate-900/40 dark:text-slate-200 dark:border-white/10"
+          >
+            打开音乐页
+          </button>
+        </div>
       </div>
     );
   }
@@ -89,10 +112,8 @@ export default function CloudPlayer() {
         .safe-wave { animation: safeWave 1s ease-in-out infinite; transform-origin: bottom; will-change: height; }
       `}</style>
 
-      {/* 🌟 终极逻辑：在外层 Div 直接绑定 onClick 进行页面跳转 */}
       <div
-        onClick={() => router.push('/music')}
-        className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col justify-between transition-all duration-700 hover:scale-[1.02] relative group overflow-hidden cursor-pointer"
+        className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col justify-between transition-all duration-700 hover:scale-[1.02] relative group overflow-hidden"
       >
         <div className={`absolute -top-20 -right-20 w-48 h-48 bg-indigo-500/20 blur-[50px] rounded-full transition-opacity duration-1000 ${isPlaying ? 'opacity-100' : 'opacity-30'}`}></div>
 
@@ -112,6 +133,13 @@ export default function CloudPlayer() {
           <div className="flex-col overflow-hidden w-full">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 tracking-widest bg-white/50 dark:bg-slate-900/50 px-2 py-0.5 rounded-sm shadow-sm transition-colors duration-700">云端音乐</span>
+              <button
+                type="button"
+                onClick={() => router.push('/music')}
+                className="rounded-full bg-white/50 px-2.5 py-1 text-[10px] font-black tracking-widest text-slate-600 shadow-sm transition hover:bg-white/70 dark:bg-slate-900/50 dark:text-slate-300"
+              >
+                完整播放器
+              </button>
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white truncate drop-shadow-sm transition-colors duration-700">{currentSong.title}</h3>
             <p className="text-sm text-slate-700 dark:text-slate-300 font-medium truncate drop-shadow-sm transition-colors duration-700">{currentSong.artist}</p>
@@ -132,6 +160,7 @@ export default function CloudPlayer() {
             <span className="w-10 text-right">{formatTime(currentTime)}</span>
             <input
               type="range" min="0" max="100"
+              aria-label="播放进度"
               value={progress}
               onChange={safeHandleSeek}
               className="flex-1 h-1.5 bg-white/40 dark:bg-slate-700/50 rounded-full appearance-none outline-none cursor-pointer shadow-inner"
@@ -142,16 +171,16 @@ export default function CloudPlayer() {
 
           {/* 🌟 核心拦截：使用我们上面写的 safe 函数，阻止事件冒泡 */}
           <div className="flex items-center justify-center gap-6">
-            <button onClick={safePrevSong} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors drop-shadow-sm relative z-20">
-               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            <button type="button" aria-label="上一首" onClick={safePrevSong} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors drop-shadow-sm relative z-20">
+               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
             </button>
 
-            <button onClick={safeTogglePlay} className="w-12 h-12 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white/50 dark:border-slate-600 relative z-20">
-              {isPlaying ? <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> : <svg className="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>}
+            <button type="button" aria-label={isPlaying ? "暂停" : "播放"} onClick={safeTogglePlay} className="w-12 h-12 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white/50 dark:border-slate-600 relative z-20">
+              {isPlaying ? <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> : <svg className="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>}
             </button>
 
-            <button onClick={safeNextSong} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors drop-shadow-sm relative z-20">
-               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            <button type="button" aria-label="下一首" onClick={safeNextSong} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors drop-shadow-sm relative z-20">
+               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
             </button>
           </div>
         </div>

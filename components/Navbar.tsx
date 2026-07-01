@@ -6,6 +6,18 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, PanInfo } from 'framer-motion';
 import { siteConfig } from '../siteConfig';
 
+const getMobileDragConstraints = () => {
+  if (typeof window === 'undefined') {
+    return { top: 0, bottom: 0 };
+  }
+
+  const vh = window.innerHeight;
+  return {
+    top: -(vh / 2) + 80,
+    bottom: (vh / 2) - 80
+  };
+};
+
 export default function Navbar() {
   const [showNav, setShowNav] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -18,7 +30,7 @@ export default function Navbar() {
   const smoothRotation = useSpring(rawRotation, { stiffness: 200, damping: 25 });
   const inverseRotation = useTransform(smoothRotation, (r) => -r);
 
-  const handlePan = (event: any, info: PanInfo) => {
+  const handlePan = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (!wheelRef.current) return;
     const rect = wheelRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -37,21 +49,22 @@ export default function Navbar() {
 
   // --- 🌟 物理引擎：手机端按钮拖拽逻辑 ---
   const dragY = useMotionValue(0);
-  const [constraints, setConstraints] = useState({ top: 0, bottom: 0 });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const vh = window.innerHeight;
-      setConstraints({
-        top: -(vh / 2) + 80,
-        bottom: (vh / 2) - 80
-      });
-    }
-  }, []);
+  const [constraints] = useState(getMobileDragConstraints);
 
   useEffect(() => {
     if (isMobileMenuOpen) rawRotation.set(0);
   }, [isMobileMenuOpen, rawRotation]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileMenuOpen(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen]);
 
   // 控制 PC 端导航栏
   useEffect(() => {
@@ -96,7 +109,7 @@ export default function Navbar() {
             {navLinks.map((link) => {
               const isActive = pathname === link.href || pathname === `${link.href}/`;
               return (
-                <Link key={link.href} href={link.href} className={`relative py-1 transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200 hover:text-indigo-600'}`}>
+                <Link key={link.href} href={link.href} aria-current={isActive ? 'page' : undefined} className={`relative py-1 transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200 hover:text-indigo-600'}`}>
                   {link.name}
                   {isActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full animate-pulse"></span>}
                 </Link>
@@ -109,6 +122,10 @@ export default function Navbar() {
       {/* 📱 手机端：可拖拽吸附的触发球 */}
       <div className="md:hidden">
         <motion.button
+          type="button"
+          aria-label="打开导航"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-nav-wheel"
           drag="y"
           dragConstraints={constraints}
           dragElastic={0.1}
@@ -136,6 +153,7 @@ export default function Navbar() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                aria-hidden="true"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[65]"
               />
@@ -145,6 +163,10 @@ export default function Navbar() {
                 animate={{ scale: 1, opacity: 1, rotate: 0 }}
                 exit={{ scale: 0.5, opacity: 0, rotate: 90 }}
                 transition={{ type: 'spring', damping: 20, stiffness: 150 }}
+                id="mobile-nav-wheel"
+                role="dialog"
+                aria-modal="true"
+                aria-label="移动导航"
                 className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] z-[70] pointer-events-none"
               >
                 <motion.div
@@ -154,8 +176,8 @@ export default function Navbar() {
                   className="w-full h-full rounded-full border border-white/30 dark:border-slate-500/50 bg-white/40 dark:bg-slate-800/50 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] pointer-events-auto relative cursor-grab active:cursor-grabbing"
                 >
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-700 border-4 border-slate-300 dark:border-slate-500 flex items-center justify-center shadow-inner z-10">
-                    <button onClick={() => setIsMobileMenuOpen(false)} className="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center text-white font-black shadow-lg hover:bg-red-500 hover:rotate-90 transition-all duration-300 active:scale-95">
-                      ✕
+                    <button type="button" aria-label="关闭导航" onClick={() => setIsMobileMenuOpen(false)} className="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center text-white font-black shadow-lg hover:bg-red-500 hover:rotate-90 transition-all duration-300 active:scale-95">
+                      <span aria-hidden="true">✕</span>
                     </button>
                   </div>
 
@@ -177,6 +199,7 @@ export default function Navbar() {
                           <Link
                             href={link.href}
                             onClick={() => setIsMobileMenuOpen(false)}
+                            aria-current={isActive ? 'page' : undefined}
                             className={`flex items-center justify-center w-full h-full rounded-full transition-all duration-300 ${
                               isActive 
                                 ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.8)] scale-110' 

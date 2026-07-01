@@ -5,7 +5,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function LatestChatterCarousel({ chatters }: { chatters: any[] }) {
+interface ChatterItem {
+  slug: string;
+  title: string;
+  description?: string;
+  cover: string;
+  formattedDate?: string;
+}
+
+export default function LatestChatterCarousel({ chatters }: { chatters: ChatterItem[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {

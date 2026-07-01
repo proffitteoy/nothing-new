@@ -33,7 +33,7 @@ export default function CalculatorTool() {
         const result = new Function('return ' + safeEq)();
         setDisplay(String(parseFloat(Number(result).toFixed(6))));
         setEquation('');
-      } catch (e) {
+      } catch {
         setDisplay('Error');
       }
     }

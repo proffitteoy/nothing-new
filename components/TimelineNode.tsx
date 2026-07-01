@@ -3,7 +3,16 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-export default function TimelineNode({ post, index }: { post: any, index: number }) {
+export interface TimelinePost {
+  slug: string;
+  title: string;
+  date: string;
+  cover: string;
+  description?: string;
+  tags?: string[];
+}
+
+export default function TimelineNode({ post, index }: { post: TimelinePost, index: number }) {
   // 判断是放在左边还是右边（偶数左，奇数右）
   const isLeft = index % 2 === 0;
 
