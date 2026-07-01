@@ -20,3 +20,5 @@ private/
 replit.nix
 .sync/obsidian-sync-state.json
 .sync/tmp-*/
+.codex/
+docs/product-design-audit/*.log

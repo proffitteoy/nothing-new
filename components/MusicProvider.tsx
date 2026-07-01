@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useRef, useEffect, type ChangeEvent, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, useRef, useEffect, type ChangeEvent, type ReactNode } from 'react';
 import { siteConfig } from '../siteConfig';
 
 // 【增强版 LRC 歌词解析】
@@ -14,12 +14,15 @@ export type MusicSong = {
   author?: string;
   cover?: string;
   pic?: string;
+  album?: string;
   src?: string;
   url?: string;
   lrc?: string;
   lyric?: string;
   lyrics?: LyricLine[] | string;
   lrcUrl?: string | null;
+  duration?: number;
+  source?: string;
   error?: unknown;
 };
 
@@ -30,9 +33,18 @@ type ApiSong = {
   author?: string;
   cover?: string;
   pic?: string;
+  album?: string;
   url?: string;
   lrc?: string;
+  duration?: number;
+  source?: string;
   error?: unknown;
+};
+
+type LoadSongsOptions = {
+  stationName?: string;
+  stationDescription?: string;
+  autoPlay?: boolean;
 };
 
 function parseLrc(lrcText: string): LyricLine[] {
@@ -80,6 +92,8 @@ interface MusicContextType {
   isLoading: boolean;
   musicStatus: MusicStatus;
   musicError: string;
+  stationName: string;
+  stationDescription: string;
   volume: number;
   isMuted: boolean;
   playMode: PlayMode;
@@ -94,9 +108,27 @@ interface MusicContextType {
   toggleMute: () => void;
   togglePlayMode: () => void;
   retryMusic: () => void;
+  loadSongsByIds: (ids: Array<string | number>, options?: LoadSongsOptions) => Promise<void>;
 }
 
 const MusicContext = createContext<MusicContextType | null>(null);
+
+function normalizeApiSong(song: ApiSong): MusicSong | null {
+  if (!song || song.error || !song.url) return null;
+
+  return {
+    id: song.id || Math.random().toString(),
+    title: song.name || '未知歌曲',
+    artist: song.artist || song.author || '未知歌手',
+    album: song.album || '',
+    cover: song.cover || song.pic || 'https://bu.dusays.com/2026/03/24/69c24230a5ff8.jpg',
+    src: song.url,
+    lrcUrl: null,
+    duration: song.duration,
+    source: song.source,
+    lyrics: song.lrc ? parseLrc(song.lrc) : [],
+  };
+}
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const [playlist, setPlaylist] = useState<MusicSong[]>([]);
@@ -110,6 +142,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [musicStatus, setMusicStatus] = useState<MusicStatus>('loading');
   const [musicError, setMusicError] = useState('');
+  const [stationName, setStationName] = useState('默认云端频道');
+  const [stationDescription, setStationDescription] = useState('来自站点配置的云端歌单');
   const [retryKey, setRetryKey] = useState(0);
 
   // 🌟 2. 新增音量和播放模式状态
@@ -119,6 +153,68 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const currentSong = playlist[currentIndex];
+
+  const loadSongsByIds = useCallback(async (ids: Array<string | number>, options: LoadSongsOptions = {}) => {
+    const songIds = ids.map((id) => String(id).trim()).filter(Boolean);
+
+    if (songIds.length === 0) {
+      setPlaylist([]);
+      setCurrentIndex(0);
+      setIsPlaying(false);
+      setMusicStatus('empty');
+      setMusicError('没有可调谐的歌曲');
+      setCurrentLyric("频道里暂时没有信号");
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setMusicStatus('loading');
+    setMusicError('');
+    setCurrentLyric("正在调谐频道...");
+
+    try {
+      const res = await fetch(`/api/music?ids=${songIds.join(',')}`);
+      if (!res.ok) {
+        throw new Error(`音乐接口返回 ${res.status}`);
+      }
+
+      const rawResults = await res.json();
+      const songResults = Array.isArray(rawResults) ? (rawResults as ApiSong[]) : [];
+      const mergedPlaylist = songResults
+        .map(normalizeApiSong)
+        .filter((song): song is MusicSong => Boolean(song));
+
+      if (mergedPlaylist.length === 0) {
+        setPlaylist([]);
+        setCurrentIndex(0);
+        setIsPlaying(false);
+        setMusicStatus('empty');
+        setMusicError('没有拿到可播放的音轨');
+        setCurrentLyric("云端链路受阻");
+        return;
+      }
+
+      setPlaylist(mergedPlaylist);
+      setCurrentIndex(0);
+      setProgress(0);
+      setCurrentTime(0);
+      setDuration(0);
+      setStationName(options.stationName || 'Mineradio 调谐频道');
+      setStationDescription(options.stationDescription || `${mergedPlaylist.length} 首歌已经进入频道栈`);
+      setMusicStatus('ready');
+      setIsPlaying(options.autoPlay ?? false);
+    } catch (error) {
+      setPlaylist([]);
+      setCurrentIndex(0);
+      setIsPlaying(false);
+      setMusicStatus('error');
+      setMusicError(error instanceof Error ? error.message : '音乐初始化失败');
+      setCurrentLyric("网络初始化失败");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -139,39 +235,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setCurrentLyric("正在连接高可用神经云端...");
 
       try {
-        const res = await fetch(`/api/music?ids=${siteConfig.cloudMusicIds.join(',')}`);
-        if (!res.ok) {
-          throw new Error(`音乐接口返回 ${res.status}`);
-        }
-
-        const rawResults = await res.json();
-        const songResults = Array.isArray(rawResults) ? (rawResults as ApiSong[]) : [];
-
-        const mergedPlaylist = songResults
-          .filter((song): song is ApiSong & { url: string } => Boolean(song && song.url && !song.error))
-          .map((song): MusicSong => ({
-            id: song.id || Math.random().toString(),
-            title: song.name || '未知歌曲',
-            artist: song.artist || song.author || '未知歌手',
-            cover: song.cover || song.pic || 'https://bu.dusays.com/2026/03/24/69c24230a5ff8.jpg',
-            src: song.url,
-            lrcUrl: null,
-            lyrics: song.lrc ? parseLrc(song.lrc) : []
-          }));
-
-        if (isMounted) {
-          setPlaylist(mergedPlaylist);
-          setCurrentIndex(0);
-          if (mergedPlaylist.length > 0) {
-            setMusicStatus('ready');
-          } else {
-            setIsPlaying(false);
-            setMusicStatus('empty');
-            setMusicError('没有拿到可播放的音轨');
-            setCurrentLyric("云端链路受阻");
-          }
-          setIsLoading(false);
-        }
+        await loadSongsByIds(siteConfig.cloudMusicIds, {
+          stationName: '默认云端频道',
+          stationDescription: '来自站点配置的云端歌单',
+          autoPlay: false,
+        });
       } catch (error) {
         if (isMounted) {
           setPlaylist([]);
@@ -187,7 +255,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     fetchMusicData();
 
     return () => { isMounted = false; };
-  }, [retryKey]);
+  }, [loadSongsByIds, retryKey]);
 
   useEffect(() => {
     if (!currentSong) return;
@@ -332,10 +400,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   return (
     <MusicContext.Provider value={{
         playlist, currentIndex, currentSong, isPlaying, progress, currentTime, duration, currentLyric, isLoading,
-        musicStatus, musicError,
+        musicStatus, musicError, stationName, stationDescription,
         volume, isMuted, playMode, // 暴露新状态
         togglePlay, nextSong, prevSong, handleSeek, seekToPercent,
-        playSong, setVolume, toggleMute, togglePlayMode, retryMusic // 暴露新方法
+        playSong, setVolume, toggleMute, togglePlayMode, retryMusic, loadSongsByIds // 暴露新方法
     }}>
       {children}
       {currentSong && (

@@ -130,3 +130,23 @@ P3：降低视觉层级重复
 Vercel / GitHub 复核：
 - Vercel `math-vault` 最新 production 部署 `dpl_5uaCkRHJV12bvdUGHkQXG9dTBPfN` 为 `READY`，对应 `main` 分支提交 `6625f169b4d8413ae15feaf0d90df50e9f1dd2d9`，提交信息 `6.30`。
 - GitHub PR #21 仍为 open、未合并、mergeable；head commit `004e6260766d0751035893621d988aee84bfd685` 的 Vercel status 为 `failure`，对应失败部署 `dpl_GRnyc8CLySZc1Rcvk7VTBN3tQgHh`。
+
+## 2026-07-01 Mineradio 化继续实施
+
+已完成：
+- `/music` 重做为 Mineradio 风格的三栏电台台面：左侧频道栈，中间沉浸播放舞台，右侧歌词/队列直播间。
+- 接入 Mineradio 核心能力的 Web 等价实现：新增 `/api/music/search` 搜索调台、`/api/music/weather-radio` 天气电台，以及共用的 `app/api/music/_mineradio.ts` 音乐核心工具。
+- `MusicProvider` 增加 `loadSongsByIds`，搜索结果和天气电台可以直接替换当前队列并开始播放，不再只是静态视觉借鉴。
+- 左侧频道栈增加搜索 Tune 和 Weather Radio 控制，搜索结果点击即可生成频道，天气电台会根据 Open-Meteo 天气 mood 生成网易云搜索种子队列。
+- 审阅 Mineradio 源码后确认其为 GPL-3.0；本项目没有直接复制 GPL 源文件，而是按当前 Web/Next 架构重写可公开运行的等价能力，避免把桌面端许可证和 Cookie/系统能力直接带入站点。
+- ESLint 忽略 `.codex/**`，避免本地工具临时源码参与项目 lint。
+
+验证：
+- `npm.cmd run lint`：通过，0 errors；剩余 18 个 warning 为 `<img>` 性能建议和既有匿名默认导出提示。
+- `npm.cmd run typecheck`：通过。
+- `npm.cmd run build`：通过；Next.js 路由表包含 `/api/music/search` 与 `/api/music/weather-radio`。
+
+剩余风险：
+- 天气电台和搜索依赖 Open-Meteo、网易云公开接口与 Vercel 出站网络，运行态可能受第三方限流或版权可播性影响。
+- 未接入 Mineradio 的账号登录、QQ 音乐、桌面歌词、系统热键、桌面壁纸和本地更新能力；这些能力更适合桌面客户端，不建议直接放进公开 Web 站点。
+- `.codex` 临时目录因权限审批未能删除，已从 lint 中排除；后续可手动清理。
