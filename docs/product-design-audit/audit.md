@@ -150,3 +150,36 @@ Vercel / GitHub 复核：
 - 天气电台和搜索依赖 Open-Meteo、网易云公开接口与 Vercel 出站网络，运行态可能受第三方限流或版权可播性影响。
 - 未接入 Mineradio 的账号登录、QQ 音乐、桌面歌词、系统热键、桌面壁纸和本地更新能力；这些能力更适合桌面客户端，不建议直接放进公开 Web 站点。
 - `.codex` 临时目录因权限审批未能删除，已从 lint 中排除；后续可手动清理。
+
+## 2026-07-02 Mineradio 粒子效果跟进
+
+用户反馈：本轮重点不是继续借鉴 Mineradio 的布局，而是把 `/music` 的播放舞台做出 Mineradio 那种炫酷粒子、光轨和能量场氛围。
+
+已完成：
+- 新增 `components/MineradioParticleField.tsx`，用原创 Canvas 绘制封面种子驱动的轨道粒子、发光能量环、雾状光带、火花点和粒子连线。
+- 将粒子场接入 `/music` 中央播放舞台，粒子会根据播放状态、进度、当前时间和音量变化；暂停时降为低能量状态，播放时增强轨道和发光反馈。
+- 在封面外层增加双层旋转光环，并强化下方频谱条的玻璃质感与发光层级，让视觉重点从“三栏布局”转向“正在播出的音频能量场”。
+- 保留 `prefers-reduced-motion: reduce` 降级：系统减少动态效果时 Canvas 只绘制低能量静态帧，CSS 光环和波形动画停止。
+- 许可证处理不变：Mineradio 为 GPL-3.0，本轮没有复制其源码或资源，只借鉴“粒子可视化方向”，按当前 Web/Next 架构原创实现。
+
+验证：
+- `npm.cmd run typecheck`：通过。
+- `npm.cmd run lint`：通过，0 errors；剩余 18 个 warning 仍为既有 `<img>` 性能建议和匿名默认导出提示。
+- `npm.cmd run build`：通过。
+
+剩余风险：
+- 当前粒子是播放状态、时间、进度和音量驱动，还不是 Web Audio `AnalyserNode` 的真实频谱驱动。若要进一步接近音乐可视化软件效果，后续应在 `MusicProvider` 中谨慎暴露音频分析数据，并注意 `createMediaElementSource` 每个 audio 元素只能创建一次。
+
+## 2026-07-02 Mineradio 粒子直接移植跟进
+
+用户进一步要求“直接用他的”，并确认可以接受 Mineradio GPL-3.0 授权影响。因此本轮将上一版原创 Canvas 粒子替换为直接移植/改造 Mineradio 粒子核心。
+
+已完成：
+- `components/MineradioParticleField.tsx` 改为 Three.js 粒子舞台，移植 Mineradio `public/index.html` 中的封面粒子、wallpaper pulse、bloom Shader 和涟漪数据纹理分支。
+- 播放状态下使用 Mineradio 默认播放态封面粒子平面；暂停/低能量状态切到 Mineradio wallpaper pulse 氛围。
+- 保留当前音乐页布局和播放器控件，只替换中央舞台的视觉层。
+- 组件头部加入 Mineradio/GPL-3.0 来源说明，完整 GPL 文本复制到 `docs/licenses/Mineradio-GPL-3.0.txt`，并新增 `docs/project/third-party-notices.md` 记录授权边界。
+
+剩余风险：
+- 当前 Web 移植版仍用播放时间、进度和音量合成 `uBass / uMid / uTreble / uBeat`，不是 Mineradio 桌面版那套真实 `AnalyserNode` 频谱和节奏锁拍。后续如要继续逼近原版，需要在 `MusicProvider` 中暴露音频分析数据。
+- 封面纹理走 WebGL `TextureLoader`，远程封面如果不允许 CORS，会自动退回默认色粒子，但不会阻塞播放器。

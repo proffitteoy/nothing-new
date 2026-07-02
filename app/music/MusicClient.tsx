@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
+import MineradioParticleField from "../../components/MineradioParticleField";
 import PageTransition from "../../components/PageTransition";
 import { useMusic, type LyricLine, type MusicSong } from "../../components/MusicProvider";
 
@@ -486,11 +487,21 @@ export default function MusicClient() {
               </div>
             </aside>
 
-            <section className="relative min-h-[680px] overflow-hidden rounded-[34px] border border-white/10 bg-white/[0.07] shadow-2xl shadow-black/25 backdrop-blur-2xl">
+            <section className="relative isolate min-h-[680px] overflow-hidden rounded-[34px] border border-white/10 bg-white/[0.07] shadow-2xl shadow-black/25 backdrop-blur-2xl">
               <div className="absolute inset-0 opacity-60" style={{ backgroundImage: `linear-gradient(120deg, rgba(34,211,238,.12), transparent 38%), url(${songCover})`, backgroundSize: "cover", backgroundPosition: "center" }} />
               <div className="absolute inset-0 bg-gradient-to-b from-[#071018]/60 via-[#080b10]/82 to-[#080b10]/96" />
+              <MineradioParticleField
+                coverUrl={songCover}
+                isPlaying={isPlaying}
+                progress={progress || 0}
+                currentTime={currentTime}
+                volume={isMuted ? 0 : volume || 0}
+                seed={currentSong.id}
+                className="z-[1] opacity-95"
+              />
+              <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(circle_at_50%_42%,transparent_0%,transparent_28%,rgba(8,11,16,0.18)_60%,rgba(8,11,16,0.58)_100%)]" />
 
-              <div className="relative flex h-full min-h-[680px] flex-col justify-between p-5 sm:p-7 md:p-8">
+              <div className="relative z-10 flex h-full min-h-[680px] flex-col justify-between p-5 sm:p-7 md:p-8">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="rounded-full border border-white/10 bg-black/25 px-4 py-2 backdrop-blur-xl">
                     <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">Now Broadcasting</p>
@@ -505,8 +516,10 @@ export default function MusicClient() {
                   <div className="relative aspect-square w-[min(72vw,360px)]">
                     <div className="absolute inset-[-18%] rounded-full bg-cyan-300/12 blur-3xl" />
                     <div className="absolute inset-[-8%] rounded-full border border-cyan-200/10" />
+                    <div className={`absolute inset-[-16%] rounded-full border border-cyan-100/20 ${isPlaying ? "particle-orbit particle-orbit-a" : ""}`} />
+                    <div className={`absolute inset-[-28%] rounded-full border border-amber-100/10 ${isPlaying ? "particle-orbit particle-orbit-b" : ""}`} />
                     <motion.div
-                      className="relative h-full w-full overflow-hidden rounded-[34px] border border-white/20 bg-slate-900 shadow-[0_32px_100px_rgba(0,0,0,0.5)]"
+                      className="relative h-full w-full overflow-hidden rounded-[34px] border border-white/20 bg-slate-900 shadow-[0_32px_100px_rgba(0,0,0,0.5),0_0_80px_rgba(34,211,238,0.18)]"
                       animate={{ rotateY: isPlaying ? 0 : -6, scale: isPlaying ? 1 : 0.97 }}
                       transition={{ type: "spring", stiffness: 80, damping: 18 }}
                     >
@@ -521,13 +534,15 @@ export default function MusicClient() {
                     <p className="mt-3 text-sm font-bold uppercase tracking-[0.22em] text-slate-300">{getArtist(currentSong)}</p>
                   </div>
 
-                  <div className="mt-8 flex h-16 w-full max-w-xl items-end justify-center gap-1.5" aria-hidden="true">
+                  <div className="relative mt-8 flex h-20 w-full max-w-xl items-end justify-center gap-1.5 overflow-hidden rounded-full border border-white/10 bg-black/20 px-5 pb-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" aria-hidden="true">
+                    <div className="absolute inset-x-8 top-4 h-px bg-gradient-to-r from-transparent via-cyan-200/30 to-transparent" />
+                    <div className="absolute inset-x-14 bottom-6 h-px bg-gradient-to-r from-transparent via-amber-100/25 to-transparent" />
                     {Array.from({ length: 34 }).map((_, index) => (
                       <span
                         key={index}
-                        className={`w-1.5 rounded-full bg-gradient-to-t from-cyan-300 via-teal-200 to-amber-100 ${isPlaying ? "radio-wave" : ""}`}
+                        className={`w-1.5 rounded-full bg-gradient-to-t from-cyan-300 via-teal-200 to-amber-100 shadow-[0_0_16px_rgba(103,232,249,0.42)] ${isPlaying ? "radio-wave" : ""}`}
                         style={{
-                          height: `${18 + ((index * 13) % 38)}px`,
+                          height: `${16 + ((index * 13) % 48)}px`,
                           animationDelay: `${index * 70}ms`,
                         }}
                       />
@@ -787,6 +802,20 @@ export default function MusicClient() {
           animation: radioWave 1.3s ease-in-out infinite alternate;
           transform-origin: bottom;
         }
+        .particle-orbit {
+          animation: particleOrbit 9s linear infinite;
+          box-shadow:
+            0 0 34px rgba(103, 232, 249, 0.12),
+            inset 0 0 34px rgba(103, 232, 249, 0.08);
+          transform-origin: center;
+        }
+        .particle-orbit-b {
+          animation-duration: 15s;
+          animation-direction: reverse;
+          box-shadow:
+            0 0 42px rgba(251, 191, 36, 0.12),
+            inset 0 0 42px rgba(251, 191, 36, 0.07);
+        }
         @keyframes radioWave {
           0% {
             transform: scaleY(0.42);
@@ -797,8 +826,23 @@ export default function MusicClient() {
             opacity: 1;
           }
         }
+        @keyframes particleOrbit {
+          0% {
+            transform: rotate(0deg) scale(0.98);
+            opacity: 0.45;
+          }
+          50% {
+            transform: rotate(180deg) scale(1.04);
+            opacity: 0.9;
+          }
+          100% {
+            transform: rotate(360deg) scale(0.98);
+            opacity: 0.45;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
-          .radio-wave {
+          .radio-wave,
+          .particle-orbit {
             animation: none !important;
           }
         }
