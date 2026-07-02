@@ -180,6 +180,28 @@ Vercel / GitHub 复核：
 - 保留当前音乐页布局和播放器控件，只替换中央舞台的视觉层。
 - 组件头部加入 Mineradio/GPL-3.0 来源说明，完整 GPL 文本复制到 `docs/licenses/Mineradio-GPL-3.0.txt`，并新增 `docs/project/third-party-notices.md` 记录授权边界。
 
+验证：
+- `npm.cmd run typecheck`：通过。
+- `npm.cmd run lint`：通过，0 errors；剩余 18 个 warning 仍为既有 `<img>` 性能建议和匿名默认导出提示。
+- `npm.cmd run build`：通过。
+- 尝试启动本地生产服务并用 Browser 插件检查 `/music`，但当前 Browser 插件对 localhost/127.0.0.1 返回 `ERR_BLOCKED_BY_CLIENT`，未能完成截图级 WebGL 验证；当前以 TypeScript、ESLint、Next 生产构建作为本轮验证依据。
+
 剩余风险：
 - 当前 Web 移植版仍用播放时间、进度和音量合成 `uBass / uMid / uTreble / uBeat`，不是 Mineradio 桌面版那套真实 `AnalyserNode` 频谱和节奏锁拍。后续如要继续逼近原版，需要在 `MusicProvider` 中暴露音频分析数据。
 - 封面纹理走 WebGL `TextureLoader`，远程封面如果不允许 CORS，会自动退回默认色粒子，但不会阻塞播放器。
+
+## 2026-07-02 音乐页去杂化跟进
+
+用户反馈：音乐页布局太杂，存在很多不需要的控制和英文文案；保留 Mineradio 粒子效果，但不要继续沿用 Mineradio 的电台台面布局。
+
+已完成：
+- `/music` 从三栏电台控制台收敛为两块核心区域：沉浸粒子播放器舞台，以及歌词/播放列表信息区。
+- 移除频道栈、搜索调台、天气电台、FM 频率、Station/Tracks/Channel、ON AIR/STANDBY、Studio Panel 等电台化控件和英文标签。
+- 可见状态、按钮、空状态、兜底歌曲名/歌手名改为中文表达，保留播放/暂停、上一首/下一首、播放模式、进度、音量、歌词和列表这些基础播放器能力。
+- 保留 `MineradioParticleField` 的 Three.js 粒子舞台，视觉重心继续放在封面粒子、光环和播放能量反馈上。
+
+验证：
+- `npm.cmd run typecheck`：通过。
+- `npm.cmd run lint`：通过，0 errors；剩余 16 个 warning 为既有 `<img>` 性能建议和匿名默认导出提示。
+- `git diff --check`：通过。
+- `npm.cmd run build`：通过；Next.js 16.2.1 生产构建成功。
