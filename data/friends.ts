@@ -80,7 +80,7 @@ export const friendsData: Friend[] = [
     description: "传递笑容魔法的Ciallo～(∠・ω< )⌒☆",
     avatar: "https://funingna-wakawaka.github.io/images/0.png",
     url: "https://funingna-wakawaka.github.io/",
-    themeColor: "rgba(251, 191, 36, 0.5)",
+    themeColor: "rgba(2, 2, 2, 0.5)",
   },
   {
     id: "mmzming",
@@ -89,5 +89,13 @@ export const friendsData: Friend[] = [
     avatar: "https://i.stardots.io/784774835/StarDots-2026052116374135506.jpg",
     url: "https://tblog.mmzhiku.xyz",
     themeColor: "rgba(99, 102, 241, 0.5)",
+  },
+  {
+    id: "Halfcity's Blog",
+    name: "MmzMing的知识库",
+    description: "网安学习小窝，这里分享个人的网安逆向、开发、渗透、对抗等知识~",
+    url: "https://blog.halfcity.top",
+    avatar: "https://blog.halfcity.top/assets/images/avatar.avif",
+    themeColor: "rgba(43, 97, 22, 0.5)",
   },
 ]
