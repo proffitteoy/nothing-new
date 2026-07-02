@@ -174,3 +174,4 @@ ai/ManiMind/阶段三/前端设计.md
 ai/ManiMind/阶段四/Harness Engineering.md
 数学建模/读优秀论文杂记/二维守恒型方程的差分放缩.md
 数学建模/读优秀论文杂记/ARIMA-LSTM 混合时间序列模型.md
+math/Lp 范数收敛到无穷范数.md
