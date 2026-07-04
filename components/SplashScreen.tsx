@@ -3,22 +3,15 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Gem, Layers3, Mountain, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
-const stats = [
-  { label: "CORE", value: "Basalt" },
-  { label: "VEIN", value: "Quartz" },
-  { label: "RISE", value: "7.6s" },
-];
+const SPLASH_DURATION = 5200;
 
 export default function SplashScreen() {
   const [show, setShow] = useState(true);
 
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => {
-      setShow(false);
-    }, 3900);
-
+    const exitTimer = window.setTimeout(() => setShow(false), SPLASH_DURATION);
     return () => window.clearTimeout(exitTimer);
   }, []);
 
@@ -26,143 +19,166 @@ export default function SplashScreen() {
     <AnimatePresence>
       {show && (
         <motion.section
-          key="lithos-splash"
+          key="lithos-loader"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.04, filter: "blur(18px)" }}
-          transition={{ duration: 0.7, ease: "easeInOut" }}
-          className="fixed inset-0 z-[100000] isolate flex min-h-screen overflow-hidden bg-[#070604] text-stone-100"
-          aria-label="Lithos loading hero"
+          exit={{ opacity: 0, scale: 1.05, filter: "blur(18px)" }}
+          transition={{ duration: 0.72, ease: "easeInOut" }}
+          className="fixed inset-0 z-[100000] isolate min-h-screen overflow-hidden bg-[#05040b] text-white"
+          aria-label="站点加载中"
         >
-          <GeologyPlate />
-
-          <div className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(90deg,rgba(7,6,4,0.94)_0%,rgba(7,6,4,0.58)_38%,rgba(7,6,4,0.28)_58%,rgba(7,6,4,0.82)_100%)]" />
-          <div className="pointer-events-none absolute inset-0 z-[2] opacity-40 [background-image:linear-gradient(rgba(255,255,255,.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] [background-size:56px_56px]" />
+          <ReferenceBase />
+          <PhoenixMotion />
 
           <motion.div
             aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 z-[3] h-[72%] bg-[linear-gradient(0deg,rgba(233,166,74,0.2)_0%,rgba(184,149,255,0.14)_42%,transparent_100%)]"
-            initial={{ clipPath: "inset(100% 0 0 0)" }}
-            animate={{ clipPath: "inset(0% 0 0 0)" }}
-            transition={{ duration: 2.55, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-0 z-30 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.96)_0%,rgba(255,235,255,0.52)_13%,rgba(210,176,255,0.38)_30%,rgba(12,8,24,0.0)_58%)]"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: [1, 0.72, 0.08, 0] }}
+            transition={{ duration: 2.8, times: [0, 0.28, 0.72, 1], ease: "easeOut" }}
           />
 
-          <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 items-center gap-10 px-6 py-10 md:grid-cols-[0.9fr_1.1fr] md:px-10 lg:px-14">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              className="order-2 max-w-xl md:order-1"
+          <div className="absolute left-1/2 top-8 z-40 -translate-x-1/2 text-center">
+            <motion.p
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: [0, 1, 1, 0.72], y: 0 }}
+              transition={{ duration: 2.2, ease: "easeOut" }}
+              className="text-[11px] font-black tracking-[0.42em] text-white/80"
             >
-              <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-amber-200/20 bg-stone-950/55 px-4 py-2 text-xs font-black text-amber-100 shadow-2xl shadow-black/25 backdrop-blur-xl">
-                <Mountain size={15} aria-hidden="true" />
-                Lithos geological atelier
-              </div>
+              LITHOS
+            </motion.p>
+          </div>
 
-              <h1 className="text-5xl font-black leading-none text-stone-50 sm:text-6xl lg:text-7xl">
-                LITHOS
-              </h1>
-              <p className="mt-5 max-w-md text-sm font-semibold leading-7 text-stone-300 sm:text-base">
-                A dark mineral field forms first. Then the phoenix rises through the strata,
-                opening its wings above the core sample.
-              </p>
-
-              <div className="mt-8 grid max-w-lg grid-cols-3 gap-3">
-                {stats.map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 backdrop-blur-xl"
-                  >
-                    <p className="text-[10px] font-black text-stone-500">{item.label}</p>
-                    <p className="mt-1 text-sm font-black text-stone-100">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-9 flex items-center gap-4">
-                <div className="relative h-1.5 w-48 overflow-hidden rounded-full bg-white/10">
-                  <motion.div
-                    className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-300 via-orange-400 to-violet-300"
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 3.35, ease: "easeInOut" }}
-                  />
-                </div>
-                <span className="text-xs font-black text-stone-400">INITIALIZING</span>
-              </div>
+          <div className="absolute inset-x-0 bottom-8 z-40 mx-auto flex w-[min(82vw,520px)] flex-col items-center gap-4 px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.55 }}
+              className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-black/25 px-4 py-2 text-[11px] font-black tracking-[0.28em] text-white/75 backdrop-blur-xl"
+            >
+              <Sparkles size={14} className="text-violet-200" aria-hidden="true" />
+              LOADING
             </motion.div>
-
-            <div className="order-1 flex min-h-[460px] items-center justify-center md:order-2 md:min-h-[680px]">
-              <PhoenixStage />
+            <div className="h-[3px] w-full overflow-hidden rounded-full bg-white/12">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-orange-300 via-white to-violet-300 shadow-[0_0_24px_rgba(255,255,255,0.85)]"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 4.65, ease: [0.76, 0, 0.24, 1] }}
+              />
             </div>
           </div>
 
           <style jsx global>{`
-            .lithos-wing-left {
-              transform-origin: 51% 58%;
-              animation: lithosLeftWing 3.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+            .loader-wing-left {
+              transform-origin: 50% 66%;
+              animation: loaderLeftWing 2.45s cubic-bezier(0.16, 1, 0.3, 1) both;
             }
-            .lithos-wing-right {
-              transform-origin: 49% 58%;
-              animation: lithosRightWing 3.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+            .loader-wing-right {
+              transform-origin: 50% 66%;
+              animation: loaderRightWing 2.45s cubic-bezier(0.16, 1, 0.3, 1) both;
             }
-            .lithos-feather {
-              animation: lithosFeatherGlow 2.4s ease-in-out infinite alternate;
+            .loader-tail {
+              animation: loaderTailDrift 1.55s ease-in-out infinite alternate;
             }
-            .lithos-ash {
-              animation: lithosAshRise 3.4s ease-out infinite;
+            .loader-smoke-a {
+              animation: loaderSmokeA 4.4s ease-in-out both;
             }
-            @keyframes lithosLeftWing {
+            .loader-smoke-b {
+              animation: loaderSmokeB 4.8s ease-in-out both;
+            }
+            .loader-spark {
+              animation: loaderSpark 3.1s ease-out infinite;
+            }
+            @keyframes loaderLeftWing {
               0% {
-                transform: translateY(72px) rotate(18deg) scaleX(0.42) scaleY(0.72);
-                opacity: 0;
-              }
-              38% {
-                opacity: 0.85;
-              }
-              100% {
-                transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
-                opacity: 1;
-              }
-            }
-            @keyframes lithosRightWing {
-              0% {
-                transform: translateY(72px) rotate(-18deg) scaleX(0.42) scaleY(0.72);
-                opacity: 0;
-              }
-              38% {
-                opacity: 0.85;
-              }
-              100% {
-                transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
-                opacity: 1;
-              }
-            }
-            @keyframes lithosFeatherGlow {
-              from {
-                opacity: 0.44;
-              }
-              to {
-                opacity: 0.95;
-              }
-            }
-            @keyframes lithosAshRise {
-              0% {
-                transform: translate3d(0, 36px, 0) scale(0.6);
+                transform: translateY(118px) rotate(36deg) scaleX(0.18) scaleY(0.52);
                 opacity: 0;
               }
               28% {
+                opacity: 0.94;
+              }
+              58% {
+                transform: translateY(22px) rotate(8deg) scaleX(0.86) scaleY(0.88);
+                opacity: 1;
+              }
+              100% {
+                transform: translateY(-8px) rotate(-2deg) scaleX(1.05) scaleY(1);
+                opacity: 0.86;
+              }
+            }
+            @keyframes loaderRightWing {
+              0% {
+                transform: translateY(118px) rotate(-36deg) scaleX(0.18) scaleY(0.52);
+                opacity: 0;
+              }
+              28% {
+                opacity: 0.94;
+              }
+              58% {
+                transform: translateY(22px) rotate(-8deg) scaleX(0.86) scaleY(0.88);
+                opacity: 1;
+              }
+              100% {
+                transform: translateY(-8px) rotate(2deg) scaleX(1.05) scaleY(1);
+                opacity: 0.86;
+              }
+            }
+            @keyframes loaderTailDrift {
+              from {
+                transform: translateY(0) scaleY(0.92);
+                opacity: 0.48;
+              }
+              to {
+                transform: translateY(-15px) scaleY(1.08);
+                opacity: 0.9;
+              }
+            }
+            @keyframes loaderSmokeA {
+              0% {
+                transform: translate(-50%, -50%) rotate(-16deg) scale(0.35);
+                opacity: 0;
+              }
+              38% {
+                opacity: 0.3;
+              }
+              100% {
+                transform: translate(-50%, -50%) rotate(7deg) scale(1.08);
+                opacity: 0.58;
+              }
+            }
+            @keyframes loaderSmokeB {
+              0% {
+                transform: translate(-50%, -50%) rotate(18deg) scale(0.2);
+                opacity: 0;
+              }
+              44% {
+                opacity: 0.34;
+              }
+              100% {
+                transform: translate(-50%, -50%) rotate(-9deg) scale(1.15);
+                opacity: 0.48;
+              }
+            }
+            @keyframes loaderSpark {
+              0% {
+                transform: translate3d(0, 44px, 0) scale(0.5);
+                opacity: 0;
+              }
+              24% {
                 opacity: 0.9;
               }
               100% {
-                transform: translate3d(var(--ash-x), -190px, 0) scale(1.1);
+                transform: translate3d(var(--spark-x), -230px, 0) scale(1.15);
                 opacity: 0;
               }
             }
             @media (prefers-reduced-motion: reduce) {
-              .lithos-wing-left,
-              .lithos-wing-right,
-              .lithos-feather,
-              .lithos-ash {
+              .loader-wing-left,
+              .loader-wing-right,
+              .loader-tail,
+              .loader-smoke-a,
+              .loader-smoke-b,
+              .loader-spark {
                 animation: none !important;
               }
             }
@@ -173,49 +189,73 @@ export default function SplashScreen() {
   );
 }
 
-function PhoenixStage() {
+function ReferenceBase() {
   return (
-    <div className="relative aspect-[1.08/1] w-full max-w-[720px]">
-      <motion.div
-        aria-hidden="true"
-        className="absolute left-1/2 top-[50%] h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-100/20 bg-amber-100/10 blur-[1px]"
-        initial={{ scale: 0.2, opacity: 0 }}
-        animate={{ scale: [0.2, 1.08, 0.9], opacity: [0, 0.85, 0.48] }}
-        transition={{ duration: 2.8, ease: "easeOut" }}
+    <div className="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <motion.img
+        src="/lithos-loading-base.webp"
+        alt=""
+        className="absolute inset-0 h-full w-full scale-110 object-cover opacity-0 blur-[2px] saturate-125"
+        initial={{ opacity: 0, scale: 1.18 }}
+        animate={{ opacity: [0, 0, 0.88], scale: [1.18, 1.14, 1.08] }}
+        transition={{ duration: 3.05, times: [0, 0.34, 1], ease: "easeOut" }}
       />
-
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_32%,rgba(75,68,255,0.32)_0%,rgba(75,68,255,0.18)_20%,transparent_50%),linear-gradient(90deg,rgba(3,3,9,0.9)_0%,rgba(3,3,9,0.2)_50%,rgba(3,3,9,0.9)_100%)]" />
       <motion.div
-        aria-hidden="true"
-        className="absolute left-1/2 top-[52%] h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,244,204,0.48)_0%,rgba(233,166,74,0.18)_32%,rgba(184,149,255,0.09)_56%,transparent_72%)]"
-        initial={{ scale: 0.35, opacity: 0 }}
-        animate={{ scale: [0.35, 1.2, 1.02], opacity: [0, 0.95, 0.62] }}
-        transition={{ duration: 3, ease: "easeOut" }}
+        className="absolute left-1/2 top-[36%] h-[62vw] max-h-[720px] w-[62vw] max-w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/18 bg-[radial-gradient(circle,rgba(255,255,255,0.16)_0%,rgba(195,182,255,0.08)_38%,transparent_72%)]"
+        initial={{ scale: 0.25, opacity: 0 }}
+        animate={{ scale: [0.25, 1.05, 0.94], opacity: [0, 0.92, 0.42] }}
+        transition={{ duration: 2.6, ease: "easeOut" }}
       />
-
       <motion.div
-        className="absolute inset-x-0 bottom-[3%] mx-auto h-[88%] w-full"
-        initial={{ y: 190, opacity: 0, scale: 0.78 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        transition={{ duration: 2.35, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute left-1/2 top-[43%] h-[74vh] w-12 -translate-x-1/2 -translate-y-1/2 bg-blue-600/45 blur-3xl"
+        initial={{ opacity: 0, scaleY: 0.25 }}
+        animate={{ opacity: [0, 0.9, 0.54], scaleY: [0.25, 1.05, 0.92] }}
+        transition={{ delay: 1.3, duration: 2.15, ease: "easeOut" }}
+      />
+    </div>
+  );
+}
+
+function PhoenixMotion() {
+  return (
+    <div className="absolute inset-0 z-20 overflow-hidden" aria-hidden="true">
+      <motion.div
+        className="absolute left-1/2 top-[44%] aspect-[1.6/1] w-[min(122vw,1040px)] -translate-x-1/2 -translate-y-1/2"
+        initial={{ y: "36vh", scale: 0.5, opacity: 0 }}
+        animate={{
+          y: ["36vh", "11vh", "-2vh", "-8vh"],
+          scale: [0.5, 0.92, 1.06, 1.1],
+          opacity: [0, 1, 0.86, 0],
+        }}
+        transition={{ duration: 4.1, times: [0, 0.42, 0.72, 1], ease: [0.16, 1, 0.3, 1] }}
       >
-        <svg viewBox="0 0 720 660" className="h-full w-full overflow-visible" role="img" aria-label="Rising phoenix">
+        <motion.div
+          className="absolute left-1/2 top-[40%] h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.9)_0%,rgba(255,195,103,0.36)_26%,rgba(151,121,255,0.18)_52%,transparent_74%)] blur-sm"
+          initial={{ scale: 0.12, opacity: 0 }}
+          animate={{ scale: [0.12, 1.22, 0.86], opacity: [0, 1, 0.62] }}
+          transition={{ duration: 2.7, ease: "easeOut" }}
+        />
+
+        <svg viewBox="0 0 980 610" className="relative h-full w-full overflow-visible drop-shadow-[0_0_46px_rgba(255,168,92,0.4)]">
           <defs>
-            <linearGradient id="lithosWing" x1="0%" x2="100%" y1="20%" y2="80%">
-              <stop offset="0%" stopColor="#f7d487" stopOpacity="0.96" />
-              <stop offset="46%" stopColor="#df693d" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#8d5bff" stopOpacity="0.72" />
+            <linearGradient id="loaderWingGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+              <stop offset="0%" stopColor="#fff8df" stopOpacity="0.98" />
+              <stop offset="36%" stopColor="#ffad58" stopOpacity="0.92" />
+              <stop offset="70%" stopColor="#ff5c7c" stopOpacity="0.74" />
+              <stop offset="100%" stopColor="#8f78ff" stopOpacity="0.62" />
             </linearGradient>
-            <linearGradient id="lithosBody" x1="45%" x2="55%" y1="0%" y2="100%">
-              <stop offset="0%" stopColor="#fff4c7" />
-              <stop offset="42%" stopColor="#f0a24b" />
-              <stop offset="100%" stopColor="#7c3f23" />
+            <linearGradient id="loaderBodyGradient" x1="50%" x2="50%" y1="0%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="36%" stopColor="#ffd36f" />
+              <stop offset="100%" stopColor="#f16535" />
             </linearGradient>
-            <filter id="lithosGlow" x="-30%" y="-30%" width="160%" height="170%">
-              <feGaussianBlur stdDeviation="8" result="blur" />
+            <filter id="loaderPhoenixGlow" x="-35%" y="-35%" width="170%" height="180%">
+              <feGaussianBlur stdDeviation="10" result="blur" />
               <feColorMatrix
                 in="blur"
                 type="matrix"
-                values="1 0 0 0 0.98 0 1 0 0 0.47 0 0 1 0 0.14 0 0 0 0.82 0"
+                values="1 0 0 0 1 0 1 0 0 0.42 0 0 1 0 0.16 0 0 0 0.92 0"
               />
               <feMerge>
                 <feMergeNode />
@@ -224,141 +264,48 @@ function PhoenixStage() {
             </filter>
           </defs>
 
-          <g filter="url(#lithosGlow)">
+          <g filter="url(#loaderPhoenixGlow)">
             <path
-              className="lithos-wing-left"
-              d="M346 337 C260 200 148 148 36 142 C122 184 172 237 198 293 C132 276 83 293 33 331 C126 327 188 360 236 411 C164 421 115 455 75 514 C180 476 270 489 334 558 C319 475 315 403 346 337Z"
-              fill="url(#lithosWing)"
-              opacity="0.92"
+              className="loader-wing-left"
+              d="M474 308 C356 150 198 104 30 143 C154 174 240 232 286 294 C198 269 114 291 40 364 C178 340 286 374 354 442 C264 454 188 512 144 592 C286 520 394 526 472 594 C446 486 438 390 474 308Z"
+              fill="url(#loaderWingGradient)"
             />
             <path
-              className="lithos-wing-right"
-              d="M374 337 C460 200 572 148 684 142 C598 184 548 237 522 293 C588 276 637 293 687 331 C594 327 532 360 484 411 C556 421 605 455 645 514 C540 476 450 489 386 558 C401 475 405 403 374 337Z"
-              fill="url(#lithosWing)"
-              opacity="0.92"
+              className="loader-wing-right"
+              d="M506 308 C624 150 782 104 950 143 C826 174 740 232 694 294 C782 269 866 291 940 364 C802 340 694 374 626 442 C716 454 792 512 836 592 C694 520 586 526 508 594 C534 486 542 390 506 308Z"
+              fill="url(#loaderWingGradient)"
             />
             <path
-              className="lithos-feather"
-              d="M350 318 C313 214 318 125 361 50 C401 126 407 218 370 318Z"
-              fill="#fff0ba"
-              opacity="0.86"
+              className="loader-tail"
+              d="M490 312 C446 386 456 475 394 610 C464 566 490 512 490 448 C498 512 526 566 596 610 C532 475 536 386 490 312Z"
+              fill="url(#loaderWingGradient)"
+              opacity="0.78"
             />
             <path
-              d="M360 248 C398 286 408 363 382 430 C372 457 374 501 408 585 C375 565 358 528 360 486 C350 528 331 565 302 590 C335 504 340 459 332 432 C307 363 321 286 360 248Z"
-              fill="url(#lithosBody)"
+              d="M490 214 C545 278 546 374 510 442 C501 460 501 490 518 532 C496 518 489 492 490 466 C481 492 472 518 450 532 C469 490 470 460 462 442 C426 374 434 278 490 214Z"
+              fill="url(#loaderBodyGradient)"
             />
-            <path
-              d="M360 251 C349 282 347 313 360 337 C374 313 373 282 360 251Z"
-              fill="#fff8d9"
-            />
+            <path d="M490 216 C470 254 470 296 490 326 C510 296 510 254 490 216Z" fill="#fffbe8" />
           </g>
         </svg>
       </motion.div>
 
-      {Array.from({ length: 16 }).map((_, index) => (
+      <div className="loader-smoke-a absolute left-1/2 top-[45%] h-[32vh] w-[68vw] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-violet-200/18 bg-violet-300/8 blur-xl" />
+      <div className="loader-smoke-b absolute left-1/2 top-[46%] h-[26vh] w-[54vw] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-orange-200/14 bg-orange-300/8 blur-2xl" />
+
+      {Array.from({ length: 22 }).map((_, index) => (
         <span
           key={index}
-          aria-hidden="true"
-          className="lithos-ash absolute bottom-[16%] left-1/2 h-1.5 w-1.5 rounded-full bg-amber-200/80 shadow-[0_0_18px_rgba(251,191,36,0.9)]"
+          className="loader-spark absolute bottom-[17%] h-1.5 w-1.5 rounded-full bg-orange-200 shadow-[0_0_20px_rgba(255,190,92,0.95)]"
           style={
             {
-              "--ash-x": `${(index % 2 === 0 ? -1 : 1) * (42 + index * 9)}px`,
-              animationDelay: `${index * 120}ms`,
-              left: `${40 + (index % 6) * 4}%`,
+              "--spark-x": `${(index % 2 === 0 ? -1 : 1) * (34 + index * 9)}px`,
+              animationDelay: `${index * 110}ms`,
+              left: `${37 + (index % 7) * 4.4}%`,
             } as CSSProperties
           }
         />
       ))}
-
-      <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/10 bg-stone-950/55 px-4 py-2 text-xs font-black text-stone-300 backdrop-blur-xl">
-        <Sparkles size={14} className="text-amber-200" aria-hidden="true" />
-        Phoenix reveal
-      </div>
-    </div>
-  );
-}
-
-function GeologyPlate() {
-  return (
-    <div className="absolute inset-0 z-0 overflow-hidden">
-      <svg
-        className="h-full w-full"
-        viewBox="0 0 1440 900"
-        preserveAspectRatio="xMidYMid slice"
-        aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="rockBase" x1="0%" x2="100%" y1="0%" y2="100%">
-            <stop offset="0%" stopColor="#050403" />
-            <stop offset="38%" stopColor="#16100c" />
-            <stop offset="68%" stopColor="#241812" />
-            <stop offset="100%" stopColor="#070604" />
-          </linearGradient>
-          <linearGradient id="oreVein" x1="0%" x2="100%" y1="0%" y2="0%">
-            <stop offset="0%" stopColor="#66d2c2" stopOpacity="0" />
-            <stop offset="42%" stopColor="#e9a64a" stopOpacity="0.82" />
-            <stop offset="100%" stopColor="#b895ff" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <rect width="1440" height="900" fill="url(#rockBase)" />
-        <path
-          d="M-70 638 C204 570 360 666 572 608 C780 552 918 458 1154 488 C1320 510 1424 454 1510 404 L1510 940 L-70 940Z"
-          fill="#110b08"
-        />
-        <path
-          d="M-42 714 C160 646 306 719 492 681 C732 632 905 698 1116 645 C1282 603 1370 620 1502 560"
-          fill="none"
-          stroke="#6f4a2a"
-          strokeOpacity="0.34"
-          strokeWidth="22"
-        />
-        <path
-          d="M-32 718 C165 650 308 724 493 686 C731 637 906 704 1116 651 C1282 609 1370 626 1502 566"
-          fill="none"
-          stroke="url(#oreVein)"
-          strokeWidth="3"
-        />
-        <path
-          d="M-20 248 C170 200 275 273 417 240 C607 196 704 105 904 138 C1092 169 1195 88 1464 115"
-          fill="none"
-          stroke="#ffffff"
-          strokeOpacity="0.08"
-          strokeWidth="2"
-        />
-        <path
-          d="M-18 312 C170 268 288 324 458 300 C660 270 783 202 986 230 C1162 254 1283 204 1468 218"
-          fill="none"
-          stroke="#f2bd73"
-          strokeOpacity="0.1"
-          strokeWidth="2"
-        />
-        <path
-          d="M-12 380 C165 340 344 386 520 365 C726 340 822 316 1024 344 C1202 369 1304 336 1462 350"
-          fill="none"
-          stroke="#8f79ff"
-          strokeOpacity="0.12"
-          strokeWidth="2"
-        />
-        {Array.from({ length: 34 }).map((_, index) => (
-          <circle
-            key={index}
-            cx={90 + ((index * 131) % 1280)}
-            cy={70 + ((index * 83) % 760)}
-            r={index % 5 === 0 ? 2.2 : 1.1}
-            fill={index % 4 === 0 ? "#e9a64a" : "#d9c7a1"}
-            opacity={index % 3 === 0 ? 0.24 : 0.1}
-          />
-        ))}
-      </svg>
-
-      <div className="absolute bottom-8 right-8 hidden items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-xs font-black text-stone-400 backdrop-blur-xl md:flex">
-        <Layers3 size={16} className="text-amber-200" aria-hidden="true" />
-        Stratigraphic render
-      </div>
-      <div className="absolute right-[14%] top-[14%] hidden items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-xs font-black text-stone-400 backdrop-blur-xl md:flex">
-        <Gem size={16} className="text-teal-200" aria-hidden="true" />
-        Mineral signal
-      </div>
     </div>
   );
 }
