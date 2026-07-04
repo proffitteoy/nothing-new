@@ -6,7 +6,7 @@ declare global {
   interface Window {
     __quartzBlogFrame?: HTMLIFrameElement;
     __quartzBlogLoaded?: boolean;
-    __quartzBlogDock?: (target?: HTMLElement | null) => void;
+    __quartzBlogDock?: (target?: HTMLElement | null, visible?: boolean) => void;
   }
 }
 
@@ -22,13 +22,21 @@ export default function QuartzFrame({ src, title }: { src: string; title: string
     let docked = false;
     let disposed = false;
 
-    const markLoaded = () => setLoaded(true);
+    const showPreloadedFrame = () => {
+      if (mountRef.current) {
+        window.__quartzBlogDock?.(mountRef.current, true);
+      }
+    };
+    const markLoaded = () => {
+      setLoaded(true);
+      showPreloadedFrame();
+    };
     const attachPreloadedFrame = () => {
       if (disposed || fallbackStartedRef.current || !mountRef.current || !window.__quartzBlogDock) {
         return false;
       }
 
-      window.__quartzBlogDock(mountRef.current);
+      window.__quartzBlogDock(mountRef.current, Boolean(window.__quartzBlogLoaded));
       docked = true;
       if (window.__quartzBlogLoaded) {
         markLoaded();

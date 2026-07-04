@@ -11,7 +11,7 @@ declare global {
   interface Window {
     __quartzBlogFrame?: HTMLIFrameElement;
     __quartzBlogLoaded?: boolean;
-    __quartzBlogDock?: (target?: HTMLElement | null) => void;
+    __quartzBlogDock?: (target?: HTMLElement | null, visible?: boolean) => void;
   }
 }
 
@@ -42,12 +42,12 @@ export default function BlogPreloader() {
       window.__quartzBlogLoaded = false;
     }
 
-    window.__quartzBlogDock = (target?: HTMLElement | null) => {
+    window.__quartzBlogDock = (target?: HTMLElement | null, visible = false) => {
       const dockTarget = target ?? host;
       if (!window.__quartzBlogFrame || !dockTarget) return;
 
-      window.__quartzBlogFrame.className = target ? VISIBLE_FRAME_CLASS : HIDDEN_FRAME_CLASS;
-      if (target) {
+      window.__quartzBlogFrame.className = target && visible ? VISIBLE_FRAME_CLASS : HIDDEN_FRAME_CLASS;
+      if (target && visible) {
         window.__quartzBlogFrame.removeAttribute("aria-hidden");
       } else {
         window.__quartzBlogFrame.setAttribute("aria-hidden", "true");
