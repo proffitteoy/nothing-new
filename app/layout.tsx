@@ -10,7 +10,7 @@ import ClickEffect from "../components/ClickEffect";
 import BackgroundSlider from "../components/BackgroundSlider";
 import SplashScreen from "../components/SplashScreen";
 import DanmakuBackground from '../components/DanmakuBackground';
-import BlogPreloader from "../components/BlogPreloader";
+import BlogWarmup from "../components/BlogWarmup";
 
 import MobileBackButton from '../components/MobileBackButton';
 
@@ -56,7 +56,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SplashScreen />
 
           <MusicProvider>
-            <BlogPreloader />
+            <BlogWarmup />
             <div id="app-mount-root" className="flex-1 flex flex-col transition-opacity duration-1000">
               <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
                 {!siteConfig.useGradient && <BackgroundSlider />}

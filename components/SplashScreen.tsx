@@ -1,40 +1,54 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { siteConfig } from '../siteConfig';
+
+const SPLASH_DURATION_MS = 2200;
+const REVEAL_DELAY_MS = 500;
 
 export default function SplashScreen() {
   const [show, setShow] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash') === 'true';
+  const exitSplash = useCallback(() => {
+    setShow(false);
 
-    if (!hasSeenSplash) {
-      setShow(true);
-      const timer = setTimeout(() => {
-        exitSplash();
-      }, 2200);
-      return () => clearTimeout(timer);
-    } else {
-      // 容错处理：确保直接访问时类名存在
-      document.documentElement.classList.add('splash-seen');
+    try {
+      sessionStorage.setItem('hasSeenSplash', 'true');
+    } catch {
+      // Ignore storage failures in restricted browser modes.
     }
+
+    window.setTimeout(() => {
+      document.documentElement.classList.add('splash-seen');
+    }, REVEAL_DELAY_MS);
   }, []);
 
-  const exitSplash = () => {
-    setShow(false);
-    sessionStorage.setItem('hasSeenSplash', 'true');
+  useEffect(() => {
+    let hasSeenSplash = false;
 
-    // 【核心解封】：动画快结束时，给 html 加上类名，CSS 会自动把内容显示出来
-    setTimeout(() => {
+    try {
+      hasSeenSplash = sessionStorage.getItem('hasSeenSplash') === 'true';
+    } catch {
+      hasSeenSplash = true;
+    }
+
+    if (hasSeenSplash) {
       document.documentElement.classList.add('splash-seen');
-    }, 500);
-  };
+      return;
+    }
 
-  if (!isMounted) return null;
+    const showTimer = window.setTimeout(() => {
+      setShow(true);
+    }, 0);
+    const exitTimer = window.setTimeout(exitSplash, SPLASH_DURATION_MS);
+
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(exitTimer);
+    };
+  }, [exitSplash]);
 
   return (
     <AnimatePresence>
@@ -54,7 +68,14 @@ export default function SplashScreen() {
                 className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-60 blur-[3px]"
               />
               <div className="relative w-full h-full rounded-full p-1.5 bg-white dark:bg-slate-900 shadow-xl">
-                <img src={siteConfig.avatarUrl} alt="头像" className="w-full h-full rounded-full object-cover" />
+                <Image
+                  src={siteConfig.avatarUrl}
+                  alt="头像"
+                  width={96}
+                  height={96}
+                  priority
+                  className="w-full h-full rounded-full object-cover"
+                />
               </div>
             </div>
 

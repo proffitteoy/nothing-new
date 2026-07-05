@@ -7,9 +7,7 @@ const config: QuartzConfig = {
     pageTitleSuffix: "",
     enableSPA: true,
     enablePopovers: true,
-    analytics: {
-      provider: "plausible",
-    },
+    analytics: null,
     locale: "zh-CN",
     baseUrl: "math-vault",
     ignorePatterns: ["private", "templates", ".obsidian"],
