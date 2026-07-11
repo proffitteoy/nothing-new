@@ -142,7 +142,11 @@ export default function ProjectsBoard() {
           </div>
         </section>
 
-        <section className={styles.projectsSection} id="project-index" aria-labelledby="project-index-title">
+        <section
+          className={styles.projectsSection}
+          id="project-index"
+          aria-labelledby="project-index-title"
+        >
           <header className={styles.sectionHeader}>
             <div>
               <p className={styles.sectionNumber}>01 / ORIGINAL WORK</p>
@@ -185,7 +189,11 @@ export default function ProjectsBoard() {
         <section className={styles.contribution} aria-labelledby="open-source-title">
           <div className={styles.contributionLabel}>
             <span>02</span>
-            <p>OPEN SOURCE<br />CONTRIBUTION</p>
+            <p>
+              OPEN SOURCE
+              <br />
+              CONTRIBUTION
+            </p>
           </div>
           <div className={styles.contributionBody}>
             <p className={styles.sectionNumber}>COMMUNITY WORK</p>
@@ -211,11 +219,16 @@ export default function ProjectsBoard() {
         <section className={styles.stackStrip} aria-label="常用技术栈">
           <p>WORKING STACK</p>
           <div>
-            <span>TypeScript</span><i>✦</i>
-            <span>React</span><i>✦</i>
-            <span>Next.js</span><i>✦</i>
-            <span>Python</span><i>✦</i>
-            <span>PostgreSQL</span><i>✦</i>
+            <span>TypeScript</span>
+            <i>✦</i>
+            <span>React</span>
+            <i>✦</i>
+            <span>Next.js</span>
+            <i>✦</i>
+            <span>Python</span>
+            <i>✦</i>
+            <span>PostgreSQL</span>
+            <i>✦</i>
             <span>Docker</span>
           </div>
         </section>

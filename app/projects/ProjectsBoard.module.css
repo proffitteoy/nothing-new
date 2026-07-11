@@ -76,7 +76,8 @@
 .imageShade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 55%, rgba(17, 18, 15, 0.22)),
+  background:
+    linear-gradient(90deg, transparent 55%, rgba(17, 18, 15, 0.22)),
     linear-gradient(0deg, rgba(17, 18, 15, 0.55), transparent 32%);
 }
 
@@ -265,7 +266,9 @@
   border-right: 1px solid var(--ink);
   border-bottom: 1px solid var(--ink);
   color: inherit;
-  transition: color 220ms ease, background 220ms ease;
+  transition:
+    color 220ms ease,
+    background 220ms ease;
 }
 
 .projectCard:hover {
