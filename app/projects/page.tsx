@@ -4,8 +4,8 @@ import ProjectsBoard from './ProjectsBoard';
 import {siteConfig} from "@/siteConfig";
 
 export const metadata = {
-  title: "项目矩阵 | " + siteConfig.title,
-  description: "展示中文项目简介与常回看的仓库。",
+  title: "项目档案 | " + siteConfig.title,
+  description: "proffitteoy 的研究项目、AI 工具、图方法与开源贡献。",
 };
 
 export default function ProjectsPage() {
@@ -13,7 +13,7 @@ export default function ProjectsPage() {
     <div className="min-h-screen relative pb-20">
       <Navbar />
       <PageTransition>
-        <div className="mt-28">
+        <div className="pt-16 md:pt-16">
           <ProjectsBoard />
         </div>
       </PageTransition>

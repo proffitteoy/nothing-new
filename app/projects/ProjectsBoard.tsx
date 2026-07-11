@@ -1,219 +1,235 @@
-import fs from "fs"
-import path from "path"
-import { unified } from "unified"
-import type { Element, Properties, Root } from "hast"
-import { visit } from "unist-util-visit"
-import remarkParse from "remark-parse"
-import remarkGfm from "remark-gfm"
-import remarkRehype from "remark-rehype"
-import rehypeRaw from "rehype-raw"
-import rehypeStringify from "rehype-stringify"
+import {
+  ArrowUpRight,
+  Bot,
+  Braces,
+  Github,
+  GraduationCap,
+  Network,
+  Orbit,
+  TimerReset,
+} from "lucide-react"
 import BackButton from "../../components/BackButton"
+import styles from "./ProjectsBoard.module.css"
 
-const PROFILE_REPO_URL = "https://github.com/proffitteoy/proffitteoy"
-const PROFILE_README_RAW_BASE = "https://raw.githubusercontent.com/proffitteoy/proffitteoy/main/"
-const PROFILE_README_BLOB_BASE = "https://github.com/proffitteoy/proffitteoy/blob/main/"
+const PROFILE_URL = "https://github.com/proffitteoy"
+const HERO_IMAGE =
+  "https://raw.githubusercontent.com/proffitteoy/proffitteoy/main/assets/generated/profile-studio.png"
 
-type ReadmeSource = "local"
+const tracks = [
+  { label: "Study", value: "应用数学考研准备", icon: GraduationCap },
+  { label: "Research", value: "传播树 · TDA · 图结构分析", icon: Orbit },
+  { label: "Build", value: "AI 研究工作台与开源工具", icon: Braces },
+]
 
-function readLocalReadme() {
-  const readmePath = path.join(process.cwd(), "data", "proffitteoy-readme.md")
-  try {
-    return fs.readFileSync(readmePath, "utf8")
-  } catch {
-    return "# 项目矩阵\n\n项目说明暂未找到。"
-  }
-}
+const projects = [
+  {
+    index: "01",
+    eyebrow: "RESEARCH ORIGINAL",
+    name: "early-rumor-propagation-tda",
+    description: "从早期谣言传播树中构造拓扑特征，并用持久同调观察传播结构。",
+    href: "https://github.com/proffitteoy/early-rumor-propagation-tda",
+    tags: ["TDA", "传播树", "持久同调"],
+    icon: Orbit,
+    featured: true,
+  },
+  {
+    index: "02",
+    eyebrow: "AI WORKBENCH",
+    name: "Iris-Terminal",
+    description: "把对话、检索、文件与笔记放进同一张桌面的本地优先 AI 研究工作台。",
+    href: "https://github.com/proffitteoy/Iris-Terminal",
+    tags: ["Local-first", "Research Workspace"],
+    icon: Bot,
+  },
+  {
+    index: "03",
+    eyebrow: "CAMPUS PRODUCT",
+    name: "ai-data-competitions-ui",
+    description: "面向学生竞赛的学院级服务网站，以及可持续维护的组件体系。",
+    href: "https://github.com/GDUF-quantitative/ai-data-competitions-ui",
+    tags: ["Next.js", "React", "Tailwind CSS"],
+    icon: Braces,
+  },
+  {
+    index: "04",
+    eyebrow: "GRAPH METHOD",
+    name: "TILO-PRC",
+    description: "结构感知的图聚类实验，串联 PRC 与 TILO 划分流程。",
+    href: "https://github.com/proffitteoy/TILO-PRC",
+    tags: ["Graph Clustering", "PRC", "TILO"],
+    icon: Network,
+  },
+  {
+    index: "05",
+    eyebrow: "AGENT PIPELINE",
+    name: "ManiMind",
+    description: "面向研究产物生成的 Agent 编排层，让上下文、任务和审核形成闭环。",
+    href: "https://github.com/proffitteoy/ManiMind",
+    tags: ["Agent", "Artifact Pipeline"],
+    icon: Bot,
+  },
+  {
+    index: "06",
+    eyebrow: "COGNITIVE WORKSTATION",
+    name: "Task-Manager",
+    description: "串联任务、计时、活动统计与每日复盘的本地优先认知工作站。",
+    href: "https://github.com/proffitteoy/Task-Manager",
+    tags: ["Task Management", "Local-first", "Electron"],
+    icon: TimerReset,
+  },
+]
 
-async function loadProjectsReadme(): Promise<{ markdown: string; source: ReadmeSource }> {
-  return { markdown: readLocalReadme(), source: "local" }
-}
-
-function getStringProperty(value: Properties[keyof Properties]) {
-  if (typeof value === "string") return value
-  if (typeof value === "number") return String(value)
-  if (Array.isArray(value)) return value.join(" ")
-  return ""
-}
-
-function mergeClassName(value: Properties[keyof Properties], className: string) {
-  const classNames = Array.isArray(value)
-    ? value.map(String)
-    : typeof value === "string"
-      ? value.split(/\s+/)
-      : []
-
-  return Array.from(new Set([...classNames.filter(Boolean), className]))
-}
-
-function githubBlobImageToRaw(src: string) {
-  try {
-    const url = new URL(src)
-    const parts = url.pathname.split("/").filter(Boolean)
-    const isProfileBlob =
-      url.hostname === "github.com" &&
-      parts[0] === "proffitteoy" &&
-      parts[1] === "proffitteoy" &&
-      parts[2] === "blob" &&
-      parts.length > 4
-
-    if (!isProfileBlob) return src
-
-    const branch = parts[3]
-    const filePath = parts.slice(4).join("/")
-    return `https://raw.githubusercontent.com/proffitteoy/proffitteoy/${branch}/${filePath}${url.search}`
-  } catch {
-    return src
-  }
-}
-
-function resolveReadmeUrl(value: Properties[keyof Properties], baseUrl: string, isImage = false) {
-  const source = getStringProperty(value).trim()
-  if (!source || source.startsWith("#") || source.startsWith("data:")) return source
-  if (/^(mailto|tel):/i.test(source)) return source
-  if (source.startsWith("//")) return `https:${source}`
-  if (/^https?:\/\//i.test(source)) {
-    return isImage ? githubBlobImageToRaw(source) : source
-  }
-
-  try {
-    return new URL(source, baseUrl).toString()
-  } catch {
-    return source
-  }
-}
-
-function isExternalUrl(value: string) {
-  try {
-    const url = new URL(value)
-    return url.protocol === "http:" || url.protocol === "https:"
-  } catch {
-    return false
-  }
-}
-
-function enhanceReadmeElements() {
-  return (tree: Root) => {
-    visit(tree, "element", (node: Element) => {
-      node.properties ||= {}
-
-      if (["script", "iframe", "object", "embed"].includes(node.tagName)) {
-        node.tagName = "template"
-        node.children = []
-        return
-      }
-
-      if (node.tagName === "img") {
-        node.properties.src = resolveReadmeUrl(node.properties.src, PROFILE_README_RAW_BASE, true)
-        node.properties.loading = "lazy"
-        node.properties.decoding = "async"
-        node.properties.referrerPolicy = "no-referrer"
-        node.properties.alt = getStringProperty(node.properties.alt)
-        node.properties.className = mergeClassName(node.properties.className, "github-readme-image")
-      }
-
-      if (node.tagName === "a") {
-        const href = resolveReadmeUrl(node.properties.href, PROFILE_README_BLOB_BASE)
-        node.properties.href = href
-
-        if (isExternalUrl(href)) {
-          node.properties.target = "_blank"
-          node.properties.rel = "noopener noreferrer"
-        }
-      }
-    })
-  }
-}
-
-async function renderProjectsReadme(markdown: string) {
-  const processed = await unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeRaw)
-    .use(enhanceReadmeElements)
-    .use(rehypeStringify, { allowDangerousHtml: true })
-    .process(markdown)
-
-  return processed.toString()
-}
-
-export default async function ProjectsBoard() {
-  const readme = await loadProjectsReadme()
-  const contentHtml = await renderProjectsReadme(readme.markdown)
-
+export default function ProjectsBoard() {
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-8 md:py-10 relative z-10">
-      <div className="w-full flex justify-start mb-6">
-        <BackButton />
-      </div>
-
-      <section className="mb-6 rounded-[1.75rem] bg-slate-950/90 border border-indigo-400/20 shadow-2xl overflow-hidden">
-        <div className="p-5 md:p-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[11px] font-black tracking-[0.32em] text-cyan-300 mb-4 uppercase">
-              个人项目自述
-            </p>
-            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">
-              项目矩阵
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm md:text-base leading-8 text-slate-300">
-              这里整理常回看的项目、研究工具与个人知识库建设记录。
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex w-fit items-center justify-center rounded-full border border-slate-400/30 bg-white/5 px-4 py-2 text-xs font-black text-slate-200">
-              中文本地版
-            </span>
-            <a
-              href={PROFILE_REPO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center justify-center rounded-full border border-cyan-300/40 bg-cyan-300/10 px-5 py-2 text-sm font-black text-cyan-100 transition-colors duration-300 hover:bg-cyan-300/20"
-            >
-              打开 GitHub
-            </a>
-          </div>
+    <main className={styles.pageShell}>
+      <div className={styles.noise} aria-hidden="true" />
+      <div className={styles.container}>
+        <div className={styles.utilityRow}>
+          <BackButton />
+          <p>SELECTED WORK · 2026</p>
         </div>
-      </section>
 
-      <article className="rounded-[1.75rem] bg-slate-950/90 border border-indigo-400/20 shadow-2xl overflow-hidden p-4 md:p-8">
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-          .github-readme { color: #e2e8f0; font-size: 0.98rem; overflow-wrap: anywhere; }
-          .github-readme h1, .github-readme h2, .github-readme h3 { color: #f8fafc !important; margin-top: 2rem; margin-bottom: 1rem; letter-spacing: 0; }
-          .github-readme h1 { font-size: clamp(2rem, 5vw, 3.35rem); line-height: 1.08; margin-top: 0; text-align: center; }
-          .github-readme h2 { font-size: clamp(1.35rem, 3vw, 1.85rem); border-bottom: 1px solid rgba(148, 163, 184, 0.25); padding-bottom: 0.75rem; }
-          .github-readme h3 { font-size: 1.2rem; }
-          .github-readme p { margin: 1rem 0; line-height: 1.8; }
-          .github-readme p[align="center"], .github-readme div[align="center"] { text-align: center; }
-          .github-readme ul, .github-readme ol { margin: 1rem 0 1.5rem 1.25rem; line-height: 1.8; }
-          .github-readme li { padding-left: 0.25rem; }
-          .github-readme blockquote { margin: 1.5rem 0; border-left: 4px solid rgba(125, 211, 252, 0.7); padding: 0.5rem 0 0.5rem 1rem; color: #cbd5e1; background: rgba(14, 165, 233, 0.08); border-radius: 0.75rem; }
-          .github-readme a { color: #7dd3fc; text-decoration: none; }
-          .github-readme a:hover { color: #bae6fd; }
-          .github-readme table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 1.5rem 0; overflow: hidden; border-radius: 1rem; border: 1px solid rgba(148, 163, 184, 0.18); }
-          .github-readme td, .github-readme th { border: 1px solid rgba(148, 163, 184, 0.14); padding: 1rem; vertical-align: top; }
-          .github-readme th { color: #f8fafc; background: rgba(14, 165, 233, 0.1); }
-          .github-readme tr { background: rgba(15, 23, 42, 0.18); }
-          .github-readme code { color: #bae6fd; background: rgba(14, 165, 233, 0.12); border-radius: 0.35rem; padding: 0.1rem 0.35rem; }
-          .github-readme pre { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(125, 211, 252, 0.18); border-radius: 1rem; padding: 1.25rem; overflow-x: auto; }
-          .github-readme pre code { background: transparent; padding: 0; color: #c4b5fd; }
-          .github-readme .github-readme-image { display: inline-block; max-width: min(100%, 760px); height: auto; vertical-align: middle; border-radius: 0.75rem; }
-          .github-readme p > .github-readme-image:only-child { display: block; margin: 1rem auto; }
-          .github-readme table .github-readme-image { max-width: 100%; border-radius: 0.6rem; }
-          @media (max-width: 768px) {
-            .github-readme h2 { font-size: 1.35rem; }
-            .github-readme table, .github-readme tbody, .github-readme tr, .github-readme td { display: block; width: 100%; }
-            .github-readme thead { display: none; }
-            .github-readme td { padding: 0.85rem; }
-          }
-        `,
-          }}
-        />
-        <div className="github-readme" dangerouslySetInnerHTML={{ __html: contentHtml }} />
-      </article>
-    </div>
+        <section className={styles.hero} aria-labelledby="projects-title">
+          <div className={styles.heroImageWrap}>
+            {/* The image lives in the public profile repository and stays in sync with its README. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={HERO_IMAGE}
+              alt="夕阳下的数学与 AI 研究工作室"
+              width="1792"
+              height="1024"
+              className={styles.heroImage}
+            />
+            <div className={styles.imageShade} />
+            <span className={styles.imageStamp}>FIELD NOTES / 2026</span>
+          </div>
+
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}>PROFFITTEOY · PROJECT ARCHIVE</p>
+            <h1 id="projects-title">
+              把研究做成
+              <span>可以运行的作品。</span>
+            </h1>
+            <p className={styles.intro}>
+              从拓扑数据分析到本地 AI 工具，我在意的不只是一个结果，
+              还包括它能否被复现、检查，并在下一次研究里继续生长。
+            </p>
+            <div className={styles.heroActions}>
+              <a href="#project-index" className={styles.primaryAction}>
+                浏览项目 <ArrowUpRight size={17} aria-hidden="true" />
+              </a>
+              <a
+                href={PROFILE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.secondaryAction}
+              >
+                <Github size={17} aria-hidden="true" /> GitHub 主页
+              </a>
+            </div>
+          </div>
+
+          <div className={styles.trackRail} aria-label="当前轨道">
+            {tracks.map(({ label, value, icon: Icon }) => (
+              <div className={styles.trackItem} key={label}>
+                <Icon size={18} strokeWidth={1.7} aria-hidden="true" />
+                <div>
+                  <span>{label}</span>
+                  <p>{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.projectsSection} id="project-index" aria-labelledby="project-index-title">
+          <header className={styles.sectionHeader}>
+            <div>
+              <p className={styles.sectionNumber}>01 / ORIGINAL WORK</p>
+              <h2 id="project-index-title">原创作品矩阵</h2>
+            </div>
+            <p>研究方法、认知工具与真实服务。每个仓库都是一段仍在继续的实验。</p>
+          </header>
+
+          <div className={styles.projectGrid}>
+            {projects.map(({ icon: Icon, ...project }) => (
+              <a
+                href={project.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${styles.projectCard} ${project.featured ? styles.featuredCard : ""}`}
+                key={project.name}
+              >
+                <div className={styles.cardTopline}>
+                  <span>{project.index}</span>
+                  <Icon size={22} strokeWidth={1.6} aria-hidden="true" />
+                </div>
+                <div className={styles.cardBody}>
+                  <p className={styles.cardEyebrow}>{project.eyebrow}</p>
+                  <h3>{project.name}</h3>
+                  <p className={styles.cardDescription}>{project.description}</p>
+                </div>
+                <div className={styles.cardFooter}>
+                  <ul aria-label={`${project.name} 技术标签`}>
+                    {project.tags.map((tag) => (
+                      <li key={tag}>{tag}</li>
+                    ))}
+                  </ul>
+                  <ArrowUpRight className={styles.cardArrow} size={22} aria-hidden="true" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.contribution} aria-labelledby="open-source-title">
+          <div className={styles.contributionLabel}>
+            <span>02</span>
+            <p>OPEN SOURCE<br />CONTRIBUTION</p>
+          </div>
+          <div className={styles.contributionBody}>
+            <p className={styles.sectionNumber}>COMMUNITY WORK</p>
+            <h2 id="open-source-title">open-ani / animeko</h2>
+            <p>参与 Android / Kotlin Multiplatform 调试修复、构建验证与 PR 协作。</p>
+            <div className={styles.contributionTags}>
+              <span>Kotlin Multiplatform</span>
+              <span>Android</span>
+              <span>PR 协作</span>
+            </div>
+          </div>
+          <a
+            href="https://github.com/open-ani/animeko"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="前往 open-ani animeko 仓库"
+            className={styles.roundLink}
+          >
+            <ArrowUpRight size={28} aria-hidden="true" />
+          </a>
+        </section>
+
+        <section className={styles.stackStrip} aria-label="常用技术栈">
+          <p>WORKING STACK</p>
+          <div>
+            <span>TypeScript</span><i>✦</i>
+            <span>React</span><i>✦</i>
+            <span>Next.js</span><i>✦</i>
+            <span>Python</span><i>✦</i>
+            <span>PostgreSQL</span><i>✦</i>
+            <span>Docker</span>
+          </div>
+        </section>
+
+        <footer className={styles.projectFooter}>
+          <div>
+            <p className={styles.sectionNumber}>THE COMPLETE LOG</p>
+            <h2>代码在 GitHub，思考留在这里。</h2>
+          </div>
+          <a href={PROFILE_URL} target="_blank" rel="noopener noreferrer">
+            查看全部仓库 <ArrowUpRight size={19} aria-hidden="true" />
+          </a>
+        </footer>
+      </div>
+    </main>
   )
 }
