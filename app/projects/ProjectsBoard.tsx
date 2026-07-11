@@ -2,7 +2,7 @@ import {
   ArrowUpRight,
   Bot,
   Braces,
-  Github,
+  Code2,
   GraduationCap,
   Network,
   Orbit,
@@ -124,7 +124,7 @@ export default function ProjectsBoard() {
                 rel="noopener noreferrer"
                 className={styles.secondaryAction}
               >
-                <Github size={17} aria-hidden="true" /> GitHub 主页
+                <Code2 size={17} aria-hidden="true" /> GitHub 主页
               </a>
             </div>
           </div>
