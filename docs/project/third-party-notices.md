@@ -4,6 +4,16 @@ title: 第三方代码与授权说明
 
 # 第三方代码与授权说明
 
+本仓库整体采用 GPL-3.0-only。下列第三方代码继续保留其原始版权声明与许可证文本。
+
+## Quartz
+
+- 来源：`jackyzha0/quartz`
+- 上游仓库：https://github.com/jackyzha0/quartz
+- 授权：MIT
+- 本仓库使用位置：`quartz/`、`quartz.config.ts`、`quartz.layout.ts` 及相关内容渲染代码
+- MIT 文本：`docs/licenses/Quartz-MIT.txt`
+
 ## Mineradio 粒子视觉
 
 - 来源：`XxHuberrr/Mineradio`
