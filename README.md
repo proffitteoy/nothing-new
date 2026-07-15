@@ -46,7 +46,7 @@
 - Node.js `22.x`（仓库提供 `.node-version`）
 - npm `>= 10.9.2`
 
-本项目当前无需必填环境变量即可启动。
+站点主体无需环境变量即可启动；“番剧”页需要服务端环境变量 `BANGUMI_ACCESS_TOKEN`。复制 `.env.example` 为 `.env.local` 并填入 Bangumi Access Token，部署时也需在平台环境变量中配置。Token 仅供服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。
 
 ```bash
 git clone https://github.com/proffitteoy/math-vault.git
@@ -74,6 +74,7 @@ npm run dev
 ## 内容与配置
 
 - 全站标题、头像、背景、社交链接、歌单与视觉开关：`siteConfig.ts`
+- 番剧收藏：由 Bangumi API 动态同步，凭据通过 `BANGUMI_ACCESS_TOKEN` 配置
 - 项目、友链等结构化数据：`data/`
 - Next.js 页面与接口：`app/`
 - 通用 UI 与播放器组件：`components/`

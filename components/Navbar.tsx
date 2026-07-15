@@ -85,6 +85,7 @@ export default function Navbar() {
     { name: '首页', href: '/' },
     { name: '项目', href: '/projects' },
     { name: '音乐', href: '/music' },
+    { name: '番剧', href: '/anime' },
     { name: '杂谈', href: '/chatter' },
     { name: '博客', href: '/legacy' },
     { name: '友链', href: '/friends' },

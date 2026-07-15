@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
         hostname: "bu.dusays.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "lain.bgm.tv",
+        pathname: "/pic/cover/**",
+      },
     ],
   },
   typescript: {
