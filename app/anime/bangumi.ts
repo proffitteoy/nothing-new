@@ -1,8 +1,12 @@
 import "server-only"
+import { unstable_cache } from "next/cache"
 
 const BANGUMI_API_BASE = "https://api.bgm.tv/v0"
-const PAGE_SIZE = 50
+const FIRST_SCREEN_LIMIT = 5
+const PAGE_SIZE = 10
 const CACHE_SECONDS = 30 * 60
+
+export type AnimeShelfStatus = "watching" | "watched"
 
 type BangumiImages = {
   large?: string
@@ -26,6 +30,8 @@ type BangumiCollection = {
 
 type BangumiCollectionPage = {
   total: number
+  limit: number
+  offset: number
   data: BangumiCollection[]
 }
 
@@ -39,17 +45,31 @@ export type AnimeEntry = {
   cover: string | null
 }
 
+export type AnimeCollectionSlice = {
+  items: AnimeEntry[]
+  total: number
+  nextOffset: number
+}
+
 export type AnimeShelfState =
   | {
       status: "ready"
       username: string
-      watching: AnimeEntry[]
-      watched: AnimeEntry[]
+      watching: AnimeCollectionSlice
+      watched: AnimeCollectionSlice
     }
   | {
       status: "error"
       reason: "missing-token" | "request-failed"
     }
+
+class MissingBangumiTokenError extends Error {}
+
+function getToken() {
+  const token = process.env.BANGUMI_ACCESS_TOKEN?.trim()
+  if (!token) throw new MissingBangumiTokenError("BANGUMI_ACCESS_TOKEN is missing")
+  return token
+}
 
 async function bangumiFetch<T>(path: string, token: string): Promise<T> {
   const response = await fetch(`${BANGUMI_API_BASE}${path}`, {
@@ -58,7 +78,10 @@ async function bangumiFetch<T>(path: string, token: string): Promise<T> {
       Authorization: `Bearer ${token}`,
       "User-Agent": "nothing-new.icu/1.0 (https://nothing-new.icu)",
     },
-    next: { revalidate: CACHE_SECONDS },
+    next: {
+      revalidate: CACHE_SECONDS,
+      tags: ["bangumi-anime-api"],
+    },
   })
 
   if (!response.ok) {
@@ -87,56 +110,70 @@ function toAnimeEntry(collection: BangumiCollection): AnimeEntry | null {
   }
 }
 
-async function getCollectionPage(
-  token: string,
-  username: string,
-  collectionType: 2 | 3,
-  offset: number,
-) {
+function getCollectionType(status: AnimeShelfStatus): 2 | 3 {
+  return status === "watching" ? 3 : 2
+}
+
+async function getUsername(token: string) {
+  const user = await bangumiFetch<BangumiUser>("/me", token)
+  return user.username
+}
+
+export async function getAnimeCollectionPage(
+  status: AnimeShelfStatus,
+  offset = 0,
+  limit = PAGE_SIZE,
+): Promise<AnimeCollectionSlice> {
+  const token = getToken()
+  const username = await getUsername(token)
+  const safeOffset = Math.max(0, Math.floor(offset))
+  const safeLimit = Math.min(50, Math.max(1, Math.floor(limit)))
   const params = new URLSearchParams({
     subject_type: "2",
-    type: String(collectionType),
-    limit: String(PAGE_SIZE),
-    offset: String(offset),
+    type: String(getCollectionType(status)),
+    limit: String(safeLimit),
+    offset: String(safeOffset),
   })
-
-  return bangumiFetch<BangumiCollectionPage>(
+  const page = await bangumiFetch<BangumiCollectionPage>(
     `/users/${encodeURIComponent(username)}/collections?${params}`,
     token,
   )
+
+  return {
+    items: page.data.map(toAnimeEntry).filter((entry): entry is AnimeEntry => entry !== null),
+    total: page.total,
+    nextOffset: page.offset + page.data.length,
+  }
 }
 
-async function getAllCollections(token: string, username: string, collectionType: 2 | 3) {
-  const firstPage = await getCollectionPage(token, username, collectionType, 0)
-  const remainingOffsets = Array.from(
-    { length: Math.max(0, Math.ceil(firstPage.total / PAGE_SIZE) - 1) },
-    (_, index) => (index + 1) * PAGE_SIZE,
-  )
-  const remainingPages = await Promise.all(
-    remainingOffsets.map((offset) => getCollectionPage(token, username, collectionType, offset)),
-  )
+async function loadFirstScreen() {
+  const token = getToken()
+  const username = await getUsername(token)
+  const [watching, watched] = await Promise.all([
+    getAnimeCollectionPage("watching", 0, FIRST_SCREEN_LIMIT),
+    getAnimeCollectionPage("watched", 0, FIRST_SCREEN_LIMIT),
+  ])
 
-  return [firstPage, ...remainingPages]
-    .flatMap((page) => page.data)
-    .map(toAnimeEntry)
-    .filter((entry): entry is AnimeEntry => entry !== null)
+  return { status: "ready" as const, username, watching, watched }
 }
+
+const getCachedFirstScreen = unstable_cache(
+  loadFirstScreen,
+  ["bangumi-anime-first-screen-v2"],
+  {
+    revalidate: CACHE_SECONDS,
+    tags: ["bangumi-anime-first-screen"],
+  },
+)
 
 export async function getAnimeShelf(): Promise<AnimeShelfState> {
-  const token = process.env.BANGUMI_ACCESS_TOKEN?.trim()
-  if (!token) {
-    return { status: "error", reason: "missing-token" }
-  }
-
   try {
-    const { username } = await bangumiFetch<BangumiUser>("/me", token)
-    const [watching, watched] = await Promise.all([
-      getAllCollections(token, username, 3),
-      getAllCollections(token, username, 2),
-    ])
-
-    return { status: "ready", username, watching, watched }
+    return await getCachedFirstScreen()
   } catch (error) {
+    if (error instanceof MissingBangumiTokenError) {
+      return { status: "error", reason: "missing-token" }
+    }
+
     console.error(
       "[Bangumi] failed to load anime collections:",
       error instanceof Error ? error.message : "unknown error",
