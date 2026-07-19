@@ -18,7 +18,7 @@
     "build": "npm run quartz:build:site && next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "legacy:quartz:build": "node quartz/bootstrap-cli.mjs build",
     "legacy:quartz:dev": "node quartz/bootstrap-cli.mjs build --serve",
     "docs": "node quartz/bootstrap-cli.mjs build --serve -d docs",
