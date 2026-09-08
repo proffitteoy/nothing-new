@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/1d7f1437d602eca442987d643f7bccc.jpg"
+cover: "/chatter-covers/1f6296bc6ca4628a83c857bf5f88c233.jpg"
 ---
 
 >[!tip]

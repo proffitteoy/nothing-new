@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/572e879b89dc0c5f9dc0bcd51bca2c34.jpg"
+cover: "/chatter-covers/c620cc9592b7ca5aac86ceffdaecd52c.jpg"
 ---
 
 我真狂点1000次干出来了

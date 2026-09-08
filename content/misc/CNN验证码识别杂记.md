@@ -1,3 +1,3 @@
 ---
-cover: "/chatter-covers/1caeb074dffe845cf6d87ca6a27839d0.jpg"
+cover: "/chatter-covers/d63f533907eca4f917008acd1b8ea0fb.jpg"
 ---
