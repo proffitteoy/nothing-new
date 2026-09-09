@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/f5f72f9ce773c0e0f33d3cbd9ddff4e4.jpg"
+cover: "/chatter-covers/2ff057fc4fb00eab338d883d10ef38f2183a95b4.png"
 ---
 
 # **第 0 章 服务器使用总览**

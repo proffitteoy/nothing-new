@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/457d5392ba7855fa584a4975b693d987cd74b8b0.jpg"
+cover: "/chatter-covers/ANIME-PICTURES.NET_-_928905-10000x4759-violet+evergarden-kyoto+animation-violet+evergarden+(character)-guang+tai+lang+dian-single-fringe.jpg"
 ---
 
 我们现在本科低年级学习的许多数学知识，一两百年前往往只有博士生才能涉猎。这当然并非因为人类的DNA在过去一百年里发生了突变而是因为学习这些知识的信息差被大幅缩小了。
