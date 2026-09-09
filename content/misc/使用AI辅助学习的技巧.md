@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/a806edac158828cf40a4896cb11f710b.png"
+cover: "/chatter-covers/d63f533907eca4f917008acd1b8ea0fb.jpg"
 ---
 
 ### 1. 使用AI学习的原则

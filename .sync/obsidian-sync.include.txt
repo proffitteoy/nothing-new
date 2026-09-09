@@ -180,3 +180,4 @@ misc/CNN验证码识别杂记.md
 math/一致有界原理.md
 math/Calderón–Zygmund 定理.md
 misc/如何读一篇论文.md
+misc/AI4MATH何去何从.md

@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/ChatGPT Image 2026年4月24日 12_06_06.png"
+cover: "/chatter-covers/4fe4fd34e96e0a1878f03699c1c2a786.jpg"
 ---
 
 >[!tip]

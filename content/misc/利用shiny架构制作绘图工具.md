@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/b65f6763bb10b5b4f84983ff25c5545.jpg"
+cover: "/chatter-covers/1caeb074dffe845cf6d87ca6a27839d0.jpg"
 ---
 
 ## 高性能科研绘图配色工具

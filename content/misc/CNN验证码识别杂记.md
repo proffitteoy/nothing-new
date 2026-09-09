@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/fbf48c01c998d575eede3039f115a5aa.jpg"
+cover: "/chatter-covers/ChatGPT Image 2026年4月24日 12_06_06.png"
 ---
 
 # 从 0% 开始认验证码

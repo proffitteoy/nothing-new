@@ -1,5 +1,5 @@
 ---
-cover: "/chatter-covers/504a4fd3122503de6728442122d79f5c.jpg"
+cover: "/chatter-covers/1d7f1437d602eca442987d643f7bccc.jpg"
 ---
 
 ## hashcat
