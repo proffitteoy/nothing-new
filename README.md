@@ -59,6 +59,7 @@
 - **项目与兴趣归档**：项目卡片由本地数据维护，番剧页通过服务端 Bangumi API 获取收藏数据。
 - **双内容分区**：<code>content/misc/</code> 生成杂谈，其余公开 Markdown 生成笔记；两者共享解析能力，但使用不同的集合页与阅读体验。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理，不把笔记降级为普通 Markdown 页面。
+- **统一图片存储**：生产部署会把站点背景、头像、杂谈封面与 Quartz 文章图片增量同步到私有 Vercel Blob，并通过原有站内路径读取。
 - **可审阅的发布流程**：Obsidian 同步先判断哪些笔记允许公开，再单向写入 <code>content/</code>；杂谈封面会被固定到 frontmatter，保证后续构建稳定。
 
 ## 技术栈
@@ -87,7 +88,7 @@ npm run dev
 
 打开 <http://localhost:3000>。<code>dev</code> 会先编译 <code>content/</code>，因此首次启动会比普通 Next.js 项目稍慢。
 
-站点主体不依赖环境变量。若要加载番剧收藏，再复制环境变量示例并填写 Bangumi Access Token：
+未配置 Blob 时，本地开发会继续读取 <code>public/</code> 中的图片。若要加载番剧收藏或检查 Blob 同步状态，再复制环境变量示例并填写对应配置：
 
 ```powershell
 Copy-Item .env.example .env.local
@@ -116,6 +117,9 @@ Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Tok
 | <code>npm run sync:obsidian:check</code> | 检查是否存在未同步变化                     |
 | <code>npm run sync:obsidian</code>       | 审阅并同步获准公开的内容，同时补全杂谈封面 |
 | <code>npm run covers:check</code>        | 检查杂谈封面分配是否稳定                   |
+| <code>npm run images:dry</code>          | 盘点将同步到 Blob 的站点图片               |
+| <code>npm run images:sync</code>         | 把有变化的站点图片增量同步到 Blob          |
+| <code>npm run images:check</code>        | 检查本地图片与 Blob 清单是否一致           |
 
 ## 内容维护
 
@@ -165,7 +169,7 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 
 ## 部署
 
-推荐使用 Vercel。导入仓库后保持 Root Directory 为仓库根目录，使用 <code>npm run build</code>，Node.js 版本选择 <code>22.x</code>；如需番剧页面，再在部署环境中配置 <code>BANGUMI_ACCESS_TOKEN</code>。
+推荐使用 Vercel。导入仓库后保持 Root Directory 为仓库根目录，使用 <code>npm run build</code>，Node.js 版本选择 <code>22.x</code>。连接私有 Vercel Blob 后，构建会增量上传站点自有图片，生产请求统一从 Blob 读取；<code>/avatar</code>、<code>/avatar.jpg</code>、杂谈封面及 Quartz 附件的原有 URL 都保持不变。友链头像等第三方图片仍使用各自来源。如需番剧页面，再在部署环境中配置 <code>BANGUMI_ACCESS_TOKEN</code>。
 
 部署前建议运行：
 

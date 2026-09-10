@@ -1,13 +1,37 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
+
+const blobImagesEnabled = Boolean(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN)
 
 const nextConfig: NextConfig = {
   async rewrites() {
-    return [
-      {
-        source: "/avatar",
-        destination: "/avatar.jpg",
-      },
-    ];
+    return {
+      beforeFiles: blobImagesEnabled
+        ? [
+            { source: "/avatar", destination: "/assets/avatar.jpg" },
+            { source: "/avatar.jpg", destination: "/assets/avatar.jpg" },
+            { source: "/about-cover.png", destination: "/assets/about-cover.png" },
+            { source: "/background.png", destination: "/assets/background.png" },
+            { source: "/profile-studio.png", destination: "/assets/profile-studio.png" },
+            {
+              source: "/chatter-covers/:path*",
+              destination: "/assets/chatter-covers/:path*",
+            },
+            {
+              source: "/quartz-assets/content/:path*",
+              destination: "/assets/quartz-assets/content/:path*",
+            },
+          ]
+        : [],
+      afterFiles: blobImagesEnabled
+        ? []
+        : [
+            {
+              source: "/avatar",
+              destination: "/avatar.jpg",
+            },
+          ],
+      fallback: [],
+    }
   },
   async headers() {
     return [
@@ -20,7 +44,7 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-    ];
+    ]
   },
   images: {
     unoptimized: true,
@@ -42,6 +66,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

@@ -14,7 +14,7 @@
   "scripts": {
     "notes:build": "node quartz/bootstrap-cli.mjs build -o .quartz-cache/quartz-site",
     "dev": "npm run notes:build && next dev",
-    "build": "npm run notes:build && next build",
+    "build": "npm run notes:build && npm run images:sync && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
@@ -27,6 +27,9 @@
     "covers:assign": "node scripts/assign-chatter-covers.mjs",
     "covers:check": "node scripts/assign-chatter-covers.mjs --check",
     "covers:dry": "node scripts/assign-chatter-covers.mjs --dry-run",
+    "images:sync": "node scripts/sync-image-assets.mjs",
+    "images:check": "node scripts/sync-image-assets.mjs --check",
+    "images:dry": "node scripts/sync-image-assets.mjs --dry-run",
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
     "test": "tsx --test"
