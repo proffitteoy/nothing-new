@@ -24,16 +24,16 @@
 
 ## 页面与能力
 
-| 页面 | 路径 | 主要内容 |
-| --- | --- | --- |
-| 首页 | [<code>/</code>](https://nothing-new.icu/) | 个人资料、内容统计、当前音乐、昼夜与性能模式、站点状态 |
-| 项目 | [<code>/projects</code>](https://nothing-new.icu/projects) | 研究工作、AI 工具、竞赛项目与开源贡献 |
-| 音乐 | [<code>/music</code>](https://nothing-new.icu/music) | 网易云歌单、歌词、播放列表与全局悬浮播放器 |
-| 番剧 | [<code>/anime</code>](https://nothing-new.icu/anime) | 从 Bangumi 同步收藏，并按观看状态与评分归档 |
-| 杂谈 | [<code>/chatter</code>](https://nothing-new.icu/chatter) | 零散想法、开发记录与日常观察的瀑布流展示 |
-| 笔记 | [<code>/blog</code>](https://nothing-new.icu/blog) | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接 |
-| 友链 | [<code>/friends</code>](https://nothing-new.icu/friends) | 朋友站点与独立博客入口 |
-| 关于 | [<code>/about</code>](https://nothing-new.icu/about) | 个人介绍、技术足迹与站点信息 |
+| 页面 | 路径                                                       | 主要内容                                               |
+| ---- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| 首页 | [<code>/</code>](https://nothing-new.icu/)                 | 个人资料、内容统计、当前音乐、昼夜与性能模式、站点状态 |
+| 项目 | [<code>/projects</code>](https://nothing-new.icu/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
+| 音乐 | [<code>/music</code>](https://nothing-new.icu/music)       | 网易云歌单、歌词、播放列表与全局悬浮播放器             |
+| 番剧 | [<code>/anime</code>](https://nothing-new.icu/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
+| 杂谈 | [<code>/chatter</code>](https://nothing-new.icu/chatter)   | 零散想法、开发记录与日常观察的瀑布流展示               |
+| 笔记 | [<code>/blog</code>](https://nothing-new.icu/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接 |
+| 友链 | [<code>/friends</code>](https://nothing-new.icu/friends)   | 朋友站点与独立博客入口                                 |
+| 关于 | [<code>/about</code>](https://nothing-new.icu/about)       | 个人介绍、技术足迹与站点信息                           |
 
 ## 页面预览
 
@@ -63,13 +63,13 @@
 
 ## 技术栈
 
-| 层级 | 技术 |
-| --- | --- |
-| Web | Next.js 16、React 19、TypeScript、Tailwind CSS 4 |
+| 层级       | 技术                                               |
+| ---------- | -------------------------------------------------- |
+| Web        | Next.js 16、React 19、TypeScript、Tailwind CSS 4   |
 | 动效与场景 | Framer Motion、Three.js、React Three Fiber、PixiJS |
-| 内容处理 | Quartz、Markdown、KaTeX、Shiki、FlexSearch |
-| 数据来源 | 本地 TypeScript 数据、Bangumi API、网易云音乐接口 |
-| 工程化 | ESLint、Prettier、Node.js Test Runner、Vercel |
+| 内容处理   | Quartz、Markdown、KaTeX、Shiki、FlexSearch         |
+| 数据来源   | 本地 TypeScript 数据、Bangumi API、网易云音乐接口  |
+| 工程化     | ESLint、Prettier、Node.js Test Runner、Vercel      |
 
 ## 快速开始
 
@@ -78,44 +78,44 @@
 - Node.js <code>22.x</code>（版本见 <code>.node-version</code>）
 - npm <code>>= 10.9.2</code>
 
-~~~bash
+```bash
 git clone https://github.com/proffitteoy/math-vault.git
 cd math-vault
 npm ci
 npm run dev
-~~~
+```
 
 打开 <http://localhost:3000>。<code>dev</code> 会先编译 <code>content/</code>，因此首次启动会比普通 Next.js 项目稍慢。
 
 站点主体不依赖环境变量。若要加载番剧收藏，再复制环境变量示例并填写 Bangumi Access Token：
 
-~~~powershell
+```powershell
 Copy-Item .env.example .env.local
-~~~
+```
 
-~~~dotenv
+```dotenv
 BANGUMI_ACCESS_TOKEN=your_token_here
-~~~
+```
 
-Token 只在服务端读取，不要添加 <code>NEXT_PUBLIC_</code> 前缀。未配置 Token 时，其余页面仍可正常运行，番剧页会显示配置提示。
+Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Token 时，其余页面仍可正常运行，番剧页会显示配置提示。
 
 > Windows PowerShell 如果阻止执行 <code>npm.ps1</code>，请将命令中的 <code>npm</code> 换成 <code>npm.cmd</code>，例如 <code>npm.cmd run dev</code>。
 
 ## 常用命令
 
-| 命令 | 作用 |
-| --- | --- |
-| <code>npm run dev</code> | 构建笔记并启动开发服务器 |
-| <code>npm run build</code> | 构建笔记与 Next.js 生产版本 |
-| <code>npm run start</code> | 启动已经完成构建的生产服务器 |
-| <code>npm run lint</code> | 执行 ESLint 检查 |
-| <code>npm run typecheck</code> | 生成 Next.js 类型并执行 TypeScript 检查 |
-| <code>npm test</code> | 运行测试 |
-| <code>npm run notes:build</code> | 只生成笔记、搜索索引与静态资源 |
-| <code>npm run sync:obsidian:dry</code> | 预览 Obsidian 同步，不写入文件 |
-| <code>npm run sync:obsidian:check</code> | 检查是否存在未同步变化 |
-| <code>npm run sync:obsidian</code> | 审阅并同步获准公开的内容，同时补全杂谈封面 |
-| <code>npm run covers:check</code> | 检查杂谈封面分配是否稳定 |
+| 命令                                     | 作用                                       |
+| ---------------------------------------- | ------------------------------------------ |
+| <code>npm run dev</code>                 | 构建笔记并启动开发服务器                   |
+| <code>npm run build</code>               | 构建笔记与 Next.js 生产版本                |
+| <code>npm run start</code>               | 启动已经完成构建的生产服务器               |
+| <code>npm run lint</code>                | 执行 ESLint 检查                           |
+| <code>npm run typecheck</code>           | 生成 Next.js 类型并执行 TypeScript 检查    |
+| <code>npm test</code>                    | 运行测试                                   |
+| <code>npm run notes:build</code>         | 只生成笔记、搜索索引与静态资源             |
+| <code>npm run sync:obsidian:dry</code>   | 预览 Obsidian 同步，不写入文件             |
+| <code>npm run sync:obsidian:check</code> | 检查是否存在未同步变化                     |
+| <code>npm run sync:obsidian</code>       | 审阅并同步获准公开的内容，同时补全杂谈封面 |
+| <code>npm run covers:check</code>        | 检查杂谈封面分配是否稳定                   |
 
 ## 内容维护
 
@@ -131,9 +131,9 @@ Token 只在服务端读取，不要添加 <code>NEXT_PUBLIC_</code> 前缀。�
 
 仓库内置的是单向同步流程：
 
-~~~text
+```text
 Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
-~~~
+```
 
 默认源目录是作者本机的 <code>E:/math</code>。在其他环境使用时，请先修改 <code>obsidian-sync.config.mjs</code>；不使用 Obsidian 时可以直接维护 <code>content/</code>。完整的 include、exclude、附件与删除规则见[同步说明](./docs/project/obsidian-sync.md)。
 
@@ -148,7 +148,7 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 
 ## 项目结构
 
-~~~text
+```text
 .
 ├── app/                       # 页面、路由与服务端接口
 ├── components/                # 通用 UI、动态场景与播放器
@@ -161,7 +161,7 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 ├── scripts/                   # 同步、审阅和封面维护脚本
 ├── obsidian-sync.config.mjs   # Obsidian 单向同步配置
 └── siteConfig.ts              # 全站配置中心
-~~~
+```
 
 ## 部署
 
@@ -169,12 +169,12 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 
 部署前建议运行：
 
-~~~bash
+```bash
 npm run lint
 npm run typecheck
 npm test
 npm run build
-~~~
+```
 
 ## 贡献
 
