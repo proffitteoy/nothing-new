@@ -37,6 +37,9 @@ export function normalizeBangumiCollection(
   const tags = subject?.tags
     ?.map((tag) => tag.name?.trim())
     .filter((tag): tag is string => Boolean(tag))
+  const cover = [subject?.images?.large, subject?.images?.common, subject?.images?.medium]
+    .map((value) => value?.trim())
+    .find((value): value is string => Boolean(value)) ?? null
 
   return {
     id: id as number,
@@ -47,7 +50,7 @@ export function normalizeBangumiCollection(
       : {}),
     status,
     ...(subject?.date ? { airDate: subject.date } : {}),
-    cover: subject?.images?.large ?? subject?.images?.common ?? subject?.images?.medium ?? null,
+    cover,
     ...(tags && tags.length > 0 ? { tags } : {}),
   }
 }
