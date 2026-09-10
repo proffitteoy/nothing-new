@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, Clapperboard, Play, RotateCcw, Sparkles, Star } from "lucide-react"
-import Image from "next/image"
 import BackButton from "../../components/BackButton"
 import { ANIME_BATCH_SIZE, getAnimeTitle, type AnimeItem, type AnimeLatestPointer, type AnimeSnapshot } from "../../lib/anime/schema"
+import AnimeCoverImage from "./AnimeCoverImage"
 import { groupAnimeByScore, sortAnimeByScore } from "./collection"
 
 type AnimeShelfProps = {
@@ -311,20 +311,7 @@ function AnimeGrid({
             className="group min-w-0"
           >
             <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/55 bg-slate-200/70 shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl dark:border-white/10 dark:bg-slate-800/70 sm:rounded-2xl">
-              {anime.cover ? (
-                <Image
-                  src={anime.cover}
-                  alt={`${title}封面`}
-                  fill
-                  sizes="(max-width: 639px) 24vw, (max-width: 1023px) 19vw, 170px"
-                  loading={index < eagerCount ? "eager" : "lazy"}
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
-                />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-200/80 via-white/60 to-pink-200/80 px-2 text-center text-[8px] font-black tracking-[0.14em] text-indigo-700 dark:from-indigo-950 dark:via-slate-900 dark:to-pink-950 dark:text-indigo-200 sm:text-[9px]">NO COVER</span>
-              )}
+              <AnimeCoverImage src={anime.cover} alt={`${title}封面`} eager={index < eagerCount} />
               <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-white/20 opacity-70 transition-opacity group-hover:opacity-40" />
               <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20 sm:rounded-2xl" />
               {showRating && (
