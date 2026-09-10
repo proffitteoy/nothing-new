@@ -65,6 +65,13 @@ type BangumiMe = {
   username?: string
 }
 
+type BangumiCollectionPage = {
+  total: number
+  limit: number
+  offset: number
+  data: BangumiCollection[]
+}
+
 export async function getBangumiUsername() {
   const configured = process.env.BANGUMI_USERNAME?.trim()
   if (configured) return configured
@@ -93,11 +100,11 @@ export async function getBangumiCollections(username: string, status: AnimeStatu
       limit: String(BANGUMI_PAGE_SIZE),
       offset: String(offset),
     })
-    const page = await bangumiRequest<BangumiCollection[]>(
+    const page = await bangumiRequest<BangumiCollectionPage>(
       `/users/${encodeURIComponent(username)}/collections?${params}`,
     )
-    items.push(...page)
-    if (page.length < BANGUMI_PAGE_SIZE) break
+    items.push(...page.data)
+    if (items.length >= page.total || page.data.length < BANGUMI_PAGE_SIZE) break
   }
 
   return items
