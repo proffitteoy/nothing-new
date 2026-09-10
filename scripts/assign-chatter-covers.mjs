@@ -38,15 +38,25 @@ export async function assignChatterCovers({
     const articleCover = firstImage
       ? resolveArticleCover(firstImage, notePath, contentRoot, contentImages)
       : null
-    notes.push({ content, notePath, articleCover })
+    notes.push({
+      content,
+      notePath,
+      articleCover,
+      currentCover: extractCover(content),
+    })
   }
 
   const fallbackNotes = notes.filter((note) => !note.articleCover)
-  const fallbackCovers = distributeCovers(fallbackNotes.length, coverPool, randomIndex)
+  const fallbackCovers = assignFallbackCovers(fallbackNotes, coverPool, randomIndex)
+  let fallbackIndex = 0
   const assignments = notes.map((note) => ({
     ...note,
-    cover: note.articleCover ?? fallbackCovers.shift(),
-    source: note.articleCover ? "正文首图" : "封面目录",
+    cover: note.articleCover ?? fallbackCovers[fallbackIndex++],
+    source: note.articleCover
+      ? "正文首图"
+      : note.currentCover === fallbackCovers[fallbackIndex - 1]
+        ? "已有分配"
+        : "封面目录",
   }))
 
   if (check) {
@@ -224,6 +234,44 @@ export function distributeCovers(count, coverPool, randomIndex) {
   return result
 }
 
+export function assignFallbackCovers(notes, coverPool, randomIndex) {
+  if (coverPool.length === 0) throw new Error("封面池不能为空")
+
+  const allowedCovers = new Set(coverPool)
+  const unusedCovers = new Set(coverPool)
+  const assignments = new Array(notes.length)
+  const pendingIndexes = []
+
+  for (const [index, note] of notes.entries()) {
+    const currentCover = note.currentCover
+    if (currentCover && allowedCovers.has(currentCover) && unusedCovers.has(currentCover)) {
+      assignments[index] = currentCover
+      unusedCovers.delete(currentCover)
+    } else {
+      pendingIndexes.push(index)
+    }
+  }
+
+  const shuffledUnusedCovers = shuffle([...unusedCovers], randomIndex)
+  const reuseCount = pendingIndexes
+    .slice(shuffledUnusedCovers.length)
+    .filter((index) => !allowedCovers.has(notes[index].currentCover)).length
+  const reusedCovers = distributeCovers(reuseCount, coverPool, randomIndex)
+
+  for (const index of pendingIndexes) {
+    const unusedCover = shuffledUnusedCovers.shift()
+    if (unusedCover) {
+      assignments[index] = unusedCover
+      continue
+    }
+
+    const currentCover = notes[index].currentCover
+    assignments[index] = allowedCovers.has(currentCover) ? currentCover : reusedCovers.shift()
+  }
+
+  return assignments
+}
+
 function shuffle(values, randomIndex) {
   for (let index = values.length - 1; index > 0; index -= 1) {
     const swapIndex = randomIndex(index + 1)
@@ -298,11 +346,8 @@ function checkAssignments(assignments, rootDir, coverPool) {
     }
   }
 
-  if (
-    fallbackCovers.length <= coverPool.length &&
-    new Set(fallbackCovers).size !== fallbackCovers.length
-  ) {
-    errors.push("封面目录图片足够，但仍有文章重复使用同一张目录封面")
+  if (new Set(fallbackCovers).size < Math.min(fallbackCovers.length, coverPool.length)) {
+    errors.push("仍有可以用未占用图片消除的重复目录封面")
   }
 
   if (errors.length > 0) {

@@ -1,7 +1,12 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
-import { distributeCovers, findFirstImageReference, upsertCover } from "./assign-chatter-covers.mjs"
+import {
+  assignFallbackCovers,
+  distributeCovers,
+  findFirstImageReference,
+  upsertCover,
+} from "./assign-chatter-covers.mjs"
 
 describe("杂谈封面分配", () => {
   it("按正文顺序识别第一张图片，并忽略 frontmatter 中的封面", () => {
@@ -27,6 +32,32 @@ describe("杂谈封面分配", () => {
     for (let index = 1; index < assigned.length; index += 1) {
       assert.notEqual(assigned[index], assigned[index - 1])
     }
+  })
+
+  it("保留已有唯一封面，只重分配重复项和新增项", () => {
+    const pool = ["a", "b", "c", "d"]
+    const assigned = assignFallbackCovers(
+      [{ currentCover: "a" }, { currentCover: "a" }, { currentCover: "b" }, { currentCover: null }],
+      pool,
+      () => 0,
+    )
+
+    assert.deepEqual(assigned, ["a", "d", "b", "c"])
+    assert.deepEqual(
+      assignFallbackCovers(
+        assigned.map((currentCover) => ({ currentCover })),
+        pool,
+        () => 0,
+      ),
+      assigned,
+    )
+  })
+
+  it("图片池不足时保留不可避免的重复封面，避免每次运行抖动", () => {
+    assert.deepEqual(
+      assignFallbackCovers([{ currentCover: "a" }, { currentCover: "a" }], ["a"], () => 0),
+      ["a", "a"],
+    )
   })
 
   it("新增或替换 cover 时保留其余 frontmatter 和正文", () => {

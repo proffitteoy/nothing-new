@@ -9,7 +9,7 @@ export const SPECTRAL_TRACER_CAPACITY = 4096
 export const SPECTRAL_TRACER_MAX_OBSTACLES = 8
 
 const BACKGROUND_RENDER_CAPACITY = 1280
-const FOREGROUND_RENDER_CAPACITY = 48
+const FOREGROUND_RENDER_CAPACITY = 72
 const FIELD_KX = [1.0, 2.0, 3.0, 1.0, 4.0, 2.0] as const
 const FIELD_KY = [2.0, -1.0, 1.0, -3.0, 2.0, 5.0] as const
 const FIELD_AMPLITUDES = [1.0, 0.72, 0.5, 0.38, 0.26, 0.18] as const
@@ -321,6 +321,20 @@ function createLayerRenderer(
           obstacle.bottom - obstacle.top + padding * 2,
         )
       }
+    } else {
+      context.globalCompositeOperation = "source-atop"
+      context.globalAlpha = 0.74
+      context.fillStyle = theme < 0.5 ? "rgb(132, 151, 174)" : "rgb(180, 211, 232)"
+      for (const obstacle of obstacles.slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)) {
+        context.fillRect(
+          obstacle.left,
+          obstacle.top,
+          obstacle.right - obstacle.left,
+          obstacle.bottom - obstacle.top,
+        )
+      }
+      context.globalAlpha = 1
+      context.globalCompositeOperation = "source-over"
     }
   }
 
