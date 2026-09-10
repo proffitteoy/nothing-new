@@ -1,29 +1,19 @@
 import { NextResponse } from "next/server"
-import { getBangumiCollections, getBangumiUsername } from "../../../lib/anime/bgm-client"
+import { getBangumiUsername } from "../../../lib/anime/bgm-client"
 import { buildPublicCacheControl } from "../../../lib/anime/cache"
-import { normalizeBangumiCollection } from "../../../lib/anime/normalize"
 import { createAnimeSnapshot, readLatestAnimeSnapshot } from "../../../lib/anime/snapshot"
-import type { AnimeItem } from "../../../lib/anime/schema"
+import { loadAnimeItemsFromBangumi } from "../../../lib/anime/source"
 
 async function createRealtimeFallback() {
   const username = await getBangumiUsername()
-  const [watchingRaw, watchedRaw] = await Promise.all([
-    getBangumiCollections(username, "watching"),
-    getBangumiCollections(username, "watched"),
-  ])
+  const items = await loadAnimeItemsFromBangumi(username)
 
-  const items: AnimeItem[] = []
-  for (const collection of watchingRaw) {
-    const item = normalizeBangumiCollection(collection, "watching")
-    if (item) items.push({ ...item, cover: null })
-  }
-  for (const collection of watchedRaw) {
-    const item = normalizeBangumiCollection(collection, "watched")
-    if (item) items.push({ ...item, cover: null })
-  }
-
-  const unique = new Map(items.map((item) => [item.id, item]))
-  return createAnimeSnapshot(username, [...unique.values()])
+  // Realtime fallback keeps the browser independent from lain.bgm.tv.
+  // Mirrored Blob covers are attached by the authenticated sync path.
+  return createAnimeSnapshot(
+    username,
+    items.map((item) => ({ ...item, cover: null })),
+  )
 }
 
 export async function GET() {
