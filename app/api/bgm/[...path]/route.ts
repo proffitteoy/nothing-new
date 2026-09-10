@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { bangumiRequest } from "../../../../../lib/anime/bgm-client"
-import { buildPublicCacheControl } from "../../../../../lib/anime/cache"
-import { resolveBangumiProxyTarget } from "../../../../../lib/anime/proxy"
+import { bangumiRequest } from "../../../../lib/anime/bgm-client"
+import { buildPublicCacheControl } from "../../../../lib/anime/cache"
+import { resolveBangumiProxyTarget } from "../../../../lib/anime/proxy"
 
 type RouteContext = {
   params: Promise<{ path: string[] }>
