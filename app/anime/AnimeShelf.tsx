@@ -7,40 +7,31 @@ import { ANIME_BATCH_SIZE, getAnimeTitle, type AnimeItem, type AnimeLatestPointe
 import AnimeCoverImage from "./AnimeCoverImage"
 import { groupAnimeByScore, sortAnimeByScore } from "./collection"
 
-type AnimeShelfProps = {
-  snapshotBaseUrl: string | null
-}
-
 function isSnapshot(value: unknown): value is AnimeSnapshot {
   if (!value || typeof value !== "object") return false
   const candidate = value as Partial<AnimeSnapshot>
   return candidate.version === 1 && typeof candidate.username === "string" && Array.isArray(candidate.items)
 }
 
-async function fetchSnapshot(snapshotBaseUrl: string | null, signal: AbortSignal) {
-  if (snapshotBaseUrl) {
-    try {
-      const latestResponse = await fetch(`${snapshotBaseUrl}/latest.json`, {
-        cache: "no-cache",
-        signal,
-      })
-      if (!latestResponse.ok) throw new Error(`latest.json returned ${latestResponse.status}`)
-      const latest = (await latestResponse.json()) as AnimeLatestPointer
-      const snapshotResponse = await fetch(latest.snapshot, {
-        cache: "force-cache",
-        signal,
-      })
-      if (!snapshotResponse.ok) throw new Error(`snapshot returned ${snapshotResponse.status}`)
-      const snapshot = await snapshotResponse.json()
-      if (!isSnapshot(snapshot)) throw new Error("snapshot schema is invalid")
-      return snapshot
-    } catch (error) {
-      if (signal.aborted) throw error
-      console.warn(
-        "[AnimeShelf] snapshot load failed, falling back to the Vercel API:",
-        error instanceof Error ? error.message : "unknown error",
-      )
-    }
+async function fetchSnapshot(signal: AbortSignal) {
+  try {
+    const latestResponse = await fetch("/anime/latest.json", { signal })
+    if (!latestResponse.ok) throw new Error(`latest.json returned ${latestResponse.status}`)
+    const latest = (await latestResponse.json()) as AnimeLatestPointer
+    const snapshotResponse = await fetch(latest.snapshot, {
+      cache: "force-cache",
+      signal,
+    })
+    if (!snapshotResponse.ok) throw new Error(`snapshot returned ${snapshotResponse.status}`)
+    const snapshot = await snapshotResponse.json()
+    if (!isSnapshot(snapshot)) throw new Error("snapshot schema is invalid")
+    return snapshot
+  } catch (error) {
+    if (signal.aborted) throw error
+    console.warn(
+      "[AnimeShelf] snapshot load failed, falling back to the Vercel API:",
+      error instanceof Error ? error.message : "unknown error",
+    )
   }
 
   const fallbackResponse = await fetch("/api/anime", {
@@ -87,7 +78,7 @@ function useProgressiveCount(total: number) {
   }
 }
 
-export default function AnimeShelf({ snapshotBaseUrl }: AnimeShelfProps) {
+export default function AnimeShelf() {
   const [snapshot, setSnapshot] = useState<AnimeSnapshot | null>(null)
   const [error, setError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
@@ -96,7 +87,7 @@ export default function AnimeShelf({ snapshotBaseUrl }: AnimeShelfProps) {
     const controller = new AbortController()
     setError(false)
 
-    void fetchSnapshot(snapshotBaseUrl, controller.signal)
+    void fetchSnapshot(controller.signal)
       .then((data) => setSnapshot(data))
       .catch((loadError) => {
         if (controller.signal.aborted) return
@@ -108,7 +99,7 @@ export default function AnimeShelf({ snapshotBaseUrl }: AnimeShelfProps) {
       })
 
     return () => controller.abort()
-  }, [reloadKey, snapshotBaseUrl])
+  }, [reloadKey])
 
   if (!snapshot) {
     return error ? (

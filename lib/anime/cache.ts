@@ -14,3 +14,10 @@ export function buildPublicCacheControl(
 ) {
   return `public, max-age=${maxAge}, s-maxage=${sMaxAge}, stale-while-revalidate=${staleWhileRevalidate}`
 }
+
+export function buildLatestPointerCacheHeaders() {
+  return {
+    "Cache-Control": `public, max-age=${ANIME_CACHE.latestBrowserSeconds}`,
+    "CDN-Cache-Control": `public, max-age=${ANIME_CACHE.latestCdnSeconds}, stale-while-revalidate=${ANIME_CACHE.staleSeconds}`,
+  }
+}
