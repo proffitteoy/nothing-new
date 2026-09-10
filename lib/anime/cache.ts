@@ -18,6 +18,6 @@ export function buildPublicCacheControl(
 export function buildLatestPointerCacheHeaders() {
   return {
     "Cache-Control": `public, max-age=${ANIME_CACHE.latestBrowserSeconds}`,
-    "CDN-Cache-Control": `public, max-age=${ANIME_CACHE.latestCdnSeconds}, stale-while-revalidate=${ANIME_CACHE.staleSeconds}`,
+    "CDN-Cache-Control": `public, max-age=${ANIME_CACHE.latestCdnSeconds}, stale-while-revalidate=${ANIME_CACHE.staleSeconds}, stale-if-error=${ANIME_CACHE.staleSeconds}`,
   }
 }
