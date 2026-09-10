@@ -56,7 +56,7 @@ export function getAnimeBlobUrl(pathname: string) {
 
 export async function putPublicBlob(
   pathname: string,
-  body: string | ArrayBuffer | Uint8Array,
+  body: string | ArrayBuffer,
   options: {
     contentType: string
     cacheControlMaxAge: number
