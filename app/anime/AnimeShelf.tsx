@@ -1,113 +1,144 @@
 "use client"
 
-import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import {
-  ChevronDown,
-  Clapperboard,
-  LoaderCircle,
-  Play,
-  RotateCcw,
-  Sparkles,
-  Star,
-} from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { ChevronDown, Clapperboard, Play, RotateCcw, Sparkles, Star } from "lucide-react"
 import Image from "next/image"
 import BackButton from "../../components/BackButton"
-import { groupAnimeByRating, mergeAnimeEntries } from "./collection"
-import type { AnimeCollectionSlice, AnimeEntry, AnimeShelfStatus } from "./bangumi"
+import { ANIME_BATCH_SIZE, getAnimeTitle, type AnimeItem, type AnimeLatestPointer, type AnimeSnapshot } from "../../lib/anime/schema"
+import { groupAnimeByScore, sortAnimeByScore } from "./collection"
 
 type AnimeShelfProps = {
-  username: string
-  watching: AnimeCollectionSlice
-  watched: AnimeCollectionSlice
+  snapshotBaseUrl: string | null
 }
 
-const initialStatusState = {
-  watching: false,
-  watched: false,
-} satisfies Record<AnimeShelfStatus, boolean>
+function isSnapshot(value: unknown): value is AnimeSnapshot {
+  if (!value || typeof value !== "object") return false
+  const candidate = value as Partial<AnimeSnapshot>
+  return candidate.version === 1 && typeof candidate.username === "string" && Array.isArray(candidate.items)
+}
 
-export default function AnimeShelf({ username, watching, watched }: AnimeShelfProps) {
-  const [collections, setCollections] = useState({ watching, watched })
-  const [loading, setLoading] = useState(initialStatusState)
-  const [loadError, setLoadError] = useState(initialStatusState)
-  const watchingLoadMoreRef = useRef<HTMLDivElement>(null)
-  const watchedLoadMoreRef = useRef<HTMLDivElement>(null)
+async function fetchSnapshot(snapshotBaseUrl: string | null, signal: AbortSignal) {
+  if (snapshotBaseUrl) {
+    try {
+      const latestResponse = await fetch(`${snapshotBaseUrl}/latest.json`, {
+        cache: "no-cache",
+        signal,
+      })
+      if (!latestResponse.ok) throw new Error(`latest.json returned ${latestResponse.status}`)
+      const latest = (await latestResponse.json()) as AnimeLatestPointer
+      const snapshotResponse = await fetch(latest.snapshot, {
+        cache: "force-cache",
+        signal,
+      })
+      if (!snapshotResponse.ok) throw new Error(`snapshot returned ${snapshotResponse.status}`)
+      const snapshot = await snapshotResponse.json()
+      if (!isSnapshot(snapshot)) throw new Error("snapshot schema is invalid")
+      return snapshot
+    } catch (error) {
+      if (signal.aborted) throw error
+      console.warn(
+        "[AnimeShelf] snapshot load failed, falling back to the Vercel API:",
+        error instanceof Error ? error.message : "unknown error",
+      )
+    }
+  }
 
-  const loadMore = useCallback(
-    async (status: AnimeShelfStatus) => {
-      const collection = collections[status]
-      if (loading[status] || collection.nextOffset >= collection.total) return
+  const fallbackResponse = await fetch("/api/anime", {
+    cache: "no-cache",
+    signal,
+  })
+  if (!fallbackResponse.ok) throw new Error(`fallback API returned ${fallbackResponse.status}`)
+  const fallback = await fallbackResponse.json()
+  if (!isSnapshot(fallback)) throw new Error("fallback snapshot schema is invalid")
+  return fallback
+}
 
-      setLoading((current) => ({ ...current, [status]: true }))
-      setLoadError((current) => ({ ...current, [status]: false }))
-
-      try {
-        const params = new URLSearchParams({
-          status,
-          offset: String(collection.nextOffset),
-        })
-        const response = await fetch("/api/anime?" + params)
-        if (!response.ok) {
-          throw new Error("request failed with status " + response.status)
-        }
-
-        const page = (await response.json()) as AnimeCollectionSlice
-        setCollections((current) => ({
-          ...current,
-          [status]: {
-            items: mergeAnimeEntries(current[status].items, page.items),
-            total: page.total,
-            nextOffset: page.nextOffset,
-          },
-        }))
-      } catch (error) {
-        console.error(
-          "[AnimeShelf] failed to load more anime:",
-          error instanceof Error ? error.message : "unknown error",
-        )
-        setLoadError((current) => ({ ...current, [status]: true }))
-      } finally {
-        setLoading((current) => ({ ...current, [status]: false }))
-      }
-    },
-    [collections, loading],
-  )
+function useProgressiveCount(total: number) {
+  const [count, setCount] = useState(Math.min(ANIME_BATCH_SIZE, total))
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const targets = [
-      {
-        status: "watching" as const,
-        element: watchingLoadMoreRef.current,
-        collection: collections.watching,
+    setCount(Math.min(ANIME_BATCH_SIZE, total))
+  }, [total])
+
+  const loadMore = useCallback(() => {
+    setCount((current) => Math.min(total, current + ANIME_BATCH_SIZE))
+  }, [total])
+
+  useEffect(() => {
+    const element = sentinelRef.current
+    if (!element || count >= total) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) loadMore()
       },
-      {
-        status: "watched" as const,
-        element: watchedLoadMoreRef.current,
-        collection: collections.watched,
-      },
-    ]
-    const observers: IntersectionObserver[] = []
+      { rootMargin: "320px 0px" },
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [count, loadMore, total])
 
-    for (const { status, element, collection } of targets) {
-      if (!element || loading[status] || collection.nextOffset >= collection.total) continue
+  return {
+    count,
+    remaining: Math.max(0, total - count),
+    sentinelRef,
+    loadMore,
+  }
+}
 
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) void loadMore(status)
-        },
-        { rootMargin: "240px 0px" },
-      )
-      observer.observe(element)
-      observers.push(observer)
-    }
+export default function AnimeShelf({ snapshotBaseUrl }: AnimeShelfProps) {
+  const [snapshot, setSnapshot] = useState<AnimeSnapshot | null>(null)
+  const [error, setError] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
-    return () => observers.forEach((observer) => observer.disconnect())
-  }, [collections, loadMore, loading])
+  useEffect(() => {
+    const controller = new AbortController()
+    setError(false)
 
-  const watchedGroups = useMemo(
-    () => groupAnimeByRating(collections.watched.items),
-    [collections.watched.items],
+    void fetchSnapshot(snapshotBaseUrl, controller.signal)
+      .then((data) => setSnapshot(data))
+      .catch((loadError) => {
+        if (controller.signal.aborted) return
+        console.error(
+          "[AnimeShelf] failed to load anime data:",
+          loadError instanceof Error ? loadError.message : "unknown error",
+        )
+        setError(true)
+      })
+
+    return () => controller.abort()
+  }, [reloadKey, snapshotBaseUrl])
+
+  if (!snapshot) {
+    return error ? (
+      <ShelfState
+        title="番剧数据暂时不可用"
+        description="快照与实时中转都未能返回数据。"
+        action={() => setReloadKey((key) => key + 1)}
+      />
+    ) : (
+      <ShelfState title="正在读取番剧快照" description="先加载 metadata，封面会按视口渐进加载。" />
+    )
+  }
+
+  return <AnimeShelfContent snapshot={snapshot} />
+}
+
+function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
+  const watching = useMemo(
+    () => snapshot.items.filter((item) => item.status === "watching"),
+    [snapshot.items],
   )
+  const watched = useMemo(
+    () => sortAnimeByScore(snapshot.items.filter((item) => item.status === "watched")),
+    [snapshot.items],
+  )
+  const watchingBatch = useProgressiveCount(watching.length)
+  const watchedBatch = useProgressiveCount(watched.length)
+  const visibleWatching = watching.slice(0, watchingBatch.count)
+  const visibleWatched = watched.slice(0, watchedBatch.count)
+  const watchedGroups = useMemo(() => groupAnimeByScore(visibleWatched), [visibleWatched])
 
   return (
     <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
@@ -124,25 +155,20 @@ export default function AnimeShelf({ username, watching, watched }: AnimeShelfPr
               ANIME INDEX
             </p>
             <div className="mt-0.5 flex items-baseline gap-3">
-              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
-                番剧
-              </h1>
+              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">番剧</h1>
               <a
-                href={"https://bgm.tv/user/" + encodeURIComponent(username)}
+                href={`https://bgm.tv/user/${encodeURIComponent(snapshot.username)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[10px] font-black text-slate-500 transition hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300"
               >
-                @{username}
+                @{snapshot.username}
               </a>
             </div>
           </div>
         </div>
 
-        <nav
-          aria-label="番剧分区"
-          className="relative mt-4 grid grid-cols-2 gap-2 sm:mt-0 sm:w-[22rem]"
-        >
+        <nav aria-label="番剧分区" className="relative mt-4 grid grid-cols-2 gap-2 sm:mt-0 sm:w-[22rem]">
           <a
             href="#watching"
             className="group flex min-w-0 items-center gap-2 rounded-2xl border border-indigo-200/70 bg-indigo-50/65 px-3 py-2.5 text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-100/70 dark:border-indigo-400/15 dark:bg-indigo-500/10 dark:text-indigo-200 dark:hover:bg-indigo-500/15"
@@ -150,9 +176,7 @@ export default function AnimeShelf({ username, watching, watched }: AnimeShelfPr
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">01</span>
             <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">正在看</span>
-            <span className="ml-auto rounded-full bg-indigo-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
-              {collections.watching.total}
-            </span>
+            <span className="ml-auto rounded-full bg-indigo-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">{watching.length}</span>
           </a>
           <a
             href="#watched"
@@ -161,9 +185,7 @@ export default function AnimeShelf({ username, watching, watched }: AnimeShelfPr
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">02</span>
             <Star className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">看过</span>
-            <span className="ml-auto rounded-full bg-amber-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
-              {collections.watched.total}
-            </span>
+            <span className="ml-auto rounded-full bg-amber-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">{watched.length}</span>
           </a>
         </nav>
       </header>
@@ -176,19 +198,15 @@ export default function AnimeShelf({ username, watching, watched }: AnimeShelfPr
           description="故事还在继续，下一集仍亮着灯。"
           icon="play"
         />
-
-        {collections.watching.items.length > 0 ? (
-          <AnimeGrid items={collections.watching.items} />
+        {visibleWatching.length > 0 ? (
+          <AnimeGrid items={visibleWatching} eagerCount={16} />
         ) : (
           <EmptyShelf message="这里暂时没有正在看的故事" />
         )}
-
         <LoadMoreControl
-          containerRef={watchingLoadMoreRef}
-          remaining={Math.max(0, collections.watching.total - collections.watching.nextOffset)}
-          loading={loading.watching}
-          error={loadError.watching}
-          onLoadMore={() => void loadMore("watching")}
+          containerRef={watchingBatch.sentinelRef}
+          remaining={watchingBatch.remaining}
+          onLoadMore={watchingBatch.loadMore}
         />
       </section>
 
@@ -200,35 +218,27 @@ export default function AnimeShelf({ username, watching, watched }: AnimeShelfPr
           description="按我的 Bangumi 评分，从高到低归档。"
           icon="star"
         />
-
         {watchedGroups.length > 0 ? (
           <div className="space-y-12">
             {watchedGroups.map((group) => {
-              const groupId =
-                group.rating === null ? "anime-unrated" : "anime-rating-" + group.rating
-
+              const groupId = group.score === null ? "anime-unrated" : `anime-rating-${group.score}`
               return (
                 <section key={groupId} aria-labelledby={groupId}>
                   <div className="mb-4 flex items-center gap-3">
                     <span
                       className={
                         "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-lg font-black shadow-sm " +
-                        (group.rating === null
+                        (group.score === null
                           ? "border-slate-200/70 bg-white/55 text-slate-500 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-300"
                           : "border-amber-200/70 bg-amber-50/75 text-amber-700 dark:border-amber-300/15 dark:bg-amber-400/10 dark:text-amber-200")
                       }
                     >
-                      {group.rating ?? "—"}
+                      {group.score ?? "—"}
                     </span>
                     <div>
-                      <p className="text-[9px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                        MY SCORE
-                      </p>
-                      <h3
-                        id={groupId}
-                        className="mt-0.5 text-lg font-black text-slate-900 dark:text-white"
-                      >
-                        {group.rating === null ? "未评分" : group.rating + " 分"}
+                      <p className="text-[9px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500">MY SCORE</p>
+                      <h3 id={groupId} className="mt-0.5 text-lg font-black text-slate-900 dark:text-white">
+                        {group.score === null ? "未评分" : `${group.score} 分`}
                       </h3>
                     </div>
                     <span className="h-px flex-1 bg-gradient-to-r from-slate-300/70 to-transparent dark:from-white/15" />
@@ -241,13 +251,10 @@ export default function AnimeShelf({ username, watching, watched }: AnimeShelfPr
         ) : (
           <EmptyShelf message="这里暂时没有已经看过的故事" />
         )}
-
         <LoadMoreControl
-          containerRef={watchedLoadMoreRef}
-          remaining={Math.max(0, collections.watched.total - collections.watched.nextOffset)}
-          loading={loading.watched}
-          error={loadError.watched}
-          onLoadMore={() => void loadMore("watched")}
+          containerRef={watchedBatch.sentinelRef}
+          remaining={watchedBatch.remaining}
+          onLoadMore={watchedBatch.loadMore}
         />
       </section>
     </main>
@@ -268,7 +275,6 @@ function SectionHeading({
   icon: "play" | "star"
 }) {
   const Icon = icon === "play" ? Sparkles : Star
-
   return (
     <div className="mb-5 flex items-end justify-between gap-5 px-1">
       <div>
@@ -276,65 +282,68 @@ function SectionHeading({
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
           {eyebrow}
         </div>
-        <h2 id={id} className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
-          {title}
-        </h2>
-        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400 sm:text-sm">
-          {description}
-        </p>
+        <h2 id={id} className="mt-2 text-2xl font-black text-slate-950 dark:text-white">{title}</h2>
+        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400 sm:text-sm">{description}</p>
       </div>
     </div>
   )
 }
 
-function AnimeGrid({ items, showRating = false }: { items: AnimeEntry[]; showRating?: boolean }) {
+function AnimeGrid({
+  items,
+  showRating = false,
+  eagerCount = 0,
+}: {
+  items: AnimeItem[]
+  showRating?: boolean
+  eagerCount?: number
+}) {
   return (
     <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-5 sm:gap-x-3 sm:gap-y-6 lg:grid-cols-6 lg:gap-x-4 lg:gap-y-8">
-      {items.map((anime) => (
-        <a
-          key={anime.id}
-          href={"https://bgm.tv/subject/" + anime.id}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group min-w-0"
-        >
-          <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/55 bg-slate-200/70 shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl dark:border-white/10 dark:bg-slate-800/70 sm:rounded-2xl">
-            {anime.cover ? (
-              <Image
-                src={anime.cover}
-                alt={anime.title + "封面"}
-                fill
-                sizes="(max-width: 639px) 24vw, (max-width: 1023px) 19vw, 170px"
-                loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
-              />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-200/80 via-white/60 to-pink-200/80 px-2 text-center text-[8px] font-black tracking-[0.14em] text-indigo-700 dark:from-indigo-950 dark:via-slate-900 dark:to-pink-950 dark:text-indigo-200 sm:text-[9px]">
-                NO COVER
-              </span>
-            )}
-            <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-white/20 opacity-70 transition-opacity group-hover:opacity-40" />
-            <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20 sm:rounded-2xl" />
-            {showRating && (
-              <span
-                className={
-                  "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm backdrop-blur-md sm:right-2 sm:top-2 sm:text-[9px] " +
-                  (anime.rating === null
-                    ? "border-white/40 bg-slate-900/55 text-white"
-                    : "border-amber-100/70 bg-amber-400/90 text-amber-950")
-                }
-              >
-                {anime.rating === null ? "未评" : anime.rating + " 分"}
-              </span>
-            )}
-          </span>
-          <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-indigo-600 dark:text-slate-100 dark:group-hover:text-indigo-300 sm:mt-2.5 sm:text-xs sm:leading-5">
-            {anime.title}
-          </span>
-        </a>
-      ))}
+      {items.map((anime, index) => {
+        const title = getAnimeTitle(anime)
+        return (
+          <a
+            key={anime.id}
+            href={`https://bgm.tv/subject/${anime.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group min-w-0"
+          >
+            <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/55 bg-slate-200/70 shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl dark:border-white/10 dark:bg-slate-800/70 sm:rounded-2xl">
+              {anime.cover ? (
+                <Image
+                  src={anime.cover}
+                  alt={`${title}封面`}
+                  fill
+                  sizes="(max-width: 639px) 24vw, (max-width: 1023px) 19vw, 170px"
+                  loading={index < eagerCount ? "eager" : "lazy"}
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-200/80 via-white/60 to-pink-200/80 px-2 text-center text-[8px] font-black tracking-[0.14em] text-indigo-700 dark:from-indigo-950 dark:via-slate-900 dark:to-pink-950 dark:text-indigo-200 sm:text-[9px]">NO COVER</span>
+              )}
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-white/20 opacity-70 transition-opacity group-hover:opacity-40" />
+              <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20 sm:rounded-2xl" />
+              {showRating && (
+                <span
+                  className={
+                    "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm backdrop-blur-md sm:right-2 sm:top-2 sm:text-[9px] " +
+                    (anime.score === undefined
+                      ? "border-white/40 bg-slate-900/55 text-white"
+                      : "border-amber-100/70 bg-amber-400/90 text-amber-950")
+                  }
+                >
+                  {anime.score === undefined ? "未评" : `${anime.score} 分`}
+                </span>
+              )}
+            </span>
+            <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-indigo-600 dark:text-slate-100 dark:group-hover:text-indigo-300 sm:mt-2.5 sm:text-xs sm:leading-5">{title}</span>
+          </a>
+        )
+      })}
     </div>
   )
 }
@@ -351,41 +360,55 @@ function EmptyShelf({ message }: { message: string }) {
 function LoadMoreControl({
   containerRef,
   remaining,
-  loading,
-  error,
   onLoadMore,
 }: {
-  containerRef: RefObject<HTMLDivElement | null>
+  containerRef: React.RefObject<HTMLDivElement | null>
   remaining: number
-  loading: boolean
-  error: boolean
   onLoadMore: () => void
 }) {
   if (remaining <= 0) return null
-
   return (
     <div ref={containerRef} className="relative mt-8 flex flex-col items-center pt-8">
       <div className="pointer-events-none absolute inset-x-0 -top-20 h-28 bg-gradient-to-b from-transparent to-white/20 dark:to-slate-950/15" />
       <button
         type="button"
-        disabled={loading}
-        aria-busy={loading}
         onClick={onLoadMore}
-        className="relative inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/55 px-5 py-3 text-xs font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-wait disabled:opacity-70 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-indigo-300"
+        className="relative inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/55 px-5 py-3 text-xs font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-600 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-indigo-300"
       >
-        {loading ? (
-          <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
-        ) : error ? (
-          <RotateCcw className="h-4 w-4" aria-hidden="true" />
-        ) : (
-          <ChevronDown className="h-4 w-4 animate-bounce" aria-hidden="true" />
-        )}
-        {loading
-          ? "正在接续下一卷…"
-          : error
-            ? "加载失败，点击重试"
-            : "继续展开 · 还有 " + remaining + " 部"}
+        <ChevronDown className="h-4 w-4 animate-bounce" aria-hidden="true" />
+        继续展开 · 还有 {remaining} 部
       </button>
     </div>
+  )
+}
+
+function ShelfState({
+  title,
+  description,
+  action,
+}: {
+  title: string
+  description: string
+  action?: () => void
+}) {
+  return (
+    <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
+      <BackButton />
+      <div className="mt-8 rounded-[1.75rem] border border-white/55 bg-white/45 px-6 py-16 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45">
+        <Clapperboard className="mx-auto h-9 w-9 text-indigo-400" aria-hidden="true" />
+        <h1 className="mt-5 text-xl font-black text-slate-950 dark:text-white">{title}</h1>
+        <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">{description}</p>
+        {action && (
+          <button
+            type="button"
+            onClick={action}
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-4 py-2.5 text-xs font-black text-slate-700 shadow-md transition hover:text-indigo-600 dark:border-white/10 dark:bg-slate-950/35 dark:text-slate-200 dark:hover:text-indigo-300"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            重试
+          </button>
+        )}
+      </div>
+    </main>
   )
 }

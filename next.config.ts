@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         hostname: "lain.bgm.tv",
         pathname: "/pic/cover/**",
       },
+      {
+        protocol: "https",
+        hostname: "**.public.blob.vercel-storage.com",
+        pathname: "/anime/covers/**",
+      },
     ],
   },
 };
