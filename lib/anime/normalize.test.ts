@@ -38,4 +38,20 @@ describe("Bangumi normalization", () => {
       },
     )
   })
+
+  test("normalizes blank cover URLs to null", () => {
+    const item = normalizeBangumiCollection(
+      {
+        subject_id: 43,
+        subject: {
+          name: "Blank Cover",
+          images: { large: "   ", common: "" },
+        },
+      },
+      "watching",
+    )
+
+    assert.ok(item)
+    assert.strictEqual(item.cover, null)
+  })
 })
