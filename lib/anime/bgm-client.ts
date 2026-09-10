@@ -24,6 +24,10 @@ function getAccessToken() {
   return process.env.BANGUMI_ACCESS_TOKEN?.trim() || null
 }
 
+export function getBangumiErrorStatus(error: unknown) {
+  return error instanceof BangumiHttpError ? error.status : null
+}
+
 export async function bangumiRequest<T>(path: string): Promise<T> {
   const token = getAccessToken()
   let lastError: unknown
