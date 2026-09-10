@@ -21,3 +21,11 @@ export function buildLatestPointerCacheHeaders() {
     "CDN-Cache-Control": `public, max-age=${ANIME_CACHE.latestCdnSeconds}, stale-while-revalidate=${ANIME_CACHE.staleSeconds}, stale-if-error=${ANIME_CACHE.staleSeconds}`,
   }
 }
+
+export function buildImmutableCacheHeaders() {
+  const value = `public, max-age=${ANIME_CACHE.immutableSeconds}, immutable`
+  return {
+    "Cache-Control": value,
+    "CDN-Cache-Control": value,
+  }
+}

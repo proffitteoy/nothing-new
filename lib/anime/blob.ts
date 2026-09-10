@@ -2,6 +2,7 @@ import "server-only"
 
 const VERCEL_BLOB_API = "https://vercel.com/api/blob/"
 const VERCEL_BLOB_API_VERSION = "12"
+const ANIME_BLOB_ACCESS = "private" as const
 
 type BlobPutResult = {
   url: string
@@ -39,22 +40,22 @@ function getBlobAuth(): BlobAuth {
   }
 
   throw new Error(
-    "Vercel Blob is not configured. Set BLOB_STORE_ID with VERCEL_OIDC_TOKEN or BLOB_READ_WRITE_TOKEN.",
+    "Vercel Blob is not configured. Connect a Blob store or provide BLOB_STORE_ID with VERCEL_OIDC_TOKEN / BLOB_READ_WRITE_TOKEN.",
   )
-}
-
-export function getAnimeBlobBaseUrl() {
-  const { storeId } = getBlobAuth()
-  return `https://${storeId}.public.blob.vercel-storage.com/anime`
 }
 
 export function getAnimeBlobUrl(pathname: string) {
   const cleanPath = pathname.replace(/^\/+/, "")
   const { storeId } = getBlobAuth()
-  return `https://${storeId}.public.blob.vercel-storage.com/${cleanPath}`
+  return `https://${storeId}.${ANIME_BLOB_ACCESS}.blob.vercel-storage.com/${cleanPath}`
 }
 
-export async function putPublicBlob(
+export function getAnimePublicAssetPath(pathname: string) {
+  const cleanPath = pathname.replace(/^\/+/, "").replace(/^anime\//, "")
+  return `/anime/blob/${cleanPath}`
+}
+
+export async function putAnimeBlob(
   pathname: string,
   body: string | ArrayBuffer,
   options: {
@@ -76,7 +77,7 @@ export async function putPublicBlob(
       "x-api-blob-request-id": `${storeId}:${Date.now()}:${crypto.randomUUID()}`,
       "x-api-blob-request-attempt": "0",
       "x-vercel-blob-store-id": storeId,
-      "x-vercel-blob-access": "public",
+      "x-vercel-blob-access": ANIME_BLOB_ACCESS,
       "x-add-random-suffix": "0",
       "x-allow-overwrite": options.allowOverwrite ? "1" : "0",
       "x-content-type": options.contentType,
@@ -93,13 +94,27 @@ export async function putPublicBlob(
   return (await response.json()) as BlobPutResult
 }
 
-export async function readPublicBlobJson<T>(pathname: string): Promise<T> {
-  const response = await fetch(getAnimeBlobUrl(pathname), {
+export async function fetchAnimeBlob(pathname: string) {
+  const { token } = getBlobAuth()
+  return fetch(getAnimeBlobUrl(pathname), {
     cache: "no-store",
+    headers: { Authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(10_000),
   })
+}
+
+export async function readAnimeBlobJson<T>(pathname: string): Promise<T> {
+  const response = await fetchAnimeBlob(pathname)
   if (!response.ok) {
     throw new Error(`Vercel Blob read failed: ${response.status} ${pathname}`)
   }
   return (await response.json()) as T
+}
+
+export async function readAnimeBlobText(pathname: string) {
+  const response = await fetchAnimeBlob(pathname)
+  if (!response.ok) {
+    throw new Error(`Vercel Blob read failed: ${response.status} ${pathname}`)
+  }
+  return response.text()
 }

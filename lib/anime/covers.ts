@@ -2,7 +2,7 @@ import "server-only"
 
 import { createHash } from "node:crypto"
 import { ANIME_CACHE } from "./cache"
-import { putPublicBlob, readPublicBlobJson } from "./blob"
+import { getAnimePublicAssetPath, putAnimeBlob, readAnimeBlobJson } from "./blob"
 import type { AnimeItem } from "./schema"
 
 const COVER_MANIFEST_PATH = "anime/covers/manifest.json"
@@ -24,7 +24,7 @@ export type CoverSyncResult = {
 
 async function readCoverManifest(): Promise<CoverManifest> {
   try {
-    return await readPublicBlobJson<CoverManifest>(COVER_MANIFEST_PATH)
+    return await readAnimeBlobJson<CoverManifest>(COVER_MANIFEST_PATH)
   } catch {
     return {}
   }
@@ -57,13 +57,14 @@ async function mirrorCover(item: AnimeItem, previous?: CoverRecord) {
     const contentType = response.headers.get("content-type") || "image/jpeg"
     const hash = createHash("sha256").update(Buffer.from(bytes)).digest("hex").slice(0, 12)
     const pathname = `anime/covers/${item.id}-${hash}.${imageExtension(contentType)}`
-    const stored = await putPublicBlob(pathname, bytes, {
+    await putAnimeBlob(pathname, bytes, {
       contentType,
       cacheControlMaxAge: ANIME_CACHE.immutableSeconds,
       allowOverwrite: true,
     })
-    const record = { source, blob: stored.url }
-    return { item: { ...item, cover: stored.url }, record, state: "downloaded" as const }
+    const publicPath = getAnimePublicAssetPath(pathname)
+    const record = { source, blob: publicPath }
+    return { item: { ...item, cover: publicPath }, record, state: "downloaded" as const }
   } catch (error) {
     console.error(
       `[anime/sync] cover ${item.id} failed:`,
@@ -105,7 +106,7 @@ export async function syncAnimeCovers(items: AnimeItem[]): Promise<CoverSyncResu
     Array.from({ length: Math.min(COVER_CONCURRENCY, Math.max(items.length, 1)) }, () => worker()),
   )
 
-  await putPublicBlob(COVER_MANIFEST_PATH, JSON.stringify(nextManifest), {
+  await putAnimeBlob(COVER_MANIFEST_PATH, JSON.stringify(nextManifest), {
     contentType: "application/json; charset=utf-8",
     cacheControlMaxAge: ANIME_CACHE.latestBrowserSeconds,
     allowOverwrite: true,

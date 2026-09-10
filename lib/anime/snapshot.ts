@@ -2,14 +2,20 @@ import "server-only"
 
 import { createHash } from "node:crypto"
 import { ANIME_CACHE } from "./cache"
-import { getAnimeBlobUrl, putPublicBlob, readPublicBlobJson } from "./blob"
+import {
+  getAnimePublicAssetPath,
+  putAnimeBlob,
+  readAnimeBlobJson,
+  readAnimeBlobText,
+} from "./blob"
 import type { AnimeItem, AnimeLatestPointer, AnimeSnapshot } from "./schema"
 
 const LATEST_PATH = "anime/latest.json"
 const SNAPSHOT_VERSION = 1 as const
 
-function validUrl(value: string | null) {
+function validCoverUrl(value: string | null) {
   if (value === null) return true
+  if (value.startsWith("/anime/blob/covers/")) return true
   try {
     return new URL(value).protocol === "https:"
   } catch {
@@ -39,7 +45,7 @@ export function validateAnimeSnapshot(snapshot: AnimeSnapshot, previousCount = 0
     if (item.score !== undefined && (item.score < 1 || item.score > 10)) {
       throw new Error(`Anime ${item.id} has invalid score`)
     }
-    if (!validUrl(item.cover)) throw new Error(`Anime ${item.id} has invalid cover URL`)
+    if (!validCoverUrl(item.cover)) throw new Error(`Anime ${item.id} has invalid cover URL`)
   }
 }
 
@@ -47,14 +53,8 @@ function snapshotVersion(serialized: string) {
   return createHash("sha256").update(serialized).digest("hex").slice(0, 12)
 }
 
-async function verifyUploadedSnapshot(url: string, expectedVersion: string) {
-  const response = await fetch(url, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
-  })
-  if (!response.ok) throw new Error(`Anime snapshot verification failed: ${response.status}`)
-
-  const serialized = await response.text()
+async function verifyUploadedSnapshot(pathname: string, expectedVersion: string) {
+  const serialized = await readAnimeBlobText(pathname)
   if (snapshotVersion(serialized) !== expectedVersion) {
     throw new Error("Anime snapshot verification failed: content hash mismatch")
   }
@@ -64,17 +64,13 @@ async function verifyUploadedSnapshot(url: string, expectedVersion: string) {
 }
 
 export async function readAnimeLatestPointer() {
-  return readPublicBlobJson<AnimeLatestPointer>(LATEST_PATH)
+  return readAnimeBlobJson<AnimeLatestPointer>(LATEST_PATH)
 }
 
 export async function readLatestAnimeSnapshot() {
   const latest = await readAnimeLatestPointer()
-  const response = await fetch(latest.snapshot, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
-  })
-  if (!response.ok) throw new Error(`Anime snapshot read failed: ${response.status}`)
-  const snapshot = (await response.json()) as AnimeSnapshot
+  const pathname = `anime/snapshots/${latest.version}.json`
+  const snapshot = await readAnimeBlobJson<AnimeSnapshot>(pathname)
   validateAnimeSnapshot(snapshot)
   return { latest, snapshot }
 }
@@ -85,22 +81,21 @@ export async function writeAnimeSnapshot(snapshot: AnimeSnapshot, previousCount 
   const serialized = JSON.stringify(snapshot)
   const version = snapshotVersion(serialized)
   const pathname = `anime/snapshots/${version}.json`
-  const stored = await putPublicBlob(pathname, serialized, {
+  await putAnimeBlob(pathname, serialized, {
     contentType: "application/json; charset=utf-8",
     cacheControlMaxAge: ANIME_CACHE.immutableSeconds,
   })
-  const snapshotUrl = stored.url || getAnimeBlobUrl(pathname)
 
-  await verifyUploadedSnapshot(snapshotUrl, version)
+  await verifyUploadedSnapshot(pathname, version)
 
   const latest: AnimeLatestPointer = {
     version,
-    snapshot: snapshotUrl,
+    snapshot: getAnimePublicAssetPath(pathname),
     updatedAt: snapshot.updatedAt,
     count: snapshot.items.length,
   }
 
-  await putPublicBlob(LATEST_PATH, JSON.stringify(latest), {
+  await putAnimeBlob(LATEST_PATH, JSON.stringify(latest), {
     contentType: "application/json; charset=utf-8",
     cacheControlMaxAge: ANIME_CACHE.latestBrowserSeconds,
     allowOverwrite: true,
