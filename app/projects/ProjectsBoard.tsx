@@ -121,6 +121,7 @@ function ProjectCard({
 
   return (
     <motion.a
+      data-field-obstacle
       href={project.href}
       target="_blank"
       rel="noopener noreferrer"
@@ -209,7 +210,10 @@ export default function ProjectsBoard() {
     >
       <BackButton />
 
-      <header className="relative overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white/90 p-6 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.5)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/60 md:p-9">
+      <header
+        data-field-obstacle
+        className="relative overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white/90 p-6 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.5)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/60 md:p-9"
+      >
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl"

@@ -6,7 +6,7 @@ import { SPECTRAL_LAMBDAS } from "./spectralField"
 export const SPECTRAL_TRACER_BACKGROUND = 3200
 export const SPECTRAL_TRACER_FOREGROUND = 120
 export const SPECTRAL_TRACER_CAPACITY = 4096
-export const SPECTRAL_TRACER_MAX_OBSTACLES = 8
+export const SPECTRAL_TRACER_MAX_OBSTACLES = 16
 
 const BACKGROUND_RENDER_CAPACITY = 1280
 const FOREGROUND_RENDER_CAPACITY = 72
@@ -322,19 +322,14 @@ function createLayerRenderer(
         )
       }
     } else {
-      context.globalCompositeOperation = "source-atop"
-      context.globalAlpha = 0.74
-      context.fillStyle = theme < 0.5 ? "rgb(132, 151, 174)" : "rgb(180, 211, 232)"
       for (const obstacle of obstacles.slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)) {
-        context.fillRect(
+        context.clearRect(
           obstacle.left,
           obstacle.top,
           obstacle.right - obstacle.left,
           obstacle.bottom - obstacle.top,
         )
       }
-      context.globalAlpha = 1
-      context.globalCompositeOperation = "source-over"
     }
   }
 
