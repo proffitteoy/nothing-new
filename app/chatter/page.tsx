@@ -9,21 +9,15 @@ import { siteConfig } from "@/siteConfig"
 
 export const metadata: Metadata = {
   title: `杂谈 | ${siteConfig.title}`,
-  description: "零散想法、开发记录与日常观察。",
+  description: "按最后修改时间整理的杂谈与项目记录。",
 }
 
 export default async function ChatterPage() {
-  const [chatterNotes, blogNotes, manifest] = await Promise.all([
+  const [chatterNotes, manifest] = await Promise.all([
     getSectionNotes("chatter"),
-    getSectionNotes("blog"),
     getNoteManifest(),
   ])
-  const items = buildChatterItems(
-    chatterNotes,
-    blogNotes,
-    manifest.trees.blog,
-    siteConfig.defaultPostCover,
-  )
+  const items = buildChatterItems(chatterNotes, manifest.trees.chatter, siteConfig.defaultPostCover)
 
   return (
     <div className="relative min-h-screen pb-10">

@@ -74,8 +74,19 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
                   {item.kind === "folder" ? (
                     <Link
                       href={item.route}
-                      className="group relative flex min-h-64 flex-col overflow-hidden rounded-2xl border border-white/55 bg-gradient-to-br from-indigo-500 via-violet-500 to-slate-900 p-5 text-white shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 sm:p-6 md:rounded-[2rem]"
+                      className="group relative flex min-h-64 flex-col overflow-hidden rounded-2xl border border-white/55 bg-slate-900 p-5 text-white shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 sm:p-6 md:rounded-[2rem]"
                     >
+                      {/* Folder covers may come from external defaults or generated note assets without dimensions. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.cover}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy={isSiteImage(item.cover) ? undefined : "no-referrer"}
+                        className="absolute inset-0 h-full w-full object-cover opacity-60 transition duration-1000 group-hover:scale-105 group-hover:opacity-70"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-indigo-950/20" />
                       <div
                         aria-hidden="true"
                         className="absolute -right-14 -top-16 h-48 w-48 rounded-full bg-white/15 blur-2xl transition-transform duration-700 group-hover:scale-125"

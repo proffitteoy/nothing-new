@@ -33,17 +33,34 @@ const optimizedImageWidths = [384, 640, 750, 828, 1080, 1200, 1440, 1920]
 const noteImageSizes =
   "(max-width: 639px) calc(100vw - 3rem), (max-width: 1023px) calc(100vw - 6rem), 820px"
 
+function isMiscContent(simpleSlug: string) {
+  return simpleSlug === "misc" || simpleSlug.startsWith("misc/")
+}
+
 export function getNoteSection(slug: string): NoteSection {
   const simple = simplifySlug(slug as FullSlug).replace(/^\/+|\/+$/g, "")
-  return simple === "misc" || simple.startsWith("misc/") ? "chatter" : "blog"
+  if (isMiscContent(simple)) return "chatter"
+  if (simple === "math" || simple.startsWith("math/") || !simple) return "blog"
+  return "chatter"
 }
 
 export function getNoteRoute(slug: string, fallbackSection?: NoteSection): string {
   const simple = simplifySlug(slug as FullSlug).replace(/^\/+|\/+$/g, "")
-  const section =
-    simple === "misc" || simple.startsWith("misc/") ? "chatter" : (fallbackSection ?? "blog")
-  const localSlug = section === "chatter" ? simple.replace(/^misc\/?/, "") : simple
+  const section = fallbackSection ?? getNoteSection(slug)
+  const localSlug =
+    section === "chatter" && isMiscContent(simple) ? simple.replace(/^misc\/?/, "") : simple
   return `/${section}${localSlug ? `/${localSlug}` : ""}`
+}
+
+export function getLegacyBlogAliases(slug: string) {
+  const simple = simplifySlug(slug as FullSlug).replace(/^\/+|\/+$/g, "")
+  if (getNoteSection(slug) !== "chatter" || isMiscContent(simple)) return []
+
+  const targetSegments = getNoteRoute(slug).split("/").filter(Boolean)
+  return Array.from({ length: targetSegments.length - 1 }, (_, index) => {
+    const target = `/${targetSegments.slice(0, index + 2).join("/")}`
+    return [target.replace(/^\/chatter/, "/blog"), target] as const
+  })
 }
 
 function artifactPathFor(route: string): string {
@@ -381,6 +398,9 @@ export const NextContentArtifacts: QuartzEmitterPlugin = () => ({
         text: artifact.text,
         tags: artifact.tags,
       })
+      for (const [legacyRoute, targetRoute] of getLegacyBlogAliases(artifact.slug)) {
+        manifest.aliases[legacyRoute] = targetRoute
+      }
 
       const fileData = allFiles.find((file) => file.slug === artifact.slug)
       for (const alias of fileData?.aliases ?? []) {

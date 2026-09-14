@@ -3,6 +3,7 @@ import { describe, it } from "node:test"
 
 import {
   buildNextImageUrl,
+  getLegacyBlogAliases,
   getNoteRoute,
   getNoteSection,
   getResponsiveImageAttributes,
@@ -12,8 +13,14 @@ import {
 
 describe("Next content artifact routes", () => {
   it("maps ordinary notes to readable blog routes", () => {
-    assert.equal(getNoteSection("数学/Fubini-Tonelli定理"), "blog")
-    assert.equal(getNoteRoute("数学/Fubini-Tonelli定理"), "/blog/数学/Fubini-Tonelli定理")
+    assert.equal(getNoteSection("math/Fubini-Tonelli定理"), "blog")
+    assert.equal(getNoteRoute("math/Fubini-Tonelli定理"), "/blog/math/Fubini-Tonelli定理")
+  })
+
+  it("maps non-math project folders to chatter routes", () => {
+    assert.equal(getNoteSection("数学建模/聚类"), "chatter")
+    assert.equal(getNoteRoute("数学建模/聚类"), "/chatter/数学建模/聚类")
+    assert.equal(getNoteRoute("ai/ManiMind/阶段一/总目标"), "/chatter/ai/ManiMind/阶段一/总目标")
   })
 
   it("removes the misc prefix from chatter routes", () => {
@@ -24,6 +31,17 @@ describe("Next content artifact routes", () => {
 
   it("keeps aliases in the target section when they have no misc prefix", () => {
     assert.equal(getNoteRoute("旧标题", "chatter"), "/chatter/旧标题")
+    assert.equal(getNoteRoute("旧标题", "blog"), "/blog/旧标题")
+  })
+
+  it("keeps old blog links as aliases for moved project notes and folders", () => {
+    assert.deepEqual(getLegacyBlogAliases("ai/ManiMind/阶段一/总目标"), [
+      ["/blog/ai", "/chatter/ai"],
+      ["/blog/ai/ManiMind", "/chatter/ai/ManiMind"],
+      ["/blog/ai/ManiMind/阶段一", "/chatter/ai/ManiMind/阶段一"],
+      ["/blog/ai/ManiMind/阶段一/总目标", "/chatter/ai/ManiMind/阶段一/总目标"],
+    ])
+    assert.deepEqual(getLegacyBlogAliases("misc/随笔/九月"), [])
   })
 
   it("keeps remote covers and rewrites note-local covers to public assets", () => {

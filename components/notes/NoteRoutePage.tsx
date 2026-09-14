@@ -21,7 +21,7 @@ export default async function NoteRoutePage({
   const decodedPath = decodeNotePath(path)
   const route = `/${section}/${decodedPath.join("/")}`
   const canonicalRoute = await getCanonicalRoute(route)
-  if (canonicalRoute !== route) permanentRedirect(canonicalRoute)
+  if (canonicalRoute !== route) permanentRedirect(encodeURI(canonicalRoute))
 
   const note = await getNoteByRoute(route)
   if (note) return <NoteShell note={note} />

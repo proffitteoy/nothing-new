@@ -57,7 +57,7 @@
 - **统一的页面外壳**：响应式导航、全站背景、日夜主题、动态场景和播放器状态在不同页面间保持一致。
 - **跨页面音乐体验**：音乐页提供完整播放界面，桌面端同时保留全局悬浮控制器。
 - **项目与兴趣归档**：项目卡片由本地数据维护，番剧页通过服务端 Bangumi API 获取收藏数据。
-- **双内容分区**：<code>content/misc/</code> 生成普通杂谈卡片，其余公开 Markdown 仍保留原笔记路由；杂谈页额外把非数学顶层目录显示为项目文件夹封面。
+- **双内容分区**：<code>content/math/</code> 生成笔记，<code>content/misc/</code> 生成普通杂谈卡片，其余公开顶层目录在杂谈页显示为带图片的项目文件夹封面。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理，不把笔记降级为普通 Markdown 页面。
 - **统一图片存储**：生产部署会把站点背景、头像、杂谈封面与 Quartz 文章图片增量同步到私有 Vercel Blob，并通过原有站内路径读取。
 - **可审阅的发布流程**：Obsidian 同步先判断哪些笔记允许公开，再单向写入 <code>content/</code>；杂谈封面会被固定到 frontmatter，保证后续构建稳定。
@@ -128,7 +128,7 @@ Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Tok
 - <code>siteConfig.ts</code>：站点标题、头像、背景、歌单、社交链接与视觉开关。
 - <code>app/projects/ProjectsBoard.tsx</code>：项目档案内容。
 - <code>data/friends.ts</code>：友链数据。
-- <code>content/</code>：笔记与杂谈源内容，其中 <code>content/misc/</code> 会进入杂谈分区。
+- <code>content/</code>：笔记与杂谈源内容；<code>math/</code> 进入笔记，<code>misc/</code> 进入普通杂谈，其余公开顶层目录作为杂谈项目文件夹。
 - <code>app/about/about.md</code>：关于页正文。
 
 ### Obsidian 同步

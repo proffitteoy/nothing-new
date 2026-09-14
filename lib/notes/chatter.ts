@@ -15,6 +15,7 @@ export type ChatterItem =
       title: string
       modified?: string
       noteCount: number
+      cover: string
     }
 
 function noteDate(note: NoteArtifact) {
@@ -23,11 +24,15 @@ function noteDate(note: NoteArtifact) {
 
 export function buildChatterItems(
   chatterNotes: readonly NoteArtifact[],
-  blogNotes: readonly NoteArtifact[],
-  blogTree: readonly NoteTreeNode[],
+  chatterTree: readonly NoteTreeNode[],
   defaultCover: string,
 ): ChatterItem[] {
-  const noteItems: ChatterItem[] = chatterNotes.map((note) => ({
+  const miscNotes = chatterNotes.filter((note) => note.sourcePath.startsWith("misc/"))
+  const projectNotes = chatterNotes.filter((note) => !note.sourcePath.startsWith("misc/"))
+  const projectRoutes = new Set(
+    projectNotes.map((note) => `/chatter/${note.route.split("/").filter(Boolean)[1]}`),
+  )
+  const noteItems: ChatterItem[] = miscNotes.map((note) => ({
     kind: "note",
     route: note.route,
     title: note.title,
@@ -38,18 +43,26 @@ export function buildChatterItems(
       defaultCover,
     coverDimensions: note.coverDimensions,
   }))
-  const folderItems: ChatterItem[] = blogTree
-    .filter((node) => node.type === "folder" && node.path !== "/blog/math")
+  const folderItems: ChatterItem[] = chatterTree
+    .filter((node) => node.type === "folder" && projectRoutes.has(node.path))
     .map((node) => {
-      const folderNotes = blogNotes
+      const folderNotes = projectNotes
         .filter((note) => note.route.startsWith(`${node.path}/`))
         .sort((left, right) => noteDate(right).localeCompare(noteDate(left)))
+      const cover =
+        folderNotes
+          .flatMap((note) => [
+            note.cover,
+            note.assets.find((asset) => /\.(avif|gif|jpe?g|png|webp)$/i.test(asset)),
+          ])
+          .find((asset): asset is string => Boolean(asset)) ?? defaultCover
       return {
         kind: "folder",
         route: node.path,
         title: node.title,
         modified: folderNotes[0] ? noteDate(folderNotes[0]) : undefined,
         noteCount: folderNotes.length,
+        cover,
       }
     })
 
