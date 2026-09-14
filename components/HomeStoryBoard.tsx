@@ -25,9 +25,8 @@ export default function HomeStoryBoard() {
           src="/profile-studio.png"
           alt="灯光下的个人研究工作台"
           fill
-          priority
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.015] motion-reduce:transform-none"
-          sizes="(min-width: 1024px) 66vw, 100vw"
+          sizes="(max-width: 1023px) calc(100vw - 2rem), 704px"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/5 to-transparent" />
         <figcaption className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-7">

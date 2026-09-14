@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { siteConfig } from "../siteConfig"
 import { useToast } from "./ToastProvider"
@@ -32,9 +33,13 @@ export default function ProfileCard({
       <div className="flex items-start justify-between relative z-10">
         <div className="flex items-center gap-4 md:gap-6 w-full">
           <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 p-1 shadow-lg flex-shrink-0 transition-transform duration-500 group-hover:rotate-3">
-            <img
+            <Image
               src={siteConfig.avatarUrl}
               alt="头像"
+              width={128}
+              height={128}
+              sizes="128px"
+              quality={85}
               className="w-full h-full rounded-lg md:rounded-xl object-cover bg-white"
             />
           </div>

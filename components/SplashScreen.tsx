@@ -1,54 +1,54 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
-import { siteConfig } from '../siteConfig';
+import { useCallback, useEffect, useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import Image from "next/image"
+import { siteConfig } from "../siteConfig"
 
-const SPLASH_DURATION_MS = 2200;
-const REVEAL_DELAY_MS = 500;
+const SPLASH_DURATION_MS = 2200
+const REVEAL_DELAY_MS = 500
 
 export default function SplashScreen() {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(false)
 
   const exitSplash = useCallback(() => {
-    setShow(false);
+    setShow(false)
 
     try {
-      sessionStorage.setItem('hasSeenSplash', 'true');
+      sessionStorage.setItem("hasSeenSplash", "true")
     } catch {
       // Ignore storage failures in restricted browser modes.
     }
 
     window.setTimeout(() => {
-      document.documentElement.classList.add('splash-seen');
-    }, REVEAL_DELAY_MS);
-  }, []);
+      document.documentElement.classList.add("splash-seen")
+    }, REVEAL_DELAY_MS)
+  }, [])
 
   useEffect(() => {
-    let hasSeenSplash = false;
+    let hasSeenSplash = false
 
     try {
-      hasSeenSplash = sessionStorage.getItem('hasSeenSplash') === 'true';
+      hasSeenSplash = sessionStorage.getItem("hasSeenSplash") === "true"
     } catch {
-      hasSeenSplash = true;
+      hasSeenSplash = true
     }
 
     if (hasSeenSplash) {
-      document.documentElement.classList.add('splash-seen');
-      return;
+      document.documentElement.classList.add("splash-seen")
+      return
     }
 
     const showTimer = window.setTimeout(() => {
-      setShow(true);
-    }, 0);
-    const exitTimer = window.setTimeout(exitSplash, SPLASH_DURATION_MS);
+      setShow(true)
+    }, 0)
+    const exitTimer = window.setTimeout(exitSplash, SPLASH_DURATION_MS)
 
     return () => {
-      window.clearTimeout(showTimer);
-      window.clearTimeout(exitTimer);
-    };
-  }, [exitSplash]);
+      window.clearTimeout(showTimer)
+      window.clearTimeout(exitTimer)
+    }
+  }, [exitSplash])
 
   return (
     <AnimatePresence>
@@ -71,9 +71,11 @@ export default function SplashScreen() {
                 <Image
                   src={siteConfig.avatarUrl}
                   alt="头像"
-                  width={96}
-                  height={96}
-                  priority
+                  width={128}
+                  height={128}
+                  preload
+                  sizes="128px"
+                  quality={85}
                   className="w-full h-full rounded-full object-cover"
                 />
               </div>
@@ -82,7 +84,9 @@ export default function SplashScreen() {
             <h1 className="text-2xl font-black text-slate-800 dark:text-white mb-2 tracking-[0.2em] uppercase">
               {siteConfig.authorName}
             </h1>
-            <p className="text-[10px] font-black text-slate-400 tracking-[0.5em] mb-12">正在初始化站点</p>
+            <p className="text-[10px] font-black text-slate-400 tracking-[0.5em] mb-12">
+              正在初始化站点
+            </p>
 
             <div className="w-40 h-[1.5px] bg-slate-200 dark:bg-slate-800 relative">
               <motion.div
@@ -96,5 +100,5 @@ export default function SplashScreen() {
         </motion.div>
       )}
     </AnimatePresence>
-  );
+  )
 }

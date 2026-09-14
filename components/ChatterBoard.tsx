@@ -1,18 +1,27 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Search } from "lucide-react"
+import { useImageEagerBudget } from "@/lib/image-loading"
+import type { ImageDimensions } from "@/lib/notes/types"
 
 type ChatterCard = {
   route: string
   title: string
   cover: string
+  coverDimensions?: ImageDimensions
+}
+
+function isSiteImage(src: string) {
+  return src.startsWith("/") && !src.startsWith("//")
 }
 
 export default function ChatterBoard({ chatters }: { chatters: ChatterCard[] }) {
   const [searchQuery, setSearchQuery] = useState("")
+  const eagerCount = useImageEagerBudget("chatter")
 
   const filteredChatters = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase("zh-CN")
@@ -53,12 +62,9 @@ export default function ChatterBoard({ chatters }: { chatters: ChatterCard[] }) 
       </div>
 
       {filteredChatters.length > 0 ? (
-        <motion.div
-          layout
-          className="columns-2 gap-3 md:gap-6 lg:columns-3"
-        >
+        <motion.div layout className="columns-2 gap-3 md:gap-6 lg:columns-3">
           <AnimatePresence mode="popLayout">
-            {filteredChatters.map((chatter) => (
+            {filteredChatters.map((chatter, index) => (
               <motion.article
                 layout
                 initial={{ opacity: 0, scale: 0.96 }}
@@ -72,12 +78,31 @@ export default function ChatterBoard({ chatters }: { chatters: ChatterCard[] }) 
                   href={chatter.route}
                   className="group relative block overflow-hidden rounded-2xl border border-white/55 bg-slate-800 shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/70 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 md:rounded-[2rem]"
                 >
-                  <img
-                    src={chatter.cover}
-                    alt=""
-                    loading="lazy"
-                    className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
-                  />
+                  {isSiteImage(chatter.cover) && chatter.coverDimensions ? (
+                    <Image
+                      src={chatter.cover}
+                      alt=""
+                      width={chatter.coverDimensions.width}
+                      height={chatter.coverDimensions.height}
+                      sizes="(max-width: 1023px) calc((100vw - 2.25rem) / 2), 390px"
+                      loading={index < eagerCount ? "eager" : "lazy"}
+                      decoding="async"
+                      className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
+                    />
+                  ) : (
+                    // External images and legacy artifacts without dimensions intentionally bypass Next optimization.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={chatter.cover}
+                      alt=""
+                      width={chatter.coverDimensions?.width}
+                      height={chatter.coverDimensions?.height}
+                      loading={index < eagerCount ? "eager" : "lazy"}
+                      decoding="async"
+                      referrerPolicy={isSiteImage(chatter.cover) ? undefined : "no-referrer"}
+                      className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/10 to-transparent" />
                   <h2 className="absolute inset-x-0 bottom-0 line-clamp-2 break-words p-3 text-sm font-black leading-tight text-white drop-shadow-lg transition-colors group-hover:text-indigo-200 sm:p-5 sm:text-lg md:p-6 md:text-xl">
                     {chatter.title}

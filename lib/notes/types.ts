@@ -17,6 +17,11 @@ export type NoteFeatures = {
   popovers: boolean
 }
 
+export type ImageDimensions = {
+  width: number
+  height: number
+}
+
 export type NoteArtifact = {
   version: 1
   slug: string
@@ -27,6 +32,7 @@ export type NoteArtifact = {
   title: string
   description: string
   cover?: string
+  coverDimensions?: ImageDimensions
   dates: {
     created?: string
     modified?: string

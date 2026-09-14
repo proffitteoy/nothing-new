@@ -3,14 +3,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, Clapperboard, Play, RotateCcw, Sparkles, Star } from "lucide-react"
 import BackButton from "../../components/BackButton"
-import { ANIME_BATCH_SIZE, getAnimeTitle, type AnimeItem, type AnimeLatestPointer, type AnimeSnapshot } from "../../lib/anime/schema"
+import {
+  ANIME_BATCH_SIZE,
+  getAnimeTitle,
+  type AnimeItem,
+  type AnimeLatestPointer,
+  type AnimeSnapshot,
+} from "../../lib/anime/schema"
+import { useImageEagerBudget } from "../../lib/image-loading"
 import AnimeCoverImage from "./AnimeCoverImage"
 import { groupAnimeByScore, sortAnimeByScore } from "./collection"
 
 function isSnapshot(value: unknown): value is AnimeSnapshot {
   if (!value || typeof value !== "object") return false
   const candidate = value as Partial<AnimeSnapshot>
-  return candidate.version === 1 && typeof candidate.username === "string" && Array.isArray(candidate.items)
+  return (
+    candidate.version === 1 &&
+    typeof candidate.username === "string" &&
+    Array.isArray(candidate.items)
+  )
 }
 
 async function fetchSnapshot(signal: AbortSignal) {
@@ -48,10 +59,6 @@ function useProgressiveCount(total: number) {
   const [count, setCount] = useState(Math.min(ANIME_BATCH_SIZE, total))
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    setCount(Math.min(ANIME_BATCH_SIZE, total))
-  }, [total])
-
   const loadMore = useCallback(() => {
     setCount((current) => Math.min(total, current + ANIME_BATCH_SIZE))
   }, [total])
@@ -85,7 +92,6 @@ export default function AnimeShelf() {
 
   useEffect(() => {
     const controller = new AbortController()
-    setError(false)
 
     void fetchSnapshot(controller.signal)
       .then((data) => setSnapshot(data))
@@ -106,7 +112,11 @@ export default function AnimeShelf() {
       <ShelfState
         title="番剧数据暂时不可用"
         description="快照与实时中转都未能返回数据。"
-        action={() => setReloadKey((key) => key + 1)}
+        action={() => {
+          setError(false)
+          setSnapshot(null)
+          setReloadKey((key) => key + 1)
+        }}
       />
     ) : (
       <ShelfState title="正在读取番剧快照" description="先加载 metadata，封面会按视口渐进加载。" />
@@ -117,6 +127,7 @@ export default function AnimeShelf() {
 }
 
 function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
+  const eagerCount = useImageEagerBudget("anime")
   const watching = useMemo(
     () => snapshot.items.filter((item) => item.status === "watching"),
     [snapshot.items],
@@ -146,7 +157,9 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
               ANIME INDEX
             </p>
             <div className="mt-0.5 flex items-baseline gap-3">
-              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">番剧</h1>
+              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                番剧
+              </h1>
               <a
                 href={`https://bgm.tv/user/${encodeURIComponent(snapshot.username)}`}
                 target="_blank"
@@ -159,7 +172,10 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
           </div>
         </div>
 
-        <nav aria-label="番剧分区" className="relative mt-4 grid grid-cols-2 gap-2 sm:mt-0 sm:w-[22rem]">
+        <nav
+          aria-label="番剧分区"
+          className="relative mt-4 grid grid-cols-2 gap-2 sm:mt-0 sm:w-[22rem]"
+        >
           <a
             href="#watching"
             className="group flex min-w-0 items-center gap-2 rounded-2xl border border-indigo-200/70 bg-indigo-50/65 px-3 py-2.5 text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-100/70 dark:border-indigo-400/15 dark:bg-indigo-500/10 dark:text-indigo-200 dark:hover:bg-indigo-500/15"
@@ -167,7 +183,9 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">01</span>
             <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">正在看</span>
-            <span className="ml-auto rounded-full bg-indigo-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">{watching.length}</span>
+            <span className="ml-auto rounded-full bg-indigo-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
+              {watching.length}
+            </span>
           </a>
           <a
             href="#watched"
@@ -176,7 +194,9 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">02</span>
             <Star className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">看过</span>
-            <span className="ml-auto rounded-full bg-amber-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">{watched.length}</span>
+            <span className="ml-auto rounded-full bg-amber-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
+              {watched.length}
+            </span>
           </a>
         </nav>
       </header>
@@ -190,7 +210,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
           icon="play"
         />
         {visibleWatching.length > 0 ? (
-          <AnimeGrid items={visibleWatching} eagerCount={16} />
+          <AnimeGrid items={visibleWatching} eagerCount={eagerCount} />
         ) : (
           <EmptyShelf message="这里暂时没有正在看的故事" />
         )}
@@ -227,8 +247,13 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                       {group.score ?? "—"}
                     </span>
                     <div>
-                      <p className="text-[9px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500">MY SCORE</p>
-                      <h3 id={groupId} className="mt-0.5 text-lg font-black text-slate-900 dark:text-white">
+                      <p className="text-[9px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                        MY SCORE
+                      </p>
+                      <h3
+                        id={groupId}
+                        className="mt-0.5 text-lg font-black text-slate-900 dark:text-white"
+                      >
                         {group.score === null ? "未评分" : `${group.score} 分`}
                       </h3>
                     </div>
@@ -273,8 +298,12 @@ function SectionHeading({
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
           {eyebrow}
         </div>
-        <h2 id={id} className="mt-2 text-2xl font-black text-slate-950 dark:text-white">{title}</h2>
-        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400 sm:text-sm">{description}</p>
+        <h2 id={id} className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
+          {title}
+        </h2>
+        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400 sm:text-sm">
+          {description}
+        </p>
       </div>
     </div>
   )
@@ -318,7 +347,9 @@ function AnimeGrid({
                 </span>
               )}
             </span>
-            <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-indigo-600 dark:text-slate-100 dark:group-hover:text-indigo-300 sm:mt-2.5 sm:text-xs sm:leading-5">{title}</span>
+            <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-indigo-600 dark:text-slate-100 dark:group-hover:text-indigo-300 sm:mt-2.5 sm:text-xs sm:leading-5">
+              {title}
+            </span>
           </a>
         )
       })}

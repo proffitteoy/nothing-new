@@ -1,5 +1,6 @@
 import { buildImmutableCacheHeaders } from "../../../../lib/anime/cache"
 import { fetchAnimeBlob } from "../../../../lib/anime/blob"
+import { buildBlobResponse } from "../../../../lib/blob-response"
 
 type RouteContext = {
   params: Promise<{ path: string[] }>
@@ -10,7 +11,7 @@ const COVER_PATTERN = /^covers\/\d+-[a-f0-9]{12}\.(?:jpg|png|webp|avif|gif)$/
 
 export const runtime = "nodejs"
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const { path } = await context.params
   const relativePath = path.join("/")
   if (!SNAPSHOT_PATTERN.test(relativePath) && !COVER_PATTERN.test(relativePath)) {
@@ -18,21 +19,14 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   try {
-    const upstream = await fetchAnimeBlob(`anime/${relativePath}`)
-    if (!upstream.ok) {
-      return new Response("Not found", {
-        status: upstream.status === 404 ? 404 : 502,
-        headers: { "Cache-Control": "no-store" },
-      })
-    }
-
-    const headers = new Headers(buildImmutableCacheHeaders())
-    const contentType = upstream.headers.get("content-type")
-    const etag = upstream.headers.get("etag")
-    if (contentType) headers.set("Content-Type", contentType)
-    if (etag) headers.set("ETag", etag)
-
-    return new Response(upstream.body, { status: 200, headers })
+    const upstream = await fetchAnimeBlob(`anime/${relativePath}`, {
+      ifNoneMatch: request.headers.get("if-none-match") ?? undefined,
+    })
+    const immutableHeaders = buildImmutableCacheHeaders()
+    return buildBlobResponse(upstream, {
+      browser: immutableHeaders["Cache-Control"],
+      cdn: immutableHeaders["CDN-Cache-Control"],
+    })
   } catch (error) {
     console.error(
       "[anime/blob] asset read failed:",

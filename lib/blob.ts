@@ -1,5 +1,7 @@
 import "server-only"
 
+import { get as getVercelBlob } from "@vercel/blob"
+
 const VERCEL_BLOB_API = "https://vercel.com/api/blob/"
 const VERCEL_BLOB_API_VERSION = "12"
 const BLOB_ACCESS = "private" as const
@@ -13,6 +15,7 @@ type BlobPutResult = {
 }
 
 type BlobAuth = {
+  kind: "oidc" | "read-write-token"
   token: string
   storeId: string
 }
@@ -30,14 +33,14 @@ function getBlobAuth(): BlobAuth {
   const oidcToken = process.env.VERCEL_OIDC_TOKEN?.trim()
   const oidcStoreId = process.env.BLOB_STORE_ID?.trim()
   if (oidcToken && oidcStoreId) {
-    return { token: oidcToken, storeId: normalizeStoreId(oidcStoreId) }
+    return { kind: "oidc", token: oidcToken, storeId: normalizeStoreId(oidcStoreId) }
   }
 
   const readWriteToken = process.env.BLOB_READ_WRITE_TOKEN?.trim()
   if (readWriteToken) {
     const storeId = storeIdFromReadWriteToken(readWriteToken)
     if (!storeId) throw new Error("BLOB_READ_WRITE_TOKEN does not contain a Blob store id")
-    return { token: readWriteToken, storeId }
+    return { kind: "read-write-token", token: readWriteToken, storeId }
   }
 
   throw new Error(
@@ -124,13 +127,24 @@ export async function putBlob(
   throw new Error(`Vercel Blob upload failed: ${lastError}`)
 }
 
-export async function fetchBlob(pathname: string) {
-  const { token } = getBlobAuth()
-  return fetch(getBlobUrl(pathname), {
-    cache: "no-store",
-    headers: { Authorization: `Bearer ${token}` },
-    signal: AbortSignal.timeout(10_000),
+export async function fetchBlob(pathname: string, options: { ifNoneMatch?: string } = {}) {
+  const auth = getBlobAuth()
+  const credentials =
+    auth.kind === "oidc" ? { oidcToken: auth.token, storeId: auth.storeId } : { token: auth.token }
+  const result = await getVercelBlob(cleanBlobPath(pathname), {
+    access: BLOB_ACCESS,
+    useCache: true,
+    ifNoneMatch: options.ifNoneMatch,
+    abortSignal: AbortSignal.timeout(10_000),
+    ...credentials,
   })
+
+  if (!result) return new Response(null, { status: 404 })
+
+  const headers = new Headers(Array.from(result.headers.entries()))
+  if (result.blob.etag) headers.set("ETag", result.blob.etag)
+  if (result.blob.contentType) headers.set("Content-Type", result.blob.contentType)
+  return new Response(result.stream, { status: result.statusCode, headers })
 }
 
 export async function readBlobJson<T>(pathname: string): Promise<T> {

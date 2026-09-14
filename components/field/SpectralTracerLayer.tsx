@@ -313,9 +313,8 @@ function createLayerRenderer(
 
     if (layer === 0) {
       for (const obstacle of obstacles.slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)) {
-        // blur-xl uses a 24px Gaussian blur whose sampled backdrop extends to
-        // roughly three standard deviations beyond the component boundary.
-        const padding = 80
+        // Keep the backdrop blur from sampling nearby trails into the card.
+        const padding = 36
         context.clearRect(
           obstacle.left - padding,
           obstacle.top - padding,
@@ -325,8 +324,8 @@ function createLayerRenderer(
       }
     } else {
       for (const obstacle of obstacles.slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)) {
-        // Cover stroke antialiasing and the gap between transformed-card bounds samples.
-        const padding = 12
+        // Cover the stroked edge without creating a visible empty halo.
+        const padding = 4
         context.clearRect(
           obstacle.left - padding,
           obstacle.top - padding,

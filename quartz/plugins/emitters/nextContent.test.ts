@@ -1,7 +1,14 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
-import { getNoteRoute, getNoteSection, resolveNoteCover } from "./nextContent"
+import {
+  buildNextImageUrl,
+  getNoteRoute,
+  getNoteSection,
+  getResponsiveImageAttributes,
+  isOptimizableSiteImage,
+  resolveNoteCover,
+} from "./nextContent"
 
 describe("Next content artifact routes", () => {
   it("maps ordinary notes to readable blog routes", () => {
@@ -28,5 +35,30 @@ describe("Next content artifact routes", () => {
       resolveNoteCover("misc/随笔/九月", "./images/cover.webp"),
       "/quartz-assets/content/misc/随笔/images/cover.webp",
     )
+  })
+
+  it("encodes Chinese and spaces once in responsive image URLs", () => {
+    assert.equal(
+      buildNextImageUrl("/quartz-assets/content/图片/表 一.png", 640),
+      "/_next/image?url=%2Fquartz-assets%2Fcontent%2F%E5%9B%BE%E7%89%87%2F%E8%A1%A8%20%E4%B8%80.png&w=640&q=75",
+    )
+  })
+
+  it("keeps external, animated, and dimensionless images on their original URL", () => {
+    assert.equal(isOptimizableSiteImage("https://images.example/cover.jpg"), false)
+    assert.equal(isOptimizableSiteImage("/quartz-assets/content/demo.gif"), false)
+    assert.deepEqual(getResponsiveImageAttributes("/quartz-assets/content/demo.png"), {
+      src: "/quartz-assets/content/demo.png",
+    })
+  })
+
+  it("builds a bounded same-origin srcset when dimensions are known", () => {
+    const attributes = getResponsiveImageAttributes("/chatter-covers/large image.jpg", {
+      width: 1000,
+      height: 600,
+    })
+    assert.match(attributes.src, /w=1080&q=75$/)
+    assert.match(attributes.srcSet ?? "", /w=640&q=75 640w/)
+    assert.ok(attributes.sizes)
   })
 })

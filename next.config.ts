@@ -47,7 +47,21 @@ const nextConfig: NextConfig = {
     ]
   },
   images: {
-    unoptimized: true,
+    formats: ["image/avif", "image/webp"],
+    qualities: [60, 75, 85],
+    minimumCacheTTL: 86_400,
+    deviceSizes: [640, 750, 828, 1080, 1200, 1440, 1920],
+    imageSizes: [32, 48, 64, 96, 128, 256, 384],
+    localPatterns: [
+      { pathname: "/avatar", search: "" },
+      { pathname: "/avatar.jpg", search: "" },
+      { pathname: "/about-cover.png", search: "" },
+      { pathname: "/background.png", search: "" },
+      { pathname: "/profile-studio.png", search: "" },
+      { pathname: "/chatter-covers/**", search: "" },
+      { pathname: "/quartz-assets/content/**", search: "" },
+      { pathname: "/anime/blob/covers/**", search: "" },
+    ],
     remotePatterns: [
       {
         protocol: "https",

@@ -20,6 +20,7 @@ export default async function ChatterPage() {
       note.cover ??
       note.assets.find((asset) => /\.(avif|gif|jpe?g|png|webp)$/i.test(asset)) ??
       siteConfig.defaultPostCover,
+    coverDimensions: note.coverDimensions,
   }))
 
   return (

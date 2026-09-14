@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 export default function AnimeCoverImage({
   src,
@@ -12,11 +12,8 @@ export default function AnimeCoverImage({
   alt: string
   eager: boolean
 }) {
-  const [failed, setFailed] = useState(false)
-
-  useEffect(() => {
-    setFailed(false)
-  }, [src])
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const failed = failedSrc === src
 
   if (!src || failed) {
     return (
@@ -35,7 +32,7 @@ export default function AnimeCoverImage({
       loading={eager ? "eager" : "lazy"}
       decoding="async"
       referrerPolicy="no-referrer"
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
       className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
     />
   )
