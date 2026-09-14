@@ -86,6 +86,7 @@ export default function ChatterBoard({ chatters }: { chatters: ChatterCard[] }) 
                       height={chatter.coverDimensions.height}
                       sizes="(max-width: 1023px) calc((100vw - 2.25rem) / 2), 390px"
                       loading={index < eagerCount ? "eager" : "lazy"}
+                      fetchPriority={index > 0 && index < eagerCount ? "low" : undefined}
                       decoding="async"
                       className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
                     />
@@ -98,6 +99,7 @@ export default function ChatterBoard({ chatters }: { chatters: ChatterCard[] }) 
                       width={chatter.coverDimensions?.width}
                       height={chatter.coverDimensions?.height}
                       loading={index < eagerCount ? "eager" : "lazy"}
+                      fetchPriority={index > 0 && index < eagerCount ? "low" : undefined}
                       decoding="async"
                       referrerPolicy={isSiteImage(chatter.cover) ? undefined : "no-referrer"}
                       className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
