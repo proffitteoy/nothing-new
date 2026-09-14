@@ -4,31 +4,22 @@ import Link from "next/link"
 import Image from "next/image"
 import { useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Search } from "lucide-react"
+import { ArrowRight, FolderOpen, Search } from "lucide-react"
 import { useImageEagerBudget } from "@/lib/image-loading"
-import type { ImageDimensions } from "@/lib/notes/types"
-
-type ChatterCard = {
-  route: string
-  title: string
-  cover: string
-  coverDimensions?: ImageDimensions
-}
+import type { ChatterItem } from "@/lib/notes/chatter"
 
 function isSiteImage(src: string) {
   return src.startsWith("/") && !src.startsWith("//")
 }
 
-export default function ChatterBoard({ chatters }: { chatters: ChatterCard[] }) {
+export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
   const [searchQuery, setSearchQuery] = useState("")
   const eagerCount = useImageEagerBudget("chatter")
 
-  const filteredChatters = useMemo(() => {
+  const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase("zh-CN")
-    return chatters.filter(
-      (chatter) => !query || chatter.title.toLocaleLowerCase("zh-CN").includes(query),
-    )
-  }, [chatters, searchQuery])
+    return items.filter((item) => !query || item.title.toLocaleLowerCase("zh-CN").includes(query))
+  }, [items, searchQuery])
 
   return (
     <div className="relative z-10 mx-auto w-full max-w-7xl px-3 pb-16 pt-24 sm:px-6 md:pt-28 lg:px-10">
@@ -40,7 +31,7 @@ export default function ChatterBoard({ chatters }: { chatters: ChatterCard[] }) 
           杂谈
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
-          零散想法、开发记录与日常观察，按原始笔记继续展开。
+          零散想法与项目记录按最后修改时间排列，点击后按原始笔记继续展开。
         </p>
       </header>
 
@@ -61,62 +52,109 @@ export default function ChatterBoard({ chatters }: { chatters: ChatterCard[] }) 
         </label>
       </div>
 
-      {filteredChatters.length > 0 ? (
+      {filteredItems.length > 0 ? (
         <motion.div layout className="columns-2 gap-3 md:gap-6 lg:columns-3">
           <AnimatePresence mode="popLayout">
-            {filteredChatters.map((chatter, index) => (
-              <motion.article
-                layout
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.22 }}
-                key={chatter.route}
-                className="mb-3 break-inside-avoid md:mb-6"
-              >
-                <Link
-                  href={chatter.route}
-                  className="group relative block overflow-hidden rounded-2xl border border-white/55 bg-slate-800 shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/70 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 md:rounded-[2rem]"
+            {filteredItems.map((item, index) => {
+              const imageIndex =
+                item.kind === "note"
+                  ? filteredItems.slice(0, index).filter((candidate) => candidate.kind === "note")
+                      .length
+                  : -1
+              return (
+                <motion.article
+                  layout
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.22 }}
+                  key={item.route}
+                  className="mb-3 break-inside-avoid md:mb-6"
                 >
-                  {isSiteImage(chatter.cover) && chatter.coverDimensions ? (
-                    <Image
-                      src={chatter.cover}
-                      alt=""
-                      width={chatter.coverDimensions.width}
-                      height={chatter.coverDimensions.height}
-                      sizes="(max-width: 1023px) calc((100vw - 2.25rem) / 2), 390px"
-                      loading={index < eagerCount ? "eager" : "lazy"}
-                      fetchPriority={index > 0 && index < eagerCount ? "low" : undefined}
-                      decoding="async"
-                      className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
-                    />
+                  {item.kind === "folder" ? (
+                    <Link
+                      href={item.route}
+                      className="group relative flex min-h-64 flex-col overflow-hidden rounded-2xl border border-white/55 bg-gradient-to-br from-indigo-500 via-violet-500 to-slate-900 p-5 text-white shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 sm:p-6 md:rounded-[2rem]"
+                    >
+                      <div
+                        aria-hidden="true"
+                        className="absolute -right-14 -top-16 h-48 w-48 rounded-full bg-white/15 blur-2xl transition-transform duration-700 group-hover:scale-125"
+                      />
+                      <div
+                        aria-hidden="true"
+                        className="absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-sky-300/15 blur-3xl"
+                      />
+                      <div className="relative flex items-center justify-between gap-4">
+                        <span className="inline-flex rounded-2xl bg-white/15 p-3 shadow-inner shadow-white/10 backdrop-blur">
+                          <FolderOpen className="h-7 w-7" aria-hidden="true" />
+                        </span>
+                        <span className="text-[10px] font-black tracking-[0.2em] text-white/70">
+                          PROJECT FOLDER
+                        </span>
+                      </div>
+                      <div className="relative mt-auto pt-12">
+                        <h2 className="break-words text-2xl font-black leading-tight tracking-tight drop-shadow-lg sm:text-3xl">
+                          {item.title}
+                        </h2>
+                        <div className="mt-5 flex items-center justify-between gap-4 text-xs font-bold text-white/75">
+                          <span>{item.noteCount} 篇记录</span>
+                          <ArrowRight
+                            className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                            aria-hidden="true"
+                          />
+                        </div>
+                      </div>
+                    </Link>
                   ) : (
-                    // External images and legacy artifacts without dimensions intentionally bypass Next optimization.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={chatter.cover}
-                      alt=""
-                      width={chatter.coverDimensions?.width}
-                      height={chatter.coverDimensions?.height}
-                      loading={index < eagerCount ? "eager" : "lazy"}
-                      fetchPriority={index > 0 && index < eagerCount ? "low" : undefined}
-                      decoding="async"
-                      referrerPolicy={isSiteImage(chatter.cover) ? undefined : "no-referrer"}
-                      className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
-                    />
+                    <Link
+                      href={item.route}
+                      className="group relative block overflow-hidden rounded-2xl border border-white/55 bg-slate-800 shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/70 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 md:rounded-[2rem]"
+                    >
+                      {isSiteImage(item.cover) && item.coverDimensions ? (
+                        <Image
+                          src={item.cover}
+                          alt=""
+                          width={item.coverDimensions.width}
+                          height={item.coverDimensions.height}
+                          sizes="(max-width: 1023px) calc((100vw - 2.25rem) / 2), 390px"
+                          loading={imageIndex < eagerCount ? "eager" : "lazy"}
+                          fetchPriority={
+                            imageIndex > 0 && imageIndex < eagerCount ? "low" : undefined
+                          }
+                          decoding="async"
+                          className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
+                        />
+                      ) : (
+                        // External images and legacy artifacts without dimensions intentionally bypass Next optimization.
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.cover}
+                          alt=""
+                          width={item.coverDimensions?.width}
+                          height={item.coverDimensions?.height}
+                          loading={imageIndex < eagerCount ? "eager" : "lazy"}
+                          fetchPriority={
+                            imageIndex > 0 && imageIndex < eagerCount ? "low" : undefined
+                          }
+                          decoding="async"
+                          referrerPolicy={isSiteImage(item.cover) ? undefined : "no-referrer"}
+                          className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/10 to-transparent" />
+                      <h2 className="absolute inset-x-0 bottom-0 line-clamp-2 break-words p-3 text-sm font-black leading-tight text-white drop-shadow-lg transition-colors group-hover:text-indigo-200 sm:p-5 sm:text-lg md:p-6 md:text-xl">
+                        {item.title}
+                      </h2>
+                    </Link>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/10 to-transparent" />
-                  <h2 className="absolute inset-x-0 bottom-0 line-clamp-2 break-words p-3 text-sm font-black leading-tight text-white drop-shadow-lg transition-colors group-hover:text-indigo-200 sm:p-5 sm:text-lg md:p-6 md:text-xl">
-                    {chatter.title}
-                  </h2>
-                </Link>
-              </motion.article>
-            ))}
+                </motion.article>
+              )
+            })}
           </AnimatePresence>
         </motion.div>
       ) : (
         <div className="rounded-3xl border border-dashed border-white/60 bg-white/35 p-10 text-center text-sm font-medium text-slate-500 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35 dark:text-slate-400">
-          没有找到符合当前搜索的杂谈。
+          没有找到符合当前搜索的内容。
         </div>
       )}
     </div>

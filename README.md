@@ -30,7 +30,7 @@
 | 项目 | [<code>/projects</code>](https://nothing-new.icu/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
 | 音乐 | [<code>/music</code>](https://nothing-new.icu/music)       | 网易云歌单、歌词、播放列表与全局悬浮播放器             |
 | 番剧 | [<code>/anime</code>](https://nothing-new.icu/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
-| 杂谈 | [<code>/chatter</code>](https://nothing-new.icu/chatter)   | 零散想法、开发记录与日常观察的瀑布流展示               |
+| 杂谈 | [<code>/chatter</code>](https://nothing-new.icu/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
 | 笔记 | [<code>/blog</code>](https://nothing-new.icu/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接 |
 | 友链 | [<code>/friends</code>](https://nothing-new.icu/friends)   | 朋友站点与独立博客入口                                 |
 | 关于 | [<code>/about</code>](https://nothing-new.icu/about)       | 个人介绍、技术足迹与站点信息                           |
@@ -57,7 +57,7 @@
 - **统一的页面外壳**：响应式导航、全站背景、日夜主题、动态场景和播放器状态在不同页面间保持一致。
 - **跨页面音乐体验**：音乐页提供完整播放界面，桌面端同时保留全局悬浮控制器。
 - **项目与兴趣归档**：项目卡片由本地数据维护，番剧页通过服务端 Bangumi API 获取收藏数据。
-- **双内容分区**：<code>content/misc/</code> 生成杂谈，其余公开 Markdown 生成笔记；两者共享解析能力，但使用不同的集合页与阅读体验。
+- **双内容分区**：<code>content/misc/</code> 生成普通杂谈卡片，其余公开 Markdown 仍保留原笔记路由；杂谈页额外把非数学顶层目录显示为项目文件夹封面。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理，不把笔记降级为普通 Markdown 页面。
 - **统一图片存储**：生产部署会把站点背景、头像、杂谈封面与 Quartz 文章图片增量同步到私有 Vercel Blob，并通过原有站内路径读取。
 - **可审阅的发布流程**：Obsidian 同步先判断哪些笔记允许公开，再单向写入 <code>content/</code>；杂谈封面会被固定到 frontmatter，保证后续构建稳定。

@@ -3,7 +3,8 @@ import type { Metadata } from "next"
 import ChatterBoard from "@/components/ChatterBoard"
 import Navbar from "@/components/Navbar"
 import PageTransition from "@/components/PageTransition"
-import { getSectionNotes } from "@/lib/notes/server"
+import { buildChatterItems } from "@/lib/notes/chatter"
+import { getNoteManifest, getSectionNotes } from "@/lib/notes/server"
 import { siteConfig } from "@/siteConfig"
 
 export const metadata: Metadata = {
@@ -12,22 +13,23 @@ export const metadata: Metadata = {
 }
 
 export default async function ChatterPage() {
-  const notes = await getSectionNotes("chatter")
-  const chatters = notes.map((note) => ({
-    route: note.route,
-    title: note.title,
-    cover:
-      note.cover ??
-      note.assets.find((asset) => /\.(avif|gif|jpe?g|png|webp)$/i.test(asset)) ??
-      siteConfig.defaultPostCover,
-    coverDimensions: note.coverDimensions,
-  }))
+  const [chatterNotes, blogNotes, manifest] = await Promise.all([
+    getSectionNotes("chatter"),
+    getSectionNotes("blog"),
+    getNoteManifest(),
+  ])
+  const items = buildChatterItems(
+    chatterNotes,
+    blogNotes,
+    manifest.trees.blog,
+    siteConfig.defaultPostCover,
+  )
 
   return (
     <div className="relative min-h-screen pb-10">
       <Navbar />
       <PageTransition>
-        <ChatterBoard chatters={chatters} />
+        <ChatterBoard items={items} />
       </PageTransition>
     </div>
   )
