@@ -37,6 +37,13 @@ type Ripple = {
 
 const PLANE_SIZE = 4.8;
 const RIPPLE_MAX = 12;
+const RIPPLE_REGIONS = [
+  [-1.35, -0.72],
+  [1.22, 0.68],
+  [0, 0],
+  [-0.78, 0.88],
+  [0.92, -0.84],
+] as const;
 
 function clampRange(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -50,6 +57,13 @@ function coverParticleGridForResolution(value: number) {
   let grid = Math.round(118 * normalizeCoverResolution(value));
   grid = Math.max(88, Math.min(183, grid));
   return grid % 2 ? grid : grid + 1;
+}
+
+function coverResolutionForViewport(width: number, reduceMotion: boolean) {
+  if (reduceMotion) return 0.78;
+  if (width < 640) return 0.82;
+  if (width >= 1440) return 1.16;
+  return 1;
 }
 
 function hashSeed(value: string | number) {
@@ -530,6 +544,8 @@ export default function MineradioParticleField({
 }: MineradioParticleFieldProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<RuntimeState>({ isPlaying, progress, currentTime, volume });
+  const initialSeedRef = useRef(seed);
+  const coverControllerRef = useRef<((url: string, nextSeed: string | number) => void) | null>(null);
 
   useEffect(() => {
     stateRef.current = { isPlaying, progress, currentTime, volume };
@@ -544,11 +560,18 @@ export default function MineradioParticleField({
     let frame = 0;
     let last = performance.now();
     let disposed = false;
-    let width = 1;
-    let height = 1;
+    const initialRect = mount.getBoundingClientRect();
+    let width = Math.max(1, initialRect.width);
+    let height = Math.max(1, initialRect.height);
     let lastRippleAt = 0;
-    let rippleCursor = 0;
-    const ripples: Ripple[] = Array.from({ length: RIPPLE_MAX }, () => ({ x: 0, y: 0, age: -10, str: 0 }));
+    let previousBass = 0;
+    let ripplePatternCursor = 0;
+    let activeSeed = initialSeedRef.current;
+    let rippleRandom = randomFrom(hashSeed(String(initialSeedRef.current) + "-ripples"));
+    let coverMixProgress = 1;
+    let coverRequest = 0;
+    let hasLoadedCover = false;
+    const ripples: Ripple[] = [];
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -565,11 +588,11 @@ export default function MineradioParticleField({
     camera.position.set(0, 0, 7.2);
     camera.lookAt(0, 0, 0);
 
-    const resolution = width < 640 || reduceMotion ? 0.78 : 1.0;
-    const geometry = buildCoverParticleGeometry(resolution, `${seed}-${coverUrl}`);
+    let resolution = coverResolutionForViewport(width, reduceMotion);
+    let geometry = buildCoverParticleGeometry(resolution, initialSeedRef.current);
     const dotTexture = makeDotTexture();
     const edgeTexture = makeEdgeTexture();
-    const prevCoverTexture = makeSolidTexture("#101722");
+    let prevCoverTexture: THREE.Texture = makeSolidTexture("#101722");
     let coverTexture: THREE.Texture = makeSolidTexture("#111827");
     const { data: rippleData, texture: rippleTexture } = createRippleTexture();
 
@@ -601,7 +624,7 @@ export default function MineradioParticleField({
       uColorMixT: { value: 1 },
       uEdgeTex: { value: edgeTexture },
       uRippleTex: { value: rippleTexture },
-      uRippleCount: { value: RIPPLE_MAX },
+      uRippleCount: { value: 0 },
       uDotTex: { value: dotTexture },
       uHasCover: { value: 0 },
       uHasDepth: { value: 0 },
@@ -648,36 +671,20 @@ export default function MineradioParticleField({
     particles.renderOrder = 1;
     scene.add(particles);
 
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin("anonymous");
-    loader.load(
-      coverUrl,
-      (texture) => {
-        if (disposed) {
-          texture.dispose();
-          return;
-        }
-        texture.minFilter = THREE.LinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.wrapS = THREE.ClampToEdgeWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        texture.colorSpace = THREE.SRGBColorSpace;
-        coverTexture.dispose();
-        coverTexture = texture;
-        uniforms.uCoverTex.value = texture;
-        uniforms.uHasCover.value = 1;
-        uniforms.uBurstAmt.value = Math.max(uniforms.uBurstAmt.value, 0.46);
-      },
-      undefined,
-      () => {
-        uniforms.uHasCover.value = 0;
-      },
-    );
-
     const resize = () => {
       const rect = mount.getBoundingClientRect();
       width = Math.max(1, rect.width);
       height = Math.max(1, rect.height);
+      const nextResolution = coverResolutionForViewport(width, reduceMotion);
+      if (nextResolution !== resolution) {
+        const previousGeometry = geometry;
+        resolution = nextResolution;
+        geometry = buildCoverParticleGeometry(resolution, activeSeed);
+        particles.geometry = geometry;
+        bloomParticles.geometry = geometry;
+        uniforms.uCoverRes.value = resolution;
+        previousGeometry.dispose();
+      }
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(width, height, false);
       uniforms.uPixel.value = renderer.getPixelRatio();
@@ -688,29 +695,80 @@ export default function MineradioParticleField({
     };
 
     const pushRipple = (x: number, y: number, strength: number) => {
-      const ripple = ripples[rippleCursor];
-      ripple.x = x;
-      ripple.y = y;
-      ripple.age = 0;
-      ripple.str = strength;
-      rippleCursor = (rippleCursor + 1) % RIPPLE_MAX;
+      if (ripples.length >= RIPPLE_MAX) ripples.shift();
+      ripples.push({ x, y, age: 0, str: strength });
     };
 
     const updateRipples = (delta: number) => {
-      for (let index = 0; index < ripples.length; index += 1) {
-        const ripple = ripples[index];
-        if (ripple.age >= 0) ripple.age += delta;
-        if (ripple.age > 2) {
-          ripple.age = -10;
-          ripple.str = 0;
-        }
-
-        rippleData[index * 4] = ripple.x;
-        rippleData[index * 4 + 1] = ripple.y;
-        rippleData[index * 4 + 2] = ripple.age;
-        rippleData[index * 4 + 3] = ripple.str;
+      for (let index = ripples.length - 1; index >= 0; index -= 1) {
+        ripples[index].age += delta;
+        if (ripples[index].age > 2) ripples.splice(index, 1);
       }
+      for (let index = 0; index < RIPPLE_MAX; index += 1) {
+        const ripple = ripples[index];
+        rippleData[index * 4] = ripple?.x ?? 0;
+        rippleData[index * 4 + 1] = ripple?.y ?? 0;
+        rippleData[index * 4 + 2] = ripple?.age ?? -10;
+        rippleData[index * 4 + 3] = ripple?.str ?? 0;
+      }
+      uniforms.uRippleCount.value = ripples.length;
       rippleTexture.needsUpdate = true;
+    };
+
+    const triggerBassRipples = (strength: number) => {
+      const count = strength > 0.76 ? 3 : strength > 0.6 ? 2 : 1;
+      for (let index = 0; index < count; index += 1) {
+        const region = RIPPLE_REGIONS[ripplePatternCursor % RIPPLE_REGIONS.length];
+        ripplePatternCursor += 1;
+        const jitterX = (rippleRandom() - 0.5) * 0.28;
+        const jitterY = (rippleRandom() - 0.5) * 0.22;
+        pushRipple(region[0] + jitterX, region[1] + jitterY, clampRange(0.38 + strength * 0.58 - index * 0.06, 0.35, 0.96));
+      }
+    };
+
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+    coverControllerRef.current = (url, nextSeed) => {
+      const request = ++coverRequest;
+      activeSeed = nextSeed;
+      rippleRandom = randomFrom(hashSeed(String(nextSeed) + "-ripples"));
+      loader.load(
+        url,
+        (texture) => {
+          if (disposed || request !== coverRequest) {
+            texture.dispose();
+            return;
+          }
+          texture.minFilter = THREE.LinearFilter;
+          texture.magFilter = THREE.LinearFilter;
+          texture.wrapS = THREE.ClampToEdgeWrapping;
+          texture.wrapT = THREE.ClampToEdgeWrapping;
+          texture.colorSpace = THREE.SRGBColorSpace;
+
+          if (hasLoadedCover) {
+            prevCoverTexture.dispose();
+            prevCoverTexture = coverTexture;
+            uniforms.uPrevCoverTex.value = prevCoverTexture;
+            coverMixProgress = 0;
+            uniforms.uColorMixT.value = 0;
+            triggerBassRipples(0.82);
+          } else {
+            coverTexture.dispose();
+            coverMixProgress = 1;
+            uniforms.uColorMixT.value = 1;
+          }
+
+          coverTexture = texture;
+          uniforms.uCoverTex.value = coverTexture;
+          uniforms.uHasCover.value = 1;
+          uniforms.uBurstAmt.value = Math.max(uniforms.uBurstAmt.value, 0.5);
+          hasLoadedCover = true;
+        },
+        undefined,
+        () => {
+          if (!hasLoadedCover && request === coverRequest) uniforms.uHasCover.value = 0;
+        },
+      );
     };
 
     const render = (now: number) => {
@@ -739,12 +797,17 @@ export default function MineradioParticleField({
       uniforms.uTintStrength.value = active ? 0.08 + bands.energy * 0.18 : 0.16;
       uniforms.uVinylSpin.value = (uniforms.uVinylSpin.value + delta * (0.4 + bands.bass * 0.09)) % (Math.PI * 2);
 
-      if (!reduceMotion && bands.beat > 0.56 && now - lastRippleAt > 260) {
-        lastRippleAt = now;
-        const rippleX = (Math.random() - 0.5) * 1.2;
-        const rippleY = (Math.random() - 0.5) * 0.9;
-        pushRipple(rippleX, rippleY, clampRange(0.35 + bands.beat * 0.62, 0.35, 0.96));
+      if (coverMixProgress < 1) {
+        coverMixProgress = Math.min(1, coverMixProgress + delta / 0.72);
+        uniforms.uColorMixT.value = coverMixProgress * coverMixProgress * (3 - 2 * coverMixProgress);
       }
+
+      const bassRising = bands.bass >= 0.5 && previousBass < 0.5;
+      if (!reduceMotion && bassRising && now - lastRippleAt > 320) {
+        lastRippleAt = now;
+        triggerBassRipples(bands.bass);
+      }
+      previousBass = bands.bass;
       updateRipples(delta);
 
       const targetRotY = active ? Math.sin(elapsed * 0.42) * 0.08 : Math.sin(elapsed * 0.22) * 0.04;
@@ -782,6 +845,7 @@ export default function MineradioParticleField({
 
     const handleMotionChange = () => {
       reduceMotion = reduceQuery.matches;
+      resize();
       window.cancelAnimationFrame(frame);
       last = performance.now();
       frame = window.requestAnimationFrame(render);
@@ -802,6 +866,8 @@ export default function MineradioParticleField({
       window.removeEventListener("blur", handlePointerLeave);
       reduceQuery.removeEventListener("change", handleMotionChange);
       window.cancelAnimationFrame(frame);
+      coverControllerRef.current = null;
+      coverRequest += 1;
       scene.remove(particles);
       scene.remove(bloomParticles);
       geometry.dispose();
@@ -815,6 +881,10 @@ export default function MineradioParticleField({
       renderer.dispose();
       renderer.domElement.remove();
     };
+  }, []);
+
+  useEffect(() => {
+    coverControllerRef.current?.(coverUrl, seed);
   }, [coverUrl, seed]);
 
   return (
