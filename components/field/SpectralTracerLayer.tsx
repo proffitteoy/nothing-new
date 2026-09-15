@@ -17,6 +17,23 @@ const FIELD_PHASES = [0.31, 2.17, 4.02, 5.41, 1.24, 3.52] as const
 const R2_G = 1.324717957244746
 const R2_A1 = 1 / R2_G
 const R2_A2 = 1 / (R2_G * R2_G)
+const DAY_TRACER_COLORS = [
+  [64, 145, 220],
+  [68, 170, 228],
+  [105, 112, 210],
+] as const
+const NIGHT_TRACER_GLOW_COLORS = [
+  [73, 203, 255],
+  [91, 171, 255],
+  [158, 130, 255],
+] as const
+const NIGHT_TRACER_CORE_COLORS = [
+  [232, 250, 255],
+  [211, 237, 255],
+  [229, 221, 255],
+] as const
+
+type TracerColor = readonly [number, number, number]
 
 export type TracerObstacle = {
   left: number
@@ -58,6 +75,16 @@ type LayerRenderer = {
 
 function fract(value: number) {
   return value - Math.floor(value)
+}
+
+function mix(from: number, to: number, amount: number) {
+  return from + (to - from) * amount
+}
+
+function mixColor(from: TracerColor, to: TracerColor, amount: number) {
+  return `rgb(${Math.round(mix(from[0], to[0], amount))}, ${Math.round(
+    mix(from[1], to[1], amount),
+  )}, ${Math.round(mix(from[2], to[2], amount))})`
 }
 
 function seedAt(index: number, width: number, height: number) {
@@ -278,10 +305,13 @@ function createLayerRenderer(
       layer === 0 ? 6.2 : 5.2,
       Math.min(layer === 0 ? 9.5 : 7.5, baseStep),
     )
-    const palette =
-      theme < 0.5
-        ? ["rgba(64,145,220,1)", "rgba(68,170,228,1)", "rgba(105,112,210,1)"]
-        : ["rgba(145,218,255,1)", "rgba(115,192,250,1)", "rgba(184,162,255,1)"]
+    const themeAmount = Math.max(0, Math.min(1, theme))
+    const glowAlpha =
+      alpha * (layer === 0 ? mix(0.075, 0.16, themeAmount) : mix(0.07, 0.18, themeAmount))
+    const glowWidth = layer === 0 ? mix(3.2, 5, themeAmount) : mix(2.8, 4.4, themeAmount)
+    const coreAlpha =
+      alpha * (layer === 0 ? mix(0.22, 0.48, themeAmount) : mix(0.22, 0.58, themeAmount))
+    const coreWidth = layer === 0 ? mix(0.92, 1.18, themeAmount) : mix(1.08, 1.36, themeAmount)
 
     context.lineCap = "round"
     context.lineJoin = "round"
@@ -297,14 +327,23 @@ function createLayerRenderer(
       }
 
       context.globalCompositeOperation = "lighter"
-      context.strokeStyle = palette[bucket]
-      context.globalAlpha = alpha * (layer === 0 ? 0.075 + theme * 0.025 : 0.07 + theme * 0.035)
-      context.lineWidth = layer === 0 ? 3.2 : 2.8
+      context.strokeStyle = mixColor(
+        DAY_TRACER_COLORS[bucket],
+        NIGHT_TRACER_GLOW_COLORS[bucket],
+        themeAmount,
+      )
+      context.globalAlpha = glowAlpha
+      context.lineWidth = glowWidth
       context.stroke(path)
 
       context.globalCompositeOperation = "source-over"
-      context.globalAlpha = alpha * (layer === 0 ? 0.22 + theme * 0.08 : 0.22 + theme * 0.1)
-      context.lineWidth = layer === 0 ? 0.92 : 1.08
+      context.strokeStyle = mixColor(
+        DAY_TRACER_COLORS[bucket],
+        NIGHT_TRACER_CORE_COLORS[bucket],
+        themeAmount,
+      )
+      context.globalAlpha = coreAlpha
+      context.lineWidth = coreWidth
       context.stroke(path)
     }
 
