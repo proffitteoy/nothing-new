@@ -10,6 +10,7 @@ title: 项目文档
 
 - [[obsidian-sync|Obsidian 同步到博客]]：写作源、同步规则、审阅流程和删除行为。
 - [[image-performance-audit|图片加载性能审计]]：记录加载优先级、响应式传输、私有 Blob 缓存和待部署验证项。
+- [[music-particle-medium-restoration|音乐粒子中等能力恢复规格]]：锁定真实频谱、自动预设、交互相机与 CPU 封面分析的未来接口、降级和性能门槛。
 - [[third-party-notices|第三方代码与授权说明]]：记录项目中直接引入或改造的第三方代码来源和授权边界。
 - `scripts/README.md`：Node 脚本、Windows 双击入口和旧上传脚本说明。
 - `README.md`：仓库目录职责、常用命令和部署约定。
