@@ -239,8 +239,8 @@ export default function FieldScene() {
     const desktopQuery = window.matchMedia("(min-width: 768px)")
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
     const ripples: Ripple[] = []
+    let obstacleElements: HTMLElement[] = []
     let obstacles: TracerObstacle[] = []
-    let lastObstacleSample = -1000
     let tracerController: ReturnType<typeof createSpectralTracerController> = null
     let width = 0
     let height = 0
@@ -279,13 +279,14 @@ export default function FieldScene() {
       resize2dCanvas(speciesCanvas, speciesContext, normalRatio)
       resize2dCanvas(interactionCanvas, interactionContext, fieldRatio)
       tracerController?.resize(width, height, fieldRatio)
-      lastObstacleSample = -1000
     }
 
-    const sampleObstacles = (now: number) => {
-      if (now - lastObstacleSample < 350) return
-      lastObstacleSample = now
-      obstacles = Array.from(document.querySelectorAll<HTMLElement>("[data-field-obstacle]"))
+    const refreshObstacleElements = () => {
+      obstacleElements = Array.from(document.querySelectorAll<HTMLElement>("[data-field-obstacle]"))
+    }
+
+    const sampleObstacles = () => {
+      obstacles = obstacleElements
         .map((element) => element.getBoundingClientRect())
         .filter(
           (rect) =>
@@ -506,7 +507,7 @@ export default function FieldScene() {
 
       const time = (now - startTime) / 1000
       const spectralTime = time * SPECTRAL_PLAYBACK_RATE
-      sampleObstacles(now)
+      if (fieldBlend > 0.001) sampleObstacles()
       drawSpecies(time, spectralTime, quality.modeCount)
 
       if (fieldBlend > 0.001 && !tracerController) {
@@ -592,10 +593,6 @@ export default function FieldScene() {
       renderFrame(performance.now(), true)
     }
 
-    const handleScroll = () => {
-      lastObstacleSample = -1000
-    }
-
     const handleClick = (event: MouseEvent) => {
       if (modeRef.current !== "field") {
         ripples.push({
@@ -608,8 +605,16 @@ export default function FieldScene() {
       }
     }
 
+    const obstacleObserver = new MutationObserver(refreshObstacleElements)
+    obstacleObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-field-obstacle"],
+      childList: true,
+      subtree: true,
+    })
+    refreshObstacleElements()
+
     window.addEventListener("resize", handleResize)
-    window.addEventListener("scroll", handleScroll, { passive: true })
     window.addEventListener("click", handleClick)
     document.addEventListener("visibilitychange", syncAnimation)
     desktopQuery.addEventListener("change", syncAnimation)
@@ -619,8 +624,8 @@ export default function FieldScene() {
     return () => {
       stopAnimation()
       tracerController?.destroy()
+      obstacleObserver.disconnect()
       window.removeEventListener("resize", handleResize)
-      window.removeEventListener("scroll", handleScroll)
       window.removeEventListener("click", handleClick)
       document.removeEventListener("visibilitychange", syncAnimation)
       desktopQuery.removeEventListener("change", syncAnimation)

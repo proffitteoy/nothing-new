@@ -10,6 +10,8 @@ export const SPECTRAL_TRACER_MAX_OBSTACLES = 16
 
 const BACKGROUND_RENDER_CAPACITY = 1280
 const FOREGROUND_RENDER_CAPACITY = 72
+const BACKGROUND_OBSTACLE_CLEARANCE = 36
+const FOREGROUND_OBSTACLE_CLEARANCE = 4
 const FIELD_KX = [1.0, 2.0, 3.0, 1.0, 4.0, 2.0] as const
 const FIELD_KY = [2.0, -1.0, 1.0, -3.0, 2.0, 5.0] as const
 const FIELD_AMPLITUDES = [1.0, 0.72, 0.5, 0.38, 0.26, 0.18] as const
@@ -221,26 +223,86 @@ function sampleVelocityGrid(grid: VelocityGrid, x: number, y: number) {
   return { x: vx / magnitude, y: vy / magnitude }
 }
 
-function appendStreamline(
+function circleIntersectsObstacle(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  obstacle: TracerObstacle,
+  clearance: number,
+) {
+  const closestX = Math.max(
+    obstacle.left - clearance,
+    Math.min(centerX, obstacle.right + clearance),
+  )
+  const closestY = Math.max(
+    obstacle.top - clearance,
+    Math.min(centerY, obstacle.bottom + clearance),
+  )
+  const deltaX = centerX - closestX
+  const deltaY = centerY - closestY
+  return deltaX * deltaX + deltaY * deltaY <= radius * radius
+}
+
+function appendObstacleAwareStreamline(
   path: Path2D,
   seedX: number,
   seedY: number,
-  direction: 1 | -1,
   steps: number,
   stepLength: number,
   grid: VelocityGrid,
+  obstacles: TracerObstacle[],
+  obstacleClearance: number,
+  strokeRadius: number,
+  points: Float32Array,
 ) {
-  let x = seedX
-  let y = seedY
-  path.moveTo(x, y)
+  const pointsPerDirection = steps * 2
+  let forwardCount = 0
+  let backwardCount = 0
+  let maxRadiusSquared = 0
 
-  for (let step = 0; step < steps; step++) {
-    const velocity = sampleVelocityGrid(grid, x, y)
-    x += velocity.x * stepLength * direction
-    y += velocity.y * stepLength * direction
+  for (let directionIndex = 0; directionIndex < 2; directionIndex++) {
+    const direction = directionIndex === 0 ? 1 : -1
+    const offset = directionIndex * pointsPerDirection
+    let count = 0
+    let x = seedX
+    let y = seedY
 
-    if (x < -24 || x > grid.width + 24 || y < -24 || y > grid.height + 24) break
-    path.lineTo(x, y)
+    for (let step = 0; step < steps; step++) {
+      const velocity = sampleVelocityGrid(grid, x, y)
+      x += velocity.x * stepLength * direction
+      y += velocity.y * stepLength * direction
+
+      if (x < -24 || x > grid.width + 24 || y < -24 || y > grid.height + 24) break
+      points[offset + count * 2] = x
+      points[offset + count * 2 + 1] = y
+      count++
+
+      const deltaX = x - seedX
+      const deltaY = y - seedY
+      maxRadiusSquared = Math.max(maxRadiusSquared, deltaX * deltaX + deltaY * deltaY)
+    }
+
+    if (directionIndex === 0) forwardCount = count
+    else backwardCount = count
+  }
+
+  // The rendered chords and their stroke stay inside this center-fixed support disk.
+  const supportRadius = Math.sqrt(maxRadiusSquared) + strokeRadius
+  if (
+    obstacles.some((obstacle) =>
+      circleIntersectsObstacle(seedX, seedY, supportRadius, obstacle, obstacleClearance),
+    )
+  ) {
+    return
+  }
+
+  for (let directionIndex = 0; directionIndex < 2; directionIndex++) {
+    const count = directionIndex === 0 ? forwardCount : backwardCount
+    const offset = directionIndex * pointsPerDirection
+    path.moveTo(seedX, seedY)
+    for (let pointIndex = 0; pointIndex < count; pointIndex++) {
+      path.lineTo(points[offset + pointIndex * 2], points[offset + pointIndex * 2 + 1])
+    }
   }
 }
 
@@ -257,6 +319,7 @@ function createLayerRenderer(
   let logicalWidth = 1
   let logicalHeight = 1
   let logicalPixelRatio = 1
+  const streamlinePoints = new Float32Array(40)
 
   const resize = (width: number, height: number, pixelRatio: number) => {
     logicalWidth = Math.max(1, width)
@@ -312,6 +375,10 @@ function createLayerRenderer(
     const coreAlpha =
       alpha * (layer === 0 ? mix(0.22, 0.48, themeAmount) : mix(0.22, 0.58, themeAmount))
     const coreWidth = layer === 0 ? mix(0.92, 1.18, themeAmount) : mix(1.08, 1.36, themeAmount)
+    const activeObstacles = obstacles.slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)
+    const obstacleClearance =
+      layer === 0 ? BACKGROUND_OBSTACLE_CLEARANCE : FOREGROUND_OBSTACLE_CLEARANCE
+    const strokeRadius = Math.max(glowWidth, coreWidth) * 0.5 + 1
 
     context.lineCap = "round"
     context.lineJoin = "round"
@@ -322,8 +389,18 @@ function createLayerRenderer(
       for (let localIndex = bucket; localIndex < count; localIndex += 3) {
         const index = parameterOffset + localIndex
         const seed = seedAt(index, width, height)
-        appendStreamline(path, seed.x, seed.y, 1, steps, stepLength, velocityGrid)
-        appendStreamline(path, seed.x, seed.y, -1, steps, stepLength, velocityGrid)
+        appendObstacleAwareStreamline(
+          path,
+          seed.x,
+          seed.y,
+          steps,
+          stepLength,
+          velocityGrid,
+          activeObstacles,
+          obstacleClearance,
+          strokeRadius,
+          streamlinePoints,
+        )
       }
 
       context.globalCompositeOperation = "lighter"
@@ -349,30 +426,6 @@ function createLayerRenderer(
 
     context.globalAlpha = 1
     context.globalCompositeOperation = "source-over"
-
-    if (layer === 0) {
-      for (const obstacle of obstacles.slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)) {
-        // Keep the backdrop blur from sampling nearby trails into the card.
-        const padding = 36
-        context.clearRect(
-          obstacle.left - padding,
-          obstacle.top - padding,
-          obstacle.right - obstacle.left + padding * 2,
-          obstacle.bottom - obstacle.top + padding * 2,
-        )
-      }
-    } else {
-      for (const obstacle of obstacles.slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)) {
-        // Cover the stroked edge without creating a visible empty halo.
-        const padding = 4
-        context.clearRect(
-          obstacle.left - padding,
-          obstacle.top - padding,
-          obstacle.right - obstacle.left + padding * 2,
-          obstacle.bottom - obstacle.top + padding * 2,
-        )
-      }
-    }
   }
 
   const destroy = () => {
