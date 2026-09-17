@@ -2,17 +2,24 @@
 
 import Image from "next/image"
 import { useState } from "react"
+import { useNearViewport } from "../../lib/image-loading"
 
 export default function AnimeCoverImage({
   src,
   alt,
-  eager,
+  immediate,
+  nearViewportMarginPx,
 }: {
   src: string | null
   alt: string
-  eager: boolean
+  immediate: boolean
+  nearViewportMarginPx: number
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const { elementRef, shouldLoad } = useNearViewport<HTMLSpanElement>(
+    immediate,
+    nearViewportMarginPx,
+  )
   const failed = failedSrc === src
 
   if (!src || failed) {
@@ -24,16 +31,20 @@ export default function AnimeCoverImage({
   }
 
   return (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      sizes="(max-width: 639px) 24vw, (max-width: 1023px) 19vw, 170px"
-      loading={eager ? "eager" : "lazy"}
-      decoding="async"
-      referrerPolicy="no-referrer"
-      onError={() => setFailedSrc(src)}
-      className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
-    />
+    <span ref={elementRef} className="absolute inset-0">
+      {shouldLoad && (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="(max-width: 639px) 24vw, (max-width: 1023px) 19vw, 170px"
+          loading={immediate ? "eager" : "lazy"}
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={() => setFailedSrc(src)}
+          className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
+        />
+      )}
+    </span>
   )
 }

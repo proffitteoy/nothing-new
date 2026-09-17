@@ -21,6 +21,7 @@ import Navbar from "../../components/Navbar"
 import MineradioParticleField from "../../components/MineradioParticleField"
 import PageTransition from "../../components/PageTransition"
 import { useMusic, type MusicSong } from "../../components/MusicProvider"
+import { getSizedMusicCoverUrl, isNeteaseMusicCoverUrl } from "../../lib/image-loading"
 
 const fallbackCover =
   "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1000&auto=format&fit=crop"
@@ -67,7 +68,7 @@ export default function MusicClient() {
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
   const reduceMotion = useReducedMotion()
 
-  const songCover = getCover(currentSong)
+  const songCover = getSizedMusicCoverUrl(getCover(currentSong), 256)
 
   useEffect(() => {
     if (!queueOpen) return
@@ -205,6 +206,10 @@ export default function MusicClient() {
             <img
               src={songCover}
               alt=""
+              width={44}
+              height={44}
+              decoding="async"
+              crossOrigin={isNeteaseMusicCoverUrl(songCover) ? "anonymous" : undefined}
               className="h-11 w-11 shrink-0 rounded-xl object-cover shadow-md"
               referrerPolicy="no-referrer"
             />
@@ -414,6 +419,7 @@ export default function MusicClient() {
                 <div className="flex flex-col gap-2">
                   {playlist.map((song, index) => {
                     const isActive = index === currentIndex
+                    const queueCover = getSizedMusicCoverUrl(getCover(song), isActive ? 256 : 128)
                     return (
                       <motion.button
                         type="button"
@@ -433,8 +439,15 @@ export default function MusicClient() {
                       >
                         <span className="relative h-12 w-12 overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800">
                           <img
-                            src={getCover(song)}
+                            src={queueCover}
                             alt={getTitle(song) + " 封面"}
+                            width={48}
+                            height={48}
+                            loading={isActive ? undefined : "lazy"}
+                            decoding="async"
+                            crossOrigin={
+                              isNeteaseMusicCoverUrl(queueCover) ? "anonymous" : undefined
+                            }
                             className="h-12 w-12 object-cover"
                             referrerPolicy="no-referrer"
                           />

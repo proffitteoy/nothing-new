@@ -102,6 +102,8 @@ export default function FriendsBoard() {
                       <img
                         src={avatarSrc}
                         alt={`${friend.name} 头像`}
+                        width={64}
+                        height={64}
                         loading="lazy"
                         decoding="async"
                         referrerPolicy="no-referrer"

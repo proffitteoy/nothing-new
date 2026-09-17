@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { useMusic } from "./MusicProvider"
 // 🌟 核心引入：Next.js 路由钩子
 import { useRouter } from "next/navigation"
+import { getSizedMusicCoverUrl, isNeteaseMusicCoverUrl } from "../lib/image-loading"
 
 const formatTime = (time: number) => {
   if (!time || isNaN(time)) return "00:00"
@@ -120,6 +121,8 @@ export default function CloudPlayer() {
     )
   }
 
+  const currentCover = getSizedMusicCoverUrl(currentSong.cover || currentSong.pic || "", 256)
+
   // 🌟 拦截事件防冒泡的专属函数
   const safeTogglePlay = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -170,8 +173,12 @@ export default function CloudPlayer() {
             }}
           >
             <img
-              src={currentSong.cover}
+              src={currentCover}
               alt="专辑封面"
+              width={80}
+              height={80}
+              decoding="async"
+              crossOrigin={isNeteaseMusicCoverUrl(currentCover) ? "anonymous" : undefined}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />

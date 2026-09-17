@@ -5,16 +5,30 @@ import Image from "next/image"
 import { useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowRight, FolderOpen, Search } from "lucide-react"
-import { useImageEagerBudget } from "@/lib/image-loading"
+import {
+  useImageLoadingPolicy,
+  useNearViewport,
+  type ImageLoadingPolicy,
+} from "@/lib/image-loading"
 import type { ChatterItem } from "@/lib/notes/chatter"
 
 function isSiteImage(src: string) {
   return src.startsWith("/") && !src.startsWith("//")
 }
 
+function isNextOptimizableFolderCover(src: string) {
+  if (isSiteImage(src)) return true
+  try {
+    const url = new URL(src)
+    return url.protocol === "https:" && url.hostname === "bu.dusays.com"
+  } catch {
+    return false
+  }
+}
+
 export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
   const [searchQuery, setSearchQuery] = useState("")
-  const eagerCount = useImageEagerBudget("chatter")
+  const loadingPolicy = useImageLoadingPolicy("chatter")
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase("zh-CN")
@@ -62,30 +76,79 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
                       .length
                   : -1
               return (
-                <motion.article
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.22 }}
+                <ChatterCard
                   key={item.route}
-                  className="mb-3 break-inside-avoid md:mb-6"
-                >
+                  item={item}
+                  imageIndex={imageIndex}
+                  loadingPolicy={loadingPolicy}
+                />
+              )
+            })}
+          </AnimatePresence>
+        </motion.div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-white/60 bg-white/35 p-10 text-center text-sm font-medium text-slate-500 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35 dark:text-slate-400">
+          没有找到符合当前搜索的内容。
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ChatterCard({
+  item,
+  imageIndex,
+  loadingPolicy,
+}: {
+  item: ChatterItem
+  imageIndex: number
+  loadingPolicy: ImageLoadingPolicy
+}) {
+  const immediate = item.kind === "note" && imageIndex < loadingPolicy.immediateBudget
+  const { elementRef, shouldLoad } = useNearViewport<HTMLElement>(
+    immediate,
+    loadingPolicy.nearViewportMarginPx,
+  )
+  const lowPriorityImmediate = immediate && imageIndex > 0
+
+  return (
+    <motion.article
+      ref={elementRef}
+      layout
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.22 }}
+      className="mb-3 break-inside-avoid md:mb-6"
+    >
                   {item.kind === "folder" ? (
                     <Link
                       href={item.route}
                       className="group relative flex min-h-64 flex-col overflow-hidden rounded-2xl border border-white/55 bg-slate-900 p-5 text-white shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 sm:p-6 md:rounded-[2rem]"
                     >
-                      {/* Folder covers may come from external defaults or generated note assets without dimensions. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.cover}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        referrerPolicy={isSiteImage(item.cover) ? undefined : "no-referrer"}
-                        className="absolute inset-0 h-full w-full object-cover opacity-60 transition duration-1000 group-hover:scale-105 group-hover:opacity-70"
-                      />
+                      {shouldLoad &&
+                        (isNextOptimizableFolderCover(item.cover) ? (
+                          <Image
+                            src={item.cover}
+                            alt=""
+                            fill
+                            sizes="(max-width: 1023px) calc((100vw - 2.25rem) / 2), 390px"
+                            loading="lazy"
+                            decoding="async"
+                            className="object-cover opacity-60 transition duration-1000 group-hover:scale-105 group-hover:opacity-70"
+                          />
+                        ) : (
+                          // Unknown third-party folder covers intentionally bypass Next optimization.
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.cover}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            referrerPolicy="no-referrer"
+                            className="absolute inset-0 h-full w-full object-cover opacity-60 transition duration-1000 group-hover:scale-105 group-hover:opacity-70"
+                          />
+                        ))}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-indigo-950/20" />
                       <div
                         aria-hidden="true"
@@ -121,36 +184,55 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
                       href={item.route}
                       className="group relative block overflow-hidden rounded-2xl border border-white/55 bg-slate-800 shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/70 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 md:rounded-[2rem]"
                     >
-                      {isSiteImage(item.cover) && item.coverDimensions ? (
-                        <Image
-                          src={item.cover}
-                          alt=""
-                          width={item.coverDimensions.width}
-                          height={item.coverDimensions.height}
-                          sizes="(max-width: 1023px) calc((100vw - 2.25rem) / 2), 390px"
-                          loading={imageIndex < eagerCount ? "eager" : "lazy"}
-                          fetchPriority={
-                            imageIndex > 0 && imageIndex < eagerCount ? "low" : undefined
-                          }
-                          decoding="async"
-                          className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
-                        />
-                      ) : (
+                      {item.coverDimensions ? (
+                        <span
+                          className="relative block w-full bg-slate-800"
+                          style={{
+                            aspectRatio: `${item.coverDimensions.width} / ${item.coverDimensions.height}`,
+                          }}
+                        >
+                          {shouldLoad &&
+                            (isSiteImage(item.cover) ? (
+                              <Image
+                                src={item.cover}
+                                alt=""
+                                fill
+                                sizes="(max-width: 1023px) calc((100vw - 2.25rem) / 2), 390px"
+                                loading={immediate ? "eager" : "lazy"}
+                                fetchPriority={lowPriorityImmediate ? "low" : undefined}
+                                decoding="async"
+                                className="object-cover opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
+                              />
+                            ) : (
+                              // External images intentionally keep their original URL and referrer policy.
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={item.cover}
+                                alt=""
+                                width={item.coverDimensions.width}
+                                height={item.coverDimensions.height}
+                                loading={immediate ? "eager" : "lazy"}
+                                fetchPriority={lowPriorityImmediate ? "low" : undefined}
+                                decoding="async"
+                                referrerPolicy="no-referrer"
+                                className="absolute inset-0 h-full w-full object-cover opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
+                              />
+                            ))}
+                        </span>
+                      ) : shouldLoad ? (
                         // External images and legacy artifacts without dimensions intentionally bypass Next optimization.
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={item.cover}
                           alt=""
-                          width={item.coverDimensions?.width}
-                          height={item.coverDimensions?.height}
-                          loading={imageIndex < eagerCount ? "eager" : "lazy"}
-                          fetchPriority={
-                            imageIndex > 0 && imageIndex < eagerCount ? "low" : undefined
-                          }
+                          loading={immediate ? "eager" : "lazy"}
+                          fetchPriority={lowPriorityImmediate ? "low" : undefined}
                           decoding="async"
                           referrerPolicy={isSiteImage(item.cover) ? undefined : "no-referrer"}
                           className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
                         />
+                      ) : (
+                        <span className="block aspect-[4/3] w-full bg-slate-800" aria-hidden="true" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/10 to-transparent" />
                       <h2 className="absolute inset-x-0 bottom-0 line-clamp-2 break-words p-3 text-sm font-black leading-tight text-white drop-shadow-lg transition-colors group-hover:text-indigo-200 sm:p-5 sm:text-lg md:p-6 md:text-xl">
@@ -158,16 +240,6 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
                       </h2>
                     </Link>
                   )}
-                </motion.article>
-              )
-            })}
-          </AnimatePresence>
-        </motion.div>
-      ) : (
-        <div className="rounded-3xl border border-dashed border-white/60 bg-white/35 p-10 text-center text-sm font-medium text-slate-500 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35 dark:text-slate-400">
-          没有找到符合当前搜索的内容。
-        </div>
-      )}
-    </div>
+    </motion.article>
   )
 }

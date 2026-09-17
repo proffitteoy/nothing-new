@@ -1,22 +1,66 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
-import { getImageEagerBudget } from "./image-loading"
+import {
+  getImageLoadingPolicy,
+  getSizedMusicCoverUrl,
+  isNeteaseMusicCoverUrl,
+} from "./image-loading"
 
-describe("image eager budgets", () => {
-  it("uses separate mobile and desktop anime budgets", () => {
-    assert.equal(getImageEagerBudget("anime", { desktop: false }), 4)
-    assert.equal(getImageEagerBudget("anime", { desktop: true }), 6)
+describe("image loading policies", () => {
+  it("uses separate mobile and desktop anime policies", () => {
+    assert.deepEqual(getImageLoadingPolicy("anime", { desktop: false }), {
+      immediateBudget: 4,
+      nearViewportMarginPx: 256,
+    })
+    assert.deepEqual(getImageLoadingPolicy("anime", { desktop: true }), {
+      immediateBudget: 6,
+      nearViewportMarginPx: 320,
+    })
   })
 
   it("reduces eager work on Save-Data and 2G connections", () => {
-    assert.equal(getImageEagerBudget("anime", { desktop: true, saveData: true }), 2)
-    assert.equal(getImageEagerBudget("anime", { desktop: false, effectiveType: "slow-2g" }), 2)
-    assert.equal(getImageEagerBudget("chatter", { desktop: false, effectiveType: "2g" }), 1)
+    assert.deepEqual(getImageLoadingPolicy("anime", { desktop: true, saveData: true }), {
+      immediateBudget: 2,
+      nearViewportMarginPx: 0,
+    })
+    assert.deepEqual(
+      getImageLoadingPolicy("anime", { desktop: false, effectiveType: "slow-2g" }),
+      { immediateBudget: 2, nearViewportMarginPx: 0 },
+    )
+    assert.deepEqual(
+      getImageLoadingPolicy("chatter", { desktop: false, effectiveType: "2g" }),
+      { immediateBudget: 1, nearViewportMarginPx: 0 },
+    )
   })
 
   it("keeps chatter startup at the two-column mobile minimum", () => {
-    assert.equal(getImageEagerBudget("chatter", { desktop: false }), 2)
-    assert.equal(getImageEagerBudget("chatter", { desktop: true }), 2)
+    assert.deepEqual(getImageLoadingPolicy("chatter", { desktop: false }), {
+      immediateBudget: 2,
+      nearViewportMarginPx: 256,
+    })
+    assert.deepEqual(getImageLoadingPolicy("chatter", { desktop: true }), {
+      immediateBudget: 2,
+      nearViewportMarginPx: 320,
+    })
+  })
+})
+
+describe("music cover sizing", () => {
+  it("adds and replaces NetEase image sizing parameters", () => {
+    const cover = "https://p2.music.126.net/path/cover.jpg"
+    assert.equal(getSizedMusicCoverUrl(cover, 256), `${cover}?param=256y256`)
+    assert.equal(
+      getSizedMusicCoverUrl(`${cover}?param=64y64&foo=bar`, 128),
+      `${cover}?param=128y128&foo=bar`,
+    )
+  })
+
+  it("leaves other and invalid URLs unchanged", () => {
+    const external = "https://images.example/cover.jpg"
+    assert.equal(getSizedMusicCoverUrl(external, 256), external)
+    assert.equal(getSizedMusicCoverUrl("not a url", 128), "not a url")
+    assert.equal(isNeteaseMusicCoverUrl(external), false)
+    assert.equal(isNeteaseMusicCoverUrl("https://music.126.net/cover.jpg"), true)
   })
 })

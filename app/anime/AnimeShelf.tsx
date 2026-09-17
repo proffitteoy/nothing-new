@@ -10,7 +10,7 @@ import {
   type AnimeLatestPointer,
   type AnimeSnapshot,
 } from "../../lib/anime/schema"
-import { useImageEagerBudget } from "../../lib/image-loading"
+import { useImageLoadingPolicy } from "../../lib/image-loading"
 import AnimeCoverImage from "./AnimeCoverImage"
 import { groupAnimeByScore, sortAnimeByScore } from "./collection"
 
@@ -127,7 +127,10 @@ export default function AnimeShelf() {
 }
 
 function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
-  const eagerCount = useImageEagerBudget("anime")
+  const loadingPolicy = useImageLoadingPolicy("anime")
+  const [hashTarget, setHashTarget] = useState(() =>
+    typeof window === "undefined" ? "" : window.location.hash,
+  )
   const watching = useMemo(
     () => snapshot.items.filter((item) => item.status === "watching"),
     [snapshot.items],
@@ -141,6 +144,31 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
   const visibleWatching = watching.slice(0, watchingBatch.count)
   const visibleWatched = watched.slice(0, watchedBatch.count)
   const watchedGroups = useMemo(() => groupAnimeByScore(visibleWatched), [visibleWatched])
+  const watchedGroupsWithOffsets = useMemo(
+    () =>
+      watchedGroups.map((group, index) => ({
+        group,
+        offset: watchedGroups
+          .slice(0, index)
+          .reduce((count, previousGroup) => count + previousGroup.items.length, 0),
+      })),
+    [watchedGroups],
+  )
+  const prioritizeWatched = hashTarget === "#watched"
+
+  useEffect(() => {
+    const updateHashTarget = () => setHashTarget(window.location.hash)
+    window.addEventListener("hashchange", updateHashTarget)
+    return () => window.removeEventListener("hashchange", updateHashTarget)
+  }, [])
+
+  useEffect(() => {
+    if (hashTarget !== "#watched") return
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("watched")?.scrollIntoView()
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [hashTarget])
 
   return (
     <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
@@ -210,7 +238,11 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
           icon="play"
         />
         {visibleWatching.length > 0 ? (
-          <AnimeGrid items={visibleWatching} eagerCount={eagerCount} />
+          <AnimeGrid
+            items={visibleWatching}
+            immediateCount={prioritizeWatched ? 0 : loadingPolicy.immediateBudget}
+            nearViewportMarginPx={loadingPolicy.nearViewportMarginPx}
+          />
         ) : (
           <EmptyShelf message="这里暂时没有正在看的故事" />
         )}
@@ -231,7 +263,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
         />
         {watchedGroups.length > 0 ? (
           <div className="space-y-12">
-            {watchedGroups.map((group) => {
+            {watchedGroupsWithOffsets.map(({ group, offset }) => {
               const groupId = group.score === null ? "anime-unrated" : `anime-rating-${group.score}`
               return (
                 <section key={groupId} aria-labelledby={groupId}>
@@ -259,7 +291,16 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                     </div>
                     <span className="h-px flex-1 bg-gradient-to-r from-slate-300/70 to-transparent dark:from-white/15" />
                   </div>
-                  <AnimeGrid items={group.items} showRating />
+                  <AnimeGrid
+                    items={group.items}
+                    showRating
+                    immediateCount={
+                      prioritizeWatched
+                        ? Math.max(0, loadingPolicy.immediateBudget - offset)
+                        : 0
+                    }
+                    nearViewportMarginPx={loadingPolicy.nearViewportMarginPx}
+                  />
                 </section>
               )
             })}
@@ -312,11 +353,13 @@ function SectionHeading({
 function AnimeGrid({
   items,
   showRating = false,
-  eagerCount = 0,
+  immediateCount = 0,
+  nearViewportMarginPx,
 }: {
   items: AnimeItem[]
   showRating?: boolean
-  eagerCount?: number
+  immediateCount?: number
+  nearViewportMarginPx: number
 }) {
   return (
     <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-5 sm:gap-x-3 sm:gap-y-6 lg:grid-cols-6 lg:gap-x-4 lg:gap-y-8">
@@ -331,7 +374,12 @@ function AnimeGrid({
             className="group min-w-0"
           >
             <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/55 bg-slate-200/70 shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl dark:border-white/10 dark:bg-slate-800/70 sm:rounded-2xl">
-              <AnimeCoverImage src={anime.cover} alt={`${title}封面`} eager={index < eagerCount} />
+              <AnimeCoverImage
+                src={anime.cover}
+                alt={`${title}封面`}
+                immediate={index < immediateCount}
+                nearViewportMarginPx={nearViewportMarginPx}
+              />
               <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-white/20 opacity-70 transition-opacity group-hover:opacity-40" />
               <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20 sm:rounded-2xl" />
               {showRating && (

@@ -3,16 +3,17 @@
 import { usePathname } from 'next/navigation';
 import { useMusic } from './MusicProvider';
 import { motion } from 'framer-motion';
+import { getSizedMusicCoverUrl, isNeteaseMusicCoverUrl } from '../lib/image-loading';
 
 export default function FloatingPlayer() {
   const pathname = usePathname();
   const { currentSong, isPlaying, togglePlay, nextSong, currentLyric, isLoading } = useMusic();
 
-  // 这里只拦截还没有初始化的情况，不拦截首页
+  if (pathname === '/' || pathname === '/music') return null;
+
   if (isLoading || !currentSong) return null;
 
-  // 【核心修复】：判断是否在首页。在首页时我们让它隐身，但不销毁它！
-  const isHidden = pathname === '/' || pathname === '/music';
+  const currentCover = getSizedMusicCoverUrl(currentSong.cover || currentSong.pic || '', 256);
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999]" style={{ pointerEvents: 'none' }}>
@@ -20,11 +21,10 @@ export default function FloatingPlayer() {
         drag
         dragMomentum={false} // 取消惯性
         style={{ touchAction: 'none' }}
-        // 【核心魔法】：使用 framer-motion 平滑控制它的隐身与显现，并且动态控制点击穿透
         animate={{
-          opacity: isHidden ? 0 : 1,
-          scale: isHidden ? 0.8 : 1,
-          pointerEvents: isHidden ? 'none' : 'auto',
+          opacity: 1,
+          scale: 1,
+          pointerEvents: 'auto',
         }}
         initial={false}
         transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -36,7 +36,16 @@ export default function FloatingPlayer() {
           className="w-10 h-10 rounded-full border border-white/50 shadow-sm flex-shrink-0 overflow-hidden relative animate-[spin_6s_linear_infinite] pointer-events-none"
           style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
         >
-          <img src={currentSong.cover} alt="专辑封面" className="w-full h-full object-cover" />
+          <img
+            src={currentCover}
+            alt="专辑封面"
+            width={40}
+            height={40}
+            decoding="async"
+            crossOrigin={isNeteaseMusicCoverUrl(currentCover) ? 'anonymous' : undefined}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white/80 backdrop-blur-sm rounded-full shadow-inner"></div>
         </div>
