@@ -4,6 +4,11 @@ import ChatterBoard from "@/components/ChatterBoard"
 import Navbar from "@/components/Navbar"
 import PageTransition from "@/components/PageTransition"
 import { buildChatterItems } from "@/lib/notes/chatter"
+import {
+  NATIVE_IMAGE_LAB_CONFIG,
+  resolveImageLabConfig,
+  type ImageLabSearchParams,
+} from "@/lib/image-loading-lab"
 import { getNoteManifest, getSectionNotes } from "@/lib/notes/server"
 import { siteConfig } from "@/siteConfig"
 
@@ -12,7 +17,15 @@ export const metadata: Metadata = {
   description: "按最后修改时间整理的杂谈与项目记录。",
 }
 
-export default async function ChatterPage() {
+export default async function ChatterPage({
+  searchParams,
+}: {
+  searchParams: Promise<ImageLabSearchParams>
+}) {
+  const imageLab =
+    process.env.IMAGE_LOADING_LAB === "1"
+      ? resolveImageLabConfig(await searchParams, true)
+      : NATIVE_IMAGE_LAB_CONFIG
   const [chatterNotes, manifest] = await Promise.all([
     getSectionNotes("chatter"),
     getNoteManifest(),
@@ -23,7 +36,7 @@ export default async function ChatterPage() {
     <div className="relative min-h-screen pb-10">
       <Navbar />
       <PageTransition>
-        <ChatterBoard items={items} />
+        <ChatterBoard items={items} imageLab={imageLab} />
       </PageTransition>
     </div>
   )

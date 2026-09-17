@@ -7,15 +7,15 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowRight, FolderOpen, Search } from "lucide-react"
 import {
   useImageLoadingPolicy,
-  useNearViewport,
   type ImageLoadingPolicy,
 } from "@/lib/image-loading"
+import type { ImageLabConfig } from "@/lib/image-loading-lab"
 import type { ChatterItem } from "@/lib/notes/chatter"
+import { ImageLoadingLabProvider, useImageLoadingLabImage } from "./ImageLoadingLab"
 
 function isSiteImage(src: string) {
   return src.startsWith("/") && !src.startsWith("//")
 }
-
 function isNextOptimizableFolderCover(src: string) {
   if (isSiteImage(src)) return true
   try {
@@ -26,7 +26,25 @@ function isNextOptimizableFolderCover(src: string) {
   }
 }
 
-export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
+export default function ChatterBoard({
+  items,
+  imageLab,
+}: {
+  items: ChatterItem[]
+  imageLab: ImageLabConfig
+}) {
+  return (
+    <ImageLoadingLabProvider
+      key={`${imageLab.enabled}:${imageLab.variant}:${imageLab.runId ?? ""}`}
+      config={imageLab}
+      listKind="chatter"
+    >
+      <ChatterBoardContent items={items} />
+    </ImageLoadingLabProvider>
+  )
+}
+
+function ChatterBoardContent({ items }: { items: ChatterItem[] }) {
   const [searchQuery, setSearchQuery] = useState("")
   const loadingPolicy = useImageLoadingPolicy("chatter")
 
@@ -105,10 +123,11 @@ function ChatterCard({
   loadingPolicy: ImageLoadingPolicy
 }) {
   const immediate = item.kind === "note" && imageIndex < loadingPolicy.immediateBudget
-  const { elementRef, shouldLoad } = useNearViewport<HTMLElement>(
+  const { elementRef, shouldLoad, onLoad, onError } = useImageLoadingLabImage({
+    id: `chatter:${item.route}`,
     immediate,
-    loadingPolicy.nearViewportMarginPx,
-  )
+    nearViewportMarginPx: loadingPolicy.nearViewportMarginPx,
+  })
   const lowPriorityImmediate = immediate && imageIndex > 0
 
   return (
@@ -135,6 +154,8 @@ function ChatterCard({
                             sizes="(max-width: 1023px) calc((100vw - 2.25rem) / 2), 390px"
                             loading="lazy"
                             decoding="async"
+                            onLoad={onLoad}
+                            onError={onError}
                             className="object-cover opacity-60 transition duration-1000 group-hover:scale-105 group-hover:opacity-70"
                           />
                         ) : (
@@ -145,6 +166,8 @@ function ChatterCard({
                             alt=""
                             loading="lazy"
                             decoding="async"
+                            onLoad={onLoad}
+                            onError={onError}
                             referrerPolicy="no-referrer"
                             className="absolute inset-0 h-full w-full object-cover opacity-60 transition duration-1000 group-hover:scale-105 group-hover:opacity-70"
                           />
@@ -201,6 +224,8 @@ function ChatterCard({
                                 loading={immediate ? "eager" : "lazy"}
                                 fetchPriority={lowPriorityImmediate ? "low" : undefined}
                                 decoding="async"
+                                onLoad={onLoad}
+                                onError={onError}
                                 className="object-cover opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
                               />
                             ) : (
@@ -214,6 +239,8 @@ function ChatterCard({
                                 loading={immediate ? "eager" : "lazy"}
                                 fetchPriority={lowPriorityImmediate ? "low" : undefined}
                                 decoding="async"
+                                onLoad={onLoad}
+                                onError={onError}
                                 referrerPolicy="no-referrer"
                                 className="absolute inset-0 h-full w-full object-cover opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
                               />
@@ -228,6 +255,8 @@ function ChatterCard({
                           loading={immediate ? "eager" : "lazy"}
                           fetchPriority={lowPriorityImmediate ? "low" : undefined}
                           decoding="async"
+                          onLoad={onLoad}
+                          onError={onError}
                           referrerPolicy={isSiteImage(item.cover) ? undefined : "no-referrer"}
                           className="block h-auto w-full opacity-90 transition duration-1000 group-hover:scale-105 group-hover:opacity-100 dark:opacity-80"
                         />

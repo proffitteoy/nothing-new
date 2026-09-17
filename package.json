@@ -30,6 +30,7 @@
     "images:sync": "node scripts/sync-image-assets.mjs",
     "images:check": "node scripts/sync-image-assets.mjs --check",
     "images:dry": "node scripts/sync-image-assets.mjs --dry-run",
+    "images:lab": "node scripts/measure-image-loading.mjs",
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
     "test": "tsx --test"

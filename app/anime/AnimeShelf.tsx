@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, Clapperboard, Play, RotateCcw, Sparkles, Star } from "lucide-react"
 import BackButton from "../../components/BackButton"
+import { ImageLoadingLabProvider } from "../../components/ImageLoadingLab"
 import {
   ANIME_BATCH_SIZE,
   getAnimeTitle,
@@ -11,6 +12,7 @@ import {
   type AnimeSnapshot,
 } from "../../lib/anime/schema"
 import { useImageLoadingPolicy } from "../../lib/image-loading"
+import type { ImageLabConfig } from "../../lib/image-loading-lab"
 import AnimeCoverImage from "./AnimeCoverImage"
 import { groupAnimeByScore, sortAnimeByScore } from "./collection"
 
@@ -85,7 +87,7 @@ function useProgressiveCount(total: number) {
   }
 }
 
-export default function AnimeShelf() {
+export default function AnimeShelf({ imageLab }: { imageLab: ImageLabConfig }) {
   const [snapshot, setSnapshot] = useState<AnimeSnapshot | null>(null)
   const [error, setError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
@@ -123,7 +125,15 @@ export default function AnimeShelf() {
     )
   }
 
-  return <AnimeShelfContent snapshot={snapshot} />
+  return (
+    <ImageLoadingLabProvider
+      key={`${imageLab.enabled}:${imageLab.variant}:${imageLab.runId ?? ""}`}
+      config={imageLab}
+      listKind="anime"
+    >
+      <AnimeShelfContent snapshot={snapshot} />
+    </ImageLoadingLabProvider>
+  )
 }
 
 function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
@@ -295,9 +305,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                     items={group.items}
                     showRating
                     immediateCount={
-                      prioritizeWatched
-                        ? Math.max(0, loadingPolicy.immediateBudget - offset)
-                        : 0
+                      prioritizeWatched ? Math.max(0, loadingPolicy.immediateBudget - offset) : 0
                     }
                     nearViewportMarginPx={loadingPolicy.nearViewportMarginPx}
                   />
@@ -375,6 +383,7 @@ function AnimeGrid({
           >
             <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/55 bg-slate-200/70 shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl dark:border-white/10 dark:bg-slate-800/70 sm:rounded-2xl">
               <AnimeCoverImage
+                imageId={`anime:${anime.id}`}
                 src={anime.cover}
                 alt={`${title}封面`}
                 immediate={index < immediateCount}
