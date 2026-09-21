@@ -9,6 +9,7 @@ import { siteConfig } from "../siteConfig"
 import BackgroundSlider from "../components/BackgroundSlider"
 import SplashScreen from "../components/SplashScreen"
 import { FieldModeProvider } from "../components/FieldModeProvider"
+import ScrollRootManager from "../components/ScrollRootManager"
 
 import MobileBackButton from "../components/MobileBackButton"
 
@@ -89,7 +90,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
                 <FieldScene />
 
-                <div className="relative z-10 flex-1 flex flex-col">{children}</div>
+                <ScrollRootManager />
+
+                <div
+                  id="app-scroll-root"
+                  className="relative z-10 flex-1 flex flex-col"
+                  data-scroll-root
+                >
+                  {children}
+                </div>
 
                 <div className="hidden md:block">
                   <FloatingPlayer />

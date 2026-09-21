@@ -122,3 +122,37 @@ npm.cmd run images:lab -- --runs=1 --variants=native,fixed-4 --routes=anime --pr
 - 固定并发只有在至少两种设备配置下让可见区完成时间中位数改善至少 10%，并且 LCP P75、CLS、请求数、传输量、Long Task、最长帧间隔和失败率均不越过既定回退门槛时，才进入 adaptive 对照。
 - adaptive 必须相对最佳固定并发再改善至少 5%，或明显降低跨设备尾部波动；否则番剧和杂谈分别保留最佳固定策略或 native。
 - 当前只完成实验基础设施与初始生产样本，尚未执行完整 5 次筛选和 15 次确认矩阵，因此不宣称自定义调度或 adaptive 已带来性能收益，也不把实验策略带入生产。
+
+## 2026-09-21：Base + Refinement Representation Gate
+
+两份第二阶段设计在此按层次合并：Phase-Aware 文档定义 Fetch、Decode、Present 的运行时实验框架；Base + Refinement 文档把工作单元由整张图片细化为 Base、Refinement Layer 和后续可选 Tile。此前已部署的 `native`、`fixed-*` 与 `adaptive` 因此只属于 L0/L1 整图基线，不能作为分层传输有效的证据。
+
+本轮严格先完成 Phase 0/1。新增的 Node-only 原型实现 WebP Base、基于上一级真实重建像素的 residual、确定性定点双线性预测、量化、ZigZag、`uint16 little-endian` 与 Deflate。独立解码器验证 manifest、长度和 SHA-256；量化步长 1 仅用于逐像素 oracle，不属于候选产品格式。生产封面同步、快照 schema、Next Image 和浏览器代码均未改变。
+
+### 数据集与矩阵
+
+- 生产快照版本：`4db062a36e10`，更新时间 `2026-09-10T03:16:32.497Z`。
+- 样本为全部 17 张“正在看”加稳定 ID 哈希选择的 83 张“看过”；100/100 下载、解码和重建成功。
+- 20 张等距子样本用于筛选 27 个组合：三种层级、Base quality 50/65/80、residual quantization 2/4/8。
+- 每个 384 px 与 512 px 终点选择三个 finalist，再在完整 100 张上验证。
+- Native 对照为相同终点参考像素的 WebP/AVIF，quality 40/50/60/70/80/90/100；字节比使用达到候选 SSIM（容差 0.005）的最小 Native 文件。
+- 原始图片、二进制层和约 2.4 MB 的逐样本 JSON 保留在系统临时目录；仓库只保留紧凑聚合结果。
+
+### Representation 结果
+
+| 终点   | 最佳 finalist                 | SSIM median / P10   | 相对同质量 Native bytes median / P75 | 总 bytes median | Gate  |
+| ------ | ----------------------------- | ------------------- | ------------------------------------ | --------------: | ----- |
+| 384 px | `layered-4-mobile-base80-q2`  | 0.999281 / 0.998698 | 4.947345 / 6.693632                  |         474,131 | NO-GO |
+| 512 px | `layered-4-desktop-base80-q2` | 0.999151 / 0.998639 | 5.099741 / 6.369734                  |         772,641 | NO-GO |
+
+六个 finalist 的重建正确率、Native 匹配覆盖率和逐层质量单调率均为 1；Base 占比中位数约 0.22%–0.33%，Base 加第一层约 7.24%–7.48%，最终质量和中间 Pareto 条件也都通过。唯一且决定性的失败项是总字节开销：要求中位数不超过 1.15、P75 不超过 1.25，实测中位数约 4.95–5.10、P75 约 6.37–6.69。
+
+中位层大小也显示问题集中在 residual，而不是 Base。384 px 候选的 Base 约 1.1–1.6 KB，三级 refinement 约 33 KB、102 KB、335 KB；512 px 候选约为 1.8–2.6 KB、56–58 KB、168 KB、547 KB。简单 RGB residual 即使经过量化和 Deflate，仍远大于成熟 WebP/AVIF 对同类高频信息的表示。
+
+### 结论
+
+Representation Gate 为 **NO-GO**。根据预先确定的停止规则，本轮不实现 Phase 2 浏览器重建、Phase 3 BFS、Phase 4 Tile 或 Phase 5 自适应 quantum，也不运行这些不存在的浏览器策略矩阵。Tile 或调度无法合理弥补约五倍的表示层传输开销。
+
+这不是对 phase-aware 假设的普遍否定，只否定当前 Prototype A：`RGB residual → quantize → ZigZag/u16 → Deflate`。若未来重启研究，应先在独立分支验证 transform、wavelet 或成熟可伸缩编码格式能否把总字节压到 Gate 内，再回到浏览器阶段。生产继续使用 native，现有 L0/L1 实验代码不进入默认路径。
+
+本次离线实验运行于 Node `v24.11.1`、Sharp `0.34.5`、Windows x64；项目与 Vercel 要求 Node 22。编码和重建耗时只作为本机描述值，不能外推为浏览器 CPU、Long Task 或线上性能结论。

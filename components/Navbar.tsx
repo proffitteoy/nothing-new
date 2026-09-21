@@ -27,9 +27,9 @@ const getMobileDragConstraints = () => {
 
 export default function Navbar() {
   const [showNav, setShowNav] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+  const lastScrollYRef = useRef(0)
 
   // --- 🌟 物理引擎：菜单转动逻辑 ---
   const wheelRef = useRef<HTMLDivElement>(null)
@@ -75,18 +75,47 @@ export default function Navbar() {
 
   // 控制 PC 端导航栏
   useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 768px)")
+    let scrollRoot: HTMLElement | null = null
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+      const currentScrollY = scrollRoot?.scrollTop ?? window.scrollY
+      if (currentScrollY > lastScrollYRef.current && currentScrollY > 80) {
         setShowNav(false)
       } else {
         setShowNav(true)
       }
-      setLastScrollY(currentScrollY)
+      lastScrollYRef.current = currentScrollY
     }
-    window.addEventListener("scroll", handleScroll, { passive: true })
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [lastScrollY])
+
+    const unbindScroll = () => {
+      if (scrollRoot) {
+        scrollRoot.removeEventListener("scroll", handleScroll)
+      } else {
+        window.removeEventListener("scroll", handleScroll)
+      }
+    }
+
+    const bindScroll = () => {
+      unbindScroll()
+      scrollRoot = desktopQuery.matches ? document.getElementById("app-scroll-root") : null
+      lastScrollYRef.current = scrollRoot?.scrollTop ?? window.scrollY
+
+      if (scrollRoot) {
+        scrollRoot.addEventListener("scroll", handleScroll, { passive: true })
+      } else {
+        window.addEventListener("scroll", handleScroll, { passive: true })
+      }
+    }
+
+    bindScroll()
+    desktopQuery.addEventListener("change", bindScroll)
+
+    return () => {
+      desktopQuery.removeEventListener("change", bindScroll)
+      unbindScroll()
+    }
+  }, [])
 
   const navLinks = [
     { name: "首页", href: "/" },

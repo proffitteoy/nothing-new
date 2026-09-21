@@ -6,6 +6,7 @@
 
 - assign-chatter-covers.mjs：为 content/misc/ 杂谈分配并固定封面；正文有图片时使用第一张，否则从 public/chatter-covers/ 补充分配。
 - `sync-image-assets.mjs`：把站点头像、背景、杂谈封面与构建后的 Quartz 文章图片增量同步到私有 Vercel Blob。
+- `analyze-layered-images.mjs`：从生产番剧快照确定性抽取真实封面，离线比较 Native WebP/AVIF 与 Base + Refinement 表示并执行 Representation Gate；所有原图和逐样本结果只写入系统临时目录。
 - `obsidian-sync.mjs`：把 Obsidian 源目录中的已批准内容同步到 `content/`。
 - `../同步博客.bat`：Windows 双击入口，等价于在根目录运行 `npm.cmd run sync:obsidian`。
 - `../审阅未决笔记.bat`：Windows 双击入口，等价于在根目录运行 `npm.cmd run sync:obsidian:review`。
@@ -25,6 +26,7 @@ npm run covers:check
 npm run images:sync
 npm run images:dry
 npm run images:check
+npm run images:layers
 ```
 
 运行 npm run sync:obsidian 时，会在同步成功后自动补全杂谈封面。已经分配且没有重复的目录封面保持不变；新文章、正文新增首图、失效封面和可被新图片消除的重复封面才会更新。分配结果写入各篇 Markdown 的顶部 frontmatter。图片数量不足时允许保留重复，后续向封面目录加入新图片再运行即可逐步替换。covers:dry 只预览变化，covers:check 只检查当前分配。
@@ -35,6 +37,7 @@ npm run images:check
 
 - covers:assign 会按需修改 content/misc 下 Markdown 的 cover 字段；封面池只读取 public/chatter-covers/，不会复制或改动图片。
 - images:sync 会写入私有 Blob，但不会修改或删除本地图片；站内旧 URL 由 Next.js 重写保持兼容，`/avatar` 与 `/avatar.jpg` 均继续可用。
+- images:layers 只读取公开番剧快照并在系统临时目录生成样本、逐样本 `result.json`、紧凑 `aggregate.json` 与 `summary.md`，不会修改生产封面、Blob、快照 schema 或前端代码。可用 `--limit=5 --screening-limit=3 --finalists=1` 做快速验证。
 - 新增跨平台脚本放在 `scripts/` 根下，并在 `package.json` 暴露 npm 命令。
 - 常用 Windows 双击包装脚本保留在仓库根目录，减少路径和编码问题。
 - 脚本如果会写入 `content/`、`.sync/` 或 git 状态，文档里必须说明副作用。
