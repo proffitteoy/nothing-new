@@ -50,6 +50,7 @@ function parseArgs(argv) {
   const limit = positiveInteger("limit", 100)
   return {
     baseUrl: values["base-url"] ?? "https://nothing-new.icu",
+    samplesManifest: values["samples-manifest"],
     output:
       values.output ??
       path.join(
@@ -151,6 +152,41 @@ async function downloadSamples(items, baseUrl, rawDirectory) {
       }
     }
   })
+}
+
+async function loadCachedSamples(samplesManifest, limit) {
+  const manifestPath = path.resolve(samplesManifest)
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"))
+  if (!Array.isArray(manifest.samples)) throw new Error("cached sample manifest has no samples")
+  const sourceDirectory = path.join(path.dirname(manifestPath), "sources")
+  const selected = manifest.samples
+    .map((sample, originalIndex) => ({ sample, originalIndex }))
+    .filter(({ sample }) => sample.ok)
+    .slice(0, limit)
+  const downloads = await mapLimit(selected, 6, async ({ sample, originalIndex }) => {
+    const file = path.join(
+      sourceDirectory,
+      `${String(originalIndex).padStart(3, "0")}-${sample.item.id}-${sample.sourceSha256.slice(0, 12)}.bin`,
+    )
+    const bytes = await readFile(file)
+    if (bytes.length !== sample.sourceBytes) throw new Error(`cached sample length mismatch: ${file}`)
+    if (sha256(bytes) !== sample.sourceSha256) {
+      throw new Error(`cached sample checksum mismatch: ${file}`)
+    }
+    return { ...sample, file }
+  })
+  const snapshotUrl = manifest.snapshot
+  const snapshotVersion = path.basename(new URL(snapshotUrl).pathname, ".json")
+  return {
+    source: {
+      pointerUrl: new URL("/anime/latest.json", snapshotUrl).href,
+      snapshotUrl,
+      pointer: { version: snapshotVersion, updatedAt: undefined },
+      snapshot: { items: selected.map(({ sample }) => sample.item) },
+    },
+    selectedItems: selected.map(({ sample }) => sample.item),
+    downloads,
+  }
 }
 
 async function buildReferences(sourceBytes) {
@@ -537,9 +573,20 @@ async function main() {
   const rawDirectory = path.join(options.output, "sources")
   await mkdir(rawDirectory, { recursive: true })
   console.log(`[recovery] loading snapshot from ${options.baseUrl}`)
-  const source = await loadSnapshot(options.baseUrl)
-  const selectedItems = selectAnimeSamples(source.snapshot.items, options.limit)
-  const downloads = await downloadSamples(selectedItems, options.baseUrl, rawDirectory)
+  let source
+  let selectedItems
+  let downloads
+  if (options.samplesManifest) {
+    const cached = await loadCachedSamples(options.samplesManifest, options.limit)
+    source = cached.source
+    selectedItems = cached.selectedItems
+    downloads = cached.downloads
+    console.log(`[recovery] using cached samples from ${path.resolve(options.samplesManifest)}`)
+  } else {
+    source = await loadSnapshot(options.baseUrl)
+    selectedItems = selectAnimeSamples(source.snapshot.items, options.limit)
+    downloads = await downloadSamples(selectedItems, options.baseUrl, rawDirectory)
+  }
   const successful = downloads.filter((sample) => sample.ok)
   const failures = downloads.filter((sample) => !sample.ok)
   if (successful.length === 0) throw new Error("no cover samples could be downloaded")

@@ -96,7 +96,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   id="app-scroll-root"
                   className="relative z-10 flex-1 flex flex-col"
                   data-scroll-root
-                  tabIndex={-1}
                 >
                   {children}
                 </div>
