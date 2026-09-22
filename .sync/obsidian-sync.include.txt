@@ -181,3 +181,9 @@ math/一致有界原理.md
 math/Calderón–Zygmund 定理.md
 misc/如何读一篇论文.md
 misc/AI4MATH何去何从.md
+什么是好的研究.md
+math/Lobachevsky 函数.md
+reverse/1000Click.md
+reverse/666.md
+reverse/走迷宫.md
+reverse/Reversing-x64Elf-100.md
