@@ -98,6 +98,9 @@ export function useNearViewport<T extends Element>(
   const elementRef = useRef<T>(null)
   const [nearViewport, setNearViewport] = useState(immediate)
 
+  // Budget/hash changes may promote a mounted card; keep that admission permanent.
+  if (immediate && !nearViewport) setNearViewport(true)
+
   useEffect(() => {
     if (immediate || nearViewport) return
 

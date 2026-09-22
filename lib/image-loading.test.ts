@@ -1,10 +1,13 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
+import { createElement } from "react"
+import { renderToStaticMarkup } from "react-dom/server"
 
 import {
   getImageLoadingPolicy,
   getSizedMusicCoverUrl,
   isNeteaseMusicCoverUrl,
+  useNearViewport,
 } from "./image-loading"
 
 describe("image loading policies", () => {
@@ -24,14 +27,14 @@ describe("image loading policies", () => {
       immediateBudget: 2,
       nearViewportMarginPx: 0,
     })
-    assert.deepEqual(
-      getImageLoadingPolicy("anime", { desktop: false, effectiveType: "slow-2g" }),
-      { immediateBudget: 2, nearViewportMarginPx: 0 },
-    )
-    assert.deepEqual(
-      getImageLoadingPolicy("chatter", { desktop: false, effectiveType: "2g" }),
-      { immediateBudget: 1, nearViewportMarginPx: 0 },
-    )
+    assert.deepEqual(getImageLoadingPolicy("anime", { desktop: false, effectiveType: "slow-2g" }), {
+      immediateBudget: 2,
+      nearViewportMarginPx: 0,
+    })
+    assert.deepEqual(getImageLoadingPolicy("chatter", { desktop: false, effectiveType: "2g" }), {
+      immediateBudget: 1,
+      nearViewportMarginPx: 0,
+    })
   })
 
   it("keeps chatter startup at the two-column mobile minimum", () => {
@@ -43,6 +46,25 @@ describe("image loading policies", () => {
       immediateBudget: 2,
       nearViewportMarginPx: 320,
     })
+  })
+})
+
+describe("near viewport server rendering", () => {
+  function Cover({ immediate }: { immediate: boolean }) {
+    const { elementRef, shouldLoad } = useNearViewport<HTMLSpanElement>(immediate, 256)
+    return createElement(
+      "span",
+      { ref: elementRef },
+      shouldLoad ? createElement("img", { src: "/cover.webp", alt: "", loading: "lazy" }) : null,
+    )
+  }
+
+  it("includes immediate images in server output", () => {
+    assert.match(renderToStaticMarkup(createElement(Cover, { immediate: true })), /<img /)
+  })
+
+  it("does not expose deferred image URLs before reaching the viewport", () => {
+    assert.equal(renderToStaticMarkup(createElement(Cover, { immediate: false })), "<span></span>")
   })
 })
 

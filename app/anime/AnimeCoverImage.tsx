@@ -2,27 +2,24 @@
 
 import Image from "next/image"
 import { useState } from "react"
-import { useImageLoadingLabImage } from "../../components/ImageLoadingLab"
+import { useNearViewport } from "../../lib/image-loading"
 
 export default function AnimeCoverImage({
-  imageId,
   src,
   alt,
   immediate,
   nearViewportMarginPx,
 }: {
-  imageId: string
   src: string | null
   alt: string
   immediate: boolean
   nearViewportMarginPx: number
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
-  const { elementRef, shouldLoad, onLoad, onError } = useImageLoadingLabImage({
-    id: imageId,
+  const { elementRef, shouldLoad } = useNearViewport<HTMLSpanElement>(
     immediate,
     nearViewportMarginPx,
-  })
+  )
   const failed = failedSrc === src
 
   if (!src || failed) {
@@ -44,11 +41,7 @@ export default function AnimeCoverImage({
           loading={immediate ? "eager" : "lazy"}
           decoding="async"
           referrerPolicy="no-referrer"
-          onLoad={onLoad}
-          onError={() => {
-            onError()
-            setFailedSrc(src)
-          }}
+          onError={() => setFailedSrc(src)}
           className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
         />
       )}
