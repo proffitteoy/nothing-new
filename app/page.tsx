@@ -1,7 +1,6 @@
 import { connection } from "next/server"
 
 import { getAnimeShelf } from "./anime/bangumi"
-import Navbar from "../components/Navbar"
 import PageTransition from "../components/PageTransition"
 import { siteConfig } from "../siteConfig"
 import CloudPlayer from "../components/CloudPlayer"
@@ -24,7 +23,6 @@ export default async function Home() {
   return (
     <ToastProvider>
       <div className="min-h-screen relative pb-10">
-        <Navbar />
         <PageTransition>
           {/* 🌟 调整整体容器的内边距，适应手机端更小的屏幕 */}
           <div className="w-full max-w-6xl mx-auto mt-24 sm:mt-28 px-4 sm:px-6 lg:px-10 relative z-10">

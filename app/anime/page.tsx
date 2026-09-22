@@ -1,4 +1,3 @@
-import Navbar from "../../components/Navbar"
 import PageTransition from "../../components/PageTransition"
 import {
   NATIVE_IMAGE_LAB_CONFIG,
@@ -25,7 +24,6 @@ export default async function AnimePage({
 
   return (
     <div className="relative min-h-screen pb-20">
-      <Navbar />
       <PageTransition>
         <AnimeShelf imageLab={imageLab} />
       </PageTransition>

@@ -1,0 +1,1396 @@
+{
+  "experiment": "prototype-b",
+  "generatedAt": "2026-09-22T10:21:39.292Z",
+  "prototypeA": {
+    "commit": "fe5a70f",
+    "decision": "NO-GO",
+    "frozen": true
+  },
+  "runtime": {
+    "node": "v24.11.1",
+    "platform": "win32",
+    "arch": "x64",
+    "sharp": {
+      "aom": "3.13.1",
+      "archive": "3.8.2",
+      "cairo": "1.18.4",
+      "cgif": "0.5.0",
+      "exif": "0.6.25",
+      "expat": "2.7.3",
+      "ffi": "3.5.2",
+      "fontconfig": "2.17.1",
+      "freetype": "2.14.1",
+      "fribidi": "1.0.16",
+      "glib": "2.86.1",
+      "harfbuzz": "12.1.0",
+      "heif": "1.20.2",
+      "highway": "1.3.0",
+      "imagequant": "2.4.1",
+      "lcms": "2.17",
+      "mozjpeg": "0826579",
+      "pango": "1.57.0",
+      "pixman": "0.46.4",
+      "png": "1.6.50",
+      "proxy-libintl": "0.5",
+      "rsvg": "2.61.2",
+      "spng": "0.7.4",
+      "tiff": "4.7.1",
+      "vips": "8.17.3",
+      "webp": "1.6.0",
+      "xml2": "2.15.1",
+      "zlib-ng": "2.2.5",
+      "sharp": "0.34.5"
+    }
+  },
+  "source": {
+    "pointerUrl": "https://nothing-new.icu/anime/latest.json",
+    "snapshotUrl": "https://nothing-new.icu/anime/blob/snapshots/4db062a36e10.json",
+    "snapshotVersion": "4db062a36e10",
+    "nativeBaselineGeneratedAt": "2026-09-21T03:25:58.832Z"
+  },
+  "configuration": {
+    "baseUrl": "https://nothing-new.icu",
+    "limit": 100,
+    "screeningLimit": 20,
+    "nativeQualities": [
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100
+    ],
+    "progressiveQualities": [
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      95
+    ],
+    "quantizationScales": [
+      0.0625,
+      0.125,
+      0.25,
+      0.5,
+      1,
+      2,
+      4
+    ],
+    "baseQuality": 65,
+    "qualityTargets": [
+      0.95,
+      0.97,
+      0.99
+    ],
+    "ladders": [
+      {
+        "id": "layered-4-mobile",
+        "widths": [
+          48,
+          96,
+          192,
+          384
+        ]
+      },
+      {
+        "id": "layered-4-desktop",
+        "widths": [
+          64,
+          128,
+          256,
+          512
+        ]
+      },
+      {
+        "id": "layered-5-mobile",
+        "widths": [
+          48,
+          96,
+          144,
+          192,
+          384
+        ]
+      }
+    ]
+  },
+  "samples": {
+    "requested": 100,
+    "successful": 100,
+    "failureCount": 0
+  },
+  "progressiveJpeg": {
+    "browserEligible": true,
+    "summaries": [
+      {
+        "terminalWidth": 384,
+        "quality": 40,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.913799,
+        "ssimP10": 0.886699,
+        "bytesMedian": 22200,
+        "matchedNativeRatioMedian": 0.976133,
+        "matchedNativeRatioP75": 1.048743,
+        "psnrMedian": 26.843703,
+        "encodeMsMedian": 14.564,
+        "decodeMsMedian": 2.548,
+        "fullByteGate": true
+      },
+      {
+        "terminalWidth": 384,
+        "quality": 50,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.928142,
+        "ssimP10": 0.904462,
+        "bytesMedian": 26035,
+        "matchedNativeRatioMedian": 1.150689,
+        "matchedNativeRatioP75": 1.222345,
+        "psnrMedian": 27.630032,
+        "encodeMsMedian": 16.168,
+        "decodeMsMedian": 2.713,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 384,
+        "quality": 60,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.940174,
+        "ssimP10": 0.919319,
+        "bytesMedian": 30126,
+        "matchedNativeRatioMedian": 1.320775,
+        "matchedNativeRatioP75": 1.406698,
+        "psnrMedian": 28.437258,
+        "encodeMsMedian": 19.156,
+        "decodeMsMedian": 3.347,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 384,
+        "quality": 70,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.952999,
+        "ssimP10": 0.935514,
+        "bytesMedian": 36060,
+        "matchedNativeRatioMedian": 1.510901,
+        "matchedNativeRatioP75": 1.629731,
+        "psnrMedian": 29.471887,
+        "encodeMsMedian": 22.947,
+        "decodeMsMedian": 2.983,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 384,
+        "quality": 80,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.967246,
+        "ssimP10": 0.954078,
+        "bytesMedian": 46048,
+        "matchedNativeRatioMedian": 1.620167,
+        "matchedNativeRatioP75": 1.768349,
+        "psnrMedian": 30.877029,
+        "encodeMsMedian": 26.87,
+        "decodeMsMedian": 3.477,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 384,
+        "quality": 90,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.98275,
+        "ssimP10": 0.975925,
+        "bytesMedian": 66475,
+        "matchedNativeRatioMedian": 1.628182,
+        "matchedNativeRatioP75": 1.819079,
+        "psnrMedian": 33.815591,
+        "encodeMsMedian": 35.878,
+        "decodeMsMedian": 4.271,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 384,
+        "quality": 95,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.99155,
+        "ssimP10": 0.987909,
+        "bytesMedian": 90773,
+        "matchedNativeRatioMedian": 1.746615,
+        "matchedNativeRatioP75": 1.95293,
+        "psnrMedian": 36.277527,
+        "encodeMsMedian": 49.935,
+        "decodeMsMedian": 5.244,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 512,
+        "quality": 40,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.916599,
+        "ssimP10": 0.887577,
+        "bytesMedian": 34835,
+        "matchedNativeRatioMedian": 1.054374,
+        "matchedNativeRatioP75": 1.171392,
+        "psnrMedian": 27.820334,
+        "encodeMsMedian": 22.996,
+        "decodeMsMedian": 3.861,
+        "fullByteGate": true
+      },
+      {
+        "terminalWidth": 512,
+        "quality": 50,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.930728,
+        "ssimP10": 0.905931,
+        "bytesMedian": 40918,
+        "matchedNativeRatioMedian": 1.229327,
+        "matchedNativeRatioP75": 1.361192,
+        "psnrMedian": 28.639935,
+        "encodeMsMedian": 26.462,
+        "decodeMsMedian": 3.799,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 512,
+        "quality": 60,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.942468,
+        "ssimP10": 0.921365,
+        "bytesMedian": 47575,
+        "matchedNativeRatioMedian": 1.394371,
+        "matchedNativeRatioP75": 1.517573,
+        "psnrMedian": 29.554252,
+        "encodeMsMedian": 30.315,
+        "decodeMsMedian": 3.752,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 512,
+        "quality": 70,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.955182,
+        "ssimP10": 0.937625,
+        "bytesMedian": 57057,
+        "matchedNativeRatioMedian": 1.622609,
+        "matchedNativeRatioP75": 1.738423,
+        "psnrMedian": 30.74242,
+        "encodeMsMedian": 34.386,
+        "decodeMsMedian": 4.159,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 512,
+        "quality": 80,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.969143,
+        "ssimP10": 0.956252,
+        "bytesMedian": 73214,
+        "matchedNativeRatioMedian": 1.632075,
+        "matchedNativeRatioP75": 1.781374,
+        "psnrMedian": 32.3416,
+        "encodeMsMedian": 42.701,
+        "decodeMsMedian": 4.752,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 512,
+        "quality": 90,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.983742,
+        "ssimP10": 0.976575,
+        "bytesMedian": 106105,
+        "matchedNativeRatioMedian": 1.682249,
+        "matchedNativeRatioP75": 1.830401,
+        "psnrMedian": 35.145762,
+        "encodeMsMedian": 57.02,
+        "decodeMsMedian": 6.889,
+        "fullByteGate": false
+      },
+      {
+        "terminalWidth": 512,
+        "quality": 95,
+        "samples": 100,
+        "matchedNativeCoverage": 1,
+        "ssimMedian": 0.991727,
+        "ssimP10": 0.988917,
+        "bytesMedian": 144295,
+        "matchedNativeRatioMedian": 1.800729,
+        "matchedNativeRatioP75": 2.030071,
+        "psnrMedian": 38.003515,
+        "encodeMsMedian": 77.879,
+        "decodeMsMedian": 7.6,
+        "fullByteGate": false
+      }
+    ],
+    "capability": [
+      {
+        "browser": "Chrome/153.0.8010.53",
+        "jpegDecode": "measured",
+        "earlyPaint": "observed",
+        "multiplePreLoadScans": "0/60 runs",
+        "scanDecodeControl": false
+      },
+      {
+        "browser": "Edg/153.0.4234.48",
+        "jpegDecode": "measured",
+        "earlyPaint": "observed",
+        "multiplePreLoadScans": "0/60 runs",
+        "scanDecodeControl": false
+      },
+      {
+        "browser": "Firefox",
+        "jpegDecode": "documented",
+        "earlyPaint": "not measured on this host",
+        "multiplePreLoadScans": "not measured",
+        "scanDecodeControl": "no standardized HTMLImageElement API"
+      },
+      {
+        "browser": "Safari",
+        "jpegDecode": "documented",
+        "earlyPaint": "not measured on this host",
+        "multiplePreLoadScans": "not measured",
+        "scanDecodeControl": "no standardized HTMLImageElement API"
+      }
+    ],
+    "browserExperiment": "completed-chrome-edge",
+    "applicationDecision": "NO-GO: only q40 passes sampled-byte gate; q70+ meets final-quality floor but exceeds byte budget",
+    "browserRuns": [
+      {
+        "browser": "Chrome/153.0.8010.53",
+        "configuration": {
+          "widths": [
+            384,
+            512
+          ],
+          "sampleCount": 10,
+          "runsPerSample": 3,
+          "quality": 40,
+          "initialDelayMs": 200,
+          "scanIntervalMs": 250,
+          "captureIntervalMs": 100,
+          "dpr": 1,
+          "headless": true
+        },
+        "summaries": [
+          {
+            "width": 384,
+            "runs": 30,
+            "sampleCount": 10,
+            "timeToRecognizableMedianMs": 1364.800000000745,
+            "tq80MedianMs": 1374.9500000001863,
+            "loadMedianMs": 1244.5999999996275,
+            "finalVisibleMedianMs": 1374.9500000001863,
+            "qualityIntegralMedian": 0.32397903391329136,
+            "finalSsimMedian": 0.9190174139010845,
+            "preLoadPaintStagesMedian": 1,
+            "incrementalRuns": 0,
+            "tq80Missing": 0,
+            "maxCaptureGapMs": 239.40000000037253
+          },
+          {
+            "width": 512,
+            "runs": 30,
+            "sampleCount": 10,
+            "timeToRecognizableMedianMs": 1180.4500000001863,
+            "tq80MedianMs": 1337.2500000009313,
+            "loadMedianMs": 1233.2000000011176,
+            "finalVisibleMedianMs": 1337.2500000009313,
+            "qualityIntegralMedian": 0.3614763708526846,
+            "finalSsimMedian": 0.9225974477179146,
+            "preLoadPaintStagesMedian": 1,
+            "incrementalRuns": 0,
+            "tq80Missing": 0,
+            "maxCaptureGapMs": 292.6000000005588
+          }
+        ],
+        "maxFinalSsimDifference": 0
+      },
+      {
+        "browser": "Edg/153.0.4234.48",
+        "configuration": {
+          "widths": [
+            384,
+            512
+          ],
+          "sampleCount": 10,
+          "runsPerSample": 3,
+          "quality": 40,
+          "initialDelayMs": 200,
+          "scanIntervalMs": 250,
+          "captureIntervalMs": 100,
+          "dpr": 1,
+          "headless": true
+        },
+        "summaries": [
+          {
+            "width": 384,
+            "runs": 30,
+            "sampleCount": 10,
+            "timeToRecognizableMedianMs": 1371.75,
+            "tq80MedianMs": 1374.2000000001863,
+            "loadMedianMs": 1240.4000000003725,
+            "finalVisibleMedianMs": 1374.2000000001863,
+            "qualityIntegralMedian": 0.32080718811868125,
+            "finalSsimMedian": 0.9190174139010845,
+            "preLoadPaintStagesMedian": 1,
+            "incrementalRuns": 0,
+            "tq80Missing": 0,
+            "maxCaptureGapMs": 229.8500000005588
+          },
+          {
+            "width": 512,
+            "runs": 30,
+            "sampleCount": 10,
+            "timeToRecognizableMedianMs": 1158.3499999996275,
+            "tq80MedianMs": 1327.3500000005588,
+            "loadMedianMs": 1228.1000000014901,
+            "finalVisibleMedianMs": 1327.3500000005588,
+            "qualityIntegralMedian": 0.35600571775461254,
+            "finalSsimMedian": 0.9225974477179146,
+            "preLoadPaintStagesMedian": 1,
+            "incrementalRuns": 0,
+            "tq80Missing": 0,
+            "maxCaptureGapMs": 255.9500000011176
+          }
+        ],
+        "maxFinalSsimDifference": 0
+      }
+    ],
+    "definitions": {
+      "timeToRecognizable": "first changed screenshot with SSIM >= 0.50; heuristic, not a human recognition test",
+      "tq80": "first changed screenshot with SSIM >= 0.80 against original reference",
+      "qualityIntegral": "left-hold SSIM integral from img.src assignment to load, divided by load duration; blank quality is zero",
+      "timing": "headless DPR1; 200ms initial delay; 250ms between complete scan chunks; screenshot observation windows retained"
+    }
+  },
+  "dct": {
+    "layeredFiveDominated": true,
+    "screening": [
+      {
+        "ladderId": "layered-4-mobile",
+        "candidate": "layered-4-mobile-dct-scale0.0625",
+        "ladder": [
+          48,
+          96,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 0.0625,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.996363,
+        "finalSsimP10": 0.993919,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.865578,
+        "matchedNativeRatioP75": 3.281288,
+        "totalBytesMedian": 187775,
+        "baseShareMedian": 0.006334,
+        "baseAndFirstShareMedian": 0.07399,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": -0.002287,
+        "decodeMsP75": 39.91
+      },
+      {
+        "ladderId": "layered-4-mobile",
+        "candidate": "layered-4-mobile-dct-scale0.125",
+        "ladder": [
+          48,
+          96,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 0.125,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.991751,
+        "finalSsimP10": 0.986085,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.670133,
+        "matchedNativeRatioP75": 3.011963,
+        "totalBytesMedian": 140407,
+        "baseShareMedian": 0.008474,
+        "baseAndFirstShareMedian": 0.075816,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.006413,
+        "decodeMsP75": 41.232
+      },
+      {
+        "ladderId": "layered-4-mobile",
+        "candidate": "layered-4-mobile-dct-scale0.25",
+        "ladder": [
+          48,
+          96,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 0.25,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.982186,
+        "finalSsimP10": 0.971744,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.40897,
+        "matchedNativeRatioP75": 2.563155,
+        "totalBytesMedian": 101016,
+        "baseShareMedian": 0.01185,
+        "baseAndFirstShareMedian": 0.077428,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.016597,
+        "decodeMsP75": 39.507
+      },
+      {
+        "ladderId": "layered-4-mobile",
+        "candidate": "layered-4-mobile-dct-scale0.5",
+        "ladder": [
+          48,
+          96,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 0.5,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.966561,
+        "finalSsimP10": 0.949409,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.370365,
+        "matchedNativeRatioP75": 2.658282,
+        "totalBytesMedian": 70089,
+        "baseShareMedian": 0.017228,
+        "baseAndFirstShareMedian": 0.080416,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.027667,
+        "decodeMsP75": 38.298
+      },
+      {
+        "ladderId": "layered-4-mobile",
+        "candidate": "layered-4-mobile-dct-scale1",
+        "ladder": [
+          48,
+          96,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 1,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.939276,
+        "finalSsimP10": 0.914471,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.077877,
+        "matchedNativeRatioP75": 2.193601,
+        "totalBytesMedian": 47684,
+        "baseShareMedian": 0.025769,
+        "baseAndFirstShareMedian": 0.084376,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.040763,
+        "decodeMsP75": 37.59
+      },
+      {
+        "ladderId": "layered-4-mobile",
+        "candidate": "layered-4-mobile-dct-scale2",
+        "ladder": [
+          48,
+          96,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 2,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.900333,
+        "finalSsimP10": 0.865082,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 1.368315,
+        "matchedNativeRatioP75": 1.450561,
+        "totalBytesMedian": 31190,
+        "baseShareMedian": 0.039849,
+        "baseAndFirstShareMedian": 0.088888,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.048291,
+        "decodeMsP75": 34.935
+      },
+      {
+        "ladderId": "layered-4-mobile",
+        "candidate": "layered-4-mobile-dct-scale4",
+        "ladder": [
+          48,
+          96,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 4,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.836579,
+        "finalSsimP10": 0.798895,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 0.867749,
+        "matchedNativeRatioP75": 0.921115,
+        "totalBytesMedian": 20027,
+        "baseShareMedian": 0.063068,
+        "baseAndFirstShareMedian": 0.098217,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.054368,
+        "decodeMsP75": 32.872
+      },
+      {
+        "ladderId": "layered-4-desktop",
+        "candidate": "layered-4-desktop-dct-scale0.0625",
+        "ladder": [
+          64,
+          128,
+          256,
+          512
+        ],
+        "terminalWidth": 512,
+        "quantizationScale": 0.0625,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.996419,
+        "finalSsimP10": 0.994402,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.982042,
+        "matchedNativeRatioP75": 3.650513,
+        "totalBytesMedian": 304919,
+        "baseShareMedian": 0.006418,
+        "baseAndFirstShareMedian": 0.075956,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": -0.005371,
+        "decodeMsP75": 75.135
+      },
+      {
+        "ladderId": "layered-4-desktop",
+        "candidate": "layered-4-desktop-dct-scale0.125",
+        "ladder": [
+          64,
+          128,
+          256,
+          512
+        ],
+        "terminalWidth": 512,
+        "quantizationScale": 0.125,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.991776,
+        "finalSsimP10": 0.984479,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.63134,
+        "matchedNativeRatioP75": 3.052084,
+        "totalBytesMedian": 226533,
+        "baseShareMedian": 0.008629,
+        "baseAndFirstShareMedian": 0.07826,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.003519,
+        "decodeMsP75": 72.891
+      },
+      {
+        "ladderId": "layered-4-desktop",
+        "candidate": "layered-4-desktop-dct-scale0.25",
+        "ladder": [
+          64,
+          128,
+          256,
+          512
+        ],
+        "terminalWidth": 512,
+        "quantizationScale": 0.25,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.984037,
+        "finalSsimP10": 0.966125,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.527346,
+        "matchedNativeRatioP75": 2.694672,
+        "totalBytesMedian": 161823,
+        "baseShareMedian": 0.012077,
+        "baseAndFirstShareMedian": 0.079415,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.013765,
+        "decodeMsP75": 72.039
+      },
+      {
+        "ladderId": "layered-4-desktop",
+        "candidate": "layered-4-desktop-dct-scale0.5",
+        "ladder": [
+          64,
+          128,
+          256,
+          512
+        ],
+        "terminalWidth": 512,
+        "quantizationScale": 0.5,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.968443,
+        "finalSsimP10": 0.941117,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.466389,
+        "matchedNativeRatioP75": 2.656854,
+        "totalBytesMedian": 111638,
+        "baseShareMedian": 0.017693,
+        "baseAndFirstShareMedian": 0.081755,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.027748,
+        "decodeMsP75": 69.628
+      },
+      {
+        "ladderId": "layered-4-desktop",
+        "candidate": "layered-4-desktop-dct-scale1",
+        "ladder": [
+          64,
+          128,
+          256,
+          512
+        ],
+        "terminalWidth": 512,
+        "quantizationScale": 1,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.94399,
+        "finalSsimP10": 0.904712,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.153061,
+        "matchedNativeRatioP75": 2.260969,
+        "totalBytesMedian": 73824,
+        "baseShareMedian": 0.026975,
+        "baseAndFirstShareMedian": 0.086148,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.038491,
+        "decodeMsP75": 64.703
+      },
+      {
+        "ladderId": "layered-4-desktop",
+        "candidate": "layered-4-desktop-dct-scale2",
+        "ladder": [
+          64,
+          128,
+          256,
+          512
+        ],
+        "terminalWidth": 512,
+        "quantizationScale": 2,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.903549,
+        "finalSsimP10": 0.852312,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 1.386599,
+        "matchedNativeRatioP75": 1.516273,
+        "totalBytesMedian": 47100,
+        "baseShareMedian": 0.042293,
+        "baseAndFirstShareMedian": 0.091597,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.049829,
+        "decodeMsP75": 66.027
+      },
+      {
+        "ladderId": "layered-4-desktop",
+        "candidate": "layered-4-desktop-dct-scale4",
+        "ladder": [
+          64,
+          128,
+          256,
+          512
+        ],
+        "terminalWidth": 512,
+        "quantizationScale": 4,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.842078,
+        "finalSsimP10": 0.784777,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 0.85946,
+        "matchedNativeRatioP75": 0.941295,
+        "totalBytesMedian": 29737,
+        "baseShareMedian": 0.068233,
+        "baseAndFirstShareMedian": 0.104078,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.055087,
+        "decodeMsP75": 58.192
+      },
+      {
+        "ladderId": "layered-5-mobile",
+        "candidate": "layered-5-mobile-dct-scale0.0625",
+        "ladder": [
+          48,
+          96,
+          144,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 0.0625,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.996356,
+        "finalSsimP10": 0.99401,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 3.129391,
+        "matchedNativeRatioP75": 3.582695,
+        "totalBytesMedian": 205473,
+        "baseShareMedian": 0.005813,
+        "baseAndFirstShareMedian": 0.067634,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.000834,
+        "decodeMsP75": 43.692
+      },
+      {
+        "ladderId": "layered-5-mobile",
+        "candidate": "layered-5-mobile-dct-scale0.125",
+        "ladder": [
+          48,
+          96,
+          144,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 0.125,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.991706,
+        "finalSsimP10": 0.986088,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.900136,
+        "matchedNativeRatioP75": 3.267199,
+        "totalBytesMedian": 152936,
+        "baseShareMedian": 0.007799,
+        "baseAndFirstShareMedian": 0.069755,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.008174,
+        "decodeMsP75": 44.261
+      },
+      {
+        "ladderId": "layered-5-mobile",
+        "candidate": "layered-5-mobile-dct-scale0.25",
+        "ladder": [
+          48,
+          96,
+          144,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 0.25,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.982183,
+        "finalSsimP10": 0.97163,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.610687,
+        "matchedNativeRatioP75": 2.765477,
+        "totalBytesMedian": 109908,
+        "baseShareMedian": 0.010942,
+        "baseAndFirstShareMedian": 0.071305,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.018047,
+        "decodeMsP75": 44.004
+      },
+      {
+        "ladderId": "layered-5-mobile",
+        "candidate": "layered-5-mobile-dct-scale0.5",
+        "ladder": [
+          48,
+          96,
+          144,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 0.5,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.966323,
+        "finalSsimP10": 0.949439,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.561544,
+        "matchedNativeRatioP75": 2.858816,
+        "totalBytesMedian": 75912,
+        "baseShareMedian": 0.015968,
+        "baseAndFirstShareMedian": 0.074241,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.030038,
+        "decodeMsP75": 42.821
+      },
+      {
+        "ladderId": "layered-5-mobile",
+        "candidate": "layered-5-mobile-dct-scale1",
+        "ladder": [
+          48,
+          96,
+          144,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 1,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.93901,
+        "finalSsimP10": 0.914525,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 2.233676,
+        "matchedNativeRatioP75": 2.36936,
+        "totalBytesMedian": 51432,
+        "baseShareMedian": 0.023981,
+        "baseAndFirstShareMedian": 0.077302,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.042256,
+        "decodeMsP75": 39.954
+      },
+      {
+        "ladderId": "layered-5-mobile",
+        "candidate": "layered-5-mobile-dct-scale2",
+        "ladder": [
+          48,
+          96,
+          144,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 2,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.899215,
+        "finalSsimP10": 0.864683,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 1.484802,
+        "matchedNativeRatioP75": 1.56706,
+        "totalBytesMedian": 33592,
+        "baseShareMedian": 0.036913,
+        "baseAndFirstShareMedian": 0.082801,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.051784,
+        "decodeMsP75": 38.025
+      },
+      {
+        "ladderId": "layered-5-mobile",
+        "candidate": "layered-5-mobile-dct-scale4",
+        "ladder": [
+          48,
+          96,
+          144,
+          192,
+          384
+        ],
+        "terminalWidth": 384,
+        "quantizationScale": 4,
+        "expectedSamples": 20,
+        "completedSamples": 20,
+        "correctnessRate": 1,
+        "finalSsimMedian": 0.834934,
+        "finalSsimP10": 0.796133,
+        "matchedNativeCoverage": 1,
+        "matchedNativeRatioMedian": 0.945647,
+        "matchedNativeRatioP75": 1.007288,
+        "totalBytesMedian": 21733,
+        "baseShareMedian": 0.05744,
+        "baseAndFirstShareMedian": 0.090508,
+        "monotonicRate": 1,
+        "paretoRate": 1,
+        "bandSplitOverheadMedian": 0.057036,
+        "decodeMsP75": 35.609
+      }
+    ],
+    "screeningSampleIds": [
+      255209,
+      541285,
+      587109,
+      638497,
+      51,
+      443831,
+      290,
+      508003,
+      411427,
+      397604,
+      94244,
+      444828,
+      424883,
+      419846,
+      487630,
+      310178,
+      217660,
+      2585,
+      212775,
+      198098
+    ],
+    "finalists": [
+      {
+        "key": "layered-4-mobile-dct-scale0.5",
+        "qualityTarget": 0.95
+      },
+      {
+        "key": "layered-4-mobile-dct-scale0.25",
+        "qualityTarget": 0.97
+      },
+      {
+        "key": "layered-4-mobile-dct-scale0.125",
+        "qualityTarget": 0.99
+      },
+      {
+        "key": "layered-4-desktop-dct-scale0.5",
+        "qualityTarget": 0.95
+      },
+      {
+        "key": "layered-4-desktop-dct-scale0.25",
+        "qualityTarget": 0.97
+      },
+      {
+        "key": "layered-4-desktop-dct-scale0.125",
+        "qualityTarget": 0.99
+      }
+    ],
+    "gate": {
+      "pass": false,
+      "branch": "stop",
+      "candidates": [
+        {
+          "summary": {
+            "candidate": "layered-4-mobile-dct-scale0.5",
+            "ladder": [
+              48,
+              96,
+              192,
+              384
+            ],
+            "terminalWidth": 384,
+            "quantizationScale": 0.5,
+            "expectedSamples": 100,
+            "completedSamples": 100,
+            "correctnessRate": 1,
+            "finalSsimMedian": 0.968683,
+            "finalSsimP10": 0.957216,
+            "matchedNativeCoverage": 1,
+            "matchedNativeRatioMedian": 2.412706,
+            "matchedNativeRatioP75": 2.729687,
+            "totalBytesMedian": 71755,
+            "baseShareMedian": 0.017266,
+            "baseAndFirstShareMedian": 0.08023,
+            "monotonicRate": 1,
+            "paretoRate": 1,
+            "bandSplitOverheadMedian": 0.029021,
+            "decodeMsP75": 37.314
+          },
+          "gate": {
+            "pass": false,
+            "checks": {
+              "sampleCoverage": true,
+              "correctness": true,
+              "finalQuality": true,
+              "matchedNativeCoverage": true,
+              "byteOverhead": false,
+              "baseBudget": true,
+              "firstRefinementBudget": true,
+              "monotonicQuality": true,
+              "intermediatePareto": true
+            },
+            "branch": "stop"
+          }
+        },
+        {
+          "summary": {
+            "candidate": "layered-4-mobile-dct-scale0.25",
+            "ladder": [
+              48,
+              96,
+              192,
+              384
+            ],
+            "terminalWidth": 384,
+            "quantizationScale": 0.25,
+            "expectedSamples": 100,
+            "completedSamples": 100,
+            "correctnessRate": 1,
+            "finalSsimMedian": 0.983711,
+            "finalSsimP10": 0.9781,
+            "matchedNativeCoverage": 1,
+            "matchedNativeRatioMedian": 2.440795,
+            "matchedNativeRatioP75": 2.749936,
+            "totalBytesMedian": 104139,
+            "baseShareMedian": 0.011893,
+            "baseAndFirstShareMedian": 0.07814,
+            "monotonicRate": 1,
+            "paretoRate": 1,
+            "bandSplitOverheadMedian": 0.017452,
+            "decodeMsP75": 38.125
+          },
+          "gate": {
+            "pass": false,
+            "checks": {
+              "sampleCoverage": true,
+              "correctness": true,
+              "finalQuality": true,
+              "matchedNativeCoverage": true,
+              "byteOverhead": false,
+              "baseBudget": true,
+              "firstRefinementBudget": true,
+              "monotonicQuality": true,
+              "intermediatePareto": true
+            },
+            "branch": "stop"
+          }
+        },
+        {
+          "summary": {
+            "candidate": "layered-4-mobile-dct-scale0.125",
+            "ladder": [
+              48,
+              96,
+              192,
+              384
+            ],
+            "terminalWidth": 384,
+            "quantizationScale": 0.125,
+            "expectedSamples": 100,
+            "completedSamples": 100,
+            "correctnessRate": 1,
+            "finalSsimMedian": 0.992529,
+            "finalSsimP10": 0.989306,
+            "matchedNativeCoverage": 1,
+            "matchedNativeRatioMedian": 2.687204,
+            "matchedNativeRatioP75": 3.066967,
+            "totalBytesMedian": 145587,
+            "baseShareMedian": 0.008509,
+            "baseAndFirstShareMedian": 0.075979,
+            "monotonicRate": 1,
+            "paretoRate": 1,
+            "bandSplitOverheadMedian": 0.007239,
+            "decodeMsP75": 39.927
+          },
+          "gate": {
+            "pass": false,
+            "checks": {
+              "sampleCoverage": true,
+              "correctness": true,
+              "finalQuality": true,
+              "matchedNativeCoverage": true,
+              "byteOverhead": false,
+              "baseBudget": true,
+              "firstRefinementBudget": true,
+              "monotonicQuality": true,
+              "intermediatePareto": true
+            },
+            "branch": "stop"
+          }
+        },
+        {
+          "summary": {
+            "candidate": "layered-4-desktop-dct-scale0.5",
+            "ladder": [
+              64,
+              128,
+              256,
+              512
+            ],
+            "terminalWidth": 512,
+            "quantizationScale": 0.5,
+            "expectedSamples": 100,
+            "completedSamples": 100,
+            "correctnessRate": 1,
+            "finalSsimMedian": 0.96928,
+            "finalSsimP10": 0.958773,
+            "matchedNativeCoverage": 1,
+            "matchedNativeRatioMedian": 2.463198,
+            "matchedNativeRatioP75": 2.857988,
+            "totalBytesMedian": 112692,
+            "baseShareMedian": 0.018019,
+            "baseAndFirstShareMedian": 0.083473,
+            "monotonicRate": 1,
+            "paretoRate": 1,
+            "bandSplitOverheadMedian": 0.028186,
+            "decodeMsP75": 67.638
+          },
+          "gate": {
+            "pass": false,
+            "checks": {
+              "sampleCoverage": true,
+              "correctness": true,
+              "finalQuality": true,
+              "matchedNativeCoverage": true,
+              "byteOverhead": false,
+              "baseBudget": true,
+              "firstRefinementBudget": true,
+              "monotonicQuality": true,
+              "intermediatePareto": true
+            },
+            "branch": "stop"
+          }
+        },
+        {
+          "summary": {
+            "candidate": "layered-4-desktop-dct-scale0.25",
+            "ladder": [
+              64,
+              128,
+              256,
+              512
+            ],
+            "terminalWidth": 512,
+            "quantizationScale": 0.25,
+            "expectedSamples": 100,
+            "completedSamples": 100,
+            "correctnessRate": 1,
+            "finalSsimMedian": 0.984038,
+            "finalSsimP10": 0.978881,
+            "matchedNativeCoverage": 1,
+            "matchedNativeRatioMedian": 2.535867,
+            "matchedNativeRatioP75": 2.911966,
+            "totalBytesMedian": 163808,
+            "baseShareMedian": 0.012314,
+            "baseAndFirstShareMedian": 0.081194,
+            "monotonicRate": 1,
+            "paretoRate": 1,
+            "bandSplitOverheadMedian": 0.01485,
+            "decodeMsP75": 69.281
+          },
+          "gate": {
+            "pass": false,
+            "checks": {
+              "sampleCoverage": true,
+              "correctness": true,
+              "finalQuality": true,
+              "matchedNativeCoverage": true,
+              "byteOverhead": false,
+              "baseBudget": true,
+              "firstRefinementBudget": true,
+              "monotonicQuality": true,
+              "intermediatePareto": true
+            },
+            "branch": "stop"
+          }
+        },
+        {
+          "summary": {
+            "candidate": "layered-4-desktop-dct-scale0.125",
+            "ladder": [
+              64,
+              128,
+              256,
+              512
+            ],
+            "terminalWidth": 512,
+            "quantizationScale": 0.125,
+            "expectedSamples": 100,
+            "completedSamples": 100,
+            "correctnessRate": 1,
+            "finalSsimMedian": 0.992336,
+            "finalSsimP10": 0.989685,
+            "matchedNativeCoverage": 1,
+            "matchedNativeRatioMedian": 2.755635,
+            "matchedNativeRatioP75": 3.249781,
+            "totalBytesMedian": 229639,
+            "baseShareMedian": 0.008782,
+            "baseAndFirstShareMedian": 0.0793,
+            "monotonicRate": 1,
+            "paretoRate": 1,
+            "bandSplitOverheadMedian": 0.005751,
+            "decodeMsP75": 71.331
+          },
+          "gate": {
+            "pass": false,
+            "checks": {
+              "sampleCoverage": true,
+              "correctness": true,
+              "finalQuality": true,
+              "matchedNativeCoverage": true,
+              "byteOverhead": false,
+              "baseBudget": true,
+              "firstRefinementBudget": true,
+              "monotonicQuality": true,
+              "intermediatePareto": true
+            },
+            "branch": "stop"
+          }
+        }
+      ]
+    }
+  },
+  "decisions": {
+    "prototypeB": "stop",
+    "boundedEntropyOptimization": "not eligible; all median ratios exceed 1.50",
+    "browserReconstruction": "not started; Representation Gate failed",
+    "layeredScheduling": "not started",
+    "production": "native unchanged"
+  },
+  "limitations": [
+    "Native quality grid is 40/50/60/70/80/90/100; q40 JPEG byte GO is relative to that sampled grid, not a proven same-quality optimum. Native qualities below 40 may invalidate it.",
+    "Calibration selects nearest passing profiles from a global fixed scale grid; selected profiles overshoot target SSIM. No per-image tuning.",
+    "Intermediate Pareto uses upscaled intermediate pixels versus terminal-scale Native, inherited from Prototype A; no claim of equal-intermediate-resolution frontier.",
+    "Band split overhead measures compressed payload only, excluding a future per-band checksum/header envelope; it is a lower bound.",
+    "Cached Native timing values come from frozen Prototype A; corrected JPEG decode timing excludes quality metric computation.",
+    "Browser runs use controlled scan arrivals and screenshots, not production throttled page LCP measurements; screenshot sampling adds 100-300ms observation uncertainty.",
+    "Firefox/Safari incremental behavior is unmeasured on this Windows host; MDN only establishes JPEG format support."
+  ],
+  "references": [
+    "https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types",
+    "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode"
+  ],
+  "rawArtifactDirectories": {
+    "originalRecovery": "nothing-new-representation-recovery-2026-09-22T06-39-04-441Z",
+    "reproducedRecovery": "nothing-new-representation-recovery-2026-09-22T10-17-22-750Z",
+    "chrome": "nothing-new-progressive-stream-chrome-1790071462892",
+    "edge": "nothing-new-progressive-stream-edge-1790071620258"
+  }
+}

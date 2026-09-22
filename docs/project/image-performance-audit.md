@@ -156,3 +156,48 @@ Representation Gate 为 **NO-GO**。根据预先确定的停止规则，本轮�
 这不是对 phase-aware 假设的普遍否定，只否定当前 Prototype A：`RGB residual → quantize → ZigZag/u16 → Deflate`。若未来重启研究，应先在独立分支验证 transform、wavelet 或成熟可伸缩编码格式能否把总字节压到 Gate 内，再回到浏览器阶段。生产继续使用 native，现有 L0/L1 实验代码不进入默认路径。
 
 本次离线实验运行于 Node `v24.11.1`、Sharp `0.34.5`、Windows x64；项目与 Vercel 要求 Node 22。编码和重建耗时只作为本机描述值，不能外推为浏览器 CPU、Long Task 或线上性能结论。
+
+## 2026-09-22：Representation Recovery（Prototype B）
+
+本轮将成熟 Progressive JPEG 与 DCT residual 分开研究。Prototype A 的 `fe5a70f` 和 `image-layering-representation-summary.json` 继续冻结；新结果为 [image-representation-recovery-summary.json](./image-representation-recovery-summary.json)。生产保持 native。
+
+### 数据与实现
+
+- 沿用快照 `4db062a36e10` 的同一 100 张封面（17 watching + 83 watched）。生产 TLS 连续 ECONNRESET 后直接复用冻结临时缓存，并逐张校验长度和 SHA-256，未更换样本。
+- Prototype B 保留 WebP Base q65、真实前级重建和定点双线性预测；residual 改为 YCbCr 4:2:0 → 边缘复制 → 8×8 DCT → JPEG 量化表乘全局 scale → JPEG zigzag → 零游程/signed varint → Deflate level 6。版本化 manifest 为 v2。
+- 20 张固定等距样本筛选三种既有 ladder × 七档 scale（0.0625/0.125/0.25/0.5/1/2/4），目标 SSIM 为 0.95/0.97/0.99。固定网格选中的三档为 0.5/0.25/0.125，实际质量会高于目标；没有逐图片调参。筛选 ID 保存在聚合 JSON。
+- Layered-5 在筛选集每一档 scale 上均被对应 Layered-4 的字节与最终 SSIM 支配，故正式 100 张只验证两个终点的六个 Layered-4 profile。
+- 编码端模拟直接由量化系数重建，不经过字节解析；独立解码端重新解析序列化 manifest 和压缩层。新增 int32 溢出、截断、校验和、尺寸/plane geometry、inflate 上限保护。
+- 首轮完整实验目录为 `nothing-new-representation-recovery-2026-09-22T06-39-04-441Z`。补齐逐样本指标和二进制存档后另建 `nothing-new-representation-recovery-2026-09-22T10-17-22-750Z`；六个 profile 的画质与字节比与首轮完全相同。第二份包含 `formats.json`、`layers/`、`result.json`、`aggregate.json`。
+
+### Progressive JPEG 完整文件基线
+
+Sharp/mozjpeg 使用 `progressive: true`。以下每行均为 100 张，Native 为 WebP/AVIF q40/50/60/70/80/90/100，按 `SSIM ≥ candidate − 0.005` 取最小文件。完整字节 Gate 为 ratio median ≤1.15、P75 ≤1.25。
+
+| 尺寸 | JPEG q | SSIM median / P10 | 文件 bytes median | Native ratio median / P75 | 编码 / 完整解码 ms median | 字节 Gate |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 384 | 40 | 0.913799 / 0.886699 | 22,200 | 0.976 / 1.049 | 14.564 / 2.548 | GO |
+| 384 | 50 | 0.928142 / 0.904462 | 26,035 | 1.151 / 1.222 | 16.168 / 2.713 | NO-GO |
+| 384 | 60 | 0.940174 / 0.919319 | 30,126 | 1.321 / 1.407 | 19.156 / 3.347 | NO-GO |
+| 384 | 70 | 0.952999 / 0.935514 | 36,060 | 1.511 / 1.630 | 22.947 / 2.983 | NO-GO |
+| 384 | 80 | 0.967246 / 0.954078 | 46,048 | 1.620 / 1.768 | 26.870 / 3.477 | NO-GO |
+| 384 | 90 | 0.982750 / 0.975925 | 66,475 | 1.628 / 1.819 | 35.878 / 4.271 | NO-GO |
+| 384 | 95 | 0.991550 / 0.987909 | 90,773 | 1.747 / 1.953 | 49.935 / 5.244 | NO-GO |
+| 512 | 40 | 0.916599 / 0.887577 | 34,835 | 1.054 / 1.171 | 22.996 / 3.861 | GO |
+| 512 | 50 | 0.930728 / 0.905931 | 40,918 | 1.229 / 1.361 | 26.462 / 3.799 | NO-GO |
+| 512 | 60 | 0.942468 / 0.921365 | 47,575 | 1.394 / 1.518 | 30.315 / 3.752 | NO-GO |
+| 512 | 70 | 0.955182 / 0.937625 | 57,057 | 1.623 / 1.738 | 34.386 / 4.159 | NO-GO |
+| 512 | 80 | 0.969143 / 0.956252 | 73,214 | 1.632 / 1.781 | 42.701 / 4.752 | NO-GO |
+| 512 | 90 | 0.983742 / 0.976575 | 106,105 | 1.682 / 1.830 | 57.020 / 6.889 | NO-GO |
+| 512 | 95 | 0.991727 / 0.988917 | 144,295 | 1.801 / 2.030 | 77.879 / 7.600 | NO-GO |
+
+仅 q40 通过这个**离散 Native 网格**下的字节 Gate。其最终 SSIM median 只有 0.914/0.917、P10 只有 0.887，不能代表满足 0.95/0.93 画质底线的替换方案。q70 才达到该画质底线，但字节比 median 已为 1.511/1.623，均超过 Gate。q50 在 384 px 的真实 ratio 为 1.150689，虽四舍五入接近 1.15，仍严格判为失败。
+
+q40 的通过还受 Native 最低 q40 的限制：这不是搜索全部 Native quality 后的同质量最优解，补充 Native q<40 可能使这个 GO 消失。因此只把它作为允许进入局部流式实验的历史判定，不宣称 JPEG 压缩优于 WebP/AVIF。
+
+### 浏览器能力与流式实验
+
+采用隔离 agent-browser 0.38.1 会话，回环 HTTP chunked response，无图片实验开关。每张 JPEG 有 5 个扫描 chunk，首包延迟 200 ms，其后每 250 ms 发送一个完整扫描。Chrome 和 Edge 各运行 10 张等距封面 × 384/512 px × 3 次，共 120 轮。headless、DPR 1、图片按参考像素尺寸显示；该设置是单图机制实验，不是移动端页面性能矩阵。
+
+截图请求间隔设为 100 ms，实际截取、传输与计算使观测间隔约 100–300 ms；保留每次截图的时间窗口。TTR 定义为首个变化截图 SSIM ≥0.50（启发式，不是人工辨认测试），TQ80 为 SSIM ≥0.80；Quality Integral 使用从设置 src 至 load 的 SSIM 左保持积分除以总时长，空白不计画质。load 与最终像素可见时间分别记录，避免把完整接收当作已经呈现。
+<!-- RECOVERY_APPEND_CONTINUES -->

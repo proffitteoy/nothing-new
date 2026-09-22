@@ -3,7 +3,6 @@ import { CalendarDays, CornerUpLeft, Hash, Link2 } from "lucide-react"
 
 import { getNoteManifest } from "@/lib/notes/server"
 import type { NoteArtifact } from "@/lib/notes/types"
-import Navbar from "../Navbar"
 import PageTransition from "../PageTransition"
 import NoteExplorer from "./NoteExplorer"
 
@@ -25,7 +24,6 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
   return (
     <div className="note-native-shell relative isolate min-h-screen overflow-x-clip bg-transparent pb-20 text-[#2b251d] dark:text-[#f2f4f7]">
       <link rel="stylesheet" href="/quartz-assets/note.css" precedence="default" />
-      <Navbar />
       <PageTransition>
         <main className="mx-auto grid w-full max-w-[94rem] grid-cols-1 gap-5 px-4 pt-24 sm:px-6 lg:grid-cols-[14rem_minmax(0,1fr)_12rem] lg:px-8 xl:grid-cols-[17rem_minmax(0,1fr)_15rem] xl:gap-6">
           <NoteExplorer

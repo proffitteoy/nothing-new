@@ -10,6 +10,7 @@ import BackgroundSlider from "../components/BackgroundSlider"
 import SplashScreen from "../components/SplashScreen"
 import { FieldModeProvider } from "../components/FieldModeProvider"
 import ScrollRootManager from "../components/ScrollRootManager"
+import Navbar from "../components/Navbar"
 
 import MobileBackButton from "../components/MobileBackButton"
 
@@ -90,6 +91,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
                 <FieldScene />
 
+                <Navbar />
                 <ScrollRootManager />
 
                 <div

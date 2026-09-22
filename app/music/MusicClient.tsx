@@ -17,7 +17,6 @@ import {
   VolumeX,
   X,
 } from "lucide-react"
-import Navbar from "../../components/Navbar"
 import MineradioParticleField from "../../components/MineradioParticleField"
 import PageTransition from "../../components/PageTransition"
 import { useMusic, type MusicSong } from "../../components/MusicProvider"
@@ -96,7 +95,6 @@ export default function MusicClient() {
   if (isLoading || !currentSong) {
     return (
       <div className="relative min-h-screen overflow-hidden text-slate-900 dark:text-white">
-        <Navbar />
         <main
           className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 pt-24 text-center"
           role="status"
@@ -143,8 +141,6 @@ export default function MusicClient() {
 
   return (
     <div className="relative min-h-[100svh] overflow-hidden text-slate-900 dark:text-white">
-      <Navbar />
-
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_44%,rgba(99,102,241,0.12),transparent_42%),radial-gradient(circle_at_72%_28%,rgba(236,72,153,0.10),transparent_34%)] dark:bg-[radial-gradient(circle_at_50%_44%,rgba(129,140,248,0.13),transparent_44%),radial-gradient(circle_at_72%_28%,rgba(236,72,153,0.08),transparent_36%)]" />
         <MineradioParticleField

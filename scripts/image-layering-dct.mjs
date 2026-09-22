@@ -166,6 +166,10 @@ export function serializeDctBlocks(blocks, bandRange = [0, 64]) {
 export function deserializeDctBlocks(bytes, blockCount, bandRange = [0, 64]) {
   if (!Number.isInteger(blockCount) || blockCount < 0) throw new Error("block count is invalid")
   const [start, end] = bandRange
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end > 64 || start >= end) {
+    throw new Error("invalid DCT band range")
+  }
+  if (blockCount > 1_000_000) throw new Error("DCT block count exceeds limit")
   const state = { offset: 0 }
   const blocks = new Int32Array(blockCount * 64)
   for (let block = 0; block < blockCount; block += 1) {
@@ -178,6 +182,9 @@ export function deserializeDctBlocks(bytes, blockCount, bandRange = [0, 64]) {
       if (position >= end) throw new Error("DCT zero run exceeds its band")
       const coefficient = unsignedToSigned(decodeUnsignedVarint(bytes, state))
       if (coefficient === 0) throw new Error("DCT stream contains an explicit zero")
+      if (coefficient < -2147483648 || coefficient > 2147483647) {
+        throw new Error("DCT coefficient exceeds int32")
+      }
       blocks[block * 64 + ZIGZAG[position]] = coefficient
       position += 1
     }
@@ -243,9 +250,13 @@ function encodePlane(plane, quantizationScale) {
       }
       const coefficients = forwardDct8(block)
       for (let index = 0; index < 64; index += 1) {
-        blocks[blockIndex * 64 + index] = Math.round(
+        const quantized = Math.round(
           coefficients[index] / (plane.quantization[index] * quantizationScale),
         )
+        if (!Number.isSafeInteger(quantized) || quantized < -2147483648 || quantized > 2147483647) {
+          throw new Error("DCT quantization exceeds int32")
+        }
+        blocks[blockIndex * 64 + index] = quantized
       }
       blockIndex += 1
     }
@@ -338,6 +349,9 @@ function deserializePlanes(bytes, descriptors, bandRange = [0, 64]) {
         if (position >= end) throw new Error("DCT zero run exceeds its band")
         const coefficient = unsignedToSigned(decodeUnsignedVarint(bytes, state))
         if (coefficient === 0) throw new Error("DCT stream contains an explicit zero")
+        if (coefficient < -2147483648 || coefficient > 2147483647) {
+          throw new Error("DCT coefficient exceeds int32")
+        }
         blocks[block * 64 + ZIGZAG[position]] = coefficient
         position += 1
       }
@@ -376,19 +390,59 @@ export function encodeDctResidual(prediction, target, quantizationScale) {
   return {
     compressed,
     descriptor,
-    reconstructed: decodeDctResidual(prediction, compressed, descriptor),
+    // Encoder simulation bypasses serialization/inflate; the independent reader must
+    // reproduce these pixels from serialized bytes, not merely call itself twice.
+    reconstructed: combinePlanes(prediction, encodedPlanes.map((plane, index) =>
+      reconstructPlane(
+        plane.blocks, plane.descriptor,
+        index === 0 ? LUMA_QUANTIZATION : CHROMA_QUANTIZATION,
+        quantizationScale,
+      ),
+    )),
+  }
+}
+
+function validateDctLayer(layer) {
+  if (!layer || layer.encoding !== DCT_LAYER_ENCODING) throw new Error("unsupported DCT layer encoding")
+  if (!Number.isInteger(layer.width) || !Number.isInteger(layer.height) ||
+      layer.width < 1 || layer.height < 1 || layer.width * layer.height > 16_777_216) {
+    throw new Error("invalid DCT dimensions")
+  }
+  if (!Number.isFinite(layer.quantizationScale) || layer.quantizationScale <= 0) {
+    throw new Error("invalid DCT quantization scale")
+  }
+  if (!Array.isArray(layer.planes) || layer.planes.length !== 3) throw new Error("invalid DCT planes")
+  let totalBlocks = 0
+  layer.planes.forEach((plane, index) => {
+    const width = index === 0 ? layer.width : Math.ceil(layer.width / 2)
+    const height = index === 0 ? layer.height : Math.ceil(layer.height / 2)
+    const paddedWidth = Math.ceil(width / 8) * 8
+    const paddedHeight = Math.ceil(height / 8) * 8
+    const blockCount = paddedWidth * paddedHeight / 64
+    if (plane.name !== ["y", "cb", "cr"][index] ||
+        plane.width !== width || plane.height !== height ||
+        plane.paddedWidth !== paddedWidth || plane.paddedHeight !== paddedHeight ||
+        plane.blockCount !== blockCount) throw new Error("invalid DCT plane geometry")
+    totalBlocks += blockCount
+  })
+  if (!Number.isInteger(layer.rawBytes) || layer.rawBytes < totalBlocks ||
+      layer.rawBytes > totalBlocks * 64 * 6) throw new Error("invalid DCT raw byte length")
+  if (!Number.isInteger(layer.bytes) || layer.bytes < 1) throw new Error("invalid DCT byte length")
+  if (typeof layer.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(layer.sha256)) {
+    throw new Error("invalid DCT checksum")
   }
 }
 
 export function decodeDctResidual(prediction, compressed, descriptor) {
   assertRawImage(prediction, "prediction")
+  validateDctLayer(descriptor)
   if (descriptor.encoding !== DCT_LAYER_ENCODING) throw new Error("unsupported DCT layer encoding")
   if (descriptor.width !== prediction.width || descriptor.height !== prediction.height) {
     throw new Error("DCT layer dimensions do not match prediction")
   }
   if (compressed.length !== descriptor.bytes) throw new Error("DCT layer byte length mismatch")
   if (sha256(compressed) !== descriptor.sha256) throw new Error("DCT layer checksum mismatch")
-  const serialized = inflateSync(compressed)
+  const serialized = inflateSync(compressed, { maxOutputLength: descriptor.rawBytes })
   if (serialized.length !== descriptor.rawBytes) throw new Error("DCT layer raw length mismatch")
   const blocks = deserializePlanes(serialized, descriptor.planes)
   const planes = blocks.map((planeBlocks, index) =>
@@ -416,6 +470,7 @@ export function validateDctManifest(manifest) {
   let width = manifest.base.width
   let height = manifest.base.height
   for (const [index, layer] of manifest.layers.entries()) {
+    validateDctLayer(layer)
     if (layer.level !== index + 1 || layer.encoding !== DCT_LAYER_ENCODING) {
       throw new Error("invalid DCT layer descriptor")
     }
@@ -493,6 +548,9 @@ export async function decodeDctLayeredImage(serialized) {
     throw new Error("DCT layer count mismatch")
   }
   let reconstructed = await decodeRgb(serialized.baseBytes)
+  if (reconstructed.width !== manifest.base.width || reconstructed.height !== manifest.base.height) {
+    throw new Error("DCT base dimensions mismatch")
+  }
   const reconstructedLevels = [reconstructed]
   for (let index = 0; index < manifest.layers.length; index += 1) {
     const descriptor = manifest.layers[index]

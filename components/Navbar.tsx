@@ -26,10 +26,8 @@ const getMobileDragConstraints = () => {
 }
 
 export default function Navbar() {
-  const [showNav, setShowNav] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
-  const lastScrollYRef = useRef(0)
 
   // --- 🌟 物理引擎：菜单转动逻辑 ---
   const wheelRef = useRef<HTMLDivElement>(null)
@@ -73,50 +71,6 @@ export default function Navbar() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isMobileMenuOpen])
 
-  // 控制 PC 端导航栏
-  useEffect(() => {
-    const desktopQuery = window.matchMedia("(min-width: 768px)")
-    let scrollRoot: HTMLElement | null = null
-
-    const handleScroll = () => {
-      const currentScrollY = scrollRoot?.scrollTop ?? window.scrollY
-      if (currentScrollY > lastScrollYRef.current && currentScrollY > 80) {
-        setShowNav(false)
-      } else {
-        setShowNav(true)
-      }
-      lastScrollYRef.current = currentScrollY
-    }
-
-    const unbindScroll = () => {
-      if (scrollRoot) {
-        scrollRoot.removeEventListener("scroll", handleScroll)
-      } else {
-        window.removeEventListener("scroll", handleScroll)
-      }
-    }
-
-    const bindScroll = () => {
-      unbindScroll()
-      scrollRoot = desktopQuery.matches ? document.getElementById("app-scroll-root") : null
-      lastScrollYRef.current = scrollRoot?.scrollTop ?? window.scrollY
-
-      if (scrollRoot) {
-        scrollRoot.addEventListener("scroll", handleScroll, { passive: true })
-      } else {
-        window.addEventListener("scroll", handleScroll, { passive: true })
-      }
-    }
-
-    bindScroll()
-    desktopQuery.addEventListener("change", bindScroll)
-
-    return () => {
-      desktopQuery.removeEventListener("change", bindScroll)
-      unbindScroll()
-    }
-  }, [])
-
   const navLinks = [
     { name: "首页", href: "/" },
     { name: "项目", href: "/projects" },
@@ -136,7 +90,7 @@ export default function Navbar() {
       {/* PC端导航栏 */}
       <header
         data-field-obstacle
-        className={`hidden md:block w-full fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b ${showNav ? "translate-y-0" : "-translate-y-full"} bg-white/40 dark:bg-slate-900/50 backdrop-blur-xl border-white/20 dark:border-white/5 shadow-sm`}
+        className="hidden md:block w-full fixed top-0 left-0 right-0 z-50 border-b bg-white/40 dark:bg-slate-900/50 backdrop-blur-xl border-white/20 dark:border-white/5 shadow-sm"
       >
         <div className="w-[90%] max-w-6xl mx-auto h-16 flex items-center justify-between px-4 sm:px-[30px] box-border">
           <Link

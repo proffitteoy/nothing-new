@@ -2,7 +2,6 @@ import Link from "next/link"
 import { ArrowRight, BookOpenText, FolderOpen, Hash } from "lucide-react"
 
 import type { NoteArtifact, NoteSection } from "@/lib/notes/types"
-import Navbar from "../Navbar"
 import PageTransition from "../PageTransition"
 
 function formatDate(value?: string) {
@@ -31,7 +30,6 @@ export default function NoteCollectionPage({
 
   return (
     <div className="relative min-h-screen pb-20">
-      <Navbar />
       <PageTransition>
         <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-12 pt-24 sm:px-6 lg:px-10">
           <header className="relative overflow-hidden rounded-[2rem] border border-white/55 bg-white/50 p-6 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.55)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/55 md:p-9">

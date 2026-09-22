@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 
 import ChatterBoard from "@/components/ChatterBoard"
-import Navbar from "@/components/Navbar"
 import PageTransition from "@/components/PageTransition"
 import { buildChatterItems } from "@/lib/notes/chatter"
 import {
@@ -34,7 +33,6 @@ export default async function ChatterPage({
 
   return (
     <div className="relative min-h-screen pb-10">
-      <Navbar />
       <PageTransition>
         <ChatterBoard items={items} imageLab={imageLab} />
       </PageTransition>

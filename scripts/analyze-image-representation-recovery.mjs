@@ -51,6 +51,7 @@ function parseArgs(argv) {
   return {
     baseUrl: values["base-url"] ?? "https://nothing-new.icu",
     samplesManifest: values["samples-manifest"],
+    nativeResult: values["native-result"],
     output:
       values.output ??
       path.join(
@@ -204,19 +205,22 @@ async function encodeProgressiveJpeg(image, quality) {
     .toBuffer()
 }
 
-async function measureFormatBaselines(references, options) {
+async function measureFormatBaselines(references, options, cachedNative) {
   const output = {}
   for (const terminalWidth of [384, 512]) {
     const reference = references.get(terminalWidth)
-    const native = []
+    const native = cachedNative?.[terminalWidth]?.filter((entry) =>
+      options.nativeQualities.includes(entry.quality),
+    ) ?? []
     const progressiveJpeg = []
-    for (const format of ["webp", "avif"]) {
+    for (const format of cachedNative ? [] : ["webp", "avif"]) {
       for (const quality of options.nativeQualities) {
         const encodeStartedAt = performance.now()
         const bytes = await encodeNative(reference, format, quality)
         const encodeMs = performance.now() - encodeStartedAt
         const decodeStartedAt = performance.now()
         const decoded = await decodeRgb(bytes)
+        const decodeMs = performance.now() - decodeStartedAt
         native.push({
           format,
           quality,
@@ -224,7 +228,7 @@ async function measureFormatBaselines(references, options) {
           ssim: rounded(ssim(reference, decoded)),
           psnr: rounded(psnr(reference, decoded)),
           encodeMs: rounded(encodeMs, 3),
-          decodeMs: rounded(performance.now() - decodeStartedAt, 3),
+          decodeMs: rounded(decodeMs, 3),
         })
       }
     }
@@ -234,6 +238,7 @@ async function measureFormatBaselines(references, options) {
       const encodeMs = performance.now() - encodeStartedAt
       const decodeStartedAt = performance.now()
       const decoded = await decodeRgb(bytes)
+      const decodeMs = performance.now() - decodeStartedAt
       progressiveJpeg.push({
         format: "progressive-jpeg",
         quality,
@@ -241,7 +246,7 @@ async function measureFormatBaselines(references, options) {
         ssim: rounded(ssim(reference, decoded)),
         psnr: rounded(psnr(reference, decoded)),
         encodeMs: rounded(encodeMs, 3),
-        decodeMs: rounded(performance.now() - decodeStartedAt, 3),
+        decodeMs: rounded(decodeMs, 3),
       })
     }
     output[terminalWidth] = { native, progressiveJpeg }
@@ -272,7 +277,7 @@ function dctCandidate(ladder, quantizationScale) {
   }
 }
 
-async function measureDctCandidate(prepared, candidate, baseCache) {
+async function measureDctCandidate(prepared, candidate, baseCache, artifactDirectory) {
   const references = candidate.ladder.widths.map((width) => prepared.references.get(width))
   const baseWidth = candidate.ladder.widths[0]
   let baseBytes = baseCache.get(baseWidth)
@@ -288,13 +293,27 @@ async function measureDctCandidate(prepared, candidate, baseCache) {
     sourceSha256: prepared.sample.sourceSha256,
   })
   const encodeMs = performance.now() - encodeStartedAt
-  const manifestBytes = serializeDctManifest(encoded.manifest).length
+  const serializedManifest = serializeDctManifest(encoded.manifest)
+  const manifestBytes = serializedManifest.length
   const decodeStartedAt = performance.now()
-  const decoded = await decodeDctLayeredImage(encoded)
+  const decoded = await decodeDctLayeredImage({
+    manifest: JSON.parse(serializedManifest.toString("utf8")),
+    baseBytes: encoded.baseBytes,
+    layers: encoded.layers,
+  })
   const decodeMs = performance.now() - decodeStartedAt
   const reconstructionMatches = decoded.every((level, index) =>
     level.data.equals(encoded.reconstructedLevels[index].data),
   )
+  if (artifactDirectory) {
+    const directory = path.join(artifactDirectory, String(prepared.sample.item.id), candidate.key)
+    await mkdir(directory, { recursive: true })
+    await writeFile(path.join(directory, "manifest.json"), serializedManifest, { flag: "wx" })
+    await writeFile(path.join(directory, "base.webp"), encoded.baseBytes, { flag: "wx" })
+    for (const [index, layer] of encoded.layers.entries()) {
+      await writeFile(path.join(directory, "layer-" + (index + 1) + ".deflate"), layer, { flag: "wx" })
+    }
+  }
   const finalReference = references.at(-1)
   const nativeVariants = prepared.formats[finalReference.width].native
   let cumulativeBytes = manifestBytes
@@ -526,6 +545,9 @@ function summarizeProgressive(prepared) {
         ),
         matchedNativeRatioMedian: rounded(percentile(ratios, 0.5)),
         matchedNativeRatioP75: rounded(percentile(ratios, 0.75)),
+        psnrMedian: rounded(percentile(samples.map((sample) => sample.progressive.psnr), 0.5)),
+        encodeMsMedian: rounded(percentile(samples.map((sample) => sample.progressive.encodeMs), 0.5), 3),
+        decodeMsMedian: rounded(percentile(samples.map((sample) => sample.progressive.decodeMs), 0.5), 3),
       }
       summary.fullByteGate =
         summary.matchedNativeCoverage === 1 &&
@@ -569,7 +591,7 @@ function markdownSummary(result) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2))
-  await mkdir(options.output, { recursive: true })
+  await mkdir(options.output)
   const rawDirectory = path.join(options.output, "sources")
   await mkdir(rawDirectory, { recursive: true })
   console.log(`[recovery] loading snapshot from ${options.baseUrl}`)
@@ -591,19 +613,43 @@ async function main() {
   const failures = downloads.filter((sample) => !sample.ok)
   if (successful.length === 0) throw new Error("no cover samples could be downloaded")
 
+  // Reuse only frozen Native rows from the identical snapshot and Sharp version.
+  // Their timing values remain labelled as historical, not measured in this run.
+  const nativeResult = options.nativeResult
+    ? JSON.parse(await readFile(options.nativeResult, "utf8"))
+    : undefined
+  if (nativeResult && (
+    nativeResult.source.snapshotUrl !== source.snapshotUrl ||
+    nativeResult.runtime.sharp.sharp !== sharp.versions.sharp ||
+    !Array.isArray(nativeResult.native)
+  )) throw new Error("Native cache snapshot or Sharp version mismatch")
   const prepared = []
   for (let index = 0; index < successful.length; index += 1) {
     const sample = successful[index]
     console.log(`[recovery] format baselines ${index + 1}/${successful.length}: ${sample.item.id}`)
     const sourceBytes = await readFile(sample.file)
     const references = await buildReferences(sourceBytes)
-    const formats = await measureFormatBaselines(references, options)
+    const cachedNative = nativeResult?.native.find((entry) => entry.sampleId === sample.item.id)?.variants
+    if (nativeResult && !cachedNative) throw new Error("Native cache is missing sample " + sample.item.id)
+    if (cachedNative && [384, 512].some((width) =>
+      ["webp", "avif"].some((format) => options.nativeQualities.some((quality) =>
+        !cachedNative[width]?.some((row) => row.format === format && row.quality === quality),
+      )),
+    )) throw new Error("Native cache has incomplete quality coverage")
+    const formats = await measureFormatBaselines(references, options, cachedNative)
     prepared.push({ sample, sourceBytes, references, formats })
   }
+  const formatResults = prepared.map((entry) => ({
+    sampleId: entry.sample.item.id,
+    sourceSha256: entry.sample.sourceSha256,
+    formats: entry.formats,
+  }))
+  await writeFile(path.join(options.output, "formats.json"), JSON.stringify(formatResults, null, 2), { flag: "wx" })
 
   const progressiveSummaries = summarizeProgressive(prepared)
   const progressiveJpeg = {
-    browserEligible: progressiveSummaries.some((summary) => summary.fullByteGate),
+    browserEligible: successful.length === 100 && failures.length === 0 &&
+      progressiveSummaries.some((summary) => summary.fullByteGate),
     summaries: progressiveSummaries,
     capability: [
       {
@@ -613,7 +659,8 @@ async function main() {
         applicationScanControl: false,
       },
     ],
-    browserExperiment: progressiveSummaries.some((summary) => summary.fullByteGate)
+    browserExperiment: successful.length === 100 && failures.length === 0 &&
+      progressiveSummaries.some((summary) => summary.fullByteGate)
       ? "required"
       : "skipped-by-byte-gate",
   }
@@ -634,7 +681,7 @@ async function main() {
     for (const candidate of allCandidates) {
       resultsByCandidate
         .get(candidate.key)
-        .push(await measureDctCandidate(prepared[index], candidate, baseCache))
+        .push(await measureDctCandidate(prepared[index], candidate, baseCache, path.join(options.output, "layers")))
     }
     console.log(`[recovery] DCT screening sample complete: ${prepared[index].sample.item.id}`)
   }
@@ -657,7 +704,7 @@ async function main() {
     for (const candidate of finalists) {
       resultsByCandidate
         .get(candidate.key)
-        .push(await measureDctCandidate(prepared[index], candidate, baseCache))
+        .push(await measureDctCandidate(prepared[index], candidate, baseCache, path.join(options.output, "layers")))
     }
     console.log(`[recovery] DCT finalist sample complete: ${index + 1}/${prepared.length}`)
   }
@@ -665,7 +712,7 @@ async function main() {
     const summary = summarizeDctCandidate(
       candidate,
       resultsByCandidate.get(candidate.key),
-      successful.length,
+      options.limit,
     )
     return { summary, gate: evaluateDctGate(summary) }
   })
@@ -687,13 +734,17 @@ async function main() {
       snapshotUrl: source.snapshotUrl,
       snapshotVersion: source.pointer.version,
       snapshotUpdatedAt: source.pointer.updatedAt,
+      nativeBaselineGeneratedAt: nativeResult?.generatedAt,
     },
     configuration: { ...options, output: undefined, baseQuality: BASE_QUALITY, qualityTargets: QUALITY_TARGETS, ladders: DEFAULT_LADDERS },
-    samples: { requested: selectedItems.length, successful: successful.length, failures },
+    samples: { requested: options.limit, successful: successful.length, failures },
+    formats: formatResults,
+    sampleManifest: downloads.map((entry) => ({ ...entry, file: undefined })),
     progressiveJpeg,
     dct: {
       layeredFiveDominated: dominance.layeredFiveDominated,
       screening,
+      screeningSampleIds: screeningIndices.map((index) => prepared[index].sample.item.id),
       finalists: finalists.map((candidate) => ({ key: candidate.key, qualityTarget: candidate.qualityTarget })),
       candidateResults: Object.fromEntries(
         finalists.map((candidate) => [candidate.key, resultsByCandidate.get(candidate.key)]),
@@ -715,6 +766,7 @@ async function main() {
     dct: {
       layeredFiveDominated: result.dct.layeredFiveDominated,
       screening: result.dct.screening,
+      screeningSampleIds: result.dct.screeningSampleIds,
       finalists: result.dct.finalists,
       gate: result.dct.gate,
     },

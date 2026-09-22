@@ -2,6 +2,7 @@ import { spawn } from "node:child_process"
 import { mkdir, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import { pathToFileURL } from "node:url"
 const windowsNpxCli = path.join(
   path.dirname(process.execPath),
   "node_modules",
@@ -83,7 +84,7 @@ function parseArgs(argv) {
   }
 }
 
-function runAgent(session, args, input) {
+export function runAgent(session, args, input) {
   return new Promise((resolve, reject) => {
     const commandArgs = ["--yes", "agent-browser", "--session", session, ...args]
     const child = spawn(agentBrowser, [...agentBrowserPrefix, ...commandArgs], {
@@ -108,7 +109,7 @@ function runAgent(session, args, input) {
   })
 }
 
-function parseNestedJson(output) {
+export function parseNestedJson(output) {
   let value = output
   for (let index = 0; index < 3 && typeof value === "string"; index += 1) {
     const trimmed = value.trim()
@@ -132,7 +133,7 @@ async function evaluate(session, source) {
   return parseNestedJson(output)
 }
 
-class CdpClient {
+export class CdpClient {
   constructor(url) {
     this.url = url
     this.nextId = 1
@@ -384,7 +385,9 @@ async function main() {
   console.log(`[image-lab] summary: ${path.join(options.output, "summary.json")}`)
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+  main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}

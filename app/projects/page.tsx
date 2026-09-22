@@ -1,4 +1,3 @@
-import Navbar from "../../components/Navbar"
 import PageTransition from "../../components/PageTransition"
 import ProjectsBoard from "./ProjectsBoard"
 import { siteConfig } from "@/siteConfig"
@@ -15,7 +14,6 @@ export default function ProjectsPage() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 bg-slate-50/15 dark:bg-slate-950/10"
       />
-      <Navbar />
       <PageTransition>
         <div className="pt-16 md:pt-16">
           <ProjectsBoard />
