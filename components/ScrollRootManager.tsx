@@ -7,6 +7,12 @@ const DESKTOP_QUERY = "(min-width: 768px)"
 const SCROLL_ROOT_ID = "app-scroll-root"
 const scrollPositions = new Map<string, number>()
 
+function focusScrollRoot(scrollRoot: HTMLElement) {
+  if (document.activeElement === document.body) {
+    scrollRoot.focus({ preventScroll: true })
+  }
+}
+
 export default function ScrollRootManager() {
   const pathname = usePathname()
   const initializedRef = useRef(false)
@@ -18,6 +24,7 @@ export default function ScrollRootManager() {
 
     const previousScrollRestoration = window.history.scrollRestoration
     window.history.scrollRestoration = "manual"
+    if (window.matchMedia(DESKTOP_QUERY).matches) focusScrollRoot(scrollRoot)
 
     const rememberPosition = () => {
       if (!window.matchMedia(DESKTOP_QUERY).matches) return
@@ -61,6 +68,7 @@ export default function ScrollRootManager() {
     const firstFrame = window.requestAnimationFrame(() => {
       secondFrame = window.requestAnimationFrame(() => {
         scrollRoot.scrollTo({ top: nextScrollTop, behavior: "auto" })
+        focusScrollRoot(scrollRoot)
       })
     })
 
