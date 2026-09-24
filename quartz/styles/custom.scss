@@ -1,6 +1,67 @@
 @use "./base.scss";
 @use "./variables.scss" as *;
 
+// NoteShell embeds the article directly, without the standalone Quartz grid.
+// Explicit block spacing/list markers also restore what Tailwind Preflight resets.
+.page > article.popover-hint {
+  font-size: 1.04rem;
+  line-height: 1.9;
+
+  p {
+    margin-block: 1em;
+  }
+
+  .callout-title-inner > p {
+    margin: 0;
+  }
+
+  :is(ul, ol) {
+    margin-block: 1em;
+    padding-inline-start: 1.6em;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  li {
+    margin-block: 0.25em;
+  }
+
+  li > :is(ul, ol, p) {
+    margin-block: 0.5em;
+  }
+
+  :is(h1, h2, h3, h4, h5, h6) {
+    font-weight: 700;
+    line-height: 1.4;
+    scroll-margin-top: 5.6rem;
+  }
+
+  > :is(h1, h2) {
+    color: var(--secondary);
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--secondary);
+  }
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  a.external .external-icon {
+    display: inline-block;
+    vertical-align: baseline;
+  }
+}
+
 :root {
   --blog-shell: color-mix(in srgb, var(--light) 86%, transparent);
   --blog-shell-strong: color-mix(in srgb, var(--light) 94%, transparent);

@@ -260,7 +260,10 @@ export default function NoteExplorer({
   return (
     <>
       <aside className="hidden lg:block" aria-label="笔记探索栏">
-        <div className="sticky top-24 rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-4 shadow-[0_14px_38px_-28px_rgba(43,37,29,0.55)] dark:border-[#343a44] dark:bg-[#1a1c20]">
+        <div
+          data-field-obstacle
+          className="sticky top-24 rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-4 shadow-[0_14px_38px_-28px_rgba(43,37,29,0.55)] dark:border-[#343a44] dark:bg-[#1a1c20]"
+        >
           <ExplorerPanel
             section={section}
             tree={tree}
@@ -270,7 +273,10 @@ export default function NoteExplorer({
         </div>
       </aside>
 
-      <details className="rounded-xl border border-[#c7beb0] bg-[#f3f0ea] p-4 shadow-sm lg:hidden dark:border-[#343a44] dark:bg-[#1a1c20]">
+      <details
+        data-field-obstacle
+        className="rounded-xl border border-[#c7beb0] bg-[#f3f0ea] p-4 shadow-sm lg:hidden dark:border-[#343a44] dark:bg-[#1a1c20]"
+      >
         <summary className="cursor-pointer font-bold text-[#2b251d] dark:text-[#f2f4f7]">
           探索笔记
         </summary>

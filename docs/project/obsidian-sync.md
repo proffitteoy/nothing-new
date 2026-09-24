@@ -12,6 +12,14 @@ title: Obsidian 同步到博客
 - 博客继续只认 Quartz 的 `content/`
 - 你只需要对每篇笔记做一次是否发布的决策
 
+## 网页阅读排版
+
+笔记与杂谈共用 Quartz 渲染链。正文按 Obsidian 默认阅读模式处理：单次换行显示为换行，空行分隔段落；连续空行不额外生成空段落。普通行内空格遵循 Markdown/HTML 的折叠规则，需要保留的代码缩进请使用代码块。代码、公式、Callout 和内部链接仍由原有插件处理，不通过改写源文或全局 `white-space: pre-wrap` 模拟排版。
+
+`NoteShell` 的正文样式由 `quartz/styles/custom.scss` 生成到 `note.css`，独立恢复段落间距、列表缩进与标题层级，不依赖旧版 Quartz 布局。网页保留自身字体与昼夜配色，不复制 Obsidian 主题的全部样式。
+
+阅读页的标题、正文、探索栏、目录和反向链接面板均标记为 Field Mode 障碍物；仅登记实际卡片，不登记撑满高度的网格列，沿用已有包围圆避让与安全间距。
+
 ## 文件说明
 
 - `obsidian-sync.config.mjs`：同步根目录和运行参数。

@@ -531,6 +531,12 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
         })
       }
 
+      // Obsidian's default reading mode displays soft line endings as breaks.
+      // Run after callout extraction; only text nodes are changed, not code/math/HTML.
+      plugins.push(() => (tree: Root) => {
+        mdastFindReplace(tree, [/\r?\n/g, () => ({ type: "break" })])
+      })
+
       return plugins
     },
     htmlPlugins() {

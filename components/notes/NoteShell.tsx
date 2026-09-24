@@ -33,7 +33,10 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
           />
 
           <section className="min-w-0 max-w-full overflow-hidden">
-            <header className="mb-5 rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-6 shadow-[0_20px_55px_-42px_rgba(43,37,29,0.65)] dark:border-[#343a44] dark:bg-[#1a1c20] sm:p-8">
+            <header
+              data-field-obstacle
+              className="mb-5 rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-6 shadow-[0_20px_55px_-42px_rgba(43,37,29,0.65)] dark:border-[#343a44] dark:bg-[#1a1c20] sm:p-8"
+            >
               <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-[#8f8578] dark:text-[#7f8998]">
                 <Link
                   href={sectionRoute}
@@ -67,7 +70,10 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
             </header>
 
             {note.toc.length > 0 && (
-              <details className="mb-5 rounded-xl border border-[#c7beb0] bg-[#f3f0ea] p-4 text-sm shadow-sm lg:hidden dark:border-[#343a44] dark:bg-[#1a1c20]">
+              <details
+                data-field-obstacle
+                className="mb-5 rounded-xl border border-[#c7beb0] bg-[#f3f0ea] p-4 text-sm shadow-sm lg:hidden dark:border-[#343a44] dark:bg-[#1a1c20]"
+              >
                 <summary className="cursor-pointer font-black text-[#2b251d] dark:text-[#f2f4f7]">
                   本页目录
                 </summary>
@@ -89,7 +95,10 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
               </details>
             )}
 
-            <div className="quartz-note page min-h-0 min-w-0 !max-w-full overflow-hidden rounded-2xl border border-[#c7beb0] !bg-[#f3f0ea] p-5 shadow-[0_24px_62px_-44px_rgba(43,37,29,0.68)] dark:border-[#343a44] dark:!bg-[#1a1c20] sm:p-8 md:p-10">
+            <div
+              data-field-obstacle
+              className="quartz-note page min-h-0 min-w-0 !max-w-full overflow-hidden rounded-2xl border border-[#c7beb0] !bg-[#f3f0ea] p-5 shadow-[0_24px_62px_-44px_rgba(43,37,29,0.68)] dark:border-[#343a44] dark:!bg-[#1a1c20] sm:p-8 md:p-10"
+            >
               <article
                 id="main-content"
                 className="popover-hint min-w-0 max-w-full overflow-x-hidden [overflow-wrap:anywhere] [&_.katex-display]:max-w-full [&_.katex-display]:overflow-x-auto [&_.table-container]:max-w-full [&_.table-container]:overflow-x-auto [&_pre]:max-w-full [&_pre]:overflow-x-auto"
@@ -98,7 +107,10 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
             </div>
 
             {note.backlinks.length > 0 && (
-              <section className="mt-5 rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-5 lg:hidden dark:border-[#343a44] dark:bg-[#1a1c20]">
+              <section
+                data-field-obstacle
+                className="mt-5 rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-5 lg:hidden dark:border-[#343a44] dark:bg-[#1a1c20]"
+              >
                 <h2 className="flex items-center gap-2 text-sm font-black text-[#2b251d] dark:text-[#f2f4f7]">
                   <CornerUpLeft
                     className="h-4 w-4 text-[#3d5a80] dark:text-[#9ab5d8]"
@@ -125,7 +137,10 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
           <aside className="hidden lg:block" aria-label="笔记辅助信息">
             <div className="sticky top-24 space-y-4">
               {note.toc.length > 0 && (
-                <nav className="rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-5 shadow-[0_14px_38px_-28px_rgba(43,37,29,0.55)] dark:border-[#343a44] dark:bg-[#1a1c20]">
+                <nav
+                  data-field-obstacle
+                  className="rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-5 shadow-[0_14px_38px_-28px_rgba(43,37,29,0.55)] dark:border-[#343a44] dark:bg-[#1a1c20]"
+                >
                   <h2 className="flex items-center gap-2 text-sm font-black text-[#2b251d] dark:text-[#f2f4f7]">
                     <Link2
                       className="h-4 w-4 text-[#3d5a80] dark:text-[#9ab5d8]"
@@ -151,7 +166,10 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                 </nav>
               )}
 
-              <section className="rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-5 shadow-[0_14px_38px_-28px_rgba(43,37,29,0.55)] dark:border-[#343a44] dark:bg-[#1a1c20]">
+              <section
+                data-field-obstacle
+                className="rounded-2xl border border-[#c7beb0] bg-[#f3f0ea] p-5 shadow-[0_14px_38px_-28px_rgba(43,37,29,0.55)] dark:border-[#343a44] dark:bg-[#1a1c20]"
+              >
                 <h2 className="flex items-center gap-2 text-sm font-black text-[#2b251d] dark:text-[#f2f4f7]">
                   <CornerUpLeft
                     className="h-4 w-4 text-[#3d5a80] dark:text-[#9ab5d8]"
