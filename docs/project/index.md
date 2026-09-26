@@ -8,6 +8,9 @@ title: 项目文档
 
 ## 文档地图
 
+- [[projects-room|窗边研究小屋]]：项目页空间交互、可编辑模型重建和实际验收记录。
+
+- [[projects-3d-research|项目页 3D 重写研究]]：获奖交互作品、公开源码拆解、研究小屋方向与实现前验证门槛；当前仅研究。
 - [[obsidian-sync|Obsidian 同步到博客]]：写作源、同步规则、审阅流程和删除行为。
 - [[image-performance-audit|图片加载性能审计]]：记录加载优先级、响应式传输、私有 Blob 缓存和待部署验证项。
 - [[music-particle-medium-restoration|音乐粒子中等能力恢复规格]]：锁定真实频谱、自动预设、交互相机与 CPU 封面分析的未来接口、降级和性能门槛。
