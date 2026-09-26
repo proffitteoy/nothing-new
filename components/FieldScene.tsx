@@ -7,7 +7,6 @@ import { useTheme } from "./ThemeProvider"
 import {
   SPECTRAL_TRACER_BACKGROUND,
   SPECTRAL_TRACER_FOREGROUND,
-  SPECTRAL_TRACER_MAX_OBSTACLES,
   SpectralTracerLayer,
   createSpectralTracerController,
   type TracerObstacle,
@@ -297,7 +296,6 @@ export default function FieldScene() {
             rect.right > 0 &&
             rect.left < width,
         )
-        .slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)
         .map((rect) => ({
           left: rect.left,
           top: rect.top,

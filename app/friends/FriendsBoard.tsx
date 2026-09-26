@@ -49,6 +49,7 @@ export default function FriendsBoard() {
     setTimeout(() => setIsCopied(false), 2000)
   }
 
+  // Friend cards intentionally stay outside Field Mode avoidance for full-screen tracers.
   return (
     <div className="w-full max-w-5xl mx-auto px-3 sm:px-10 py-6 md:py-10 relative z-10 scroll-smooth mt-20 md:mt-10">
       {/* 顶部导航与标题 */}

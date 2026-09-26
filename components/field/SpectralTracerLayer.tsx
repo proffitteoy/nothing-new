@@ -6,7 +6,6 @@ import { SPECTRAL_LAMBDAS } from "./spectralField"
 export const SPECTRAL_TRACER_BACKGROUND = 3200
 export const SPECTRAL_TRACER_FOREGROUND = 120
 export const SPECTRAL_TRACER_CAPACITY = 4096
-export const SPECTRAL_TRACER_MAX_OBSTACLES = 16
 
 const BACKGROUND_RENDER_CAPACITY = 1280
 const FOREGROUND_RENDER_CAPACITY = 72
@@ -375,7 +374,6 @@ function createLayerRenderer(
     const coreAlpha =
       alpha * (layer === 0 ? mix(0.22, 0.48, themeAmount) : mix(0.22, 0.58, themeAmount))
     const coreWidth = layer === 0 ? mix(0.92, 1.18, themeAmount) : mix(1.08, 1.36, themeAmount)
-    const activeObstacles = obstacles.slice(0, SPECTRAL_TRACER_MAX_OBSTACLES)
     const obstacleClearance =
       layer === 0 ? BACKGROUND_OBSTACLE_CLEARANCE : FOREGROUND_OBSTACLE_CLEARANCE
     const strokeRadius = Math.max(glowWidth, coreWidth) * 0.5 + 1
@@ -396,7 +394,7 @@ function createLayerRenderer(
           steps,
           stepLength,
           velocityGrid,
-          activeObstacles,
+          obstacles,
           obstacleClearance,
           strokeRadius,
           streamlinePoints,

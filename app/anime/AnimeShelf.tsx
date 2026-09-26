@@ -174,7 +174,10 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
     <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
       <BackButton />
 
-      <header className="relative mt-3 overflow-hidden rounded-[1.75rem] border border-white/55 bg-white/45 px-4 py-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6">
+      <header
+        data-field-obstacle
+        className="relative mt-3 overflow-hidden rounded-[1.75rem] border border-white/55 bg-white/45 px-4 py-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6"
+      >
         <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-pink-300/20 blur-3xl dark:bg-pink-500/10" />
         <div className="relative flex items-center justify-between gap-4 sm:justify-start">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/65 text-indigo-600 shadow-sm dark:border-white/10 dark:bg-slate-950/35 dark:text-indigo-300">
@@ -331,7 +334,7 @@ function SectionHeading({
 }) {
   const Icon = icon === "play" ? Sparkles : Star
   return (
-    <div className="mb-5 flex items-end justify-between gap-5 px-1">
+    <div data-field-obstacle className="mb-5 flex items-end justify-between gap-5 px-1">
       <div>
         <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.22em] text-indigo-600 dark:text-indigo-300">
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -365,6 +368,7 @@ function AnimeGrid({
         const title = getAnimeTitle(anime)
         return (
           <a
+            data-field-obstacle
             key={anime.id}
             href={`https://bgm.tv/subject/${anime.id}`}
             target="_blank"
@@ -405,7 +409,10 @@ function AnimeGrid({
 
 function EmptyShelf({ message }: { message: string }) {
   return (
-    <div className="rounded-[1.75rem] border border-dashed border-white/60 bg-white/35 px-6 py-14 text-center shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35">
+    <div
+      data-field-obstacle
+      className="rounded-[1.75rem] border border-dashed border-white/60 bg-white/35 px-6 py-14 text-center shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35"
+    >
       <Clapperboard className="mx-auto h-8 w-8 text-indigo-400" aria-hidden="true" />
       <p className="mt-4 text-sm font-black text-slate-700 dark:text-slate-200">{message}</p>
     </div>
@@ -426,6 +433,7 @@ function LoadMoreControl({
     <div ref={containerRef} className="relative mt-8 flex flex-col items-center pt-8">
       <div className="pointer-events-none absolute inset-x-0 -top-20 h-28 bg-gradient-to-b from-transparent to-white/20 dark:to-slate-950/15" />
       <button
+        data-field-obstacle
         type="button"
         onClick={onLoadMore}
         className="relative inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/55 px-5 py-3 text-xs font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-600 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-indigo-300"
@@ -449,7 +457,10 @@ function ShelfState({
   return (
     <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
       <BackButton />
-      <div className="mt-8 rounded-[1.75rem] border border-white/55 bg-white/45 px-6 py-16 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45">
+      <div
+        data-field-obstacle
+        className="mt-8 rounded-[1.75rem] border border-white/55 bg-white/45 px-6 py-16 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45"
+      >
         <Clapperboard className="mx-auto h-9 w-9 text-indigo-400" aria-hidden="true" />
         <h1 className="mt-5 text-xl font-black text-slate-950 dark:text-white">{title}</h1>
         <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">{description}</p>

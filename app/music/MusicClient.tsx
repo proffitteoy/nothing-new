@@ -100,7 +100,10 @@ export default function MusicClient() {
           role="status"
           aria-live="polite"
         >
-          <section className="w-full max-w-md rounded-3xl border border-white/40 bg-white/45 p-8 shadow-xl backdrop-blur-xl transition-colors duration-700 dark:border-white/10 dark:bg-slate-800/50">
+          <section
+            data-field-obstacle
+            className="w-full max-w-md rounded-3xl border border-white/40 bg-white/45 p-8 shadow-xl backdrop-blur-xl transition-colors duration-700 dark:border-white/10 dark:bg-slate-800/50"
+          >
             <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-3xl border border-white/50 bg-white/50 shadow-inner dark:border-white/10 dark:bg-slate-900/50">
               <Disc3
                 size={42}
@@ -383,6 +386,7 @@ export default function MusicClient() {
               className="fixed inset-0 z-40 bg-slate-950/25 backdrop-blur-[2px]"
             />
             <motion.aside
+              data-field-obstacle
               id="music-queue"
               role="dialog"
               aria-modal="true"

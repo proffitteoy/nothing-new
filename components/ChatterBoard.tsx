@@ -39,7 +39,7 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
 
   return (
     <div className="relative z-10 mx-auto w-full max-w-7xl px-3 pb-16 pt-24 sm:px-6 md:pt-28 lg:px-10">
-      <header className="mb-8 text-center md:mb-14">
+      <header data-field-obstacle className="mb-8 text-center md:mb-14">
         <p className="text-[10px] font-black tracking-[0.3em] text-indigo-600 dark:text-indigo-300">
           FIELD NOTES
         </p>
@@ -52,7 +52,7 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
       </header>
 
       <div className="mb-8 flex justify-center md:mb-12">
-        <label className="group relative block w-full max-w-lg">
+        <label data-field-obstacle className="group relative block w-full max-w-lg">
           <span className="sr-only">搜索杂谈</span>
           <Search
             className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-500 md:left-5 md:h-5 md:w-5"
@@ -82,7 +82,10 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
           </AnimatePresence>
         </motion.div>
       ) : (
-        <div className="rounded-3xl border border-dashed border-white/60 bg-white/35 p-10 text-center text-sm font-medium text-slate-500 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35 dark:text-slate-400">
+        <div
+          data-field-obstacle
+          className="rounded-3xl border border-dashed border-white/60 bg-white/35 p-10 text-center text-sm font-medium text-slate-500 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35 dark:text-slate-400"
+        >
           没有找到符合当前搜索的内容。
         </div>
       )}
@@ -118,6 +121,7 @@ function ChatterCard({
     >
       {item.kind === "folder" ? (
         <Link
+          data-field-obstacle
           href={item.route}
           className="group relative flex min-h-64 flex-col overflow-hidden rounded-2xl border border-white/55 bg-slate-900 p-5 text-white shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 sm:p-6 md:rounded-[2rem]"
         >
@@ -176,6 +180,7 @@ function ChatterCard({
         </Link>
       ) : (
         <Link
+          data-field-obstacle
           href={item.route}
           className="group relative block overflow-hidden rounded-2xl border border-white/55 bg-slate-800 shadow-md transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/70 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transform-none dark:border-white/10 md:rounded-[2rem]"
         >
