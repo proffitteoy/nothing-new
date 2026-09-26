@@ -49,11 +49,11 @@ export default function FriendsBoard() {
     setTimeout(() => setIsCopied(false), 2000)
   }
 
-  // Friend cards intentionally stay outside Field Mode avoidance for full-screen tracers.
+  // Keep tracers in the gaps, outside the readable cards and application panel.
   return (
     <div className="w-full max-w-5xl mx-auto px-3 sm:px-10 py-6 md:py-10 relative z-10 scroll-smooth mt-20 md:mt-10">
       {/* 顶部导航与标题 */}
-      <div className="mb-8 md:mb-12 flex flex-col items-center md:items-start">
+      <div data-field-obstacle className="mb-8 md:mb-12 flex flex-col items-center md:items-start">
         <div className="w-full flex justify-start mb-4 md:mb-6">
           <BackButton />
         </div>
@@ -86,6 +86,7 @@ export default function FriendsBoard() {
           return (
             <motion.div key={friend.id} variants={itemVariants} className="h-full">
               <a
+                data-field-obstacle
                 href={friend.url}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -153,6 +154,7 @@ export default function FriendsBoard() {
 
       {/* 申请友链引导区 */}
       <motion.div
+        data-field-obstacle
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}

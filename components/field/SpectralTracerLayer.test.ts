@@ -98,10 +98,37 @@ test("the about obstacle belongs to the card containing the article, not the pag
   assert.match(obstacles[0].getText(tree), /dangerouslySetInnerHTML/)
 })
 
-test("friend cards remain outside field avoidance", () => {
+test("friends protect readable panels without blocking the entire grid", () => {
   const source = readFileSync(
     new URL("../../app/friends/FriendsBoard.tsx", import.meta.url),
     "utf8",
   )
-  assert.doesNotMatch(source, /data-field-obstacle/)
+  const tree = ts.createSourceFile(
+    "FriendsBoard.tsx",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  )
+  const obstacles: ts.JsxElement[] = []
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isJsxElement(node) &&
+      node.openingElement.attributes.properties.some(
+        (attribute) =>
+          ts.isJsxAttribute(attribute) && attribute.name.getText(tree) === "data-field-obstacle",
+      )
+    )
+      obstacles.push(node)
+    ts.forEachChild(node, visit)
+  }
+  visit(tree)
+  assert.equal(obstacles.length, 3)
+  assert.match(obstacles[0].getText(tree), /云端引力/)
+  assert.equal(obstacles[1].openingElement.tagName.getText(tree), "a")
+  assert.match(obstacles[1].openingElement.getText(tree), /href=\{friend.url\}/)
+  assert.match(obstacles[2].getText(tree), /提交友链申请/)
+  for (const obstacle of obstacles) {
+    assert.doesNotMatch(obstacle.openingElement.getText(tree), /grid-cols|max-w-5xl/)
+  }
 })
