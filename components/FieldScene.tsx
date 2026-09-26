@@ -522,7 +522,10 @@ export default function FieldScene() {
           theme: themeBlend,
           time: spectralTime,
           backgroundCount: quality.backgroundCount,
-          foregroundCount: quality.foregroundCount,
+          foregroundCount:
+            document.documentElement.dataset.projectRoomActive === "true"
+              ? 0
+              : quality.foregroundCount,
           trailSamples: quality.trailSamples,
           modeCount: quality.modeCount,
           width,
@@ -531,7 +534,11 @@ export default function FieldScene() {
         })
       }
 
-      drawInteractions()
+      if (document.documentElement.dataset.projectRoomActive === "true") {
+        interactionContext.clearRect(0, 0, width, height)
+      } else {
+        drawInteractions()
+      }
 
       if (modeRef.current === "field" && !reducedMotionQuery.matches) {
         frameCount += 1

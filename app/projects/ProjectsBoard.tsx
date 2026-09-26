@@ -1,316 +1,346 @@
 "use client"
 
-import { useState, type PointerEvent } from "react"
-import { motion, useReducedMotion } from "framer-motion"
+import dynamic from "next/dynamic"
+import Link from "next/link"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useReducedMotion } from "framer-motion"
 import {
   ArrowUpRight,
-  Binary,
-  Bot,
-  Code2,
-  Fingerprint,
-  Network,
-  Orbit,
-  type LucideIcon,
+  ArrowLeft,
+  BookOpen,
+  Headphones,
+  List,
+  LoaderCircle,
+  Maximize2,
+  Moon,
+  Pause,
+  Play,
+  RotateCcw,
+  Rotate3D,
+  Sun,
+  X,
 } from "lucide-react"
-import BackButton from "../../components/BackButton"
+import { useTheme } from "../../components/ThemeProvider"
+import { useMusic } from "../../components/MusicProvider"
+import { projects, type Project, type RoomTarget } from "./projects"
+import styles from "./room.module.css"
 
-type Project = {
-  name: string
-  category: string
-  description: string
-  href: string
-  tags: string[]
-  icon: LucideIcon
-  accent: string
-  size?: "research" | "standard"
-}
-
-const featuredProjects: Project[] = [
-  {
-    name: "early-rumor-propagation-tda",
-    category: "RESEARCH · 论文在投",
-    description: "早期谣言传播树的拓扑特征构造与持久同调分析。",
-    href: "https://github.com/proffitteoy/early-rumor-propagation-tda",
-    tags: ["TDA", "Research"],
-    icon: Orbit,
-    accent: "56 189 248",
-    size: "research",
-  },
-  {
-    name: "topp",
-    category: "RESEARCH · 论文在投",
-    description: "拓扑数据分析的高速高性能 bottleneck/Wasserstein 计算 Python 库。",
-    href: "https://github.com/proffitteoy/Topp",
-    tags: ["TDA", "Python", "Exact Matching"],
-    icon: Binary,
-    accent: "59 130 246",
-    size: "research",
-  },
-  {
-    name: "Iris-Terminal",
-    category: "AI WORKBENCH",
-    description: "本地优先 AI4MATH 工作台。",
-    href: "https://github.com/proffitteoy/Iris-Terminal",
-    tags: ["Local-first", "Research Workspace"],
-    icon: Bot,
-    accent: "14 165 233",
-  },
-  {
-    name: "ai-data-competitions-ui",
-    category: "CAMPUS COMPETITION UI",
-    description: "面向学生竞赛的学院级服务网站。",
-    href: "https://github.com/GDUF-quantitative/ai-data-competitions-ui",
-    tags: ["Next.js", "React"],
-    icon: Network,
-    accent: "6 182 212",
-  },
-]
-
-const openSourceProjects: Project[] = [
-  {
-    name: "open-ani/animeko",
-    category: "OPEN SOURCE CONTRIBUTION",
-    description: "基于 CNN 的验证码识别算法开发。",
-    href: "https://github.com/open-ani/animeko",
-    tags: ["Kotlin Multiplatform", "Android"],
-    icon: Fingerprint,
-    accent: "56 189 248",
-  },
-  {
-    name: "GUDHI/gudhi-devel",
-    category: "OPEN SOURCE CONTRIBUTION",
-    description: "核心数学算法的正确性漏洞修复与跨平台验证。",
-    href: "https://github.com/GUDHI/gudhi-devel",
-    tags: ["C++", "Bottleneck Distance", "Python"],
-    icon: Code2,
-    accent: "37 99 235",
-  },
-]
-
-function ProjectCard({
-  project,
-  activeProject,
-  setActiveProject,
-  className = "",
-}: {
-  project: Project
-  activeProject: string | null
-  setActiveProject: (name: string | null) => void
-  className?: string
-}) {
-  const reduceMotion = useReducedMotion()
-  const [spotlight, setSpotlight] = useState({ x: 50, y: 50 })
-  const [tilt, setTilt] = useState({ x: 0, y: 0 })
-  const Icon = project.icon
-  const dimmed = activeProject !== null && activeProject !== project.name
-
-  function handlePointerMove(event: PointerEvent<HTMLAnchorElement>) {
-    if (reduceMotion || event.pointerType !== "mouse") return
-
-    const bounds = event.currentTarget.getBoundingClientRect()
-    const x = ((event.clientX - bounds.left) / bounds.width) * 100
-    const y = ((event.clientY - bounds.top) / bounds.height) * 100
-    setSpotlight({ x, y })
-    setTilt({ x: (50 - y) / 18, y: (x - 50) / 18 })
-  }
-
-  function resetCard() {
-    setActiveProject(null)
-    setTilt({ x: 0, y: 0 })
-  }
-
-  return (
-    <motion.a
-      data-field-obstacle
-      href={project.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      onFocus={() => setActiveProject(project.name)}
-      onBlur={resetCard}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") setActiveProject(project.name)
-      }}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={resetCard}
-      animate={{
-        rotateX: reduceMotion ? 0 : tilt.x,
-        rotateY: reduceMotion ? 0 : tilt.y,
-        opacity: dimmed ? 0.68 : 1,
-      }}
-      transition={{ type: "spring", stiffness: 260, damping: 24, mass: 0.7 }}
-      className={`group relative isolate flex overflow-hidden rounded-[1.75rem] border border-slate-200/90 bg-white/90 p-5 shadow-[0_22px_60px_-36px_rgba(15,23,42,0.5)] backdrop-blur-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-4 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-slate-900/60 sm:p-6 ${className}`}
-      style={{ transformPerspective: 900, transformStyle: "preserve-3d" }}
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
-        style={{
-          background: `radial-gradient(420px circle at ${spotlight.x}% ${spotlight.y}%, rgb(${project.accent} / 0.2), transparent 58%)`,
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-14 -top-14 -z-10 h-40 w-40 rounded-full blur-3xl"
-        style={{ backgroundColor: `rgb(${project.accent} / 0.14)` }}
-      />
-
-      <div className="flex w-full flex-col" style={{ transform: "translateZ(22px)" }}>
-        <div className="flex items-start justify-between gap-4">
-          <div
-            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-white/10 dark:bg-slate-950/60"
-            style={{ color: `rgb(${project.accent})` }}
-          >
-            <Icon className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <ArrowUpRight
-            className="h-5 w-5 text-slate-400 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-sky-500 group-focus-visible:-translate-y-1 group-focus-visible:translate-x-1"
-            aria-hidden="true"
-          />
-        </div>
-
-        <div className="mt-8">
-          <p className="text-[10px] font-black tracking-[0.22em] text-sky-700 dark:text-sky-300">
-            {project.category}
-          </p>
-          <h3
-            className={`mt-3 break-words font-black leading-[1.08] tracking-[-0.035em] text-slate-950 dark:text-white ${project.size === "research" ? "text-2xl sm:text-[1.75rem]" : "text-xl sm:text-2xl"}`}
-          >
-            {project.name}
-          </h3>
-          <p className="mt-3 max-w-xl text-sm font-medium leading-7 text-slate-700 dark:text-slate-300">
-            {project.description}
-          </p>
-        </div>
-
-        <ul className="mt-auto flex flex-wrap gap-2 pt-8" aria-label={`${project.name} 标签`}>
-          {project.tags.map((tag) => (
-            <li
-              className="rounded-full border border-slate-200 bg-slate-50/95 px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:border-white/10 dark:bg-slate-950/45 dark:text-slate-300"
-              key={tag}
-            >
-              {tag}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </motion.a>
-  )
-}
+const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false })
 
 export default function ProjectsBoard() {
-  const [activeProject, setActiveProject] = useState<string | null>(null)
+  const { isDark, toggleTheme } = useTheme()
+  const { currentSong, isPlaying, togglePlay, musicStatus } = useMusic()
+  const reducedMotion = useReducedMotion()
+  const router = useRouter()
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
+  const [staticView, setStaticView] = useState(false)
+  const [sceneVersion, setSceneVersion] = useState(0)
+  const [showLabels, setShowLabels] = useState(false)
+  const [rotationEnabled, setRotationEnabled] = useState(false)
+  const [resetKey, setResetKey] = useState(0)
+  const [selected, setSelected] = useState<Project | null>(null)
+  const [musicOpen, setMusicOpen] = useState(false)
+  const directory = useRef<HTMLDetailsElement>(null)
+  const panel = useRef<HTMLElement>(null)
+  const returnFocus = useRef<HTMLElement | null>(null)
+  const directoryToggle = useRef<HTMLElement>(null)
+  const sceneActive = !staticView && status === "ready"
+  const panelOpen = selected !== null || musicOpen
+
+  useEffect(() => {
+    if (!sceneActive) return
+    document.documentElement.dataset.projectRoomActive = "true"
+    return () => {
+      delete document.documentElement.dataset.projectRoomActive
+    }
+  }, [sceneActive])
+  useEffect(() => {
+    if ((staticView || status === "error") && directory.current) directory.current.open = true
+  }, [staticView, status])
+  const closePanel = useCallback(() => {
+    setSelected(null)
+    setMusicOpen(false)
+    requestAnimationFrame(() => {
+      const target = returnFocus.current
+      if (target?.isConnected && !target.hidden && !target.closest("details:not([open])"))
+        target.focus({ preventScroll: true })
+      else directoryToggle.current?.focus({ preventScroll: true })
+    })
+  }, [])
+  useEffect(() => {
+    if (!panelOpen) return
+    panel.current?.focus({ preventScroll: true })
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        closePanel()
+      }
+    }
+    window.addEventListener("keydown", escape)
+    return () => window.removeEventListener("keydown", escape)
+  }, [panelOpen, closePanel])
+  const choose = useCallback(
+    (target: RoomTarget) => {
+      if (target === "notes" || target === "anime") {
+        router.push(target === "notes" ? "/blog" : "/anime")
+        return
+      }
+      returnFocus.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null
+      setMusicOpen(target === "headphones")
+      setSelected(projects.find((project) => project.id === target) ?? null)
+      if (directory.current) directory.current.open = false
+    },
+    [router],
+  )
+  const ready = useCallback(() => setStatus("ready"), [])
+  const failed = useCallback(() => setStatus("error"), [])
+  function toggleStatic() {
+    closePanel()
+    if (staticView || status === "error") {
+      setStatus("loading")
+      setSceneVersion((value) => value + 1)
+      setStaticView(false)
+      if (directory.current) directory.current.open = false
+    } else setStaticView(true)
+  }
 
   return (
-    <main
-      className="relative z-10 mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:py-12 lg:px-10"
-      style={{
-        fontFamily:
-          '"Avenir Next", "Segoe UI Variable", "PingFang SC", "Microsoft YaHei UI", sans-serif',
-      }}
-    >
-      <BackButton />
-
-      <header
-        data-field-obstacle
-        className="relative overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white/90 p-6 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.5)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/60 md:p-9"
+    <main className={styles.page}>
+      <section
+        className={styles.stage}
+        aria-labelledby="study-title"
+        data-room-status={staticView ? "static" : status}
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl"
-        />
-        <div className="relative flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-[10px] font-black tracking-[0.3em] text-sky-700 dark:text-sky-300">
-              SELECTED WORK · 2026
-            </p>
-            <h1 className="mt-3 text-4xl font-black tracking-[-0.055em] text-slate-950 dark:text-white md:text-5xl">
-              项目档案
-            </h1>
-            <p className="mt-4 text-sm font-medium leading-7 text-slate-700 dark:text-slate-300 sm:text-base">
-              从拓扑数据分析到本地研究工具，也记录进入成熟开源项目的真实协作。
-            </p>
-          </div>
-          <a
-            href="https://github.com/proffitteoy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-lg transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-4 dark:bg-white dark:text-slate-950 motion-reduce:transform-none"
-          >
-            <Code2 className="h-4 w-4" aria-hidden="true" />
-            GitHub 主页
-            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-          </a>
-        </div>
-      </header>
-
-      <section className="mt-10" aria-labelledby="featured-projects-title">
-        <div className="mb-5 flex items-end justify-between gap-4 px-1">
-          <div>
-            <p className="text-[10px] font-black tracking-[0.24em] text-sky-700 dark:text-sky-300">
-              01 / FEATURED
-            </p>
-            <h2
-              id="featured-projects-title"
-              className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white"
-            >
-              代表作品
-            </h2>
-          </div>
-          <p className="hidden text-xs font-bold text-slate-400 sm:block">研究优先 · 工具落地</p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-          <ProjectCard
-            project={featuredProjects[0]}
-            activeProject={activeProject}
-            setActiveProject={setActiveProject}
-            className="min-h-[310px] lg:col-span-7"
-          />
-          <ProjectCard
-            project={featuredProjects[1]}
-            activeProject={activeProject}
-            setActiveProject={setActiveProject}
-            className="min-h-[310px] lg:col-span-5"
-          />
-          <ProjectCard
-            project={featuredProjects[2]}
-            activeProject={activeProject}
-            setActiveProject={setActiveProject}
-            className="min-h-[260px] lg:col-span-5"
-          />
-          <ProjectCard
-            project={featuredProjects[3]}
-            activeProject={activeProject}
-            setActiveProject={setActiveProject}
-            className="min-h-[260px] lg:col-span-7"
-          />
-        </div>
-      </section>
-
-      <section className="mt-10" aria-labelledby="open-source-title">
-        <div className="mb-5 px-1">
-          <p className="text-[10px] font-black tracking-[0.24em] text-sky-700 dark:text-sky-300">
-            02 / COLLABORATION
+        <header className={styles.heading} data-field-obstacle>
+          <p className={styles.eyebrow}>
+            <span /> 阿的工作台 <span className={styles.divider}>/</span> SELECTED WORK
           </p>
-          <h2
-            id="open-source-title"
-            className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white"
+          <h1 id="study-title">窗边研究小屋</h1>
+          <p className={styles.subtitle}>研究、构建，也持续记录。</p>
+        </header>
+        <div className={styles.topActions} data-field-obstacle>
+          <Link href="/" className={styles.iconButton} aria-label="回到首页">
+            <ArrowLeft size={18} />
+          </Link>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className={styles.iconButton}
+            aria-label={isDark ? "切换到日间" : "切换到夜间"}
           >
-            开源贡献
-          </h2>
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {openSourceProjects.map((project) => (
-            <ProjectCard
-              key={project.name}
-              project={project}
-              activeProject={activeProject}
-              setActiveProject={setActiveProject}
-              className="min-h-[270px]"
-            />
-          ))}
+        {/* The poster and GLB are exported from the same editable scene. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className={styles.poster}
+          src={`/projects-room/${isDark ? "night" : "day"}.webp`}
+          width={1440}
+          height={1100}
+          alt="绿帘与窗边的深木工作桌，摆着三块屏幕、研究手稿和耳机，右侧是开源协作书架。"
+          data-visible={!sceneActive}
+          fetchPriority="high"
+        />
+        {!staticView && status !== "error" && (
+          <RoomScene
+            key={sceneVersion}
+            isDark={isDark}
+            reduceMotion={!!reducedMotion}
+            rotationEnabled={rotationEnabled}
+            paused={panelOpen}
+            resetKey={resetKey}
+            showLabels={showLabels}
+            onReady={ready}
+            onError={failed}
+            onChoose={choose}
+          />
+        )}
+        <div className={styles.caption} data-field-obstacle>
+          <span className={styles.captionLine} />
+          <p>
+            问题写在纸上，
+            <br />
+            想法在这里慢慢成形。
+          </p>
+          <small>数学研究 · 工具建设 · 开源协作</small>
         </div>
+        <div className={styles.toolbar} data-field-obstacle>
+          <details ref={directory} className={styles.directory}>
+            <summary ref={directoryToggle} className={styles.directoryToggle}>
+              <List size={16} /> 项目目录 <span>06</span>
+            </summary>
+            <div className={styles.directoryBody} data-field-obstacle>
+              {[false, true].map((contribution) => (
+                <section
+                  key={String(contribution)}
+                  aria-label={contribution ? "开源贡献" : "代表作品"}
+                >
+                  <h2>{contribution ? "02 / 开源贡献" : "01 / 代表作品"}</h2>
+                  {projects
+                    .filter((project) => project.contribution === contribution)
+                    .map((project) => (
+                      <article className={styles.directoryRow} key={project.id}>
+                        <button type="button" onClick={() => choose(project.id)}>
+                          <strong>{project.label}</strong>
+                          <small>{project.object}</small>
+                        </button>
+                        <a
+                          href={project.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${project.name} GitHub 仓库`}
+                        >
+                          <ArrowUpRight size={17} />
+                        </a>
+                        <p>{project.description}</p>
+                      </article>
+                    ))}
+                </section>
+              ))}
+              <div className={styles.directoryLife}>
+                <Link href="/blog">笔记</Link>
+                <Link href="/music">音乐</Link>
+                <Link href="/anime">番剧</Link>
+              </div>
+            </div>
+          </details>
+          <div className={styles.sceneTools}>
+            <button
+              type="button"
+              disabled={!sceneActive || panelOpen}
+              aria-label="回到桌前"
+              onClick={() => setResetKey((key) => key + 1)}
+            >
+              <RotateCcw size={15} aria-hidden="true" />
+              <span>回到桌前</span>
+            </button>
+            <button
+              type="button"
+              disabled={!sceneActive || panelOpen}
+              aria-pressed={showLabels}
+              onClick={() => setShowLabels((value) => !value)}
+            >
+              <Maximize2 size={15} />
+              <span>{showLabels ? "收起入口" : "显示入口"}</span>
+            </button>
+            <button
+              type="button"
+              className={styles.rotateButton}
+              disabled={!sceneActive || panelOpen}
+              aria-pressed={rotationEnabled}
+              onClick={() => setRotationEnabled((value) => !value)}
+            >
+              <Rotate3D size={15} />
+              <span>{rotationEnabled ? "结束旋转" : "旋转"}</span>
+            </button>
+          </div>
+          <button type="button" className={styles.staticButton} onClick={toggleStatic}>
+            {staticView || status === "error" ? "进入 3D" : "静态浏览"}
+          </button>
+        </div>
+        <p className={styles.hint} role="status">
+          {status === "loading" && !staticView ? (
+            <>
+              <LoaderCircle size={13} className={styles.spinner} />
+              正在布置小屋 · 项目目录已可浏览
+            </>
+          ) : status === "error" ? (
+            "小屋暂未加载，项目目录仍可浏览。"
+          ) : staticView ? (
+            "静静看看，或从项目目录展开阅读。"
+          ) : (
+            <>
+              <span className={styles.desktopHint}>拖动环绕 · 滚轮缩放 · 点击物件</span>
+              <span className={styles.mobileHint}>
+                {rotationEnabled
+                  ? "单指环绕 · 双指缩放 · 结束旋转后可滚动"
+                  : "点击物件探索 · 点「旋转」环绕小屋"}
+              </span>
+            </>
+          )}
+        </p>
+        {panelOpen && (
+          <aside
+            ref={panel}
+            className={styles.panel}
+            role="dialog"
+            aria-modal="false"
+            aria-labelledby="room-detail-title"
+            tabIndex={-1}
+            data-field-obstacle
+          >
+            <button
+              type="button"
+              className={styles.close}
+              onClick={closePanel}
+              aria-label="关闭详情"
+            >
+              <X size={20} />
+            </button>
+            {selected ? (
+              <>
+                <p className={styles.eyebrow}>
+                  {selected.contribution ? "OPEN SOURCE / 协作" : "SELECTED WORK / 项目"}
+                </p>
+                <div className={styles.detailIllustration} aria-hidden="true">
+                  <BookOpen size={48} strokeWidth={1} />
+                  <span>{String(projects.indexOf(selected) + 1).padStart(2, "0")}</span>
+                  <small>{selected.object}</small>
+                </div>
+                <p className={styles.category}>{selected.category}</p>
+                <h2 id="room-detail-title">{selected.name}</h2>
+                <p className={styles.description}>{selected.description}</p>
+                <ul className={styles.tags} aria-label="技术标签">
+                  {selected.tags.map((tag) => (
+                    <li key={tag}>{tag}</li>
+                  ))}
+                </ul>
+                {selected.contribution && (
+                  <p className={styles.contributionNote}>
+                    这里记录我参与的工作，完整项目由上游社区维护。
+                  </p>
+                )}
+                <a
+                  className={styles.primaryLink}
+                  href={selected.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {selected.contribution ? "查看上游仓库" : "打开项目仓库"}
+                  <ArrowUpRight size={17} />
+                </a>
+                <p className={styles.panelFoot}>窗边的一项工作 · 持续记录中</p>
+              </>
+            ) : (
+              <>
+                <p className={styles.eyebrow}>BETWEEN THE LINES / 日常</p>
+                <div className={styles.detailIllustration} aria-hidden="true">
+                  <Headphones size={58} strokeWidth={1} />
+                </div>
+                <h2 id="room-detail-title">桌边的音乐</h2>
+                <p className={styles.description}>
+                  {currentSong?.name || currentSong?.title || "挑一首歌，陪伴这一会儿。"}
+                </p>
+                <p className={styles.category}>
+                  {currentSong?.artist || currentSong?.author || "与全站播放器同步"}
+                </p>
+                {musicStatus === "ready" && (
+                  <button type="button" className={styles.primaryLink} onClick={togglePlay}>
+                    {isPlaying ? <Pause size={17} /> : <Play size={17} />}
+                    {isPlaying ? "暂停播放" : "继续播放"}
+                  </button>
+                )}
+                <Link href="/music" className={styles.textLink}>
+                  前往音乐页
+                  <ArrowUpRight size={15} />
+                </Link>
+              </>
+            )}
+          </aside>
+        )}
       </section>
     </main>
   )
