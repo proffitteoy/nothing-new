@@ -1,6 +1,7 @@
 import Image from "next/image"
 
 import ThemeToggleBlock from "./ThemeToggleBlock"
+import PerformanceToggleBlock from "./PerformanceToggleBlock"
 
 export default function HomeStoryBoard() {
   return (
@@ -8,8 +9,12 @@ export default function HomeStoryBoard() {
       className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-stretch"
       aria-label="主题与个人照片"
     >
-      <div className="grid min-h-[132px] lg:col-span-4 lg:min-h-[340px]" data-field-obstacle>
+      <div
+        className="grid min-h-[280px] grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-4 lg:min-h-[340px] lg:grid-cols-1 lg:grid-rows-2"
+        data-field-obstacle
+      >
         <ThemeToggleBlock />
+        <PerformanceToggleBlock />
       </div>
 
       <figure

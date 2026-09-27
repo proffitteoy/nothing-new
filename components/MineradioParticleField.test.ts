@@ -28,11 +28,16 @@ test("reduced motion retains its existing 8649-particle budget at every width", 
   }
 })
 
-test("global particles and their toggle are unmounted while the music field remains", () => {
+test("the restored home toggle controls music particles without mounting a global field", () => {
   const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8")
   const home = readFileSync(new URL("./HomeStoryBoard.tsx", import.meta.url), "utf8")
   const music = readFileSync(new URL("../app/music/MusicClient.tsx", import.meta.url), "utf8")
-  assert.doesNotMatch(layout, /FieldScene|FieldModeProvider|MineradioParticleField/)
-  assert.doesNotMatch(home, /PerformanceToggleBlock/)
-  assert.match(music, /<MineradioParticleField\s/)
+  const toggle = readFileSync(new URL("./PerformanceToggleBlock.tsx", import.meta.url), "utf8")
+  assert.doesNotMatch(layout, /FieldScene|MineradioParticleField/)
+  assert.match(layout, /<FieldModeProvider>/)
+  assert.match(home, /<PerformanceToggleBlock\s*\/>/)
+  assert.match(toggle, /onClick=\{togglePerformanceMode\}/)
+  assert.match(toggle, /音乐页粒子/)
+  assert.match(music, /const \{ performanceMode \} = useFieldMode\(\)/)
+  assert.match(music, /performanceMode === "field" && \(\s*<MineradioParticleField\s/)
 })
