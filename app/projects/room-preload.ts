@@ -1,4 +1,4 @@
-// Keep only the two compressed source files (3.4 MiB). Each mounted scene owns
+// Keep only the two compressed source files. Each mounted scene owns
 // its decoded images, geometry, spatial index and GPU resources independently.
 let pending: Promise<[ArrayBuffer, Blob]> | null = null
 export function preloadRoomAssets(): Promise<[ArrayBuffer, Blob]> {
