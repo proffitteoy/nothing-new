@@ -1,4 +1,5 @@
 import "katex/dist/katex.min.css"
+import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "../components/ThemeProvider"
@@ -21,7 +22,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const blogHref = await getBlogEntryRoute()
   return (
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <head>
@@ -29,8 +31,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
-              #app-mount-root { opacity: 0; visibility: hidden; pointer-events: none; }
-              html.splash-seen #app-mount-root { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
+              html.splash-seen [data-startup-overlay] { display: none; }
+              html[data-startup-entry="page"] [data-startup-loading] { display: none; }
+              html:not(.splash-seen) [data-site-ui] { opacity: 0; visibility: hidden; pointer-events: none; }
             `,
           }}
         />
@@ -38,11 +41,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                if (sessionStorage.getItem('hasSeenSplash') === 'true') {
-                  document.documentElement.classList.add('splash-seen');
-                }
-              } catch (e) {}
+              // Decide before hydration so subpage refreshes never flash the avatar intro.
+              document.documentElement.dataset.startupEntry = location.pathname === '/' ? 'home' : 'page';
+              document.documentElement.dataset.startupPhase = location.pathname === '/' ? 'loading' : 'preparing';
+              // Never leave the document inaccessible when hydration fails.
+              window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 9000);
             `,
           }}
         />
@@ -63,11 +66,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             `,
           }}
         />
+        <noscript>
+          <style>{`[data-startup-overlay] { display: none !important; } [data-site-ui] { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }`}</style>
+        </noscript>
       </head>
 
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
         <ThemeProvider>
-          <SplashScreen />
+          <SplashScreen blogHref={blogHref} />
 
           <MusicProvider>
             <div
@@ -86,22 +92,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 />
               </div>
 
-              <Navbar />
+              <Navbar blogHref={blogHref} />
               <ScrollRootManager />
 
               <div
                 id="app-scroll-root"
                 className="relative z-10 flex-1 flex flex-col"
                 data-scroll-root
+                data-site-ui
               >
                 {children}
               </div>
 
-              <div className="hidden md:block">
+              <div className="hidden md:block" data-site-ui>
                 <FloatingPlayer />
               </div>
 
-              <div className="md:hidden block">
+              <div className="md:hidden block" data-site-ui>
                 <MobileBackButton />
               </div>
             </div>

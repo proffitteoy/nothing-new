@@ -9,7 +9,7 @@ import { navigationLinks } from "./Navbar"
 import { loadAnimeSnapshot } from "../lib/anime/client"
 import { preloadRoomAssets } from "../app/projects/room-preload"
 
-type Phase = "loading" | "particles" | "ready"
+type Phase = "loading" | "preparing" | "ready"
 const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
     if (signal.aborted) {
@@ -122,22 +122,21 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           const roomLoading =
             document.querySelector<HTMLElement>("[data-room-status]")?.dataset.roomStatus ===
             "loading"
-          if (document.documentElement.dataset.fieldReady && !roomLoading) break
+          if (!roomLoading) break
           await sleep(32, signal)
         }
       }
       const criticalReady = critical().catch(() => {})
       // Only a home entry plays the avatar intro. Other entry routes spend
-      // their bounded particle stage preparing the current page immediately.
+      // their bounded preparation stage preparing the current page immediately.
       if (homeEntry) {
         changePhase("loading")
         await Promise.all([sleep(2200, signal), Promise.race([criticalReady, sleep(4000, signal)])])
       }
       if (signal.aborted || skipped.current) return
       const motionReduced = matchMedia("(prefers-reduced-motion: reduce)").matches
-      const normal = document.documentElement.dataset.performanceMode === "normal"
-      if (!motionReduced && !normal) {
-        changePhase("particles")
+      if (!motionReduced) {
+        changePhase("preparing")
         await Promise.all([
           sleep(500, signal),
           Promise.race([Promise.allSettled([important, criticalReady]), sleep(2000, signal)]),
@@ -214,7 +213,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           data-startup-overlay
           className="fixed inset-x-0 bottom-10 z-[100001] flex items-center justify-center gap-6 text-xs text-slate-600 dark:text-slate-300"
         >
-          {phase === "particles" && <span role="status">研究、构建，也持续记录。</span>}
+          {phase === "preparing" && <span role="status">正在准备页面资源…</span>}
           <button
             type="button"
             onClick={() => {
