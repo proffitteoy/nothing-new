@@ -53,17 +53,18 @@ function normalizeCoverResolution(value: number) {
   return clampRange(Number(value) || 1, 0.75, 1.55);
 }
 
-function coverParticleGridForResolution(value: number) {
+export function coverParticleGridForResolution(value: number) {
   let grid = Math.round(118 * normalizeCoverResolution(value));
   grid = Math.max(88, Math.min(183, grid));
   return grid % 2 ? grid : grid + 1;
 }
 
-function coverResolutionForViewport(width: number, reduceMotion: boolean) {
+export function coverResolutionForViewport(width: number, reduceMotion: boolean) {
+  // Denser sampling with smaller dots; keep reduced-motion geometry unchanged.
   if (reduceMotion) return 0.78;
-  if (width < 640) return 0.82;
-  if (width >= 1440) return 1.16;
-  return 1;
+  if (width < 640) return 0.9;
+  if (width >= 1440) return 1.4;
+  return 1.2;
 }
 
 function hashSeed(value: string | number) {
@@ -608,15 +609,15 @@ export default function MineradioParticleField({
       uPreset: { value: stateRef.current.isPlaying ? 0 : 5 },
       uIntensity: { value: 0.9 },
       uDepth: { value: 1.0 },
-      uPointScale: { value: reduceMotion ? 0.86 : 1.08 },
+      uPointScale: { value: reduceMotion ? 0.78 : stateRef.current.isPlaying ? 0.92 : 0.78 },
       uSpeed: { value: reduceMotion ? 0.08 : 1.0 },
       uTwist: { value: 0.12 },
       uColorBoost: { value: 1.1 },
       uScatter: { value: 0.02 },
       uCoverRes: { value: resolution },
       uBgFade: { value: 0.2 },
-      uBloomStrength: { value: reduceMotion ? 0.18 : 0.52 },
-      uBloomSize: { value: 2.65 },
+      uBloomStrength: { value: reduceMotion ? 0.16 : stateRef.current.isPlaying ? 0.46 : 0.30 },
+      uBloomSize: { value: 2.2 },
       uTintColor: { value: new THREE.Color("#9db8cf") },
       uTintStrength: { value: 0.12 },
       uCoverTex: { value: coverTexture },
@@ -784,9 +785,9 @@ export default function MineradioParticleField({
       uniforms.uTime.value += reduceMotion ? delta * 0.04 : delta;
       uniforms.uPreset.value = reduceMotion ? 5 : targetPreset;
       uniforms.uIntensity.value = 0.82 + clampRange(state.volume || 0, 0, 1) * 0.34;
-      uniforms.uPointScale.value += ((reduceMotion ? 0.78 : active ? 1.16 : 0.94) - uniforms.uPointScale.value) * ease;
+      uniforms.uPointScale.value += ((reduceMotion ? 0.78 : active ? 0.92 : 0.78) - uniforms.uPointScale.value) * ease;
       uniforms.uSpeed.value += ((reduceMotion ? 0.06 : active ? 1.0 : 0.42) - uniforms.uSpeed.value) * ease;
-      uniforms.uBloomStrength.value += ((reduceMotion ? 0.16 : active ? 0.58 : 0.38) - uniforms.uBloomStrength.value) * ease;
+      uniforms.uBloomStrength.value += ((reduceMotion ? 0.16 : active ? 0.46 : 0.30) - uniforms.uBloomStrength.value) * ease;
       uniforms.uAlpha.value += ((reduceMotion ? 0.64 : 0.92) - uniforms.uAlpha.value) * Math.min(1, delta * 2.8);
       uniforms.uBurstAmt.value *= Math.pow(0.09, delta);
       uniforms.uBass.value += (bands.bass - uniforms.uBass.value) * Math.min(1, delta * 8.5);

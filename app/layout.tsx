@@ -2,13 +2,11 @@ import "katex/dist/katex.min.css"
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "../components/ThemeProvider"
-import FieldScene from "../components/FieldScene"
 import { MusicProvider } from "../components/MusicProvider"
 import FloatingPlayer from "../components/FloatingPlayer"
 import { siteConfig } from "../siteConfig"
 import BackgroundSlider from "../components/BackgroundSlider"
 import SplashScreen from "../components/SplashScreen"
-import { FieldModeProvider } from "../components/FieldModeProvider"
 import ScrollRootManager from "../components/ScrollRootManager"
 import Navbar from "../components/Navbar"
 
@@ -69,49 +67,45 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
         <ThemeProvider>
-          <FieldModeProvider>
-            <SplashScreen />
+          <SplashScreen />
 
-            <MusicProvider>
-              <div
-                id="app-mount-root"
-                className="flex-1 flex flex-col transition-opacity duration-1000"
-              >
-                <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                  {!siteConfig.useGradient && <BackgroundSlider />}
-                  <div
-                    className="absolute inset-0 z-[1] bg-white/[0.12] transition-colors duration-1000 dark:bg-slate-950/25"
-                    style={{
-                      backgroundImage: `linear-gradient(135deg, ${siteConfig.themeColors
-                        .map((color) => `${color}24`)
-                        .join(", ")})`,
-                    }}
-                  />
-                </div>
-
-                <FieldScene />
-
-                <Navbar />
-                <ScrollRootManager />
-
+          <MusicProvider>
+            <div
+              id="app-mount-root"
+              className="flex-1 flex flex-col transition-opacity duration-1000"
+            >
+              <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                {!siteConfig.useGradient && <BackgroundSlider />}
                 <div
-                  id="app-scroll-root"
-                  className="relative z-10 flex-1 flex flex-col"
-                  data-scroll-root
-                >
-                  {children}
-                </div>
-
-                <div className="hidden md:block">
-                  <FloatingPlayer />
-                </div>
-
-                <div className="md:hidden block">
-                  <MobileBackButton />
-                </div>
+                  className="absolute inset-0 z-[1] bg-white/[0.12] transition-colors duration-1000 dark:bg-slate-950/25"
+                  style={{
+                    backgroundImage: `linear-gradient(135deg, ${siteConfig.themeColors
+                      .map((color) => `${color}24`)
+                      .join(", ")})`,
+                  }}
+                />
               </div>
-            </MusicProvider>
-          </FieldModeProvider>
+
+              <Navbar />
+              <ScrollRootManager />
+
+              <div
+                id="app-scroll-root"
+                className="relative z-10 flex-1 flex flex-col"
+                data-scroll-root
+              >
+                {children}
+              </div>
+
+              <div className="hidden md:block">
+                <FloatingPlayer />
+              </div>
+
+              <div className="md:hidden block">
+                <MobileBackButton />
+              </div>
+            </div>
+          </MusicProvider>
         </ThemeProvider>
       </body>
     </html>
