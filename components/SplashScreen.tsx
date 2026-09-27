@@ -40,11 +40,6 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
   }, [])
   const reveal = useCallback(() => {
     document.documentElement.classList.add("splash-seen")
-    try {
-      sessionStorage.setItem("hasSeenSplash", "true")
-    } catch {
-      /* Optional persistence. */
-    }
     changePhase("ready")
   }, [changePhase])
 
@@ -56,7 +51,10 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
     ).connection
     const constrained = connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType ?? "")
-    const seen = document.documentElement.classList.contains("splash-seen")
+    // Snapshot the entry route once. Soft navigation keeps this layout and
+    // must not change the startup sequence or replay it.
+    const homeEntry = window.location.pathname === "/"
+    const alreadyRevealed = document.documentElement.classList.contains("splash-seen")
 
     // Router prefetch has no completion promise. It warms all navigation targets,
     // including the resolved note URL and the otherwise hidden mobile menu.
@@ -96,7 +94,9 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         await Promise.allSettled([
           routes,
           preloadRoomAssets(),
-          import("../app/projects/RoomScene").then((module) => module.preloadRoomScene()),
+          window.location.pathname === "/projects"
+            ? Promise.resolve()
+            : import("../app/projects/RoomScene").then((module) => module.preloadRoomScene()),
           import("../app/music/MusicClient"),
           loadAnimeSnapshot(),
           cover.decode(),
@@ -107,11 +107,10 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     }
     const important = warm().catch(() => {})
     const run = async () => {
-      if (seen) {
+      if (alreadyRevealed) {
         reveal()
         return
       }
-      changePhase("loading")
       const critical = async () => {
         const started = performance.now()
         const images = Array.from(document.images).filter((img) => {
@@ -119,17 +118,30 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           return img.loading !== "lazy" || (rect.top < innerHeight && rect.bottom > 0)
         })
         await Promise.allSettled([document.fonts.ready, ...images.map((img) => img.decode())])
-        while (!document.documentElement.dataset.fieldReady && performance.now() - started < 4000)
+        while (performance.now() - started < 4000) {
+          const roomLoading =
+            document.querySelector<HTMLElement>("[data-room-status]")?.dataset.roomStatus ===
+            "loading"
+          if (document.documentElement.dataset.fieldReady && !roomLoading) break
           await sleep(32, signal)
+        }
       }
-      // The familiar animation remains, but readiness now has a bounded say in exit.
-      await Promise.all([sleep(2200, signal), Promise.race([critical(), sleep(4000, signal)])])
+      const criticalReady = critical().catch(() => {})
+      // Only a home entry plays the avatar intro. Other entry routes spend
+      // their bounded particle stage preparing the current page immediately.
+      if (homeEntry) {
+        changePhase("loading")
+        await Promise.all([sleep(2200, signal), Promise.race([criticalReady, sleep(4000, signal)])])
+      }
       if (signal.aborted || skipped.current) return
       const motionReduced = matchMedia("(prefers-reduced-motion: reduce)").matches
       const normal = document.documentElement.dataset.performanceMode === "normal"
       if (!motionReduced && !normal) {
         changePhase("particles")
-        await Promise.all([sleep(500, signal), Promise.race([important, sleep(2000, signal)])])
+        await Promise.all([
+          sleep(500, signal),
+          Promise.race([Promise.allSettled([important, criticalReady]), sleep(2000, signal)]),
+        ])
       }
       if (!signal.aborted && !skipped.current) reveal()
     }
@@ -148,6 +160,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           <motion.div
             key="splash-screen-container"
             data-startup-overlay
+            data-startup-loading
             exit={{ opacity: 0 }}
             transition={{ duration: reduced ? 0 : 0.2, ease: "easeOut" }}
             className="fixed inset-0 z-[100000] flex flex-col items-center justify-center bg-white dark:bg-slate-950"

@@ -34,6 +34,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           dangerouslySetInnerHTML={{
             __html: `
               html.splash-seen [data-startup-overlay] { display: none; }
+              html[data-startup-entry="page"] [data-startup-loading] { display: none; }
               html:not(.splash-seen) [data-site-ui] { opacity: 0; visibility: hidden; pointer-events: none; }
               html[data-startup-phase="particles"] [data-field-layer="back"],
               html[data-startup-phase="particles"] [data-field-layer="front"] { display: block; }
@@ -44,12 +45,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                if (sessionStorage.getItem('hasSeenSplash') === 'true') {
-                  document.documentElement.classList.add('splash-seen');
-                }
-              } catch (e) {}
-              document.documentElement.dataset.startupPhase = document.documentElement.classList.contains('splash-seen') ? 'ready' : 'loading';
+              // Decide before hydration so subpage refreshes never flash the avatar intro.
+              document.documentElement.dataset.startupEntry = location.pathname === '/' ? 'home' : 'page';
+              document.documentElement.dataset.startupPhase = location.pathname === '/' ? 'loading' : 'particles';
               // Never leave the document inaccessible when hydration fails.
               window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 9000);
             `,
