@@ -1,6 +1,3 @@
-import { connection } from "next/server"
-
-import { getAnimeShelf } from "./anime/bangumi"
 import PageTransition from "../components/PageTransition"
 import { siteConfig } from "../siteConfig"
 import CloudPlayer from "../components/CloudPlayer"
@@ -12,13 +9,10 @@ import { ToastProvider } from "../components/ToastProvider"
 import { getNoteManifest } from "../lib/notes/server"
 
 export default async function Home() {
-  await connection()
-  const [manifest, animeShelf] = await Promise.all([getNoteManifest(), getAnimeShelf()])
+  const manifest = await getNoteManifest()
   const routes = Object.keys(manifest.artifacts)
   const blogCount = routes.filter((route) => route.startsWith("/blog/")).length
   const chatterCount = routes.filter((route) => route.startsWith("/chatter/")).length
-  const animeCount =
-    animeShelf.status === "ready" ? animeShelf.watching.total + animeShelf.watched.total : null
 
   return (
     <ToastProvider>
@@ -35,7 +29,6 @@ export default async function Home() {
                     postCount={blogCount}
                     chatterCount={chatterCount}
                     musicCount={siteConfig.cloudMusicIds.length}
-                    animeCount={animeCount}
                   />
                 </div>
                 {/* 手机上占满1列，电脑上占5列 */}

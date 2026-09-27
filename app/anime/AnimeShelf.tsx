@@ -7,53 +7,12 @@ import {
   ANIME_BATCH_SIZE,
   getAnimeTitle,
   type AnimeItem,
-  type AnimeLatestPointer,
   type AnimeSnapshot,
 } from "../../lib/anime/schema"
 import { useImageLoadingPolicy } from "../../lib/image-loading"
 import AnimeCoverImage from "./AnimeCoverImage"
+import { loadAnimeSnapshot } from "../../lib/anime/client"
 import { groupAnimeByScore, sortAnimeByScore } from "./collection"
-
-function isSnapshot(value: unknown): value is AnimeSnapshot {
-  if (!value || typeof value !== "object") return false
-  const candidate = value as Partial<AnimeSnapshot>
-  return (
-    candidate.version === 1 &&
-    typeof candidate.username === "string" &&
-    Array.isArray(candidate.items)
-  )
-}
-
-async function fetchSnapshot(signal: AbortSignal) {
-  try {
-    const latestResponse = await fetch("/anime/latest.json", { signal })
-    if (!latestResponse.ok) throw new Error(`latest.json returned ${latestResponse.status}`)
-    const latest = (await latestResponse.json()) as AnimeLatestPointer
-    const snapshotResponse = await fetch(latest.snapshot, {
-      cache: "force-cache",
-      signal,
-    })
-    if (!snapshotResponse.ok) throw new Error(`snapshot returned ${snapshotResponse.status}`)
-    const snapshot = await snapshotResponse.json()
-    if (!isSnapshot(snapshot)) throw new Error("snapshot schema is invalid")
-    return snapshot
-  } catch (error) {
-    if (signal.aborted) throw error
-    console.warn(
-      "[AnimeShelf] snapshot load failed, falling back to the Vercel API:",
-      error instanceof Error ? error.message : "unknown error",
-    )
-  }
-
-  const fallbackResponse = await fetch("/api/anime", {
-    cache: "no-cache",
-    signal,
-  })
-  if (!fallbackResponse.ok) throw new Error(`fallback API returned ${fallbackResponse.status}`)
-  const fallback = await fallbackResponse.json()
-  if (!isSnapshot(fallback)) throw new Error("fallback snapshot schema is invalid")
-  return fallback
-}
 
 function useProgressiveCount(total: number) {
   const [count, setCount] = useState(Math.min(ANIME_BATCH_SIZE, total))
@@ -91,12 +50,14 @@ export default function AnimeShelf() {
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
-    const controller = new AbortController()
+    let active = true
 
-    void fetchSnapshot(controller.signal)
-      .then((data) => setSnapshot(data))
+    void loadAnimeSnapshot()
+      .then((data) => {
+        if (active) setSnapshot(data)
+      })
       .catch((loadError) => {
-        if (controller.signal.aborted) return
+        if (!active) return
         console.error(
           "[AnimeShelf] failed to load anime data:",
           loadError instanceof Error ? loadError.message : "unknown error",
@@ -104,7 +65,9 @@ export default function AnimeShelf() {
         setError(true)
       })
 
-    return () => controller.abort()
+    return () => {
+      active = false
+    }
   }, [reloadKey])
 
   if (!snapshot) {

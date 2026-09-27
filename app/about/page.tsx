@@ -14,7 +14,6 @@ import rehypeStringify from 'rehype-stringify';
 // 引入高亮主题
 import 'highlight.js/styles/atom-one-dark.css';
 import 'katex/dist/katex.min.css';
-import { connection } from 'next/server';
 
 import PageTransition from '../../components/PageTransition';
 import AboutClient, { type GitHubContributions } from '../../components/AboutClient';
@@ -32,6 +31,7 @@ async function getGitHubContributions(): Promise<GitHubContributions | null> {
         'User-Agent': 'nothing-new.icu',
       },
       next: { revalidate: 43200 },
+      signal: AbortSignal.timeout(4000),
     });
 
     if (!response.ok) {
@@ -88,7 +88,6 @@ async function getGitHubContributions(): Promise<GitHubContributions | null> {
 }
 
 export default async function AboutPage() {
-  await connection();
 
   const fullPath = path.join(process.cwd(), 'app', 'about', 'about.md');
   let contentHtml = "博主很懒，还没有写自我介绍哦...";

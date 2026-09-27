@@ -25,7 +25,18 @@ const getMobileDragConstraints = () => {
   }
 }
 
-export default function Navbar() {
+export const navigationLinks = [
+  { name: "首页", href: "/" },
+  { name: "项目", href: "/projects" },
+  { name: "音乐", href: "/music" },
+  { name: "番剧", href: "/anime" },
+  { name: "杂谈", href: "/chatter" },
+  { name: "笔记", href: "/blog" },
+  { name: "友链", href: "/friends" },
+  { name: "关于", href: "/about" },
+]
+
+export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
 
@@ -71,16 +82,9 @@ export default function Navbar() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isMobileMenuOpen])
 
-  const navLinks = [
-    { name: "首页", href: "/" },
-    { name: "项目", href: "/projects" },
-    { name: "音乐", href: "/music" },
-    { name: "番剧", href: "/anime" },
-    { name: "杂谈", href: "/chatter" },
-    { name: "笔记", href: "/blog" },
-    { name: "友链", href: "/friends" },
-    { name: "关于", href: "/about" },
-  ]
+  const navLinks = navigationLinks.map((link) =>
+    link.href === "/blog" ? { ...link, href: blogHref } : link,
+  )
 
   // 🌟 手机端使用同一份链接，圆盘会基于实际长度均匀排布
   const mobileNavLinks = navLinks
@@ -90,6 +94,7 @@ export default function Navbar() {
       {/* PC端导航栏 */}
       <header
         data-field-obstacle
+        data-site-ui
         className="hidden md:block w-full fixed top-0 left-0 right-0 z-50 border-b bg-white/40 dark:bg-slate-900/50 backdrop-blur-xl border-white/20 dark:border-white/5 shadow-sm"
       >
         <div className="w-[90%] max-w-6xl mx-auto h-16 flex items-center justify-between px-4 sm:px-[30px] box-border">
@@ -104,11 +109,15 @@ export default function Navbar() {
           <nav className="flex gap-8 text-sm font-bold">
             {/* PC端依然使用全量的 navLinks */}
             {navLinks.map((link) => {
-              const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`)
+              const isActive =
+                link.name === "笔记"
+                  ? pathname.startsWith("/blog")
+                  : pathname === link.href || pathname.startsWith(`${link.href}/`)
               return (
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={true}
                   aria-current={isActive ? "page" : undefined}
                   className={`relative py-1 transition-colors ${isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-700 dark:text-slate-200 hover:text-indigo-600"}`}
                 >
@@ -124,7 +133,7 @@ export default function Navbar() {
       </header>
 
       {/* 📱 手机端：可拖拽吸附的触发球 */}
-      <div className="md:hidden">
+      <div className="md:hidden" data-site-ui>
         <motion.button
           type="button"
           aria-label="打开导航"
@@ -192,7 +201,10 @@ export default function Navbar() {
 
                   {/* 🌟 手机端轮盘渲染：使用过滤后的 mobileNavLinks */}
                   {mobileNavLinks.map((link, index) => {
-                    const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`)
+                    const isActive =
+                      link.name === "笔记"
+                        ? pathname.startsWith("/blog")
+                        : pathname === link.href || pathname.startsWith(`${link.href}/`)
                     // 🌟 角度计算也会基于过滤后的长度，保证图标自动均匀排布！
                     const angle = index * (360 / mobileNavLinks.length)
 
@@ -207,6 +219,7 @@ export default function Navbar() {
                         <motion.div style={{ rotate: inverseRotation }} className="w-full h-full">
                           <Link
                             href={link.href}
+                            prefetch={true}
                             onClick={() => setIsMobileMenuOpen(false)}
                             aria-current={isActive ? "page" : undefined}
                             className={`flex items-center justify-center w-full h-full rounded-full transition-all duration-300 ${

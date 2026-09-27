@@ -37,7 +37,7 @@ title: 窗边研究小屋：实现与验证
 - 日夜只读取 `ThemeProvider`，音乐只使用 `MusicProvider`，没有第二套音频播放实例。
 - 沿用桌面 `app-scroll-root` 与移动端文档滚动，不在 window 上接管滚轮。
 - 3D 就绪时设置临时 `data-project-room-active`；Field 保留后景，前景粒子与交互波纹停止绘制，静态浏览或离开页面立即恢复。
-- Three.js 与 GLTFLoader 在客户端边界加载，无新增运行时依赖。静止时停止场景 RAF，页面后台暂停；卸载释放几何、材质、纹理、监听器和 WebGL renderer。
+- Three.js 与 GLTFLoader 在客户端边界加载，使用 three-mesh-bvh 建立拾取索引。静止时停止场景 RAF，页面后台暂停；卸载释放几何、材质、纹理、监听器和 WebGL renderer。
 - React Strict Mode 会复用 canvas，只有 canvas 实际脱离文档后才强制释放 context，避免旧实例的异步 context-loss 事件杀死替代实例。
 - GLB 请求有 20 秒超时，可切静态或重试；context loss 进入同一可读降级状态。
 
@@ -57,7 +57,7 @@ node scripts/encode-project-room.mjs
 
 交互按组保留，日夜各用一张经 OpenImageDenoise 离线降噪的 3072² 光照贴图。GLB 内嵌日间贴图并声明 `KHR_materials_unlit`，夜间图由同一路由资源单独加载；Three.js 直接显示烘焙结果，避免重复照明。默认视角与预览图使用相同表面与近似相机参数。运行时没有实时阴影或后处理。
 
-模型载入时为各组建立局部坐标的静态 Octree；每次投影或点击只变换射线，保持物件微动后的命中与遮挡正确。相比逐标签遍历全部三角形，这减少了观察操作的 CPU 开销。模型、两张光照贴图、Octree、ImageBitmap 和监听器都随路由卸载释放。
+开场期间预解析一份模型，为各组建立局部坐标的静态 BVH；每次投影或点击只变换射线，保持物件微动后的命中与遮挡正确。相比逐标签遍历全部三角形，这减少了观察操作的 CPU 开销。挂载后的模型、两张光照贴图、BVH、ImageBitmap 和监听器都随路由卸载释放。未使用的预解析模型最多保留 60 秒；仅压缩源文件在标签页内复用。加载优化实测见 [全站启动与导航](site-startup.md)。
 
 资产测试将 **GLB 与夜间贴图之和**限制在 4 MiB 内，全部几何少于 100k 三角形、primitive 少于 80；这些是资源规模检查，不等于网络或帧率验收。
 

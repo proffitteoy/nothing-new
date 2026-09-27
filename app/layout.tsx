@@ -1,4 +1,5 @@
 import "katex/dist/katex.min.css"
+import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "../components/ThemeProvider"
@@ -23,7 +24,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const blogHref = await getBlogEntryRoute()
   return (
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <head>
@@ -31,8 +33,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
-              #app-mount-root { opacity: 0; visibility: hidden; pointer-events: none; }
-              html.splash-seen #app-mount-root { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
+              html.splash-seen [data-startup-overlay] { display: none; }
+              html:not(.splash-seen) [data-site-ui] { opacity: 0; visibility: hidden; pointer-events: none; }
+              html[data-startup-phase="particles"] [data-field-layer="back"],
+              html[data-startup-phase="particles"] [data-field-layer="front"] { display: block; }
             `,
           }}
         />
@@ -45,6 +49,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   document.documentElement.classList.add('splash-seen');
                 }
               } catch (e) {}
+              document.documentElement.dataset.startupPhase = document.documentElement.classList.contains('splash-seen') ? 'ready' : 'loading';
+              // Never leave the document inaccessible when hydration fails.
+              window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 9000);
             `,
           }}
         />
@@ -65,18 +72,18 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             `,
           }}
         />
+        <noscript>
+          <style>{`[data-startup-overlay] { display: none !important; } [data-site-ui] { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }`}</style>
+        </noscript>
       </head>
 
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
         <ThemeProvider>
           <FieldModeProvider>
-            <SplashScreen />
+            <SplashScreen blogHref={blogHref} />
 
             <MusicProvider>
-              <div
-                id="app-mount-root"
-                className="flex-1 flex flex-col transition-opacity duration-1000"
-              >
+              <div id="app-mount-root" className="flex-1 flex flex-col">
                 <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
                   {!siteConfig.useGradient && <BackgroundSlider />}
                   <div
@@ -91,22 +98,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
                 <FieldScene />
 
-                <Navbar />
+                <Navbar blogHref={blogHref} />
                 <ScrollRootManager />
 
                 <div
                   id="app-scroll-root"
                   className="relative z-10 flex-1 flex flex-col"
+                  data-site-ui
                   data-scroll-root
                 >
                   {children}
                 </div>
 
-                <div className="hidden md:block">
+                <div className="hidden md:block" data-site-ui>
                   <FloatingPlayer />
                 </div>
 
-                <div className="md:hidden block">
+                <div className="md:hidden block" data-site-ui>
                   <MobileBackButton />
                 </div>
               </div>
