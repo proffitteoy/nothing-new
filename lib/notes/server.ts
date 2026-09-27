@@ -77,3 +77,11 @@ export async function getCanonicalRoute(route: string) {
   const manifest = await getNoteManifest()
   return manifest.aliases[route] ?? route
 }
+
+export const getBlogEntryRoute = cache(async () => {
+  const notes = await getSectionNotes("blog")
+  const first =
+    notes.find((note) => note.route === "/blog/math/Fubini-Tonelli定理") ??
+    notes.find((note) => note.text.trim().length >= 300)
+  return first ? encodeURI(first.route) : "/blog"
+})

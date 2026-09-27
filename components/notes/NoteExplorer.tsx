@@ -39,13 +39,14 @@ function ExplorerFolder({ node, currentPath }: { node: NoteTreeNode; currentPath
           <span className="truncate">{node.title}</span>
         </summary>
         <ul className="ml-[0.9rem] border-l border-[#c7beb0] pl-2 dark:border-[#343a44]">
-          {node.children?.map((child) => (
-            <ExplorerNode
-              key={`${child.type}-${child.path}-${currentPath}`}
-              node={child}
-              currentPath={currentPath}
-            />
-          ))}
+          {open &&
+            node.children?.map((child) => (
+              <ExplorerNode
+                key={`${child.type}-${child.path}-${currentPath}`}
+                node={child}
+                currentPath={currentPath}
+              />
+            ))}
         </ul>
       </details>
     </li>
@@ -62,6 +63,7 @@ function ExplorerNode({ node, currentPath }: { node: NoteTreeNode; currentPath: 
     <li>
       <Link
         href={node.path}
+        prefetch={false}
         aria-current={active ? "page" : undefined}
         className={`flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[13px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3d5a80] dark:focus-visible:ring-[#9ab5d8] ${
           active
@@ -257,6 +259,7 @@ export default function NoteExplorer({
   tree: NoteTreeNode[]
   currentPath: string
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false)
   return (
     <>
       <aside className="hidden lg:block" aria-label="笔记探索栏">
@@ -274,6 +277,7 @@ export default function NoteExplorer({
       </aside>
 
       <details
+        onToggle={(event) => setMobileOpen(event.currentTarget.open)}
         data-field-obstacle
         className="rounded-xl border border-[#c7beb0] bg-[#f3f0ea] p-4 shadow-sm lg:hidden dark:border-[#343a44] dark:bg-[#1a1c20]"
       >
@@ -281,12 +285,14 @@ export default function NoteExplorer({
           探索笔记
         </summary>
         <div className="mt-4 border-t border-[#ddd5c9] pt-4 dark:border-[#343a44]">
-          <ExplorerPanel
-            section={section}
-            tree={tree}
-            currentPath={currentPath}
-            idPrefix="mobile"
-          />
+          {mobileOpen && (
+            <ExplorerPanel
+              section={section}
+              tree={tree}
+              currentPath={currentPath}
+              idPrefix="mobile"
+            />
+          )}
         </div>
       </details>
     </>

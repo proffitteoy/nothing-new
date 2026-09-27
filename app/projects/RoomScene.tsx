@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { OrbitControls } from "three/addons/controls/OrbitControls.js"
-import { Octree } from "three/addons/math/Octree.js"
+import { MeshBVH } from "three-mesh-bvh"
+import { preloadRoomAssets } from "./room-preload"
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js"
 import { lifeObjects, projects, roomTargets, type RoomTarget } from "./projects"
 import styles from "./room.module.css"
@@ -18,6 +19,88 @@ type Props = {
   onReady: () => void
   onError: () => void
   onChoose: (target: RoomTarget) => void
+}
+
+type PreparedRoom = {
+  model: THREE.Group
+  nightTexture: THREE.Texture
+  trees: Map<THREE.Mesh, MeshBVH>
+}
+function disposeModel(root: THREE.Object3D, extraTextures: Iterable<THREE.Texture> = []) {
+  const materials = new Set<THREE.Material>()
+  const textures = new Set(extraTextures)
+  root.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return
+    object.geometry.dispose()
+    for (const mat of Array.isArray(object.material) ? object.material : [object.material]) {
+      materials.add(mat)
+      for (const value of Object.values(mat))
+        if (value instanceof THREE.Texture) textures.add(value)
+    }
+  })
+  for (const mat of materials) mat.dispose()
+  for (const texture of textures) {
+    const bitmap = texture.source.data
+    if (typeof ImageBitmap !== "undefined" && bitmap instanceof ImageBitmap) bitmap.close()
+    texture.dispose()
+  }
+}
+async function prepareRoom(): Promise<PreparedRoom> {
+  const [data, night] = await preloadRoomAssets()
+  const { scene: model } = await new GLTFLoader().parseAsync(data, "/projects-room/")
+  const textures: THREE.Texture[] = []
+  try {
+    const bitmap = await createImageBitmap(night, { colorSpaceConversion: "none" })
+    const nightTexture = new THREE.Texture(bitmap)
+    textures.push(nightTexture)
+    nightTexture.flipY = false
+    nightTexture.colorSpace = THREE.SRGBColorSpace
+    nightTexture.needsUpdate = true
+    const meshes: THREE.Mesh[] = []
+    model.traverse((node) => {
+      if (node instanceof THREE.Mesh) meshes.push(node)
+    })
+    const trees = new Map<THREE.Mesh, MeshBVH>()
+    for (const mesh of meshes) {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      trees.set(mesh, new MeshBVH(mesh.geometry, { indirect: true }))
+    }
+    return { model, nightTexture, trees }
+  } catch (error) {
+    disposeModel(model, textures)
+    throw error
+  }
+}
+// One unmounted, CPU-only scene can wait for the first visit. Ownership transfers
+// exactly once; subsequent visits recreate resources from the compressed cache.
+let prepared: Promise<PreparedRoom> | null = null
+let expiry: ReturnType<typeof setTimeout> | undefined
+export function preloadRoomScene() {
+  if (!prepared) {
+    const task = prepareRoom()
+    prepared = task
+    void task
+      .then((room) => {
+        if (prepared !== task) return
+        expiry = setTimeout(() => {
+          if (prepared === task) {
+            prepared = null
+            disposeModel(room.model, [room.nightTexture])
+            room.trees.clear()
+          }
+        }, 60000)
+      })
+      .catch(() => {
+        if (prepared === task) prepared = null
+      })
+  }
+  return prepared
+}
+function takePreparedRoom() {
+  const task = prepared ?? prepareRoom()
+  prepared = null
+  clearTimeout(expiry)
+  return task
 }
 
 // This component owns all GPU resources. React owns the accessible text layer.
@@ -101,7 +184,7 @@ export default function RoomScene(props: Props) {
     const worldPosition = new THREE.Vector3()
     const meshes: THREE.Mesh[] = []
     const occluders = new Map<THREE.Mesh, THREE.Box3>()
-    const hitTrees = new Map<THREE.Mesh, Octree>()
+    const hitTrees = new Map<THREE.Mesh, MeshBVH>()
     const localRay = new THREE.Ray()
     const localHit = new THREE.Vector3()
     const inverse = new THREE.Matrix4()
@@ -124,24 +207,7 @@ export default function RoomScene(props: Props) {
     }
 
     function release(root: THREE.Object3D) {
-      const materials = new Set<THREE.Material>()
-      const textures = new Set<THREE.Texture>()
-      root.traverse((object) => {
-        if (!(object instanceof THREE.Mesh)) return
-        object.geometry.dispose()
-        for (const mat of Array.isArray(object.material) ? object.material : [object.material]) {
-          materials.add(mat)
-          for (const value of Object.values(mat))
-            if (value instanceof THREE.Texture) textures.add(value)
-        }
-      })
-      for (const mat of materials) mat.dispose()
-      for (const texture of bakedTextures) textures.add(texture)
-      for (const texture of textures) {
-        const bitmap = texture.source.data
-        if (typeof ImageBitmap !== "undefined" && bitmap instanceof ImageBitmap) bitmap.close()
-        texture.dispose()
-      }
+      disposeModel(root, bakedTextures)
     }
 
     function resetCamera() {
@@ -174,7 +240,7 @@ export default function RoomScene(props: Props) {
       )
     }
 
-    // Static local octrees accelerate both label occlusion and pointer selection.
+    // Static local BVHs accelerate both label occlusion and pointer selection.
     // Transform each ray into the mesh's baked local space, so hover lifts stay correct.
     function closestHit() {
       let closest: { distance: number; object: THREE.Mesh } | null = null
@@ -183,9 +249,9 @@ export default function RoomScene(props: Props) {
         localRay.copy(ray.ray).applyMatrix4(inverse)
         const bound = occluders.get(mesh)
         if (!bound || !localRay.intersectBox(bound, localHit)) continue
-        const hit = hitTrees.get(mesh)?.rayIntersect(localRay)
+        const hit = hitTrees.get(mesh)?.raycastFirst(localRay, THREE.DoubleSide)
         if (!hit) continue
-        localHit.copy(hit.position)
+        localHit.copy(hit.point)
         const distance = localHit.applyMatrix4(mesh.matrixWorld).distanceTo(ray.ray.origin)
         if (!closest || distance < closest.distance) closest = { distance, object: mesh }
       }
@@ -320,7 +386,7 @@ export default function RoomScene(props: Props) {
           : Math.min(7, 1 + Math.floor((now - signalStarted) / 100))
         changing ||= signalNodes.count < 7
       }
-      if (model) {
+      if (model && ready) {
         model.updateMatrixWorld(true)
         renderer.render(scene, camera)
         updateLabels()
@@ -450,39 +516,17 @@ export default function RoomScene(props: Props) {
     observer.observe(host)
     resize()
 
-    const abort = new AbortController()
-    const timeout = window.setTimeout(() => abort.abort(), 20000)
-    void Promise.all([
-      fetch("/projects-room/study.glb", { signal: abort.signal }).then(async (response) => {
-        if (!response.ok) throw new Error("Room asset unavailable")
-        return response.arrayBuffer()
-      }),
-      fetch("/projects-room/study-night.jpg", { signal: abort.signal }).then(async (response) => {
-        if (!response.ok) throw new Error("Night lighting unavailable")
-        return response.blob()
-      }),
-    ])
-      .then(async ([data, night]) => {
-        if (disposed) return null
-        const bitmap = await createImageBitmap(night, { colorSpaceConversion: "none" })
+    void takePreparedRoom()
+      .then(async (room) => {
         if (disposed) {
-          bitmap.close()
-          return null
-        }
-        nightTexture = new THREE.Texture(bitmap)
-        nightTexture.flipY = false
-        nightTexture.colorSpace = THREE.SRGBColorSpace
-        nightTexture.needsUpdate = true
-        bakedTextures.add(nightTexture)
-        return new GLTFLoader().parseAsync(data, "/projects-room/")
-      })
-      .then((gltf) => {
-        if (!gltf) return
-        if (disposed) {
-          release(gltf.scene)
+          disposeModel(room.model, [room.nightTexture])
+          room.trees.clear()
           return
         }
-        model = gltf.scene
+        model = room.model
+        nightTexture = room.nightTexture
+        bakedTextures.add(nightTexture)
+        for (const [mesh, tree] of room.trees) hitTrees.set(mesh, tree)
         scene.add(model)
         model.updateMatrixWorld(true)
         const sourceMaterials = new Set<THREE.Material>()
@@ -499,9 +543,7 @@ export default function RoomScene(props: Props) {
             if (dayTexture) bakedTextures.add(dayTexture)
             object.geometry.computeBoundingBox()
             occluders.set(object, object.geometry.boundingBox!.clone())
-            const localMesh = new THREE.Mesh(object.geometry, mat)
-            const tree = new Octree().fromGraphNode(localMesh)
-            hitTrees.set(object, tree)
+
             if (object.name.startsWith("wall_")) {
               walls.push({
                 object,
@@ -521,9 +563,14 @@ export default function RoomScene(props: Props) {
           basePositions.set(object, object.position.clone())
           anchors.set(id, anchor)
         }
+        await renderer.compileAsync(scene, camera)
+        if (disposed) return
         ready = true
         update()
-        latest.current.onReady()
+        // Keep the poster until the first actual draw, not merely the download.
+        requestAnimationFrame(() => {
+          if (!disposed) latest.current.onReady()
+        })
       })
       .catch((error: unknown) => {
         if (!disposed) {
@@ -531,12 +578,9 @@ export default function RoomScene(props: Props) {
           latest.current.onError()
         }
       })
-      .finally(() => window.clearTimeout(timeout))
 
     return () => {
       disposed = true
-      abort.abort()
-      window.clearTimeout(timeout)
       cancelAnimationFrame(frame)
       observer.disconnect()
       controls.removeEventListener("change", change)
@@ -555,7 +599,6 @@ export default function RoomScene(props: Props) {
           ;(texture.source.data as ImageBitmap).close()
           texture.dispose()
         }
-      for (const tree of hitTrees.values()) tree.clear()
       hitTrees.clear()
       occluders.clear()
       nodeGeometry.dispose()

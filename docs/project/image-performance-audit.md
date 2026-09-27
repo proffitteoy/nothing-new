@@ -16,7 +16,7 @@
 - 网易云当前封面统一为 `256y256`，非当前队列封面为 `128y128`。DOM 封面与 WebGL 纹理保持兼容的 CORS 请求模式。
 - 首页和音乐页不渲染不可见的浮动播放器视图，播放状态仍由 MusicProvider 保留。
 - 保留 Quartz 正文响应式图片、第三方友链原 URL 和固定尺寸属性。
-- 不改变 Splash 时序、背景/头像/关于页主视觉 preload、站内 URL、Blob 路径或快照 schema。
+- 背景/头像/关于页主视觉保留现有 Next Image 规格、站内 URL、Blob 路径和快照 schema。两阶段开场与必要资源预热见 [全站启动与导航](site-startup.md)。
 
 ## 格式与缓存
 

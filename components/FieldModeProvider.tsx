@@ -1,44 +1,49 @@
 "use client"
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useContext, useMemo, useSyncExternalStore } from "react"
 
 export type PerformanceMode = "normal" | "field"
-
 const STORAGE_KEY = "blog-performance-mode"
-
+let fallbackMode: PerformanceMode = "field"
+let storageFailed = false
+const CHANGE_EVENT = "field-mode-change"
+function readMode(): PerformanceMode {
+  if (storageFailed) return fallbackMode
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "normal" ? "normal" : "field"
+  } catch {
+    return fallbackMode
+  }
+}
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback)
+  window.addEventListener(CHANGE_EVENT, callback)
+  return () => {
+    window.removeEventListener("storage", callback)
+    window.removeEventListener(CHANGE_EVENT, callback)
+  }
+}
 const FieldModeContext = createContext({
-  performanceMode: "normal" as PerformanceMode,
+  performanceMode: "field" as PerformanceMode,
   togglePerformanceMode: () => {},
 })
-
 export function FieldModeProvider({ children }: { children: React.ReactNode }) {
-  const [performanceMode, setPerformanceMode] = useState<PerformanceMode>("normal")
-
-  useEffect(() => {
-    const initializationTimer = window.setTimeout(() => {
-      if (localStorage.getItem(STORAGE_KEY) === "field") {
-        setPerformanceMode("field")
-      }
-    }, 0)
-
-    return () => window.clearTimeout(initializationTimer)
-  }, [])
-
+  const performanceMode = useSyncExternalStore(subscribe, readMode, () => "field" as const)
   const value = useMemo(
     () => ({
       performanceMode,
       togglePerformanceMode: () => {
-        setPerformanceMode((currentMode) => {
-          const nextMode = currentMode === "normal" ? "field" : "normal"
-          localStorage.setItem(STORAGE_KEY, nextMode)
-          return nextMode
-        })
+        fallbackMode = readMode() === "field" ? "normal" : "field"
+        try {
+          localStorage.setItem(STORAGE_KEY, fallbackMode)
+        } catch {
+          storageFailed = true
+        }
+        window.dispatchEvent(new Event(CHANGE_EVENT))
       },
     }),
     [performanceMode],
   )
-
   return <FieldModeContext.Provider value={value}>{children}</FieldModeContext.Provider>
 }
-
 export const useFieldMode = () => useContext(FieldModeContext)
