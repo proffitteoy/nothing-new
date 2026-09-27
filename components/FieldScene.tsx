@@ -153,11 +153,13 @@ export default function FieldScene() {
 
   useEffect(() => {
     darkRef.current = isDark
+    window.dispatchEvent(new Event("site-startup-phase"))
   }, [isDark])
 
   useEffect(() => {
     modeRef.current = performanceMode
     document.documentElement.dataset.performanceMode = performanceMode
+    window.dispatchEvent(new Event("site-startup-phase"))
   }, [performanceMode])
 
   useEffect(() => {
@@ -248,7 +250,8 @@ export default function FieldScene() {
     let startTime = performance.now()
     let fieldBlend = modeRef.current === "field" ? 1 : 0
     let themeBlend = darkRef.current ? 1 : 0
-    let qualityIndex = 0
+    let qualityIndex = desktopQuery.matches ? 1 : FIELD_QUALITY.length - 1
+    let obstacleSampleAt = 0
     let frameCount = 0
     let frameWindowStartedAt = performance.now()
     let lowFpsWindows = 0
@@ -285,6 +288,10 @@ export default function FieldScene() {
     }
 
     const sampleObstacles = () => {
+      if (!document.documentElement.classList.contains("splash-seen")) {
+        obstacles = []
+        return
+      }
       obstacles = obstacleElements
         .map((element) => element.getBoundingClientRect())
         .filter(
@@ -505,8 +512,12 @@ export default function FieldScene() {
 
       const time = (now - startTime) / 1000
       const spectralTime = time * SPECTRAL_PLAYBACK_RATE
-      if (fieldBlend > 0.001) sampleObstacles()
-      drawSpecies(time, spectralTime, quality.modeCount)
+      if (fieldBlend > 0.001 && now - obstacleSampleAt >= 100) {
+        // Layout reads precede canvas writes, at 10 Hz. Never truncate the obstacle list.
+        sampleObstacles()
+        obstacleSampleAt = now
+      }
+      if (desktopQuery.matches) drawSpecies(time, spectralTime, quality.modeCount)
 
       if (fieldBlend > 0.001 && !tracerController) {
         tracerController = createSpectralTracerController(backCanvas, frontCanvas)
@@ -522,7 +533,10 @@ export default function FieldScene() {
           theme: themeBlend,
           time: spectralTime,
           backgroundCount: quality.backgroundCount,
-          foregroundCount: quality.foregroundCount,
+          foregroundCount:
+            document.documentElement.dataset.projectRoomActive === "true"
+              ? 0
+              : quality.foregroundCount,
           trailSamples: quality.trailSamples,
           modeCount: quality.modeCount,
           width,
@@ -531,7 +545,11 @@ export default function FieldScene() {
         })
       }
 
-      drawInteractions()
+      if (document.documentElement.dataset.projectRoomActive === "true") {
+        interactionContext.clearRect(0, 0, width, height)
+      } else {
+        drawInteractions()
+      }
 
       if (modeRef.current === "field" && !reducedMotionQuery.matches) {
         frameCount += 1
@@ -566,13 +584,16 @@ export default function FieldScene() {
 
     const syncAnimation = () => {
       stopAnimation()
-      if (!desktopQuery.matches) {
+      const intro = document.documentElement.dataset.startupPhase === "particles"
+      if (!desktopQuery.matches && !intro) {
+        document.documentElement.dataset.fieldReady = "true"
         speciesCanvas.width = 1
         backCanvas.width = 1
         frontCanvas.width = 1
         interactionCanvas.width = 1
         return
       }
+      if (document.visibilityState !== "visible") return
       resizeCanvases()
       const now = performance.now()
       if (!lastFrame) {
@@ -580,6 +601,7 @@ export default function FieldScene() {
         lastFrame = now - NORMAL_FRAME_MS
       }
       renderFrame(now, true)
+      document.documentElement.dataset.fieldReady = "true"
       if (document.visibilityState === "visible" && !reducedMotionQuery.matches) {
         animationFrame = window.requestAnimationFrame(animate)
       }
@@ -612,6 +634,7 @@ export default function FieldScene() {
     })
     refreshObstacleElements()
 
+    window.addEventListener("site-startup-phase", syncAnimation)
     window.addEventListener("resize", handleResize)
     window.addEventListener("click", handleClick)
     document.addEventListener("visibilitychange", syncAnimation)
@@ -623,6 +646,8 @@ export default function FieldScene() {
       stopAnimation()
       tracerController?.destroy()
       obstacleObserver.disconnect()
+      delete document.documentElement.dataset.fieldReady
+      window.removeEventListener("site-startup-phase", syncAnimation)
       window.removeEventListener("resize", handleResize)
       window.removeEventListener("click", handleClick)
       document.removeEventListener("visibilitychange", syncAnimation)

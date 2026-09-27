@@ -561,6 +561,7 @@ export default function MineradioParticleField({
     let frame = 0;
     let last = performance.now();
     let disposed = false;
+    let compiled = false;
     const initialRect = mount.getBoundingClientRect();
     let width = Math.max(1, initialRect.width);
     let height = Math.max(1, initialRect.height);
@@ -574,11 +575,17 @@ export default function MineradioParticleField({
     let hasLoadedCover = false;
     const ripples: Ripple[] = [];
 
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true,
-      powerPreference: "high-performance",
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+      });
+    } catch {
+      // Playback controls remain available when WebGL is unavailable.
+      return;
+    }
     renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.domElement.className = "h-full w-full";
@@ -692,7 +699,7 @@ export default function MineradioParticleField({
       camera.aspect = width / height;
       camera.position.z = width < 640 ? 8.2 : 7.2;
       camera.updateProjectionMatrix();
-      if (reduceMotion) renderer.render(scene, camera);
+      if (reduceMotion && compiled) renderer.render(scene, camera);
     };
 
     const pushRipple = (x: number, y: number, strength: number) => {
@@ -773,6 +780,7 @@ export default function MineradioParticleField({
     };
 
     const render = (now: number) => {
+      if (disposed || !compiled || document.visibilityState !== "visible") return;
       const delta = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
       last = now;
       const state = stateRef.current;
@@ -858,10 +866,23 @@ export default function MineradioParticleField({
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("blur", handlePointerLeave);
     reduceQuery.addEventListener("change", handleMotionChange);
-    frame = window.requestAnimationFrame(render);
+    const resume = () => {
+      window.cancelAnimationFrame(frame);
+      if (compiled && !disposed && document.visibilityState === "visible") {
+        last = performance.now();
+        frame = window.requestAnimationFrame(render);
+      }
+    };
+    document.addEventListener("visibilitychange", resume);
+    // Do not make the first frame synchronously wait for both large shaders.
+    void renderer.compileAsync(scene, camera).then(() => {
+      compiled = true;
+      resume();
+    }).catch(() => { /* The surrounding player remains usable without the effect. */ });
 
     return () => {
       disposed = true;
+      document.removeEventListener("visibilitychange", resume);
       observer.disconnect();
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("blur", handlePointerLeave);
@@ -881,6 +902,7 @@ export default function MineradioParticleField({
       rippleTexture.dispose();
       renderer.dispose();
       renderer.domElement.remove();
+      renderer.forceContextLoss();
     };
   }, []);
 

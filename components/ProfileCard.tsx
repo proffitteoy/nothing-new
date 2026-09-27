@@ -1,6 +1,8 @@
 "use client"
 
 import Image from "next/image"
+import { useEffect, useState } from "react"
+import { loadAnimeSnapshot } from "../lib/anime/client"
 import { useRouter } from "next/navigation"
 import { siteConfig } from "../siteConfig"
 import { useToast } from "./ToastProvider"
@@ -9,13 +11,23 @@ export default function ProfileCard({
   postCount,
   chatterCount,
   musicCount,
-  animeCount,
 }: {
   postCount: number
   chatterCount: number
   musicCount: number
-  animeCount: number | null
 }) {
+  const [animeCount, setAnimeCount] = useState<number | null>(null)
+  useEffect(() => {
+    let active = true
+    void loadAnimeSnapshot()
+      .then((snapshot) => {
+        if (active) setAnimeCount(snapshot.items.length)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
   const router = useRouter()
   const { showToast } = useToast()
 

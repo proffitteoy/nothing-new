@@ -50,6 +50,17 @@ test("both tracer layers respect obstacles beyond the former 16-card limit", () 
     )
 
     counts.fill(0)
+    controller.render({ ...frame, foregroundCount: 0 })
+    assert.ok(counts[0] > 0, "immersive pages retain the background field")
+    assert.equal(counts[1], 0, "immersive pages can pause only foreground drawing")
+    counts.fill(0)
+    controller.render(frame)
+    assert.ok(
+      counts.every((count) => count > 0),
+      "leaving an immersive page restores both layers",
+    )
+
+    counts.fill(0)
     controller.render({
       ...frame,
       obstacles: [

@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 
-import { getSectionNotes } from "@/lib/notes/server"
+import { getBlogEntryRoute } from "@/lib/notes/server"
 import { siteConfig } from "@/siteConfig"
 
 export const metadata: Metadata = {
@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 }
 
 export default async function BlogPage() {
-  const notes = await getSectionNotes("blog")
-  const firstNote =
-    notes.find((note) => note.route === "/blog/math/Fubini-Tonelli定理") ??
-    notes.find((note) => note.text.trim().length >= 300)
-  if (!firstNote) notFound()
-  redirect(encodeURI(firstNote.route))
+  const route = await getBlogEntryRoute()
+  if (route === "/blog") notFound()
+  redirect(route)
 }
