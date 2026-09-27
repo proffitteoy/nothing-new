@@ -1,48 +1,52 @@
 .page {
-  --ink: #30392e;
-  --muted: #687363;
-  --surface: rgba(250, 249, 244, 0.94);
-  --line: rgba(107, 117, 95, 0.22);
+  --ink: #243044;
+  --muted: #64748b;
+  --surface: rgba(248, 250, 252, 0.94);
+  --line: rgba(100, 116, 139, 0.22);
   position: relative;
   z-index: 10;
-  padding: 80px 20px 20px;
+  padding: 84px 0 0;
   color: var(--ink);
 }
 :global(.dark) .page {
-  --ink: #eceddf;
-  --muted: #b3bcae;
-  --surface: rgba(24, 33, 39, 0.96);
-  --line: rgba(207, 216, 197, 0.19);
+  --ink: #e2e8f0;
+  --muted: #a6b2c4;
+  --surface: rgba(15, 23, 42, 0.94);
+  --line: rgba(148, 163, 184, 0.22);
 }
 .stage {
   position: relative;
-  min-height: 620px;
-  height: calc(100dvh - 100px);
-  max-height: 1100px;
+  min-height: 700px;
+  height: calc(100dvh - 84px);
+  max-height: 1200px;
   isolation: isolate;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 30px;
-  background: radial-gradient(
-    ellipse at 52% 52%,
-    rgba(242, 244, 230, 0.94) 5%,
-    rgba(246, 245, 239, 0.85) 46%,
-    rgba(246, 247, 240, 0.37) 100%
-  );
-  box-shadow: 0 24px 80px -60px #263321;
 }
-:global(.dark) .stage {
-  border-color: var(--line);
-  background: radial-gradient(
-    ellipse at 52% 52%,
-    rgba(30, 41, 48, 0.97),
-    rgba(24, 32, 42, 0.88) 55%,
-    rgba(20, 28, 39, 0.54)
+/* The workroom sits in the site background, without a second page-sized card. */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(248, 250, 252, 0.72),
+    rgba(248, 250, 252, 0.22) 40%,
+    transparent 75%
+  );
+}
+:global(.dark) .stage::before {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.8),
+    rgba(15, 23, 42, 0.25) 40%,
+    transparent 75%
   );
 }
 .heading {
   position: absolute;
-  top: 34px;
-  left: 38px;
+  top: 22px;
+  left: clamp(24px, 4vw, 64px);
   z-index: 3;
   pointer-events: none;
 }
@@ -60,7 +64,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #808d65;
+  background: #6366f1;
 }
 .eyebrow .divider {
   margin: 0 6px;
@@ -80,8 +84,8 @@
 }
 .topActions {
   position: absolute;
-  right: 30px;
-  top: 30px;
+  right: 32px;
+  top: 20px;
   z-index: 6;
   display: flex;
   gap: 8px;
@@ -100,22 +104,33 @@
 .scene,
 .poster {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
+  inset: 0 0 0 auto;
+  width: 86%;
+  height: calc(100% - 50px);
 }
 .poster {
-  object-fit: contain;
-  padding: 70px 100px 80px;
+  object-fit: cover;
+  padding: 0;
   transition: opacity 0.4s;
   pointer-events: none;
+}
+.poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .poster[data-visible="false"] {
   opacity: 0;
 }
 .scene {
   overflow: hidden;
+}
+.canvas,
+.poster {
+  mask-image:
+    linear-gradient(90deg, transparent, #000 13%, #000 91%, transparent),
+    linear-gradient(0deg, transparent, #000 18%, #000 86%, transparent);
+  mask-composite: intersect;
 }
 .canvas {
   display: block;
@@ -175,8 +190,8 @@
     0 0 0 4px #ffffff22;
 }
 .lifeHotspot .dot {
-  background: #e9efde;
-  color: #4a5c3b;
+  background: #eef2f6;
+  color: #475569;
 }
 .hotspot:hover .dot,
 .hotspot:focus-visible .dot,
@@ -219,8 +234,8 @@
 }
 .caption {
   position: absolute;
-  left: 38px;
-  bottom: 145px;
+  left: clamp(24px, 4vw, 64px);
+  top: 164px;
   z-index: 2;
   pointer-events: none;
 }
@@ -228,7 +243,7 @@
   display: block;
   width: 26px;
   height: 1px;
-  background: #83916c;
+  background: #818cf8;
   margin-bottom: 16px;
 }
 .caption p {
@@ -245,9 +260,9 @@
 }
 .toolbar {
   position: absolute;
-  bottom: 57px;
-  left: 38px;
-  right: 370px;
+  bottom: 54px;
+  left: clamp(24px, 4vw, 64px);
+  right: 330px;
   z-index: 8;
   display: flex;
   gap: 12px;
@@ -264,10 +279,10 @@
   gap: 10px;
   height: 44px;
   padding: 0 18px;
-  border: 1px solid #657559;
+  border: 1px solid #6366f1;
   border-radius: 24px;
-  background: #53644a;
-  color: #fffef6;
+  background: #4f46e5;
+  color: #fff;
   cursor: pointer;
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -296,7 +311,7 @@
   border: 1px solid var(--line);
   background: var(--surface);
   backdrop-filter: blur(20px);
-  box-shadow: 0 15px 60px #18251625;
+  box-shadow: 0 15px 60px #0f172a25;
 }
 .directoryBody h2 {
   font-size: 10px;
@@ -392,7 +407,7 @@
 .hint {
   position: absolute;
   bottom: 24px;
-  left: 42px;
+  left: clamp(24px, 4vw, 64px);
   display: flex;
   gap: 6px;
   align-items: center;
@@ -425,7 +440,7 @@
   border-radius: 26px;
   background: var(--surface);
   backdrop-filter: blur(22px);
-  box-shadow: -12px 15px 60px #18251620;
+  box-shadow: -12px 15px 60px #0f172a20;
   outline: none;
   animation: reveal 0.25s ease-out;
 }
@@ -458,10 +473,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7f8c71;
+  color: #818cf8;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: linear-gradient(130deg, #909d7520, #8ea5b90d);
+  background: linear-gradient(130deg, #818cf814, #38bdf80a);
 }
 .detailIllustration > span {
   position: absolute;
@@ -512,7 +527,7 @@
   font-size: 11px;
   line-height: 1.8;
   color: var(--muted);
-  border-left: 2px solid #8e9b77;
+  border-left: 2px solid #818cf8;
   padding-left: 12px;
   margin-top: 24px;
 }
@@ -526,8 +541,8 @@
   width: 100%;
   padding: 12px 17px;
   border-radius: 24px;
-  background: #53644a;
-  color: #fffef6;
+  background: #4f46e5;
+  color: #fff;
   font-size: 12px;
   cursor: pointer;
 }
@@ -559,15 +574,14 @@
     bottom: 57px;
   }
 }
-@media (max-width: 767px) {
+@media (max-width: 767px), (pointer: coarse) {
   .page {
-    padding: 14px 10px 85px;
+    padding: 12px 0 85px;
   }
   .stage {
     height: calc(100svh - 35px);
-    min-height: 640px;
+    min-height: 700px;
     max-height: 1050px;
-    border-radius: 25px;
   }
   .heading {
     left: 22px;
@@ -594,8 +608,15 @@
     width: 35px;
     height: 35px;
   }
+  .scene,
   .poster {
-    padding: 70px 0 80px;
+    width: 100%;
+    top: 95px;
+    height: calc(100% - 145px);
+  }
+  .canvas,
+  .poster {
+    mask-image: linear-gradient(0deg, transparent, #000 17%, #000 84%, transparent);
   }
   .toolbar {
     left: 16px;
@@ -690,7 +711,7 @@
   overflow: visible;
 }
 .leaders line {
-  stroke: #899572;
+  stroke: #94a3b8;
   stroke-width: 1;
   opacity: 0.7;
 }

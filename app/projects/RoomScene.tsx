@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { OrbitControls } from "three/addons/controls/OrbitControls.js"
+import { Octree } from "three/addons/math/Octree.js"
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js"
 import { lifeObjects, projects, roomTargets, type RoomTarget } from "./projects"
 import styles from "./room.module.css"
@@ -54,38 +55,31 @@ export default function RoomScene(props: Props) {
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 70)
+    const camera = new THREE.PerspectiveCamera(47, 1, 0.05, 35)
     const controls = new OrbitControls(camera, canvas)
     controls.enablePan = false
-    controls.minPolarAngle = 0.3
-    controls.maxPolarAngle = Math.PI / 2 - 0.12
+    controls.minPolarAngle = 0.45
+    controls.maxPolarAngle = Math.PI / 2 - 0.18
     controls.enableDamping = !latest.current.reduceMotion
     controls.dampingFactor = 0.12
     controls.rotateSpeed = 0.65
     controls.zoomSpeed = 0.65
     controls.target.set(0, 1.1, 0)
-    const ambient = new THREE.HemisphereLight(0xf4f1e8, 0x7b7566, 2.4)
-    const sun = new THREE.DirectionalLight(0xffe4bd, 3)
-    sun.position.set(-3, 7, 3)
-    const fill = new THREE.DirectionalLight(0xbfd7ff, 1)
-    fill.position.set(3, 4, -2)
-    const lamp = new THREE.PointLight(0xffcb80, 0, 5, 2)
-    lamp.position.set(-1.6, 2.25, -0.8)
-    scene.add(ambient, sun, fill, lamp)
-    const nodeGeometry = new THREE.SphereGeometry(0.016, 8, 6)
+    // Day/night diffuse lighting is baked in Cycles: shadow detail without per-frame lights.
+    const nodeGeometry = new THREE.SphereGeometry(0.004, 8, 6)
     const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0xafd9e9, toneMapped: false })
     const signalNodes = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, 7)
     const nodePoints = [
-      [-0.35, -0.12],
-      [-0.49, -0.02],
-      [-0.2, -0.02],
-      [-0.56, 0.06],
-      [-0.44, 0.06],
-      [-0.24, 0.06],
-      [-0.12, 0.06],
+      [-0.45, 0.09],
+      [-0.5, 0.14],
+      [-0.4, 0.14],
+      [-0.535, 0.18],
+      [-0.475, 0.18],
+      [-0.425, 0.18],
+      [-0.365, 0.18],
     ]
     nodePoints.forEach(([x, z], index) =>
-      signalNodes.setMatrixAt(index, new THREE.Matrix4().makeTranslation(x, 1.48, -z)),
+      signalNodes.setMatrixAt(index, new THREE.Matrix4().makeTranslation(x, 0.759, -z)),
     )
     signalNodes.visible = false
     scene.add(signalNodes)
@@ -100,19 +94,27 @@ export default function RoomScene(props: Props) {
     let highlighted: RoomTarget | null = null
     let resetKey = latest.current.resetKey
     let mobile = false
-    const media = window.matchMedia("(max-width: 767px)")
+    const media = window.matchMedia("(max-width: 767px), (pointer: coarse)")
     const ray = new THREE.Raycaster()
     const pointer = new THREE.Vector2()
     const projected = new THREE.Vector3()
     const worldPosition = new THREE.Vector3()
     const meshes: THREE.Mesh[] = []
+    const occluders = new Map<THREE.Mesh, THREE.Box3>()
+    const hitTrees = new Map<THREE.Mesh, Octree>()
+    const localRay = new THREE.Ray()
+    const localHit = new THREE.Vector3()
+    const inverse = new THREE.Matrix4()
+    const bakedTextures = new Set<THREE.Texture>()
+    let dayTexture: THREE.Texture | null = null
+    let nightTexture: THREE.Texture | null = null
     const targets = new Map<RoomTarget, THREE.Object3D>()
     const anchors = new Map<RoomTarget, THREE.Object3D>()
     const basePositions = new Map<THREE.Object3D, THREE.Vector3>()
     const buttons = new Map<RoomTarget, HTMLElement>()
     const walls: {
       object: THREE.Mesh
-      material: THREE.MeshStandardMaterial
+      material: THREE.MeshBasicMaterial
       axis: "x" | "z"
       sign: number
     }[] = []
@@ -134,6 +136,7 @@ export default function RoomScene(props: Props) {
         }
       })
       for (const mat of materials) mat.dispose()
+      for (const texture of bakedTextures) textures.add(texture)
       for (const texture of textures) {
         const bitmap = texture.source.data
         if (typeof ImageBitmap !== "undefined" && bitmap instanceof ImageBitmap) bitmap.close()
@@ -142,14 +145,12 @@ export default function RoomScene(props: Props) {
     }
 
     function resetCamera() {
-      // Keep the whole miniature in view in portrait, rather than cropping its sides.
-      const aspect = Math.max(host!.clientWidth / Math.max(host!.clientHeight, 1), 0.5)
-      const distanceScale = Math.max(0.77, Math.min(1.95, 0.98 / aspect))
-      camera.position.set(-6.4, 6.5, 9.3).multiplyScalar(distanceScale)
-      controls.target.set(0, 1.1, 0)
-      const distance = camera.position.distanceTo(controls.target)
-      controls.minDistance = Math.max(6.4, distance * 0.68)
-      controls.maxDistance = distance * 1.65
+      const portrait = host!.clientWidth / Math.max(host!.clientHeight, 1) < 1
+      // Human-scale view: eyes above the desktop, looking slightly down into the room.
+      camera.position.set(portrait ? -0.75 : -0.62, portrait ? 2.3 : 1.9, portrait ? 4.8 : 2.72)
+      controls.target.set(0.08, 1.06, -0.5)
+      controls.minDistance = portrait ? 3.1 : 2.4
+      controls.maxDistance = portrait ? 7 : 5.8
       controls.update()
     }
 
@@ -169,14 +170,31 @@ export default function RoomScene(props: Props) {
       return meshes.filter(
         (mesh) =>
           mesh.visible &&
-          (!(mesh.material instanceof THREE.MeshStandardMaterial) || mesh.material.opacity > 0.5),
+          (!(mesh.material instanceof THREE.MeshBasicMaterial) || mesh.material.opacity > 0.5),
       )
+    }
+
+    // Static local octrees accelerate both label occlusion and pointer selection.
+    // Transform each ray into the mesh's baked local space, so hover lifts stay correct.
+    function closestHit() {
+      let closest: { distance: number; object: THREE.Mesh } | null = null
+      for (const mesh of selectableMeshes()) {
+        inverse.copy(mesh.matrixWorld).invert()
+        localRay.copy(ray.ray).applyMatrix4(inverse)
+        const bound = occluders.get(mesh)
+        if (!bound || !localRay.intersectBox(bound, localHit)) continue
+        const hit = hitTrees.get(mesh)?.rayIntersect(localRay)
+        if (!hit) continue
+        localHit.copy(hit.position)
+        const distance = localHit.applyMatrix4(mesh.matrixWorld).distanceTo(ray.ray.origin)
+        if (!closest || distance < closest.distance) closest = { distance, object: mesh }
+      }
+      return closest
     }
 
     function updateLabels() {
       const width = host!.clientWidth
       const height = host!.clientHeight
-      const visibleMeshes = selectableMeshes()
       const occupied: { left: number; right: number; top: number; bottom: number }[] = []
       for (const [id, anchor] of anchors) {
         const button = buttons.get(id)
@@ -191,8 +209,8 @@ export default function RoomScene(props: Props) {
         if (visible) {
           const distance = camera.position.distanceTo(worldPosition)
           ray.set(camera.position, worldPosition.clone().sub(camera.position).normalize())
-          const hit = ray.intersectObjects(visibleMeshes, false)[0]
-          visible = !hit || hit.distance > distance - 0.16 || targetFor(hit.object) === id
+          const hit = closestHit()
+          visible = !hit || hit.distance > distance - 0.045 || targetFor(hit.object) === id
         }
         button.hidden = !visible
         const leader = host!.querySelector<SVGLineElement>(`[data-room-leader="${id}"]`)
@@ -264,7 +282,7 @@ export default function RoomScene(props: Props) {
       const moved = controls.update()
       let changing = false
       for (const wall of walls) {
-        const outside = camera.position[wall.axis] * wall.sign > (wall.axis === "x" ? 2.3 : 1.65)
+        const outside = camera.position[wall.axis] * wall.sign > (wall.axis === "x" ? 1.95 : 1.5)
         const goal = outside ? 0 : 1
         const difference = goal - wall.material.opacity
         wall.material.opacity = latest.current.reduceMotion
@@ -272,6 +290,12 @@ export default function RoomScene(props: Props) {
           : Math.abs(difference) < 0.015
             ? goal
             : wall.material.opacity + difference * Math.min(dt * 12, 1)
+        const transparent = wall.material.opacity < 0.995
+        if (wall.material.transparent !== transparent) {
+          wall.material.transparent = transparent
+          wall.material.depthWrite = !transparent
+          wall.material.needsUpdate = true
+        }
         wall.object.visible = wall.material.opacity > 0.005
         changing ||= Math.abs(goal - wall.material.opacity) > 0.005
       }
@@ -280,14 +304,13 @@ export default function RoomScene(props: Props) {
         const active = id === highlighted && !latest.current.paused
         const lift =
           active && ["rumor", "gudhi", "animeko"].includes(id) && !latest.current.reduceMotion
-            ? 0.035
+            ? 0.008
             : 0
         object.position.y = base.y + (id === "rumor" ? lift : 0)
         object.position.z = base.z + (["gudhi", "animeko"].includes(id) ? lift * 2 : 0)
         const mesh = object as THREE.Mesh
-        if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          mesh.material.emissive.set(active ? 0x708cb1 : 0x000000)
-          mesh.material.emissiveIntensity = active ? 0.15 : 0
+        if (mesh.material instanceof THREE.MeshBasicMaterial) {
+          mesh.material.color.set(active ? 0xc7dcff : 0xffffff)
         }
       }
       signalNodes.visible = highlighted === "rumor" && !latest.current.paused
@@ -315,13 +338,13 @@ export default function RoomScene(props: Props) {
       controls.enabled = interactive
       controls.enableDamping = !latest.current.reduceMotion
       canvas!.style.touchAction = mobile && !latest.current.rotationEnabled ? "pan-y" : "none"
-      const night = latest.current.isDark
-      ambient.intensity = night ? 1.25 : 2.4
-      sun.intensity = night ? 0.65 : 3
-      sun.color.set(night ? 0xa9bbff : 0xffe4bd)
-      fill.intensity = night ? 0.45 : 1
-      lamp.intensity = night ? 5 : 0.25
-      renderer.toneMappingExposure = night ? 0.85 : 1
+      const texture = latest.current.isDark ? nightTexture : dayTexture
+      if (texture) {
+        for (const mesh of meshes) {
+          const material = mesh.material as THREE.MeshBasicMaterial
+          material.map = texture
+        }
+      }
       if (resetKey !== latest.current.resetKey) {
         resetKey = latest.current.resetKey
         resetCamera()
@@ -343,9 +366,11 @@ export default function RoomScene(props: Props) {
       const height = host!.clientHeight
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 1.75))
       renderer.setSize(width, height, false)
-      camera.aspect = width / Math.max(height, 1)
+      const aspect = width / Math.max(height, 1)
+      const orientationChanged = camera.aspect < 1 !== aspect < 1
+      camera.aspect = aspect
       camera.updateProjectionMatrix()
-      if (!ready || wasMobile !== mobile) resetCamera()
+      if (!ready || wasMobile !== mobile || orientationChanged) resetCamera()
       update()
     }
 
@@ -357,7 +382,7 @@ export default function RoomScene(props: Props) {
         -((event.clientY - rect.top) / rect.height) * 2 + 1,
       )
       ray.setFromCamera(pointer, camera)
-      const hit = ray.intersectObjects(selectableMeshes(), false)[0]
+      const hit = closestHit()
       return hit ? targetFor(hit.object) : null
     }
     let pointerDown: { x: number; y: number; id: number } | null = null
@@ -427,38 +452,67 @@ export default function RoomScene(props: Props) {
 
     const abort = new AbortController()
     const timeout = window.setTimeout(() => abort.abort(), 20000)
-    void fetch("/projects-room/study.glb", { signal: abort.signal })
-      .then((response) => {
+    void Promise.all([
+      fetch("/projects-room/study.glb", { signal: abort.signal }).then(async (response) => {
         if (!response.ok) throw new Error("Room asset unavailable")
         return response.arrayBuffer()
+      }),
+      fetch("/projects-room/study-night.jpg", { signal: abort.signal }).then(async (response) => {
+        if (!response.ok) throw new Error("Night lighting unavailable")
+        return response.blob()
+      }),
+    ])
+      .then(async ([data, night]) => {
+        if (disposed) return null
+        const bitmap = await createImageBitmap(night, { colorSpaceConversion: "none" })
+        if (disposed) {
+          bitmap.close()
+          return null
+        }
+        nightTexture = new THREE.Texture(bitmap)
+        nightTexture.flipY = false
+        nightTexture.colorSpace = THREE.SRGBColorSpace
+        nightTexture.needsUpdate = true
+        bakedTextures.add(nightTexture)
+        return new GLTFLoader().parseAsync(data, "/projects-room/")
       })
-      .then((data) => new GLTFLoader().parseAsync(data, "/projects-room/"))
       .then((gltf) => {
+        if (!gltf) return
         if (disposed) {
           release(gltf.scene)
           return
         }
         model = gltf.scene
         scene.add(model)
+        model.updateMatrixWorld(true)
+        const sourceMaterials = new Set<THREE.Material>()
         model.traverse((object) => {
           if (object instanceof THREE.Mesh) {
             meshes.push(object)
-            // Independent feedback/opacity while all objects share the baked texture.
-            object.material = (object.material as THREE.MeshStandardMaterial).clone()
-            const mat = object.material as THREE.MeshStandardMaterial
+            // Independent feedback/opacity; a single physically lit texture for the room.
+            sourceMaterials.add(object.material as THREE.Material)
+            object.material = (object.material as THREE.MeshBasicMaterial).clone()
+            const mat = object.material as THREE.MeshBasicMaterial
             mat.side = THREE.DoubleSide
+            mat.toneMapped = false
+            dayTexture = mat.map
+            if (dayTexture) bakedTextures.add(dayTexture)
+            object.geometry.computeBoundingBox()
+            occluders.set(object, object.geometry.boundingBox!.clone())
+            const localMesh = new THREE.Mesh(object.geometry, mat)
+            const tree = new Octree().fromGraphNode(localMesh)
+            hitTrees.set(object, tree)
             if (object.name.startsWith("wall_")) {
-              mat.transparent = true
-              mat.depthWrite = false
               walls.push({
                 object,
                 material: mat,
-                axis: object.name === "wall_left" ? "x" : "z",
-                sign: -1,
+                axis: object.name === "wall_back" ? "z" : "x",
+                sign: object.name === "wall_right" ? 1 : -1,
               })
             }
           }
         })
+        for (const material of sourceMaterials) material.dispose()
         for (const id of roomTargets) {
           const object = model.getObjectByName(id)
           const anchor = model.getObjectByName(`anchor_${id}`)
@@ -496,6 +550,14 @@ export default function RoomScene(props: Props) {
       canvas.removeEventListener("webglcontextlost", lost)
       document.removeEventListener("visibilitychange", visibility)
       if (model) release(model)
+      else
+        for (const texture of bakedTextures) {
+          ;(texture.source.data as ImageBitmap).close()
+          texture.dispose()
+        }
+      for (const tree of hitTrees.values()) tree.clear()
+      hitTrees.clear()
+      occluders.clear()
       nodeGeometry.dispose()
       nodeMaterial.dispose()
       renderer.dispose()
