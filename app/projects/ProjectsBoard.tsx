@@ -117,7 +117,7 @@ export default function ProjectsBoard() {
           <p className={styles.eyebrow}>
             <span /> 阿的工作台 <span className={styles.divider}>/</span> SELECTED WORK
           </p>
-          <h1 id="study-title">窗边研究小屋</h1>
+          <h1 id="study-title">研究小屋</h1>
           <p className={styles.subtitle}>研究、构建，也持续记录。</p>
         </header>
         <div className={styles.topActions} data-field-obstacle>
@@ -133,17 +133,20 @@ export default function ProjectsBoard() {
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
-        {/* The poster and GLB are exported from the same editable scene. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className={styles.poster}
-          src={`/projects-room/${isDark ? "night" : "day"}.webp`}
-          width={1440}
-          height={1100}
-          alt="绿帘与窗边的深木工作桌，摆着三块屏幕、研究手稿和耳机，右侧是开源协作书架。"
-          data-visible={!sceneActive}
-          fetchPriority="high"
-        />
+        {/* Posters use the same perspective and baked surfaces as the live scene. */}
+        <picture className={styles.poster} data-visible={!sceneActive}>
+          <source
+            media="(max-width: 767px)"
+            srcSet={`/projects-room/mobile${isDark ? "-night" : ""}.webp`}
+          />
+          <img
+            src={`/projects-room/${isDark ? "night" : "day"}.webp`}
+            width={1440}
+            height={1000}
+            alt="自然窗光照亮胡桃木工作桌，两块副屏向内倾斜，右后方是研究白板，两侧延伸着书籍与阅读角。"
+            fetchPriority="high"
+          />
+        </picture>
         {!staticView && status !== "error" && (
           <RoomScene
             key={sceneVersion}
@@ -245,7 +248,7 @@ export default function ProjectsBoard() {
           {status === "loading" && !staticView ? (
             <>
               <LoaderCircle size={13} className={styles.spinner} />
-              正在布置小屋 · 项目目录已可浏览
+              正在走进工作间 · 项目目录已可浏览
             </>
           ) : status === "error" ? (
             "小屋暂未加载，项目目录仍可浏览。"

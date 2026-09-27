@@ -1,9 +1,9 @@
-// Encode Blender's four composition renders without changing their content.
+// Encode Blender's composition renders without changing their content.
 import sharp from "sharp"
 import { fileURLToPath } from "node:url"
 import { unlink } from "node:fs/promises"
 
-for (const name of ["day", "night", "detail", "mobile"]) {
+for (const name of ["day", "night", "detail", "mobile", "mobile-night"]) {
   const source = new URL(`../public/projects-room/${name}.png`, import.meta.url)
   const target = new URL(`../public/projects-room/${name}.webp`, import.meta.url)
   await sharp(fileURLToPath(source))
@@ -11,3 +11,6 @@ for (const name of ["day", "night", "detail", "mobile"]) {
     .toFile(fileURLToPath(target))
   await unlink(source)
 }
+
+// Day lightmap is embedded in the GLB; only the alternate night map ships separately.
+await unlink(new URL("../public/projects-room/study-day.jpg", import.meta.url))

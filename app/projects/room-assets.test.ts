@@ -4,11 +4,15 @@ import test from "node:test"
 import { projects, roomTargets } from "./projects"
 
 const bytes = readFileSync(new URL("../../public/projects-room/study.glb", import.meta.url))
+const nightBytes = readFileSync(
+  new URL("../../public/projects-room/study-night.jpg", import.meta.url),
+)
 const jsonLength = bytes.readUInt32LE(12)
 const gltf = JSON.parse(bytes.subarray(20, 20 + jsonLength).toString("utf8")) as {
   nodes: { name?: string; mesh?: number; translation?: number[] }[]
   meshes: { primitives: { indices?: number; attributes: { POSITION: number } }[] }[]
   accessors: { count: number }[]
+  materials: { extensions?: { KHR_materials_unlit?: object } }[]
   buffers: { uri?: string }[]
   images: { uri?: string; bufferView?: number }[]
 }
@@ -17,7 +21,15 @@ test("the shipped GLB is self-contained and within the agreed scene budget", () 
   assert.equal(bytes.toString("ascii", 0, 4), "glTF")
   assert.equal(bytes.readUInt32LE(4), 2)
   assert.equal(bytes.readUInt32LE(8), bytes.length)
-  assert.ok(bytes.length < 4 * 1024 * 1024, "model + embedded textures must remain below 4 MiB")
+  assert.ok(
+    bytes.length + nightBytes.length < 4 * 1024 * 1024,
+    "model + both light bakes must remain below 4 MiB",
+  )
+  assert.equal(nightBytes.readUInt16BE(0), 0xffd8, "night lightmap is a JPEG")
+  assert.ok(
+    gltf.materials.every((mat) => mat.extensions?.KHR_materials_unlit),
+    "physically baked lighting must not be lit a second time at runtime",
+  )
   assert.ok(
     gltf.buffers.every((buffer) => !buffer.uri),
     "no runtime dependency on remote model buffers",
@@ -42,7 +54,8 @@ test("every accessible entry has both real geometry and a projection anchor in t
     assert.ok(named.get(id)?.mesh !== undefined, `${id} is clickable geometry`)
     assert.ok(named.has(`anchor_${id}`), `${id} has a label anchor`)
   }
-  for (const wall of ["wall_back", "wall_left"]) assert.ok(named.get(wall)?.mesh !== undefined)
+  for (const wall of ["wall_back", "wall_left", "wall_right"])
+    assert.ok(named.get(wall)?.mesh !== undefined)
 })
 
 test("project migration preserves destinations, research status, and upstream attribution", () => {
