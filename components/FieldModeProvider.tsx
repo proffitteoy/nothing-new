@@ -4,13 +4,13 @@ import { createContext, useContext, useMemo, useSyncExternalStore } from "react"
 
 export type PerformanceMode = "normal" | "field"
 const STORAGE_KEY = "blog-performance-mode"
-let fallbackMode: PerformanceMode = "field"
+let fallbackMode: PerformanceMode = "normal"
 let storageFailed = false
 const CHANGE_EVENT = "field-mode-change"
 function readMode(): PerformanceMode {
   if (storageFailed) return fallbackMode
   try {
-    return localStorage.getItem(STORAGE_KEY) === "normal" ? "normal" : "field"
+    return localStorage.getItem(STORAGE_KEY) === "field" ? "field" : "normal"
   } catch {
     return fallbackMode
   }
@@ -24,11 +24,11 @@ function subscribe(callback: () => void) {
   }
 }
 const FieldModeContext = createContext({
-  performanceMode: "field" as PerformanceMode,
+  performanceMode: "normal" as PerformanceMode,
   togglePerformanceMode: () => {},
 })
 export function FieldModeProvider({ children }: { children: React.ReactNode }) {
-  const performanceMode = useSyncExternalStore(subscribe, readMode, () => "field" as const)
+  const performanceMode = useSyncExternalStore(subscribe, readMode, () => "normal" as const)
   const value = useMemo(
     () => ({
       performanceMode,

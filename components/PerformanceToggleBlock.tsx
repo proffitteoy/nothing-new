@@ -1,16 +1,17 @@
 "use client"
 
-import Link from "next/link"
 import { useFieldMode } from "./FieldModeProvider"
 
 export default function PerformanceToggleBlock() {
-  const { performanceMode } = useFieldMode()
+  const { performanceMode, togglePerformanceMode } = useFieldMode()
   const isFieldMode = performanceMode === "field"
 
   return (
-    <Link
-      href="/music"
-      title="进入音乐页调整粒子效果"
+    <button
+      type="button"
+      onClick={togglePerformanceMode}
+      aria-pressed={isFieldMode}
+      title={isFieldMode ? "关闭音乐页粒子" : "开启音乐页粒子"}
       className={`group relative flex h-full min-h-[132px] w-full cursor-pointer items-center overflow-hidden rounded-3xl border p-5 text-left shadow-xl backdrop-blur-md transition-all duration-500 hover:-translate-y-0.5 hover:shadow-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 lg:min-h-0 ${
         isFieldMode
           ? "border-indigo-300/35 bg-slate-900/55"
@@ -53,9 +54,9 @@ export default function PerformanceToggleBlock() {
         <span
           className={`mt-1 block text-xs font-bold tracking-wide transition-colors ${isFieldMode ? "text-indigo-200/85" : "text-slate-600 dark:text-slate-400"}`}
         >
-          {isFieldMode ? "音乐页粒子 · 已开启" : "音乐页粒子 · 已关闭"} · 进入设置
+          {isFieldMode ? "音乐页粒子 · 已开启" : "音乐页粒子 · 已关闭"}
         </span>
       </span>
-    </Link>
+    </button>
   )
 }

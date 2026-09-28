@@ -13,7 +13,6 @@ import {
   Shuffle,
   SkipBack,
   SkipForward,
-  Sparkles,
   Volume2,
   VolumeX,
   X,
@@ -39,7 +38,7 @@ const formatTime = (time: number) => {
 }
 
 export default function MusicClient() {
-  const { performanceMode, togglePerformanceMode } = useFieldMode()
+  const { performanceMode } = useFieldMode()
   const {
     playlist,
     currentIndex,
@@ -94,18 +93,6 @@ export default function MusicClient() {
   }[playMode]
 
   const isRecoverable = musicStatus === "error" || musicStatus === "empty"
-  const particleToggle = (
-    <button
-      type="button"
-      aria-label="音乐页粒子"
-      aria-pressed={performanceMode === "field"}
-      onClick={togglePerformanceMode}
-      className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-white/50 bg-white/55 px-4 text-sm font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:border-indigo-300 hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-indigo-300"
-    >
-      <Sparkles size={18} aria-hidden="true" />
-      {performanceMode === "field" ? "粒子开启" : "粒子关闭"}
-    </button>
-  )
 
   if (isLoading || !currentSong) {
     return (
@@ -142,7 +129,6 @@ export default function MusicClient() {
                 ? "正在准备播放列表，请稍候。"
                 : musicError || "可以稍后重试，或先继续浏览其他内容。"}
             </p>
-            <div className="mt-6">{particleToggle}</div>
             {isRecoverable && (
               <button
                 type="button"
@@ -178,8 +164,8 @@ export default function MusicClient() {
 
       <PageTransition>
         <main className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-4 pb-44 pt-24 sm:px-7 sm:pb-40 md:pt-28 lg:px-12">
-          <header className="flex shrink-0 flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 basis-full sm:flex-1">
+          <header className="flex shrink-0 items-start justify-between gap-4">
+            <div className="min-w-0">
               <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-300">
                 <span
                   className={
@@ -189,29 +175,26 @@ export default function MusicClient() {
                 />
                 {isPlaying ? "Now playing" : "Paused"}
               </div>
-              <h1 className="max-w-full truncate text-xl font-black sm:text-2xl">
+              <h1 className="max-w-[72vw] truncate text-xl font-black sm:text-2xl">
                 {getTitle(currentSong)}
               </h1>
               <p className="mt-1 truncate text-sm font-bold text-slate-500 dark:text-slate-400">
                 {getArtist(currentSong)}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              {particleToggle}
-              <button
-                type="button"
-                aria-label="打开播放列表"
-                aria-controls="music-queue"
-                aria-expanded={queueOpen}
-                onClick={() => setQueueOpen(true)}
-                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-white/50 bg-white/55 px-4 text-sm font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:border-indigo-300 hover:text-indigo-600 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-indigo-300"
-              >
-                <ListMusic size={18} aria-hidden="true" />
-                <span className="hidden sm:inline">
-                  {currentIndex + 1} / {playlist.length}
-                </span>
-              </button>
-            </div>
+            <button
+              type="button"
+              aria-label="打开播放列表"
+              aria-controls="music-queue"
+              aria-expanded={queueOpen}
+              onClick={() => setQueueOpen(true)}
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-white/50 bg-white/55 px-4 text-sm font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:border-indigo-300 hover:text-indigo-600 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-indigo-300"
+            >
+              <ListMusic size={18} aria-hidden="true" />
+              <span className="hidden sm:inline">
+                {currentIndex + 1} / {playlist.length}
+              </span>
+            </button>
           </header>
         </main>
       </PageTransition>
