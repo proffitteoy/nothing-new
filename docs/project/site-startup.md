@@ -2,7 +2,7 @@
 
 ## 移除全局粒子后的合并修复
 
-当前根布局通过 `getBlogEntryRoute()` 解析默认笔记地址，并将同一个 `blogHref` 传给 `SplashScreen` 与 `Navbar`，不能只给组件补一个硬编码默认值。全局 Field 已停用，启动流程不再等待 `fieldReady`，第二阶段改名为 `preparing`，只用于有上限的资源准备，不显示全局粒子。首页头像阶段、子页跳过头像、跳过按钮、9 秒 hydration 失败兜底和 noscript 可访问性保留。
+当前根布局通过 `getBlogEntryRoute()` 解析默认笔记地址，并将同一个 `blogHref` 传给 `SplashScreen` 与 `Navbar`，不能只给组件补一个硬编码默认值。`FieldScene` 只在 `/music` 挂载，其他页面没有粒子场；音乐页封面粒子独立显示，首页“性能交替”默认关闭且只切换音乐页的常规/谱场模式。启动流程不再等待 `fieldReady`，第二阶段改名为 `preparing`，只用于有上限的资源准备，不显示全局粒子。首页头像阶段、子页跳过头像、跳过按钮、9 秒 hydration 失败兜底和 noscript 可访问性保留。
 
 下文包含移除全局粒子前的历史设计与测量，涉及 Field、`particles` 阶段或普通/谱场模式的内容不代表当前行为，也不能作为本次修复的运行证据。
 

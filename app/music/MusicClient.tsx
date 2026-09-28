@@ -18,7 +18,6 @@ import {
   X,
 } from "lucide-react"
 import MineradioParticleField from "../../components/MineradioParticleField"
-import { useFieldMode } from "../../components/FieldModeProvider"
 import PageTransition from "../../components/PageTransition"
 import { useMusic, type MusicSong } from "../../components/MusicProvider"
 import { getSizedMusicCoverUrl, isNeteaseMusicCoverUrl } from "../../lib/image-loading"
@@ -38,7 +37,6 @@ const formatTime = (time: number) => {
 }
 
 export default function MusicClient() {
-  const { performanceMode } = useFieldMode()
   const {
     playlist,
     currentIndex,
@@ -148,17 +146,15 @@ export default function MusicClient() {
     <div className="relative min-h-[100svh] overflow-hidden text-slate-900 dark:text-white">
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_44%,rgba(99,102,241,0.12),transparent_42%),radial-gradient(circle_at_72%_28%,rgba(236,72,153,0.10),transparent_34%)] dark:bg-[radial-gradient(circle_at_50%_44%,rgba(129,140,248,0.13),transparent_44%),radial-gradient(circle_at_72%_28%,rgba(236,72,153,0.08),transparent_36%)]" />
-        {performanceMode === "field" && (
-          <MineradioParticleField
-            coverUrl={songCover}
-            isPlaying={isPlaying}
-            progress={progress || 0}
-            currentTime={currentTime}
-            volume={isMuted ? 0 : volume || 0}
-            seed={currentSong.id}
-            className="opacity-55 mix-blend-multiply dark:opacity-75 dark:mix-blend-screen"
-          />
-        )}
+        <MineradioParticleField
+          coverUrl={songCover}
+          isPlaying={isPlaying}
+          progress={progress || 0}
+          currentTime={currentTime}
+          volume={isMuted ? 0 : volume || 0}
+          seed={currentSong.id}
+          className="opacity-55 mix-blend-multiply dark:opacity-75 dark:mix-blend-screen"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/35 dark:from-slate-950/10 dark:via-transparent dark:to-slate-950/45" />
       </div>
 

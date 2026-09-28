@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import { siteConfig } from "../siteConfig"
 import { useFieldMode } from "./FieldModeProvider"
 import { useTheme } from "./ThemeProvider"
@@ -142,6 +143,12 @@ function createFireflySprite() {
 }
 
 export default function FieldScene() {
+  const pathname = usePathname()
+  // Unmount the entire renderer outside music, including its canvases and RAF loop.
+  return pathname === "/music" ? <MusicFieldScene /> : null
+}
+
+function MusicFieldScene() {
   const speciesCanvasRef = useRef<HTMLCanvasElement>(null)
   const backCanvasRef = useRef<HTMLCanvasElement>(null)
   const frontCanvasRef = useRef<HTMLCanvasElement>(null)

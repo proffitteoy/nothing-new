@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "../components/ThemeProvider"
 import { FieldModeProvider } from "../components/FieldModeProvider"
+import FieldScene from "../components/FieldScene"
 import { MusicProvider } from "../components/MusicProvider"
 import FloatingPlayer from "../components/FloatingPlayer"
 import { siteConfig } from "../siteConfig"
@@ -93,6 +94,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                     }}
                   />
                 </div>
+
+                <FieldScene />
 
                 <Navbar blogHref={blogHref} />
                 <ScrollRootManager />

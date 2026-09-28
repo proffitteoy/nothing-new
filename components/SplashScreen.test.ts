@@ -11,7 +11,7 @@ test("layout resolves one blog entry for both startup prefetch and navigation", 
   assert.match(layout, /const blogHref = await getBlogEntryRoute\(\)/)
   assert.match(layout, /<SplashScreen blogHref=\{blogHref\}/)
   assert.match(layout, /<Navbar blogHref=\{blogHref\}/)
-  assert.doesNotMatch(layout, /FieldScene|hasSeenSplash/)
+  assert.doesNotMatch(layout, /hasSeenSplash/)
   assert.doesNotMatch(splash, /fieldReady|performanceMode|"particles"/)
   assert.match(splash, /if \(!roomLoading\) break/)
 })

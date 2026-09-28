@@ -31,22 +31,88 @@ test("reduced motion retains its existing 8649-particle budget at every width", 
   }
 })
 
-test("the original home button controls only music particles without navigation or extra controls", () => {
+test("music cover particles remain independent of the original home mode switch", () => {
   const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8")
   const home = readFileSync(new URL("./HomeStoryBoard.tsx", import.meta.url), "utf8")
   const music = readFileSync(new URL("../app/music/MusicClient.tsx", import.meta.url), "utf8")
   const toggle = readFileSync(new URL("./PerformanceToggleBlock.tsx", import.meta.url), "utf8")
-  assert.doesNotMatch(layout, /FieldScene|MineradioParticleField/)
+  assert.match(layout, /<FieldScene\s*\/>/)
+  assert.doesNotMatch(layout, /MineradioParticleField/)
   assert.match(layout, /<FieldModeProvider>/)
   assert.match(home, /<PerformanceToggleBlock\s*\/>/)
   assert.match(toggle, /<button\s+type="button"/)
   assert.match(toggle, /onClick=\{togglePerformanceMode\}/)
   assert.match(toggle, /aria-pressed=\{isFieldMode\}/)
   assert.doesNotMatch(toggle, /next\/link|href=|router\.|进入设置/)
-  assert.match(toggle, /音乐页粒子/)
-  assert.match(music, /const \{ performanceMode \} = useFieldMode\(\)/)
-  assert.doesNotMatch(music, /togglePerformanceMode|particleToggle|aria-label="音乐页粒子"/)
-  assert.match(music, /performanceMode === "field" && \(\s*<MineradioParticleField\s/)
+  assert.match(toggle, /谱场 · 共享频率/)
+  assert.match(toggle, /常规 · 轻量动画/)
+  assert.doesNotMatch(music, /useFieldMode|performanceMode|particleToggle|aria-label="音乐页粒子"/)
+  const tree = ts.createSourceFile(
+    "MusicClient.tsx",
+    music,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  )
+  let particles = 0
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isJsxSelfClosingElement(node) &&
+      node.tagName.getText(tree) === "MineradioParticleField"
+    ) {
+      particles++
+      assert.ok(ts.isJsxElement(node.parent), "cover particles must not be conditionally gated")
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(tree)
+  assert.equal(particles, 1)
+})
+
+test("the field renderer mounts only on music and unmounts on every other route", () => {
+  const source = readFileSync(new URL("./FieldScene.tsx", import.meta.url), "utf8")
+  const tree = ts.createSourceFile(
+    "FieldScene.tsx",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  )
+  const gate = tree.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "FieldScene",
+  )
+  assert.ok(gate)
+  const script = ts.transpileModule(gate.getText(tree), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+  }).outputText
+  const exports = {} as { default: () => unknown }
+  const renderer = Symbol("MusicFieldScene")
+  let pathname: string | null = "/music"
+  runInNewContext(script, {
+    exports,
+    usePathname: () => pathname,
+    MusicFieldScene: renderer,
+    require: (name: string) => {
+      assert.equal(name, "react/jsx-runtime")
+      return { jsx: (type: unknown) => type }
+    },
+  })
+  for (const route of [
+    "/",
+    "/about",
+    "/friends",
+    "/projects",
+    "/anime",
+    "/chatter/test",
+    "/blog/math/test",
+    "/music-other",
+    null,
+  ]) {
+    pathname = "/music"
+    assert.equal(exports.default(), renderer)
+    pathname = route
+    assert.equal(exports.default(), null)
+  }
 })
 
 // Execute the provider's real storage/event logic with hook boundaries stubbed;
