@@ -8,8 +8,10 @@ import bpy
 import math
 import random
 import numpy as np
+import json
+import os
 from pathlib import Path
-from mathutils import Vector
+from mathutils import Vector, Matrix
 from collections import defaultdict
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -22,6 +24,38 @@ bpy.ops.object.delete(use_global=False)
 groups = defaultdict(list)
 current = "room"
 random.seed(24)
+details = json.loads((SOURCE / "study-details.json").read_text(encoding="utf-8"))
+detail_ids = list(details["surfaces"])
+detail_image = bpy.data.images.load(str(SOURCE / "study-details.png"))
+detail_image.pack()
+
+
+def stabilize_key_lighting(pixels):
+    # A key legend can occupy less than one bake texel. Pool the separate
+    # keyboards' receiver samples rather than turning UV padding into dark keys.
+    artwork=np.array(detail_image.pixels[:],dtype=np.float32).reshape(4096,4096,4)
+    for laptop in [False,True]:
+        keys=[key for key in details["keys"] if key["laptop"]==laptop]
+        samples=[]
+        for key in keys:
+            x,y,w,h=details["surfaces"][key["surface"]]
+            source=artwork[4096-y-h:4096-y,x:x+w,:3]
+            tile=pixels[4096-y-h:4096-y,x:x+w,:3]
+            mask=source.min(axis=2)>.12
+            if np.any(mask):
+                light=tile[mask]/np.maximum(source[mask]*(1-.32*tile[mask]),1e-5)
+                samples.append(np.median(light,axis=0))
+        lighting=np.quantile(samples,.85,axis=0)
+        for key in keys:
+            x,y,w,h=details["surfaces"][key["surface"]]
+            rgb=artwork[4096-y-h:4096-y,x:x+w,:3]*lighting
+            tile=pixels[4096-y-h:4096-y,x:x+w,:3]
+            tile[:]=rgb/(1+.32*rgb)
+            # Tiny palette pads sit below the legend UV region. Key skirts use
+            # these pooled, directional tones instead of subpixel bake islands.
+            colour=np.median(tile[8:20,32:48],axis=(0,1))
+            for index,shade in enumerate([.40,.62,.84,1.]):
+                tile[0:8,index*16:(index+1)*16]=colour*shade
 
 
 def material(name, color, roughness=.6):
@@ -49,6 +83,40 @@ gold = material("Brushed champagne metal", (.32, .27, .18), .35)
 graphite = material("Whiteboard marker", (.06, .085, .12), .8)
 screen_white = material("LCD white", (.52, .59, .64), .45)
 screen_dark = material("LCD charcoal", (.008, .014, .023), .45)
+
+key_ivory = material("Warm ivory PBT", (.761, .738, .651), .72)
+key_dark = material("Laptop key ABS", (.0144, .0212, .0296), .68)
+page_edge = material("Uncoated page edges", (.70, .675, .59), .93)
+# Fine page strata are colour variation, not thousands of extra mesh slivers.
+n, l = page_edge.node_tree.nodes, page_edge.node_tree.links
+wave = n.new("ShaderNodeTexWave")
+wave.wave_type, wave.bands_direction = "BANDS", "Z"
+wave.inputs["Scale"].default_value = 350
+wave.inputs["Distortion"].default_value = 1.2
+mix = n.new("ShaderNodeMixRGB")
+mix.inputs[1].default_value = (.57, .55, .48, 1)
+mix.inputs[2].default_value = (.78, .75, .66, 1)
+l.new(wave.outputs["Color"], mix.inputs[0])
+l.new(mix.outputs[0], n.get("Principled BSDF").inputs["Base Color"])
+
+def detail_material(name, emission=False):
+    mat = material(name, (1, 1, 1), .65)
+    nodes, links = mat.node_tree.nodes, mat.node_tree.links
+    uv = nodes.new("ShaderNodeUVMap")
+    uv.uv_map = "DetailUV"
+    tex = nodes.new("ShaderNodeTexImage")
+    tex.name = "Original printed artwork"
+    tex.image = detail_image
+    links.new(uv.outputs["UV"], tex.inputs["Vector"])
+    output = nodes.get("Material Output")
+    if emission:
+        links.new(tex.outputs["Color"], output.inputs["Surface"])
+    else:
+        links.new(tex.outputs["Color"], nodes.get("Principled BSDF").inputs["Base Color"])
+    return mat
+
+printed = detail_material("Printed type and bookcloth")
+lcd = detail_material("LCD pixels", True)
 
 # Subtle grain follows real metre coordinates; no coarse speckled plaster.
 for mat, scale, strength in [(wood, (2, 95, 5), .42), (oak, (3, 100, 6), .19),
@@ -150,6 +218,104 @@ def anchor(name, pos):
     o.location = pos
 
 
+def detail_plane(name, pos, size, surface, display=False, rot=(math.pi/2, 0, 0)):
+    w, h = size
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata([(-w/2,-h/2,0),(w/2,-h/2,0),(w/2,h/2,0),(-w/2,h/2,0)], [], [(0,1,2,3)])
+    uv = mesh.uv_layers.new(name="DetailUV")
+    x,y,pw,ph = details["surfaces"][surface]
+    if surface.startswith("key-"): ph=56
+    for loop,coord in zip(uv.data,[(x/4096,1-(y+ph)/4096),((x+pw)/4096,1-(y+ph)/4096),((x+pw)/4096,1-y/4096),(x/4096,1-y/4096)]):
+        loop.uv = coord
+    mesh.attributes.new("detail_surface", "INT", "FACE").data[0].value = detail_ids.index(surface)+1
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.location, obj.rotation_euler = pos, rot
+    return finish(obj, name, lcd if display else printed)
+
+
+def transform_objects(objects, pivot, degrees, axis="Z"):
+    centre = Vector(pivot)
+    transform = Matrix.Translation(centre) @ Matrix.Rotation(math.radians(degrees), 4, axis) @ Matrix.Translation(-centre)
+    bpy.context.view_layer.update()
+    for obj in objects:
+        obj.matrix_world = transform @ obj.matrix_world
+
+
+def keycap(name, pos, width, depth, height, mat, surface):
+    # Tapered skirts, rounded shoulders and a shallow dished top at 19.05 mm pitch.
+    x,y,z = pos
+    rings = [(width/2,depth/2,0), (width/2,depth/2,height*.32),
+             (width/2-.0018,depth/2-.0018,height),
+             (width/2-.003,depth/2-.003,height-.00055)]
+    verts = [(x+sx*w,y+sy*d,z+h) for w,d,h in rings for sx,sy in [(-1,-1),(1,-1),(1,1),(-1,1)]]
+    faces = [(3,2,1,0)]
+    for ring in range(3):
+        for side in range(4):
+            a,b = ring*4+side,ring*4+(side+1)%4
+            faces.append((a,b,b+4,a+4))
+    faces.append((12,13,14,15))
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts,[],faces)
+    uv=mesh.uv_layers.new(name="DetailUV")
+    attr=mesh.attributes.new("detail_surface","INT","FACE")
+    tx,ty,tw,th=details["surfaces"][surface]
+    for face in mesh.polygons:
+        attr.data[face.index].value=detail_ids.index(surface)+1
+        tone=0 if face.index<5 else 1 if face.index<9 else 2 if face.index<13 else 3
+        for i in face.loop_indices:
+            uv.data[i].uv=((tx+tone*16+8)/4096,1-(ty+60)/4096)
+    obj = bpy.data.objects.new(name,mesh)
+    bpy.context.collection.objects.link(obj)
+    finish(obj,name,mat)
+    patch = min(depth-.006, width-.006)
+    detail_plane(name+" legend", (x-width/2+.003+patch/2,y,z+height-.00050), (patch,patch), surface, rot=(0,0,0))
+
+
+def volume(index, pos, thickness=.035, depth=.225, height=.27, angle=0, lean=0, stacked=False):
+    item = details["books"][index]
+    color = tuple(((int(item["color"][i:i+2],16)/255+.055)/1.055)**2.4 for i in [1,3,5])
+    cloth = material(item["title"]+" bookcloth", color, .82)
+    start = len(groups[current])
+    # Local book origin is the centre of its lower edge; spine faces -Y.
+    for side in [-1,1]:
+        box(item["title"]+" cover",(side*(thickness/2-.0012),0,height/2),(.0024,depth,height),cloth,.0007)
+    box(item["title"]+" recessed page block",(0,.003,height/2),(thickness-.006,depth-.012,height-.008),page_edge,.001)
+    box(item["title"]+" bound spine",(0,-depth/2+.003,height/2),(thickness,.006,height),cloth,.002)
+    detail_plane(item["title"]+" spine title",(0,-depth/2-.00005,height/2),(thickness-.001,height-.002),item["id"])
+    # Small grooves where the covers hinge; endpaper remains visible from above.
+    for side in [-1,1]:
+        box("Spine hinge",(side*(thickness/2-.002),-depth/2-.00015,height/2),(.00055,.0003,height-.009),cloth,0)
+    objects = groups[current][start:]
+    rotation = Matrix.Rotation(math.radians(angle),4,"Z") @ Matrix.Rotation(math.radians(90 if stacked else lean),4,"Y")
+    if stacked:
+        # Lay the closed book on its cover, with its bottom no lower than pos.z.
+        offset = Vector(pos)+Vector((0,0,thickness/2))-rotation @ Vector((0,0,height/2))
+    else:
+        offset = Vector((pos[0],pos[1],pos[2]+abs(math.sin(math.radians(lean)))*thickness/2))
+    bpy.context.view_layer.update()
+    for obj in objects:
+        obj.matrix_world = Matrix.Translation(offset) @ rotation @ obj.matrix_world
+
+
+def monitor(name, pos, width, height, surface, tilt):
+    x,y,z = pos
+    start = len(groups[current])
+    box(name+" thin front bezel",(x,y,z),(width,.013,height),ink,.002)
+    box(name+" tapered rear housing",(x,y+.011,z),(width-.032,.023,height-.032),ink,.009)
+    box(name+" rear centre enclosure",(x,y+.027,z-.022),(width*.54,.018,height*.65),ink,.006)
+    detail_plane(name+" LCD",(x,y-.0071,z+.002),(width-.013,height-.022),surface,True)
+    box(name+" lower chin",(x,y-.0073,z-height/2+.005),(width-.008,.0014,.007),ink,.001)
+    cylinder(name+" power indicator",(x+width/2-.018,y-.0084,z-height/2+.006),.0011,.0005,blue_light,8,(math.pi/2,0,0))
+    box(name+" rear VESA plate",(x,y+.043,z-.015),(.08,.011,.08),ink,.003)
+    cylinder(name+" tilt hinge",(x,y+.045,z-.022),.019,.085,ink,16,(0,math.pi/2,0))
+    for i in range(12):
+        box(name+" rear cooling slot",(x-.084+i*.015,y+.037,z+height*.24),(.008,.001,.016),rubber,.001)
+    for i in range(3):
+        box(name+" rear connector",(x-.031+i*.025,y+.041,z-height*.26),(.018,.004,.007),rubber,.001)
+    transform_objects(groups[current][start:],(x,y,z),tilt,"X")
+
+
 # Full-size interior; floor has no raised display plinth or rounded carpet.
 for i in range(18):
     box("Oak plank", (-2.125+i*.25, -.15, -.022), (.248, 4.5, .04), oak, .001)
@@ -195,45 +361,36 @@ for x in [-.285,.045]:
 
 current="iris"
 box("Laptop aluminium base", (-.12,.53,.912), (.355,.247,.014), cream, .004)
-box("Laptop display back", (-.12,.667,1.047), (.356,.012,.237), ink, .004, (math.radians(-8),0,0))
-box("Laptop display", (-.12,.650,1.047), (.335,.003,.213), screen_dark, .001)
-text("Iris title", "IRIS / WORKSPACE", (-.273,.647,1.127), .013, paper)
-for i in range(6):
-    box("Workspace sidebar", (-.264,.646,1.093-i*.025), (.021,.001,.006), blue_light, 0)
-    box("Workspace conversation", (-.074,.646,1.093-i*.025), (.21-.017*(i%3),.001,.006), blue_light if i%2 else paper, 0)
-# Visible keyboard/trackpad details at ordinary laptop scale.
-for row in range(4):
-    for col in range(12):
-        box("Laptop key",(-.273+col*.026,.54+row*.022,.921),(.021,.017,.0015),ink,.001)
-box("Trackpad",(-.12,.453,.920),(.115,.069,.001),wall,.002)
+panel_start=len(groups[current])
+box("Laptop display back",(-.12,.667,1.047),(.356,.009,.237),ink,.003)
+detail_plane("Iris workspace LCD",(-.12,.6618,1.048),(.338,.211),"iris",True)
+cylinder("Laptop webcam",(-.12,.6614,1.160),.0018,.0005,rubber,10,(math.pi/2,0,0))
+transform_objects(groups[current][panel_start:],(-.12,.667,.929),-12,"X")
+cylinder("Laptop display hinge",(-.12,.652,.925),.006,.31,ink,20,(0,math.pi/2,0))
+box("Laptop keyboard recess",(-.12,.565,.9195),(.307,.114,.001),rubber,.002)
+for key in details["keys"]:
+    if not key["laptop"]: continue
+    pitch=.0200
+    x=-.27+(key["x"]+key["units"]/2)*pitch
+    y=.516+key["row"]*.017
+    keycap("Laptop "+(key["label"] or "Space"),(x,y,.9198),key["units"]*pitch-.0024,.0146,.0018,key_dark,key["surface"])
+box("Trackpad inset",(-.12,.453,.9197),(.116,.068,.001),ink,.002)
+box("Glass trackpad",(-.12,.453,.9204),(.114,.066,.0006),cream,.002)
+for side in [-1,1]:
+    for i in range(12):
+        box("Laptop speaker perforation",(-.12+side*.162,.517+i*.0075,.9199),(.0026,.003,.0003),rubber,.0004)
 anchor("iris",(-.12,.64,1.18))
 
 current="topp"
 box("Portrait foot", (.40,.68,.75), (.23,.17,.015), ink)
 box("Portrait stand", (.40,.79,.944), (.024,.026,.39), ink)
-box("Portrait display back", (.40,.74,1.105), (.303,.025,.527), ink, .005)
-box("Portrait display", (.40,.724,1.105), (.283,.002,.494), screen_white, .001)
-text("Topp title", "TOPP / MATCHING", (.274,.721,1.316), .018, graphite)
-line("Diagram vertical axis", [(.28,.720,.95),(.28,.720,1.26)], graphite, .0013)
-line("Diagram horizontal axis", [(.28,.720,.95),(.52,.720,.95)], graphite, .0013)
-line("Diagram diagonal",[(.28,.719,.95),(.52,.719,1.25)], blue,.001)
-for x,z in [(.32,1.13),(.38,1.21),(.44,1.17),(.41,1.07),(.47,1.24),(.31,1.02)]:
-    ball("Diagram point", (x,.716,z),.004,blue)
-    line("Pairing", [(x,.717,z),(x+.02,.717,z+.014)],pink,.001)
-for i in range(4): box("Topp reading",(.40,.719,.899+i*.009),(.21-i*.024,.001,.002),graphite,0)
+monitor("Portrait monitor",(.40,.74,1.105),.303,.527,"topp",-5)
 anchor("topp",(.40,.71,1.40))
 
 current="competitions"
 box("Landscape foot",(-.79,.60,.75),(.23,.17,.015),ink)
 box("Landscape stand",(-.79,.69,.93),(.028,.028,.36),ink)
-box("Landscape display back",(-.79,.64,1.048),(.61,.026,.356),ink,.005)
-box("Landscape display",(-.79,.624,1.048),(.59,.002,.33),screen_white,.001)
-text("Campus title","CAMPUS / COMPETITIONS",(-1.06,.621,1.168),.019,graphite)
-box("Campus nav",(-.79,.620,1.12),(.53,.001,.017),blue,0)
-for i in range(3):
-    box("Campus card",(-.98+i*.189,.620,1.027),(.166,.001,.12),[wall,blue_light,wall][i],.001)
-    for j in range(3):
-        box("Campus caption",(-.98+i*.189,.618,.989-j*.014),(.13-j*.01,.001,.003),graphite,0)
+monitor("Landscape monitor",(-.79,.64,1.048),.61,.356,"campus",-6)
 anchor("competitions",(-.79,.62,1.255))
 
 current="rumor"
@@ -247,17 +404,28 @@ for x,y in nodes: cylinder("Propagation node",(x,y,.753),.003,.001,blue,10)
 anchor("rumor",(-.45,.12,.79))
 current="room"
 line("Mechanical pencil",[(-.247,.07,.751),(-.205,.205,.751)],ink,.0035)
-box("Keyboard aluminium case",(-.10,.395,.759),(.442,.139,.019),cream,.003)
-for row in range(5):
-    for col in range(15):
-        box("PBT keycap",(-.305+col*.0287,.345+row*.024,.773),(.024,.019,.011),paper,.0015)
-box("Spacebar",(-.10,.329,.775),(.136,.019,.01),paper,.0015)
+box("Keyboard aluminium lower case",(-.07,.383,.754),(.368,.145,.016),cream,.0025)
+box("Keyboard case seam",(-.07,.383,.7625),(.366,.143,.0012),ink,.002)
+box("Keyboard switch plate",(-.07,.383,.764),(.355,.132,.002),rubber,.002)
+for key in details["keys"]:
+    if key["laptop"]: continue
+    pitch=.01905
+    x=-.246+(key["x"]+key["units"]/2)*pitch
+    y=.325+key["row"]*pitch+(0.009 if key["row"]==5 else 0)
+    height=.008+key["row"]*.00065
+    mat = key_ivory
+    keycap("PBT "+(key["label"] or "Space"),(x,y,.765),key["units"]*pitch-.0016,.01745,height,mat,key["surface"])
+    if key["label"] in ["F","J"]:
+        box("Home row tactile bar",(x,y-.004,.765+height+.0001),(.004,.0008,.0005),key_ivory,.0002)
+for x in [.050,.061,.072]:
+    cylinder("Keyboard status LED",(x,.404,.766),.0011,.0006,blue_light,8)
+box("Keyboard USB socket",(-.16,.456,.758),(.009,.001,.0038),ink,.001)
 o=ball("Mouse",(.247,.35,.764),.047,cream)
 o.scale=(.70,1.25,.42)
 line("Mouse seam",[(.247,.352,.784),(.247,.393,.778)],ink,.0008)
 for x in [-.12,.40,-.79]:
     line("Monitor cable",[(x,.77,1.00),(x+.05,.84,.76),(x+.07,.83,.64),(x+.14,.79,.63)],rubber,.003)
-line("Keyboard cable",[(-.12,.467,.753),(-.13,.51,.756),(-.23,.53,.752),(-.36,.79,.746)],rubber,.002)
+line("Keyboard cable",[(-.16,.456,.758),(-.16,.51,.756),(-.23,.53,.752),(-.36,.79,.746)],rubber,.002)
 
 # Articulated task lamp, with hardware-scale seams and a broad light diffuser.
 cylinder("Lamp foot",(-1.06,.84,.752),.080,.018,ink,32)
@@ -287,7 +455,10 @@ for x in [1.07,1.81]: box("Archive upright",(x,1.18,.57),(.026,.43,1.14),wood)
 for z in [.10,.45,.82,1.14]: box("Archive shelf",(1.44,1.18,z),(.77,.43,.026),wood)
 box("Archive back",(1.44,1.395,.57),(.77,.014,1.13),wood)
 current="gudhi"
-box("Algorithm binder",(1.26,1.17,.624),(.075,.295,.316),blue,.004)
+for x in [1.224,1.296]:
+    box("Algorithm binder cloth cover",(x,1.17,.624),(.003,.295,.316),blue,.0008)
+box("Algorithm binder recessed pages",(1.26,1.174,.624),(.064,.278,.304),page_edge,.001)
+box("Algorithm binder spine",(1.26,1.025,.624),(.075,.005,.316),blue,.002)
 box("Binder paper insert",(1.26,1.017,.663),(.050,.002,.13),paper,.001)
 text("GUDHI label","GUDHI",(1.237,1.014,.697),.013,graphite)
 for z in [.625,.609]: box("Folio rule",(1.26,1.013,z),(.035,.001,.002),graphite,0)
@@ -302,11 +473,26 @@ text("Animeko label","ANIMEKO",(1.503,1.009,.630),.022,graphite)
 text("Vision subtitle","VISION / CNN",(1.505,1.009,.608),.010,graphite)
 anchor("animeko",(1.57,1.005,.78))
 current="room"
-for i,m in enumerate([paper,blue,wall,pink,cream,ink,wood]):
-    box("Reference volume",(1.15+i*.084,1.15,.276),(.071,.275,.302-i%3*.025),m,.002)
-    box("Book spine rule",(1.15+i*.084,1.009,.30),(.052,.002,.005),gold,0)
+# A populated reference library: distinct bindings, inset paper and readable spines.
+cursor=1.135
+for i in range(9):
+    thickness=.036+(i%3)*.009
+    if i==6: cursor+=.085
+    if i==8: cursor+=.035
+    volume(i,(cursor+thickness/2,1.17+(i%3-1)*.008,.115),thickness,.23+(i%2)*.025,.245+(i%4)*.012,lean=-7 if i==8 else 0)
+    cursor+=thickness+.003
+for x in [1.126,1.74]:
+    box("Steel library bookend",(x,1.18,.205),(.004,.20,.18),ink,.001)
+    box("Bookend foot",(x+(.025 if x<1.3 else -.025),1.18,.116),(.052,.20,.002),ink,.0005)
+stack_z=.834
 for i in range(3):
-    box("Stacked reference",(1.37,1.16,.845+i*.033),(.39-i*.02,.29,.026),[paper,blue,wall][i],.001)
+    thickness=.025+i*.007
+    volume(9+i,(1.28,1.175,stack_z),thickness,.24,.28-i*.012,angle=(-3+i*3),stacked=True)
+    stack_z += thickness+.001
+for i in range(4):
+    volume(12+i,(1.51+i*.066,1.18,.834),.036+(i%2)*.008,.235,.255-i*.014,lean=4 if i==3 else 0)
+# A slim working volume beside the two existing contribution archives.
+volume(16,(1.12,1.17,.465),.037,.252,.30)
 
 # Whiteboard is fixed to the back wall and fades together with that wall.
 current="wall_back"
@@ -369,17 +555,24 @@ for z in [.08,.48,.88,1.32]:
     box("Reading shelf board",(-1.96,-1.29,z),(.32,.68,.024),wood)
 box("Reading shelf back",(-2.115,-1.29,.66),(.018,.67,1.30),wood)
 for row in range(3):
-    for i in range(7):
-        height=.25+(i%3)*.022
-        box("Reading volume",(-1.95,-1.55+i*.078,.105+row*.40+height/2),(.25,.060,height),[paper,blue,ink,wall,pink,wood,cream][i],.002)
+    cursor=-1.585
+    for i in range(6):
+        thickness=.035+(i%3)*.009
+        if row==1 and i>=4:
+            volume(17+row*6+i,(-1.95,-1.135,.493+(0 if i==4 else .045)),.044,.242,.255,angle=90,stacked=True)
+        else:
+            if i==5: cursor+=.045
+            volume(17+row*6+i,(-1.96,cursor+thickness/2,.093+row*.40),thickness,.242,.255+(i%3)*.026,angle=90,lean=-7 if i==5 else 0)
+            cursor+=thickness+.003
 # Right-hand drawers and corkboard, visible from oblique and rear angles.
 box("Side cabinet body",(1.73,-.27,.405),(.62,.64,.79),cream,.005)
 box("Side cabinet top",(1.73,-.27,.810),(.65,.67,.027),wood,.004)
 for z in [.20,.44,.68]:
     box("Drawer front",(1.73,-.598,z),(.575,.012,.219),cream,.003)
     line("Drawer pull",[(1.65,-.615,z+.022),(1.81,-.615,z+.022)],ink,.005)
-for i in range(4):
-    box("Side research pile",(1.70,-.26,.831+i*.013),(.32,.26,.012),[blue,paper,wall,paper][i],.001)
+volume(35,(1.70,-.26,.824),.034,.24,.29,angle=7,stacked=True)
+for i in range(3):
+    box("Loose reading paper",(1.69,-.26,.860+i*.0008),(.26,.20,.00065),paper,.0002,rot=(0,0,.10))
 current="wall_right"
 # A low side partition keeps the opening view light; the near side fades on orbit.
 box("Right wall",(2.22,-.12,1.5),(.12,3.54,3),wall,.002)
@@ -404,13 +597,8 @@ cylinder("Reading lamp shade",(1.56,-1.65,1.50),.16,.20,cream,32)
 cylinder("Reading lamp lower diffuser",(1.56,-1.65,1.40),.145,.002,paper,32)
 
 # Both secondary screens turn toward the seated observer, anchors included.
-from mathutils import Matrix
 for name,pivot,degrees in [("competitions",(-.79,.64,.75),15),("topp",(.40,.74,.75),-17)]:
-    centre=Vector(pivot)
-    rotation=Matrix.Rotation(math.radians(degrees),4,"Z")
-    transform=Matrix.Translation(centre) @ rotation @ Matrix.Translation(-centre)
-    for obj in groups[name]+[bpy.data.objects["anchor_"+name]]:
-        obj.matrix_world=transform @ obj.matrix_world
+    transform_objects(groups[name]+[bpy.data.objects["anchor_"+name]],pivot,degrees)
 
 # Join only by interaction group. Multi-material modelling remains editable.
 meshes=[]
@@ -425,7 +613,7 @@ for name, objects in groups.items():
     meshes.append(obj)
 scene=bpy.context.scene
 scene.render.engine="CYCLES"
-scene.cycles.samples=64
+scene.cycles.samples=int(os.environ.get("ROOM_BAKE_SAMPLES", "32"))
 scene.cycles.use_denoising=True
 scene.render.bake.use_pass_direct=True
 scene.render.bake.use_pass_indirect=True
@@ -438,6 +626,10 @@ scene.render.bake.margin=6
 bpy.ops.object.select_all(action="DESELECT")
 for o in meshes: o.select_set(True)
 bpy.context.view_layer.objects.active=meshes[0]
+for obj in meshes:
+    layer = obj.data.uv_layers.new(name="BakeUV")
+    obj.data.uv_layers.active = layer
+    layer.active_render = True
 bpy.ops.object.mode_set(mode="EDIT")
 bpy.ops.mesh.select_all(action="SELECT")
 bpy.ops.uv.smart_project(angle_limit=1.15,island_margin=.003)
@@ -490,6 +682,12 @@ bpy.context.preferences.filepaths.save_version=0
 # Save the source before replacing any procedural materials with the baked maps.
 bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/"study.blend"),compress=True)
 
+# Bake printed patches as white receivers, then multiply the original high-resolution
+# artwork by that local illumination. The LCD keeps its own emitted colours.
+bsdf = printed.node_tree.nodes.get("Principled BSDF")
+for link in list(bsdf.inputs["Base Color"].links): printed.node_tree.links.remove(link)
+bsdf.inputs["Base Color"].default_value = (1,1,1,1)
+
 # Bake a joined duplicate once per lighting state. Original interaction meshes retain
 # their global UV layout and names; hiding them avoids coincident shadow geometry.
 bpy.ops.object.select_all(action="DESELECT")
@@ -521,8 +719,23 @@ for name,night in [("day",False),("night",True)]:
     bpy.context.view_layer.objects.active=bake_proxy
     print("Baking physically lit "+name,flush=True)
     bpy.ops.object.bake(type="COMBINED")
-    # Compress HDR highlights into a display-referred sRGB texture once, offline.
-    pixels=np.array(atlas.pixels[:],dtype=np.float32).reshape(-1,4)
+    raw=np.array(atlas.pixels[:],dtype=np.float32).reshape(3072,3072,4)
+    # Preserve 3072-square room lighting; reserve the right/bottom bands of a
+    # 4096-square atlas for screen pixels, key legends and printed book spines.
+    # Small text must not be denoised along with diffuse room lighting.
+    illuminants={}
+    for obj in meshes:
+        attr=obj.data.attributes.get("detail_surface")
+        if not attr: continue
+        uvs=obj.data.uv_layers["BakeUV"].data
+        for face in obj.data.polygons:
+            index=attr.data[face.index].value
+            if not index: continue
+            surface=detail_ids[index-1]
+            uv=sum((uvs[i].uv for i in face.loop_indices),Vector((0,0)))/len(face.loop_indices)
+            px,py=np.clip(np.array(uv)*3072,2,3069).astype(int)
+            illuminants[surface]=np.median(raw[py-1:py+2,px-1:px+2,:3].reshape(-1,3),axis=0)
+    pixels=raw.reshape(-1,4)
     pixels[:,:3]=pixels[:,:3]/(1+pixels[:,:3]*.32)
     atlas.pixels.foreach_set(pixels.ravel())
     atlas.filepath_raw=str(SOURCE/("study-atlas.png" if name=="day" else "study-night.png"))
@@ -557,7 +770,49 @@ for name,night in [("day",False),("night",True)]:
     denoise_scene.render.filepath=str(OUT/("study-"+name+".jpg"))
     bpy.ops.render.render(write_still=True,scene=denoise_scene.name)
     bpy.data.scenes.remove(denoise_scene)
+    denoised=bpy.data.images.load(str(OUT/("study-"+name+".jpg")),check_existing=False)
+    composite_pixels=np.array(detail_image.pixels[:],dtype=np.float32).reshape(4096,4096,4).copy()
+    for surface,light in illuminants.items():
+        x,y,w,h=details["surfaces"][surface]
+        tile=composite_pixels[4096-y-h:4096-y,x:x+w,:3]
+        if surface in ["campus","iris","topp"]:
+            tile *= .92 if night else .86
+        else:
+            tile *= light
+            tile /= 1+tile*.32
+    composite_pixels[1024:,:3072]=np.array(denoised.pixels[:],dtype=np.float32).reshape(3072,3072,4)
+    composite_pixels[:,:,3]=1
+    stabilize_key_lighting(composite_pixels)
+    combined=bpy.data.images.new("Study "+name+" detailed atlas",width=4096,height=4096)
+    combined.pixels.foreach_set(composite_pixels.ravel())
+    scene.render.image_settings.file_format="JPEG"
+    scene.render.image_settings.color_mode="RGB"
+    scene.render.image_settings.quality=88
+    combined.save_render(str(OUT/("study-"+name+".jpg")),scene=scene)
+    if name=="day":
+        combined.filepath_raw=str(SOURCE/"study-atlas.png")
+        combined.file_format="PNG"
+        combined.save()
     atlases[name]=bpy.data.images.load(str(OUT/("study-"+name+".jpg")),check_existing=False)
+    bpy.data.images.remove(denoised)
+    bpy.data.images.remove(combined)
+    bpy.data.images.remove(atlas)
+
+# Reuse a single unlit material and texture at runtime. High-resolution faces keep
+# their explicit artwork UVs; ordinary geometry uses the upper-left light bake.
+for obj in meshes:
+    bake_uv=obj.data.uv_layers["BakeUV"]
+    detail_uv=obj.data.uv_layers.get("DetailUV")
+    attr=obj.data.attributes.get("detail_surface")
+    for face in obj.data.polygons:
+        is_detail=attr and attr.data[face.index].value>0
+        for i in face.loop_indices:
+            bake_uv.data[i].uv=detail_uv.data[i].uv if is_detail else bake_uv.data[i].uv*.75+Vector((0,.25))
+    # Copy names, not RNA layer handles: removing a layer shifts their indices.
+    for name in [uv.name for uv in obj.data.uv_layers]:
+        if name!="BakeUV": obj.data.uv_layers.remove(obj.data.uv_layers[name])
+    obj.data.uv_layers.active=obj.data.uv_layers["BakeUV"]
+    obj.data.uv_layers["BakeUV"].active_render=True
 
 bpy.data.objects.remove(bake_proxy,do_unlink=True)
 for o in meshes: o.hide_render=False
@@ -577,7 +832,7 @@ for obj in meshes:
 bpy.ops.object.select_all(action="DESELECT")
 for o in scene.objects:
     if o.type in {"MESH","EMPTY"}: o.select_set(True)
-bpy.ops.export_scene.gltf(filepath=str(OUT/"study.glb"),export_format="GLB",use_selection=True,export_yup=True,export_materials="EXPORT",export_extras=False)
+bpy.ops.export_scene.gltf(filepath=str(OUT/"study.glb"),export_format="GLB",use_selection=True,export_yup=True,export_materials="EXPORT",export_extras=False,export_normals=False)
 # Same baked surface and perspective in posters and WebGL.
 scene.cycles.samples=16
 scene.render.image_settings.file_format="PNG"

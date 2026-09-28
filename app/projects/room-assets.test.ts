@@ -3,6 +3,7 @@ import { MeshBVH } from "three-mesh-bvh"
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import test from "node:test"
+import sharp from "sharp"
 import { projects, roomTargets } from "./projects"
 
 const bytes = readFileSync(new URL("../../public/projects-room/study.glb", import.meta.url))
@@ -71,6 +72,66 @@ test("project migration preserves destinations, research status, and upstream at
   )
   assert.equal(projects.filter((project) => project.category.includes("论文在投")).length, 2)
   assert.ok(projects.every((project) => new URL(project.href).protocol === "https:"))
+})
+
+test("screen artwork survives export at its dedicated atlas resolution", async () => {
+  const asset = JSON.parse(bytes.subarray(20, 20 + jsonLength).toString("utf8"))
+  const binary = bytes.subarray(28 + jsonLength)
+  const image = asset.bufferViews[asset.images[0].bufferView]
+  const metadata = await sharp(
+    binary.subarray(image.byteOffset, image.byteOffset + image.byteLength),
+  ).metadata()
+  assert.equal(metadata.width, 4096)
+  assert.equal(metadata.height, 4096)
+  const regions = {
+    competitions: [3072, 0, 1024, 576],
+    iris: [3072, 592, 1024, 640],
+    topp: [3072, 1248, 768, 1344],
+  }
+  for (const [name, [x, y, w, h]] of Object.entries(regions)) {
+    const node = asset.nodes.find((node: { name: string }) => node.name === name)
+    const uvAccessor = asset.accessors[asset.meshes[node.mesh].primitives[0].attributes.TEXCOORD_0]
+    const view = asset.bufferViews[uvAccessor.bufferView]
+    const uv = Array.from({ length: uvAccessor.count }, (_, i) => {
+      const offset =
+        (view.byteOffset ?? 0) + (uvAccessor.byteOffset ?? 0) + i * (view.byteStride ?? 8)
+      return [binary.readFloatLE(offset), binary.readFloatLE(offset + 4)]
+    })
+    const housingUVs = uv.filter(([u, v]) => u < 0.75 && v < 0.75)
+    assert.ok(
+      new Set(housingUVs.map(([u, v]) => `${u},${v}`)).size > 100,
+      `${name} retains the housing lightmap, not zero-filled detail UVs`,
+    )
+    for (const [u, v] of [
+      [x, y],
+      [x + w, y],
+      [x + w, y + h],
+      [x, y + h],
+    ])
+      assert.ok(
+        uv.some(([a, b]) => Math.abs(a - u / 4096) < 1e-6 && Math.abs(b - v / 4096) < 1e-6),
+        `${name} keeps its screen corners outside the room light bake`,
+      )
+  }
+})
+
+test("the authored keyboard uses an ANSI layout with a populated reference library", () => {
+  const details = JSON.parse(
+    readFileSync(new URL("../../design/projects-room/study-details.json", import.meta.url), "utf8"),
+  ) as {
+    keys: { label: string; laptop: boolean; units: number }[]
+    books: { id: string; title: string }[]
+  }
+  const keyboard = details.keys.filter((key) => !key.laptop)
+  assert.equal(keyboard.length, 87)
+  assert.equal(keyboard.find((key) => key.label === "")?.units, 6.25)
+  assert.equal(keyboard.find((key) => key.label === "Backspace")?.units, 2)
+  assert.equal(keyboard.find((key) => key.label === "Enter")?.units, 2.25)
+  for (const label of ["F1", "F12", "↑", "↓", "←", "→", "Home", "PgDn"])
+    assert.ok(keyboard.some((key) => key.label === label))
+  assert.equal(details.books.length, 36)
+  assert.equal(new Set(details.books.map((book) => book.id)).size, 36)
+  assert.ok(details.books.every((book) => book.title.length > 0))
 })
 
 test("BVH selection agrees with independent triangle raycasts on the shipped room", () => {
