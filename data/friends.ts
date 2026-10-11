@@ -106,4 +106,12 @@ export const friendsData: Friend[] = [
     url: "https://yukino-blog.site",
     themeColor: "rgba(183, 196, 38, 0.5)",
   },
+  {
+    id: "Ayeez",
+    name: "阿叶Ayeez的小站",
+    description: "记录学习历程，记录美好生活",
+    avatar: "https://qiniu.ayeez.cn/avatar.jpg",
+    url: "https://blog.Ayeez.cn",
+    themeColor: "rgba(63, 50, 165, 0.5)",
+  },
 ]
