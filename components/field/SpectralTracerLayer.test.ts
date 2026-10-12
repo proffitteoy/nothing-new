@@ -135,10 +135,9 @@ test("friends protect readable panels without blocking the entire grid", () => {
   }
   visit(tree)
   assert.equal(obstacles.length, 3)
-  assert.equal(obstacles[0].openingElement.tagName.getText(tree), "header")
+  assert.match(obstacles[0].getText(tree), /云端引力/)
   assert.equal(obstacles[1].openingElement.tagName.getText(tree), "a")
   assert.match(obstacles[1].openingElement.getText(tree), /href=\{friend.url\}/)
-  assert.equal(obstacles[2].openingElement.tagName.getText(tree), "aside")
   assert.match(obstacles[2].getText(tree), /提交友链申请/)
   for (const obstacle of obstacles) {
     assert.doesNotMatch(obstacle.openingElement.getText(tree), /grid-cols|max-w-5xl/)

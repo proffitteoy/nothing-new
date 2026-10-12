@@ -129,7 +129,7 @@ Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Tok
 
 - <code>siteConfig.ts</code>：站点标题、头像、背景、歌单、社交链接与视觉开关。
 - <code>app/projects/projects.ts</code>：项目档案与物件映射；模型重建与验收见 [窗边研究小屋](docs/project/projects-room.md)。
-- <code>data/friends.ts</code>：友链数据。每个站点的 `id` 必须唯一且稳定，用于名片和头像加载状态；缺少头像或加载失败时显示该站点的名称缩写。
+- <code>data/friends.ts</code>：友链数据。
 - <code>content/</code>：笔记与杂谈源内容；<code>math/</code> 进入笔记，<code>misc/</code> 进入普通杂谈，其余公开顶层目录作为杂谈项目文件夹。
 - <code>app/about/about.md</code>：关于页正文。
 
