@@ -1,26 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { motion, type Variants } from "framer-motion"
+import { useEffect, useState } from "react"
+import { ArrowUpRight, Check, Copy } from "lucide-react"
 import BackButton from "../../components/BackButton"
 import { friendsData } from "../../data/friends"
 import { siteConfig } from "../../siteConfig"
-
-// Framer Motion 动画变体：交错子元素
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.15 }, // 每张卡片延迟 0.15 秒出现
-  },
-}
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 30, scale: 0.9 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } },
-}
-
-type AvatarFallback = "site" | "text"
 
 function getAvatarFallbackText(name: string) {
   const normalizedName = name.trim()
@@ -35,191 +19,184 @@ function getAvatarFallbackText(name: string) {
 }
 
 export default function FriendsBoard() {
-  // 🌟 控制复制按钮的状态
-  const [isCopied, setIsCopied] = useState(false)
-  const [avatarFallbacks, setAvatarFallbacks] = useState<Record<string, AvatarFallback>>({})
-
+  const [copyState, setCopyState] = useState<"idle" | "copying" | "copied" | "error">("idle")
+  const [failedAvatars, setFailedAvatars] = useState<Record<string, boolean>>({})
   const applyFormat = siteConfig.friendLinkApplyFormat
-  const issueUrl = siteConfig.friendLinkIssueUrl
-  const fallbackAvatar = siteConfig.avatarUrl
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(applyFormat)
-    setIsCopied(true)
-    setTimeout(() => setIsCopied(false), 2000)
+  useEffect(() => {
+    if (copyState !== "copied") return
+    const timeout = window.setTimeout(() => setCopyState("idle"), 2000)
+    return () => window.clearTimeout(timeout)
+  }, [copyState])
+
+  async function handleCopy() {
+    setCopyState("copying")
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable")
+      await navigator.clipboard.writeText(applyFormat)
+      setCopyState("copied")
+    } catch {
+      setCopyState("error")
+    }
   }
 
-  // Keep tracers in the gaps, outside the readable cards and application panel.
   return (
-    <div className="w-full max-w-5xl mx-auto px-3 sm:px-10 py-6 md:py-10 relative z-10 scroll-smooth mt-20 md:mt-10">
-      {/* 顶部导航与标题 */}
-      <div data-field-obstacle className="mb-8 md:mb-12 flex flex-col items-center md:items-start">
-        <div className="w-full flex justify-start mb-4 md:mb-6">
-          <BackButton />
-        </div>
-        <div className="text-center md:text-left w-full px-2 md:px-0">
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-widest drop-shadow-sm uppercase">
-            云端引力
-          </h1>
-          <p className="text-xs md:text-base text-slate-600 dark:text-slate-400 font-serif">
-            那些散落在赛博宇宙各处的有趣灵魂与神经节点。
-          </p>
-        </div>
+    <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-32 pt-24 sm:px-6 md:pt-28 lg:px-10">
+      <div className="mb-8 w-max [&>button]:mb-0 [&>button]:focus-visible:ring-2 [&>button]:focus-visible:ring-indigo-500">
+        <BackButton />
       </div>
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6"
+      <header
+        data-field-obstacle
+        className="mb-8 flex flex-col gap-5 border-b border-white/60 pb-8 sm:flex-row sm:items-end sm:justify-between dark:border-white/10"
       >
-        {friendsData.map((friend) => {
-          const avatarFallback = avatarFallbacks[friend.id]
-          const avatarSrc =
-            avatarFallback === "site"
-              ? fallbackAvatar
-              : avatarFallback === "text"
-                ? ""
-                : friend.avatar || fallbackAvatar
-          const shouldShowAvatarImage = Boolean(avatarSrc) && avatarFallback !== "text"
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-slate-950 md:text-5xl dark:text-white">
+            友链
+          </h1>
+          <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base dark:text-slate-300">
+            一些值得常去坐坐的地方。
+          </p>
+        </div>
+        <p className="flex items-baseline gap-2 text-sm text-slate-600 dark:text-slate-300">
+          <span className="text-2xl font-bold tabular-nums text-indigo-600 dark:text-indigo-300">
+            {friendsData.length}
+          </span>
+          个朋友的站点
+        </p>
+      </header>
 
-          return (
-            <motion.div key={friend.id} variants={itemVariants} className="h-full">
-              <a
-                data-field-obstacle
-                href={friend.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block h-full rounded-2xl md:rounded-3xl bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-lg md:shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 md:hover:-translate-y-2 hover:scale-[1.02] group relative p-3 md:p-6"
-              >
-                {/* 卡片底部的动态光晕 */}
-                <div
-                  className="absolute -bottom-10 -right-10 w-24 h-24 md:w-32 md:h-32 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-                  style={{ backgroundColor: friend.themeColor }}
-                ></div>
-
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-5 relative z-10 mb-2 md:mb-4">
-                  <div className="w-10 h-10 md:w-16 md:h-16 rounded-full p-[2px] md:p-1 bg-gradient-to-tr from-indigo-500/50 to-purple-500/50 shadow-sm md:shadow-md group-hover:rotate-[360deg] transition-transform duration-1000 ease-in-out flex-shrink-0">
-                    {shouldShowAvatarImage ? (
-                      <img
-                        src={avatarSrc}
-                        alt={`${friend.name} 头像`}
-                        width={64}
-                        height={64}
-                        loading="lazy"
-                        decoding="async"
-                        referrerPolicy="no-referrer"
-                        onError={() => {
-                          setAvatarFallbacks((current) => ({
-                            ...current,
-                            [friend.id]:
-                              avatarFallback === undefined &&
-                              Boolean(friend.avatar) &&
-                              Boolean(fallbackAvatar)
-                                ? "site"
-                                : "text",
-                          }))
-                        }}
-                        className="w-full h-full rounded-full object-cover bg-white"
-                      />
-                    ) : (
-                      <div
-                        aria-hidden="true"
-                        className="w-full h-full rounded-full bg-white/90 dark:bg-slate-900/80 flex items-center justify-center px-1 text-center text-[9px] md:text-xs font-black leading-none text-indigo-600 dark:text-indigo-300"
-                      >
-                        {getAvatarFallbackText(friend.name)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 overflow-hidden w-full">
-                    <h2 className="text-sm md:text-xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+      <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-6">
+        <section aria-label="朋友站点" className="min-w-0 lg:col-span-8">
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5">
+            {friendsData.map((friend) => (
+              <li key={friend.id} className="min-w-0">
+                <a
+                  data-field-obstacle
+                  href={friend.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex h-full min-w-0 flex-col rounded-3xl border border-white/60 bg-white/65 p-5 shadow-lg backdrop-blur-xl transition duration-200 hover:-translate-y-1 hover:border-indigo-300 hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 motion-reduce:transform-none sm:p-6 dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-indigo-400/50 dark:hover:bg-slate-900/80 dark:focus-visible:ring-offset-slate-950"
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 bg-white/80 text-center text-xs font-bold text-indigo-700 dark:bg-slate-950/60 dark:text-indigo-200"
+                      style={{ borderColor: friend.themeColor }}
+                    >
+                      {friend.avatar && !failedAvatars[friend.id] ? (
+                        // Third-party avatars retain their original source and referrer policy.
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={friend.avatar}
+                          alt={`${friend.name} 头像`}
+                          width={56}
+                          height={56}
+                          loading="lazy"
+                          decoding="async"
+                          referrerPolicy="no-referrer"
+                          onError={() =>
+                            setFailedAvatars((current) => ({ ...current, [friend.id]: true }))
+                          }
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span aria-hidden="true" className="px-1">
+                          {getAvatarFallbackText(friend.name)}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="min-w-0 flex-1 break-words text-lg font-bold leading-7 tracking-tight text-slate-900 transition-colors group-hover:text-indigo-700 dark:text-white dark:group-hover:text-indigo-300">
                       {friend.name}
                     </h2>
-                    <div className="text-[9px] md:text-xs font-bold text-indigo-500/70 dark:text-indigo-400/70 tracking-widest uppercase mt-0.5 md:mt-1 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                      在线
-                    </div>
                   </div>
-                </div>
+                  <p className="mb-5 mt-4 break-words text-sm leading-7 text-slate-700 dark:text-slate-300">
+                    {friend.description}
+                  </p>
+                  <div className="mt-auto flex min-w-0 items-center justify-between gap-3 border-t border-slate-200/60 pt-3 text-xs leading-5 text-slate-500 dark:border-white/10 dark:text-slate-400">
+                    <span className="min-w-0 break-all">
+                      {new URL(friend.url).hostname.replace(/^www\./, "")}
+                    </span>
+                    <ArrowUpRight
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-300"
+                    />
+                    <span className="sr-only">在新标签页打开</span>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-                <p className="text-[10px] md:text-sm text-slate-700 dark:text-slate-300 font-serif leading-snug md:leading-relaxed line-clamp-2 md:line-clamp-3 relative z-10">
-                  {friend.description}
-                </p>
-              </a>
-            </motion.div>
-          )
-        })}
-      </motion.div>
+        <aside
+          data-field-obstacle
+          aria-labelledby="friend-exchange-title"
+          className="min-w-0 rounded-3xl border border-white/60 bg-white/65 p-5 shadow-lg backdrop-blur-xl sm:p-6 lg:col-span-4 dark:border-white/10 dark:bg-slate-900/65"
+        >
+          <h2
+            id="friend-exchange-title"
+            className="text-2xl font-black tracking-tight text-slate-950 dark:text-white"
+          >
+            交换友链
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+            欢迎交换友链。下面是本站信息，可以复制到你的友链页。
+          </p>
 
-      {/* 申请友链引导区 */}
-      <motion.div
-        data-field-obstacle
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-        className="mt-14 md:mt-20 bg-white/40 dark:bg-slate-800/40 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 rounded-2xl md:rounded-3xl p-5 md:p-8 max-w-3xl mx-auto text-center shadow-lg md:shadow-xl relative"
-      >
-        <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-wider">
-          ✨ 建立神经连接
-        </h2>
-        <p className="text-xs md:text-base text-slate-600 dark:text-slate-400 font-serif mb-4 md:mb-6">
-          欢迎交换友链。请复制下方格式，然后到仓库提交友链申请：
-        </p>
-
-        {/* 代码展示框 & 一键复制按钮 */}
-        <div className="relative bg-slate-100/60 dark:bg-slate-900/60 rounded-xl md:rounded-2xl p-4 md:p-5 text-left inline-block w-full max-w-md border border-slate-200/50 dark:border-slate-700/50 group overflow-hidden">
-          <pre className="font-mono text-[10px] md:text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-all pr-8 md:pr-10">
+          <h3 className="mb-3 mt-6 text-sm font-bold text-slate-800 dark:text-slate-200">
+            本站信息
+          </h3>
+          <pre className="select-text whitespace-pre-wrap break-all rounded-2xl border border-slate-200/60 bg-white/50 p-4 font-serif text-sm leading-7 text-slate-700 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-300">
             {applyFormat}
           </pre>
-
           <button
+            type="button"
             onClick={handleCopy}
-            className="absolute top-2 right-2 md:top-3 md:right-3 p-1.5 md:p-2 rounded-lg bg-white/80 dark:bg-slate-800/80 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-500 transition-all duration-300 shadow-sm backdrop-blur-sm"
-            title="一键复制"
+            disabled={copyState === "copying"}
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-indigo-200/70 bg-indigo-50/80 px-4 py-3 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 dark:border-indigo-400/20 dark:bg-indigo-500/10 dark:text-indigo-200 dark:hover:bg-indigo-500/20 dark:focus-visible:ring-offset-slate-950"
           >
-            {isCopied ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-500"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
+            {copyState === "copied" ? (
+              <Check aria-hidden="true" className="h-4 w-4" />
             ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-3.5 h-3.5 md:w-4 md:h-4 text-slate-500 hover:text-white"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"
-                />
-              </svg>
+              <Copy aria-hidden="true" className="h-4 w-4" />
             )}
+            {copyState === "copied"
+              ? "已复制本站信息"
+              : copyState === "copying"
+                ? "正在复制…"
+                : "复制本站信息"}
           </button>
-        </div>
-
-        <div className="mt-6 md:mt-8">
-          <a
-            href={issueUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block px-6 py-2.5 md:px-8 md:py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-full text-sm md:text-base font-bold tracking-widest transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/30"
+          <p
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="mt-2 min-h-10 text-sm leading-5 text-slate-600 dark:text-slate-300"
           >
-            提交友链申请
-          </a>
-        </div>
-      </motion.div>
-    </div>
+            {copyState === "error"
+              ? "复制未成功，请选中上方本站信息手动复制。"
+              : copyState === "copied"
+                ? "本站信息已复制到剪贴板。"
+                : ""}
+          </p>
+
+          <div className="mt-4 border-t border-slate-200/60 pt-6 dark:border-white/10">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">申请交换</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+              请在 GitHub Issue 中填写你自己的站点名称、简介、地址和头像。
+            </p>
+            <a
+              href={siteConfig.friendLinkIssueUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-offset-slate-950"
+            >
+              提交友链申请
+              <ArrowUpRight aria-hidden="true" className="h-4 w-4" />
+              <span className="sr-only">在新标签页打开</span>
+            </a>
+          </div>
+        </aside>
+      </div>
+    </main>
   )
 }

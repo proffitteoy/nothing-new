@@ -1,20 +1,18 @@
-import PageTransition from '../../components/PageTransition';
-import FriendsBoard from './FriendsBoard';
-import {siteConfig} from "@/siteConfig";
+import PageTransition from "../../components/PageTransition"
+import FriendsBoard from "./FriendsBoard"
+import { siteConfig } from "@/siteConfig"
 
 export const metadata = {
   title: "友链 | " + siteConfig.title,
-  description: "赛博空间里的有趣灵魂",
-};
+  description: "朋友们的独立站点与博客，以及交换友链的方式。",
+}
 
 export default function FriendsPage() {
   return (
-    <div className="min-h-screen relative pb-20">
+    <div className="relative min-h-screen">
       <PageTransition>
-        <div className="mt-28">
-          <FriendsBoard />
-        </div>
+        <FriendsBoard />
       </PageTransition>
     </div>
-  );
+  )
 }
