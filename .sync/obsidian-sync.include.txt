@@ -188,3 +188,4 @@ reverse/666.md
 reverse/走迷宫.md
 reverse/Reversing-x64Elf-100.md
 misc/什么是好的研究.md
+misc/我们应该对未来说些什么？.md
