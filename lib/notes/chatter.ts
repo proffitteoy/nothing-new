@@ -68,7 +68,6 @@ export function buildChatterItems(
 
   return [...noteItems, ...folderItems].sort(
     (left, right) =>
-      Number(left.kind === "folder") - Number(right.kind === "folder") ||
       (right.modified ?? "").localeCompare(left.modified ?? "") ||
       left.title.localeCompare(right.title, "zh-CN"),
   )
