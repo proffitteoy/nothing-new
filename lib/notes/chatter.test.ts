@@ -27,16 +27,20 @@ function note(route: string, section: NoteSection, modified?: string): NoteArtif
 }
 
 describe("chatter items", () => {
-  it("mixes misc notes with non-math project folders by latest modification time", () => {
+  it("sorts misc notes by latest modification time and keeps project folders at the bottom", () => {
     const chatterNotes = [
       note("/chatter/随想", "chatter", "2026-02-01T00:00:00.000Z"),
       note("/chatter/ai/项目/进展", "chatter", "2026-04-01T00:00:00.000Z"),
       note("/chatter/script/工具", "chatter", "2026-01-01T00:00:00.000Z"),
+      note("/chatter/近况", "chatter", "2026-03-01T00:00:00.000Z"),
+      note("/chatter/未标日期", "chatter"),
     ]
     chatterNotes[0].sourcePath = "misc/随想.md"
     chatterNotes[1].sourcePath = "ai/项目/进展.md"
     chatterNotes[1].assets = ["/ai-cover.png"]
     chatterNotes[2].sourcePath = "script/工具.md"
+    chatterNotes[3].sourcePath = "misc/近况.md"
+    chatterNotes[4].sourcePath = "misc/未标日期.md"
     const tree: NoteTreeNode[] = [
       { name: "reverse", title: "reverse", path: "/chatter/reverse", type: "folder", children: [] },
       {
@@ -54,8 +58,10 @@ describe("chatter items", () => {
     assert.deepEqual(
       items.map((item) => [item.kind, item.route]),
       [
-        ["folder", "/chatter/ai"],
+        ["note", "/chatter/近况"],
         ["note", "/chatter/随想"],
+        ["note", "/chatter/未标日期"],
+        ["folder", "/chatter/ai"],
         ["folder", "/chatter/script"],
       ],
     )

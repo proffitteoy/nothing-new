@@ -30,7 +30,7 @@
 | 项目 | [<code>/projects</code>](https://nothing-new.icu/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
 | 音乐 | [<code>/music</code>](https://nothing-new.icu/music)       | 网易云歌单、歌词、播放列表与全局悬浮播放器             |
 | 番剧 | [<code>/anime</code>](https://nothing-new.icu/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
-| 杂谈 | [<code>/chatter</code>](https://nothing-new.icu/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
+| 杂谈 | [<code>/chatter</code>](https://nothing-new.icu/chatter)   | 杂谈按最后修改时间降序展示，项目文件夹统一置底         |
 | 笔记 | [<code>/blog</code>](https://nothing-new.icu/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接 |
 | 友链 | [<code>/friends</code>](https://nothing-new.icu/friends)   | 朋友站点与独立博客入口                                 |
 | 关于 | [<code>/about</code>](https://nothing-new.icu/about)       | 个人介绍、技术足迹与站点信息                           |

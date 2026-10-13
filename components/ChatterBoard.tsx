@@ -47,7 +47,7 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
           杂谈
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
-          零散想法与项目记录按最后修改时间排列，点击后按原始笔记继续展开。
+          零散想法按最后修改时间从新到旧排列，项目文件夹统一放在底部。
         </p>
       </header>
 
@@ -69,18 +69,24 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
       </div>
 
       {filteredItems.length > 0 ? (
-        <motion.div layout className="columns-2 gap-3 md:gap-6 lg:columns-3">
-          <AnimatePresence mode="popLayout">
-            {filteredItems.map(({ item, imageIndex }) => (
-              <ChatterCard
-                key={item.route}
-                item={item}
-                imageIndex={imageIndex}
-                loadingPolicy={loadingPolicy}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        <div>
+          {(["note", "folder"] as const).map((kind) => (
+            <motion.div key={kind} layout className="columns-2 gap-3 md:gap-6 lg:columns-3">
+              <AnimatePresence mode="popLayout">
+                {filteredItems
+                  .filter(({ item }) => item.kind === kind)
+                  .map(({ item, imageIndex }) => (
+                    <ChatterCard
+                      key={item.route}
+                      item={item}
+                      imageIndex={imageIndex}
+                      loadingPolicy={loadingPolicy}
+                    />
+                  ))}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
       ) : (
         <div
           data-field-obstacle
