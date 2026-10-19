@@ -14,3 +14,4 @@ misc/1/审稿prompt.md
 script/1/服务器现状.md
 script/1/服务器gudhi使用指南.md
 script/1/论文现状.md
+同调投影算子.md
