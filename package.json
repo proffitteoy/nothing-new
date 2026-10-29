@@ -6,10 +6,10 @@
   "type": "module",
   "author": "proffitteoy",
   "license": "GPL-3.0-only",
-  "homepage": "https://nothing-new.icu",
+  "homepage": "https://nothing-new.cn",
   "repository": {
     "type": "git",
-    "url": "https://github.com/proffitteoy/math-vault.git"
+    "url": "https://github.com/proffitteoy/nothing-new.git"
   },
   "scripts": {
     "notes:build": "node quartz/bootstrap-cli.mjs build -o .quartz-cache/quartz-site",

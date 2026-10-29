@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import PageTransition from "../components/PageTransition"
 import { siteConfig } from "../siteConfig"
 import CloudPlayer from "../components/CloudPlayer"
@@ -7,6 +8,10 @@ import LyricBar from "../components/LyricBar"
 import HomeStoryBoard from "../components/HomeStoryBoard"
 import { ToastProvider } from "../components/ToastProvider"
 import { getNoteManifest } from "../lib/notes/server"
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+}
 
 export default async function Home() {
   const manifest = await getNoteManifest()

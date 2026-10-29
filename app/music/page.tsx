@@ -4,6 +4,7 @@ import MusicClient from "./MusicClient";
 // 🌟 这里是服务端渲染，完美支持 metadata
 export const metadata = {
   title: "音乐馆 | " + siteConfig.title,
+  alternates: { canonical: "/music" },
 };
 
 export default function MusicPage() {

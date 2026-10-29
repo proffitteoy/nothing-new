@@ -35,7 +35,10 @@ export async function generateMetadata({ params }: ChatterNotePageProps): Promis
   }
   if (await isFolderRoute("chatter", route)) {
     const title = decodedPath.at(-1) ?? "杂谈"
-    return { title: `${title} | 杂谈 | ${siteConfig.title}` }
+    return {
+      title: `${title} | 杂谈 | ${siteConfig.title}`,
+      alternates: { canonical: canonicalRoute },
+    }
   }
   return { title: `未找到笔记 | ${siteConfig.title}` }
 }

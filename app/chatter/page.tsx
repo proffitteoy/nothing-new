@@ -9,6 +9,7 @@ import { siteConfig } from "@/siteConfig"
 export const metadata: Metadata = {
   title: `杂谈 | ${siteConfig.title}`,
   description: "按最后修改时间整理的杂谈与项目记录。",
+  alternates: { canonical: "/chatter" },
 }
 
 export default async function ChatterPage() {

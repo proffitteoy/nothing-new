@@ -76,8 +76,8 @@ export const siteConfig = {
       svg: '<path d="M6 10c1.2-3.2 3.3-4.8 6.3-4.8 1.8 0 3.2.7 4.4 2.1.8.9 1.6 1.4 2.6 1.4 1.2 0 2.1-.6 2.7-1.8-1.2 3.2-3.3 4.8-6.3 4.8-1.8 0-3.2-.7-4.4-2.1-.8-.9-1.6-1.4-2.6-1.4-1.2 0-2.1.6-2.7 1.8zm-4 7.1c1.2-3.2 3.3-4.8 6.3-4.8 1.8 0 3.2.7 4.4 2.1.8.9 1.6 1.4 2.6 1.4 1.2 0 2.1-.6 2.7-1.8-1.2 3.2-3.3 4.8-6.3 4.8-1.8 0-3.2-.7-4.4-2.1-.8-.9-1.6-1.4-2.6-1.4-1.2 0-2.1.6-2.7 1.8z"/>',
     },
   ],
-  friendLinkIssueUrl: "https://github.com/proffitteoy/math-vault/issues/new",
+  friendLinkIssueUrl: "https://github.com/proffitteoy/nothing-new/issues/new",
   friendLinkApplyFormat:
-    "名称：阿的宝藏之地\n简介：记录项目、数学思考与杂谈。\n链接：https://nothing-new.icu\n头像：https://nothing-new.icu/avatar",
+    "名称：阿的宝藏之地\n简介：记录项目、数学思考与杂谈。\n链接：https://nothing-new.cn\n头像：https://nothing-new.cn/avatar",
   enableLevelSystem: true,
 }

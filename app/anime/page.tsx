@@ -5,6 +5,7 @@ import AnimeShelf from "./AnimeShelf"
 export const metadata = {
   title: `番剧 | ${siteConfig.title}`,
   description: "记录正在看的与已经看过的动画。",
+  alternates: { canonical: "/anime" },
 }
 
 export default function AnimePage() {

@@ -16,6 +16,7 @@ import Navbar from "../components/Navbar"
 import MobileBackButton from "../components/MobileBackButton"
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://nothing-new.cn"),
   title: siteConfig.title,
   description: siteConfig.bio,
   icons: {

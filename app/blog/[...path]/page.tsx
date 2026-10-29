@@ -35,7 +35,10 @@ export async function generateMetadata({ params }: BlogNotePageProps): Promise<M
   }
   if (await isFolderRoute("blog", route)) {
     const title = decodedPath.at(-1) ?? "笔记"
-    return { title: `${title} | 笔记 | ${siteConfig.title}` }
+    return {
+      title: `${title} | 笔记 | ${siteConfig.title}`,
+      alternates: { canonical: canonicalRoute },
+    }
   }
   return { title: `未找到笔记 | ${siteConfig.title}` }
 }

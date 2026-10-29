@@ -23,12 +23,16 @@ const GITHUB_CONTRIBUTIONS_URL = 'https://github.com/users/proffitteoy/contribut
 
 export const revalidate = 43200;
 
+export const metadata = {
+  alternates: { canonical: "/about" },
+};
+
 async function getGitHubContributions(): Promise<GitHubContributions | null> {
   try {
     const response = await fetch(GITHUB_CONTRIBUTIONS_URL, {
       headers: {
         Accept: 'text/html',
-        'User-Agent': 'nothing-new.icu',
+        'User-Agent': 'nothing-new.cn',
       },
       next: { revalidate: 43200 },
       signal: AbortSignal.timeout(4000),

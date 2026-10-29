@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://nothing-new.icu"><img alt="在线站点" src="https://img.shields.io/badge/在线访问-nothing--new.icu-6366f1?style=flat-square"></a>
+  <a href="https://nothing-new.cn"><img alt="在线站点" src="https://img.shields.io/badge/在线访问-nothing--new.cn-6366f1?style=flat-square"></a>
   <img alt="Next.js 16.2.1" src="https://img.shields.io/badge/Next.js-16.2.1-000000?style=flat-square&logo=next.js">
   <img alt="React 19.2.4" src="https://img.shields.io/badge/React-19.2.4-61DAFB?style=flat-square&logo=react&logoColor=111827">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white">
@@ -26,14 +26,14 @@
 
 | 页面 | 路径                                                       | 主要内容                                               |
 | ---- | ---------------------------------------------------------- | ------------------------------------------------------ |
-| 首页 | [<code>/</code>](https://nothing-new.icu/)                 | 个人资料、内容统计、当前音乐、昼夜与性能模式、站点状态 |
-| 项目 | [<code>/projects</code>](https://nothing-new.icu/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
-| 音乐 | [<code>/music</code>](https://nothing-new.icu/music)       | 网易云歌单、歌词、播放列表与全局悬浮播放器             |
-| 番剧 | [<code>/anime</code>](https://nothing-new.icu/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
-| 杂谈 | [<code>/chatter</code>](https://nothing-new.icu/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
-| 笔记 | [<code>/blog</code>](https://nothing-new.icu/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接 |
-| 友链 | [<code>/friends</code>](https://nothing-new.icu/friends)   | 朋友站点与独立博客入口                                 |
-| 关于 | [<code>/about</code>](https://nothing-new.icu/about)       | 个人介绍、技术足迹与站点信息                           |
+| 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 个人资料、内容统计、当前音乐、昼夜与性能模式、站点状态 |
+| 项目 | [<code>/projects</code>](https://nothing-new.cn/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
+| 音乐 | [<code>/music</code>](https://nothing-new.cn/music)       | 网易云歌单、歌词、播放列表与全局悬浮播放器             |
+| 番剧 | [<code>/anime</code>](https://nothing-new.cn/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
+| 杂谈 | [<code>/chatter</code>](https://nothing-new.cn/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
+| 笔记 | [<code>/blog</code>](https://nothing-new.cn/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接 |
+| 友链 | [<code>/friends</code>](https://nothing-new.cn/friends)   | 朋友站点与独立博客入口                                 |
+| 关于 | [<code>/about</code>](https://nothing-new.cn/about)       | 个人介绍、技术足迹与站点信息                           |
 
 ## 页面预览
 
@@ -82,8 +82,8 @@
 - npm <code>>= 10.9.2</code>
 
 ```bash
-git clone https://github.com/proffitteoy/math-vault.git
-cd math-vault
+git clone https://github.com/proffitteoy/nothing-new.git
+cd nothing-new
 npm ci
 npm run dev
 ```
@@ -132,6 +132,12 @@ Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Tok
 - <code>data/friends.ts</code>：友链数据。
 - <code>content/</code>：笔记与杂谈源内容；<code>math/</code> 进入笔记，<code>misc/</code> 进入普通杂谈，其余公开顶层目录作为杂谈项目文件夹。
 - <code>app/about/about.md</code>：关于页正文。
+
+### 搜索引擎索引
+
+站点正式地址为 <https://nothing-new.cn>。根布局的 <code>metadataBase</code> 将各页面的相对 canonical 解析为新域名下的绝对地址。
+
+<code>app/sitemap.ts</code> 通过 <code>getNoteManifest()</code> 读取构建后的内容清单，收录静态页面、公开目录页及 <code>manifest.artifacts</code> 中的文章，排除 <code>manifest.aliases</code> 历史别名和跳转到文章的 <code>/blog</code> 入口，并对路径去重。新增公开 Markdown 文章后，重新构建即可更新 <code>/sitemap.xml</code>；<code>app/robots.ts</code> 生成的 <code>/robots.txt</code> 允许抓取并声明该 Sitemap 地址。
 
 ### Obsidian 同步
 
@@ -184,7 +190,7 @@ npm run build
 
 ## 贡献
 
-欢迎提交 Bug、文档修正和范围明确的体验改进。界面变更请附上截图，并说明验证方式；功能建议与问题可通过 [GitHub Issues](https://github.com/proffitteoy/math-vault/issues) 提交。
+欢迎提交 Bug、文档修正和范围明确的体验改进。界面变更请附上截图，并说明验证方式；功能建议与问题可通过 [GitHub Issues](https://github.com/proffitteoy/nothing-new/issues) 提交。
 
 ## 许可证与致谢
 
