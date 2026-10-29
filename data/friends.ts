@@ -107,4 +107,12 @@ export const friendsData: Friend[] = [
     url: "https://blog.Ayeez.cn",
     themeColor: "rgba(63, 50, 165, 0.5)",
   },
+  {
+    id: "fengc",
+    name: "fengc's Blog",
+    description: "让我们一起在镜头下发现生活之美",
+    avatar: "https://fengc-img.880200.xyz/api/rfile/logo.png",
+    url: "https://fengcblog.880200.xyz",
+    themeColor: "rgba(63, 50, 165, 0.5)",
+  },
 ]
