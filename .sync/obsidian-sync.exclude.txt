@@ -15,3 +15,9 @@ script/1/服务器现状.md
 script/1/服务器gudhi使用指南.md
 script/1/论文现状.md
 同调投影算子.md
+
+# reverse/ 已保留同一正文与公开 URL；阻止旧 misc 副本再次同步或进入审阅。
+misc/reverse/1000Click.md
+misc/reverse/666.md
+misc/reverse/走迷宫.md
+misc/reverse/Reversing-x64Elf-100.md

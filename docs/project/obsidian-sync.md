@@ -16,7 +16,7 @@ title: Obsidian 同步到博客
 
 笔记与杂谈共用 Quartz 渲染链。正文按 Obsidian 默认阅读模式处理：单次换行显示为换行，空行分隔段落；连续空行不额外生成空段落。普通行内空格遵循 Markdown/HTML 的折叠规则，需要保留的代码缩进请使用代码块。代码、公式、Callout 和内部链接仍由原有插件处理，不通过改写源文或全局 `white-space: pre-wrap` 模拟排版。
 
-`NoteShell` 的正文样式由 `quartz/styles/custom.scss` 生成到 `note.css`，独立恢复段落间距、列表缩进与标题层级，不依赖旧版 Quartz 布局。网页保留自身字体与昼夜配色，不复制 Obsidian 主题的全部样式。
+`NoteShell` 的正文样式由 `quartz/styles/custom.scss` 生成到 `note.css`，独立恢复段落间距、列表缩进与标题层级，不依赖旧版 Quartz 布局。旧网格、侧栏、独立首页与开场动画样式已移除；正文基础样式仍由 `base.scss`、`syntax.scss` 和 `callouts.scss` 提供。网页保留自身字体与昼夜配色，不复制 Obsidian 主题的全部样式。
 
 阅读页的标题、正文、探索栏、目录和反向链接面板均标记为 Field Mode 障碍物；仅登记实际卡片，不登记撑满高度的网格列，沿用已有包围圆避让与安全间距。
 
@@ -122,6 +122,10 @@ glob: misc/private/**
 如果某个文件之前被同步过，后来又从 include 中移除，或者被加入 exclude，下一次执行 `npm run sync:obsidian` 时，它在 `content/` 里的对应文件会被删除。
 
 这样可以保证博客目录和同步配置保持一致，避免已经取消发布的文章继续残留在博客里。
+
+## 已合并的重复笔记
+
+`content/reverse/` 保留 `1000Click.md`、`666.md`、`走迷宫.md` 和 `Reversing-x64Elf-100.md`；`content/misc/reverse/` 下的同正文副本已移除。这两组源路径原本都生成 `/chatter/reverse/<标题>`，因此公开文章 URL 保持不变。旧 `misc/reverse/` 路径已从 include 移除，并逐篇加入 exclude，避免后续同步重新生成副本或再次询问发布决策。Obsidian 源文件不做改动。
 
 ## 注意事项
 

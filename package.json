@@ -1,5 +1,5 @@
 {
-  "name": "personal-blog",
+  "name": "nothing-new",
   "description": "Personal website for projects, notes, music, and long-form knowledge",
   "private": true,
   "version": "0.1.0",
@@ -39,9 +39,9 @@
     "npm": ">=10.9.2"
   },
   "keywords": [
-    "site generator",
-    "ssg",
-    "digital-garden",
+    "personal-website",
+    "nextjs",
+    "quartz",
     "markdown",
     "blog"
   ],

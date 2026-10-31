@@ -11,7 +11,7 @@ title: 第三方代码与授权说明
 - 来源：`jackyzha0/quartz`
 - 上游仓库：https://github.com/jackyzha0/quartz
 - 授权：MIT
-- 本仓库使用位置：`quartz/`、`quartz.config.ts`、`quartz.layout.ts` 及相关内容渲染代码
+- 本仓库使用位置：`quartz/`、`quartz.config.ts`、`components/notes/` 及 `lib/notes/` 内容渲染代码
 - MIT 文本：`docs/licenses/Quartz-MIT.txt`
 
 ## Mineradio 粒子视觉

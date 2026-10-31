@@ -143,10 +143,6 @@ misc/ai学习的原则.md
 misc/kali.md
 misc/linux服务器使用指南.md
 misc/Quartz 部署架构.md
-misc/reverse/1000Click.md
-misc/reverse/666.md
-misc/reverse/走迷宫.md
-misc/reverse/Reversing-x64Elf-100.md
 script/从菲尔兹奖看现代数学中拓扑学和复分析的发展--mathpix扫描识别版.md
 ai/ManiMind/阶段一/前端骨架的实现.md
 ai/ManiMind/阶段一/总目标.md

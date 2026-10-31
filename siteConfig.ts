@@ -25,23 +25,23 @@ export const siteConfig = {
   // 4. 文章默认封面图 (当 Markdown 没写 cover 时显示)
   defaultPostCover: "https://bu.dusays.com/2026/03/24/69c1e38b346cb.jpg",
 
-  // 5. 首页照片墙预览图
-  photoWallImage: "/background.png",
-  cloudMusicIds: ["3313005946", "761594", "2669802224", "3405072664", "2693626963","1809646618","3361076230","1859390262"
+  // 5. 歌单与社交链接
+  cloudMusicIds: [
+    "3313005946",
+    "761594",
+    "2669802224",
+    "3405072664",
+    "2693626963",
+    "1809646618",
+    "3361076230",
+    "1859390262",
   ],
   social: {
     github: "https://github.com/proffitteoy",
-    gitee: "",
-    google: "",
     email: "84025375@qq.com",
     qq: "84025375",
     wechat: "-84025375",
   },
-  counts: {
-    photos: 128, // 照片墙数量可以手动写死或动态计算
-  },
-  chatterTitle: "杂谈", // 你可以改成任何你喜欢的名字
-  chatterDescription: "零散想法、开发记录与日常观察。",
 
   // 👇 【新增】：全局背景弹幕配置
   danmakuList: [
@@ -79,5 +79,4 @@ export const siteConfig = {
   friendLinkIssueUrl: "https://github.com/proffitteoy/nothing-new/issues/new",
   friendLinkApplyFormat:
     "名称：阿的宝藏之地\n简介：记录项目、数学思考与杂谈。\n链接：https://nothing-new.cn\n头像：https://nothing-new.cn/avatar",
-  enableLevelSystem: true,
 }
