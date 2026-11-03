@@ -78,5 +78,5 @@ export const siteConfig = {
   ],
   friendLinkIssueUrl: "https://github.com/proffitteoy/nothing-new/issues/new",
   friendLinkApplyFormat:
-    "名称：阿的宝藏之地\n简介：记录项目、数学思考与杂谈。\n链接：https://nothing-new.cn\n头像：https://nothing-new.cn/avatar",
+    "名称：阿的宝藏之地\n简介：为学日益，为道日损\n链接：https://nothing-new.cn\n头像：https://nothing-new.cn/avatar",
 }
