@@ -115,4 +115,12 @@ export const friendsData: Friend[] = [
     url: "https://fengcblog.880200.xyz",
     themeColor: "rgba(63, 50, 165, 0.5)",
   },
+  {
+    id: "失去理想的獾",
+    name: "失去理想的獾 の Blog",
+    description: "一只獾的生活隙缝",
+    avatar: "https://dbqdss.github.io/img/avatar.jpg",
+    url: "https://dbqdss.github.io/",
+    themeColor: "rgba(63, 50, 165, 0.5)",
+  },
 ]
