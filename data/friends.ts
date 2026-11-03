@@ -113,7 +113,7 @@ export const friendsData: Friend[] = [
     description: "让我们一起在镜头下发现生活之美",
     avatar: "https://fengc-img.880200.xyz/api/rfile/logo.png",
     url: "https://fengcblog.880200.xyz",
-    themeColor: "rgba(63, 50, 165, 0.5)",
+    themeColor: "rgba(142, 20, 46, 0.5)",
   },
   {
     id: "失去理想的獾",
@@ -121,6 +121,14 @@ export const friendsData: Friend[] = [
     description: "一只獾的生活隙缝",
     avatar: "https://dbqdss.github.io/img/avatar.jpg",
     url: "https://dbqdss.github.io/",
-    themeColor: "rgba(63, 50, 165, 0.5)",
+    themeColor: "rgba(60, 155, 172, 0.5)",
+  },
+  {
+    id: "Eliauk",
+    name: "Eliauk's Blog",
+    description: "一方天地，记录代码、生活和偶尔的奇思妙想。",
+    avatar: "https://img.eliauk312.top/avatar/default-avatar.jpg",
+    url: "https://eliauk312.top/",
+    themeColor: "rgba(64, 158, 64, 0.5)",
   },
 ]
