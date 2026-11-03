@@ -131,4 +131,12 @@ export const friendsData: Friend[] = [
     url: "https://eliauk312.top/",
     themeColor: "rgba(64, 158, 64, 0.5)",
   },
+  {
+    id: "Jacky",
+    name: "Jacky's Blog",
+    description: "窗外下雨了",
+    avatar: "https://www.jackyhu.top/avatar.jpg",
+    url: "https://www.jackyhu.top/",
+    themeColor: "rgba(145, 32, 132, 0.5)",
+  },
 ]
