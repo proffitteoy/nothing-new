@@ -12,3 +12,6 @@ private/
 docs/product-design-audit/*.log
 .env*
 !.env.example
+
+# Local navigation visual acceptance screenshots (do not commit binary captures)
+/docs/images/navigation-renewal/

@@ -32,7 +32,8 @@
     "images:dry": "node scripts/sync-image-assets.mjs --dry-run",
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
-    "test": "tsx --test"
+    "test": "tsx --test",
+    "test:navigation": "python scripts/navigation-preview.py --stage after --check-only"
   },
   "engines": {
     "node": "22.x",
