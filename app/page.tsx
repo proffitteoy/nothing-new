@@ -43,9 +43,7 @@ export default async function Home() {
               </div>
 
               {/* 歌词栏 */}
-              <div className="w-full mt-[-10px]">
-                <LyricBar />
-              </div>
+              <LyricBar />
 
               <HomeStoryBoard />
               {/* 底部数据面板 */}

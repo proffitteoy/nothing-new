@@ -4,6 +4,8 @@
 
 ## 目录说明
 
+- `home-music-preview.py`：使用可选 Python Playwright 与固定音乐传输数据，验证真实 Provider 的首页播放、歌词、异常恢复及跨页连续性，输出忽略目录 `.sync/tmp-home-music-evidence/`；详见[首页音乐验收](../docs/project/home-music-renewal.md)。不改应用或线上数据。
+
 - `navigation-preview.py`：使用可选的 Python Playwright 截取八个栏目，并检查桌面／手机导航；运行 `npm run test:navigation` 前先按[导航验收说明](../docs/project/navigation-renewal.md)安装浏览器依赖。仅在本地写入已被 Git 忽略的 `docs/images/navigation-renewal/` 截图，不改业务数据或线上环境。
 
 - assign-chatter-covers.mjs：为 content/misc/ 杂谈分配并固定封面；正文有图片时使用第一张，否则从 public/chatter-covers/ 补充分配。

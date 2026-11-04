@@ -1,30 +1,53 @@
 "use client"
-import { useEffect, useState } from "react"
+
+import { useState, type CSSProperties } from "react"
+import Link from "next/link"
+import { ArrowUpRight, Music2, Pause, Play, RotateCcw, SkipBack, SkipForward } from "lucide-react"
 import { useMusic } from "./MusicProvider"
-// 🌟 核心引入：Next.js 路由钩子
-import { useRouter } from "next/navigation"
 import { getSizedMusicCoverUrl, isNeteaseMusicCoverUrl } from "../lib/image-loading"
+import styles from "./HomeMusic.module.css"
 
 const formatTime = (time: number) => {
-  if (!time || isNaN(time)) return "00:00"
-  const m = Math.floor(time / 60)
+  const seconds = Number.isFinite(time) ? Math.max(0, Math.floor(time)) : 0
+  return `${Math.floor(seconds / 60)
     .toString()
-    .padStart(2, "0")
-  const s = Math.floor(time % 60)
-    .toString()
-    .padStart(2, "0")
-  return `${m}:${s}`
+    .padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`
+}
+
+// Keyed by song and URL below: a failed cover never prevents the next image attempt.
+function CoverArt({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false)
+
+  return (
+    <div className={styles.cover}>
+      {src && !failed ? (
+        <img
+          src={src}
+          alt="专辑封面"
+          width={256}
+          height={256}
+          decoding="async"
+          crossOrigin={isNeteaseMusicCoverUrl(src) ? "anonymous" : undefined}
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className={styles.coverPlaceholder} role="img" aria-label="音乐封面占位">
+          <Music2 size={36} strokeWidth={1} aria-hidden="true" />
+          <span aria-hidden="true">NOTHING NEW / MUSIC</span>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function CloudPlayer() {
   const {
-    playlist,
     currentSong,
     isPlaying,
     progress,
     currentTime,
     duration,
-    currentLyric,
     isLoading,
     musicStatus,
     musicError,
@@ -34,262 +57,132 @@ export default function CloudPlayer() {
     handleSeek,
     retryMusic,
   } = useMusic()
-  const [displayedLyric, setDisplayedLyric] = useState("")
-  // 🌟 初始化路由
-  const router = useRouter()
-
-  useEffect(() => {
-    let i = 0
-    const target = currentLyric || ""
-    const resetTimer = setTimeout(() => setDisplayedLyric(""), 0)
-    if (!target) return () => clearTimeout(resetTimer)
-
-    const typingInterval = setInterval(() => {
-      if (i <= target.length) {
-        setDisplayedLyric(target.slice(0, i))
-        i++
-      } else {
-        clearInterval(typingInterval)
-      }
-    }, 50)
-
-    return () => {
-      clearTimeout(resetTimer)
-      clearInterval(typingInterval)
-    }
-  }, [currentLyric])
-
-  if (isLoading) {
-    return (
-      <div
-        className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col items-center justify-center transition-colors duration-700"
-        role="status"
-        aria-live="polite"
-      >
-        <div
-          className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"
-          aria-hidden="true"
-        ></div>
-        <span className="text-slate-800 dark:text-white font-bold tracking-widest animate-pulse text-sm">
-          连接音乐云端中...
-        </span>
-      </div>
-    )
-  }
-
-  if (playlist.length === 0 || !currentSong) {
-    const isError = musicStatus === "error"
-    return (
-      <div
-        className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col items-center justify-center text-center transition-all duration-700"
-        role="status"
-        aria-live="polite"
-      >
-        <div className="w-16 h-16 mb-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shadow-inner opacity-50">
-          <svg
-            className="w-8 h-8 text-slate-400"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-          </svg>
-        </div>
-        <span className="text-slate-500 dark:text-slate-400 font-bold tracking-widest text-xs">
-          {isError ? "音乐云端连接失败" : "暂无可播放音乐"}
-        </span>
-        <span className="text-[10px] text-slate-400 mt-1">
-          {musicError || "请检查播放列表或网络连接"}
-        </span>
-        <div className="mt-5 flex flex-wrap justify-center gap-2">
-          <button
-            type="button"
-            onClick={retryMusic}
-            className="rounded-full bg-indigo-500 px-4 py-2 text-xs font-black text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-600"
-          >
-            重试连接
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/music")}
-            className="rounded-full bg-white/50 px-4 py-2 text-xs font-black text-slate-700 border border-white/60 transition hover:bg-white/70 dark:bg-slate-900/40 dark:text-slate-200 dark:border-white/10"
-          >
-            打开音乐页
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  const currentCover = getSizedMusicCoverUrl(currentSong.cover || currentSong.pic || "", 256)
-
-  // 🌟 拦截事件防冒泡的专属函数
-  const safeTogglePlay = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    togglePlay()
-  }
-
-  const safePrevSong = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    prevSong()
-  }
-
-  const safeNextSong = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    nextSong()
-  }
-
-  const safeHandleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation()
-    handleSeek(e)
-  }
+  const loading = isLoading || musicStatus === "loading"
+  const ready = !loading && musicStatus === "ready" && Boolean(currentSong)
+  const failed = musicStatus === "error"
+  const cover = ready
+    ? getSizedMusicCoverUrl(currentSong?.cover || currentSong?.pic || "", 256)
+    : ""
+  const title = currentSong?.title || currentSong?.name || "未知歌曲"
+  const artist = currentSong?.artist || currentSong?.author || "未知歌手"
+  const seekProgress = Number.isFinite(progress) ? Math.min(100, Math.max(0, progress)) : 0
+  const stateText = loading
+    ? "正在连接音乐云端"
+    : ready
+      ? isPlaying
+        ? "播放中"
+        : "已暂停"
+      : failed
+        ? "连接中断"
+        : "暂无音轨"
 
   return (
-    <>
-      <style>{`
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #6366f1; cursor: pointer; transition: transform 0.1s; }
-        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
-        @keyframes safeWave { 0%, 100% { height: 4px; } 50% { height: 28px; } }
-        .safe-wave { animation: safeWave 1s ease-in-out infinite; transform-origin: bottom; will-change: height; }
-      `}</style>
+    <section
+      aria-label="首页音乐"
+      aria-busy={loading}
+      data-field-obstacle
+      className={`${styles.visualScope} ${styles.player}`}
+    >
+      <header className={styles.masthead}>
+        <span className={styles.eyebrow}>NOW PLAYING / MUSIC</span>
+        <Link href="/music" className={styles.musicLink}>
+          完整播放器 <ArrowUpRight size={14} aria-hidden="true" />
+        </Link>
+      </header>
 
-      <div
-        data-field-obstacle
-        className="h-full w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col justify-between transition-all duration-700 hover:scale-[1.02] relative group overflow-hidden"
-      >
-        <div
-          className={`absolute -top-20 -right-20 w-48 h-48 bg-indigo-500/20 blur-[50px] rounded-full transition-opacity duration-1000 ${isPlaying ? "opacity-100" : "opacity-30"}`}
-        ></div>
-
-        <div className="flex items-center gap-5 relative z-10 mb-6 mt-2">
-          <div
-            className="w-20 h-20 rounded-full border-2 border-white/50 shadow-lg flex-shrink-0 overflow-hidden relative animate-[spin_6s_linear_infinite]"
-            style={{
-              animationPlayState: isPlaying ? "running" : "paused",
-              willChange: "transform",
-            }}
-          >
-            <img
-              src={currentCover}
-              alt="专辑封面"
-              width={80}
-              height={80}
-              decoding="async"
-              crossOrigin={isNeteaseMusicCoverUrl(currentCover) ? "anonymous" : undefined}
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white/80 backdrop-blur-sm rounded-full border border-gray-300 shadow-inner"></div>
-          </div>
-
-          <div className="flex-col overflow-hidden w-full">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 tracking-widest bg-white/50 dark:bg-slate-900/50 px-2 py-0.5 rounded-sm shadow-sm transition-colors duration-700">
-                云端音乐
-              </span>
-              <button
-                type="button"
-                onClick={() => router.push("/music")}
-                className="rounded-full bg-white/50 px-2.5 py-1 text-[10px] font-black tracking-widest text-slate-600 shadow-sm transition hover:bg-white/70 dark:bg-slate-900/50 dark:text-slate-300"
-              >
-                完整播放器
-              </button>
+      <div className={styles.record}>
+        <CoverArt key={`${currentSong?.id ?? "empty"}:${cover}`} src={cover} />
+        <div className={styles.songInfo}>
+          {loading ? (
+            <div className={styles.skeleton} aria-hidden="true">
+              <span />
+              <span />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white truncate drop-shadow-sm transition-colors duration-700">
-              {currentSong.title}
-            </h3>
-            <p className="text-sm text-slate-700 dark:text-slate-300 font-medium truncate drop-shadow-sm transition-colors duration-700">
-              {currentSong.artist}
-            </p>
-          </div>
-        </div>
-
-        <div className="relative z-10 mb-2 h-6 overflow-hidden">
-          <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">
-            {displayedLyric}
+          ) : (
+            <>
+              <h3 className={styles.title} title={ready ? title : undefined}>
+                {ready ? title : failed ? "音乐连接失败" : "暂无可播放音乐"}
+              </h3>
+              <p
+                className={styles.artist}
+                title={ready ? artist : musicError || "请检查播放列表或网络连接"}
+              >
+                {ready ? artist : musicError || "请检查播放列表或网络连接"}
+              </p>
+            </>
+          )}
+          <p className={styles.playState} role="status">
+            <span
+              className={styles.stateDot}
+              data-playing={ready && isPlaying}
+              aria-hidden="true"
+            />
+            {stateText}
           </p>
         </div>
-
-        <div className="relative z-10 mt-auto">
-          {/* 🌟 核心拦截：把进度条的点击也拦住 */}
-          <div
-            className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 font-bold mb-3 transition-colors duration-700"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation()
-            }}
-          >
-            <span className="w-10 text-right">{formatTime(currentTime)}</span>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              aria-label="播放进度"
-              value={progress}
-              onChange={safeHandleSeek}
-              className="flex-1 h-1.5 bg-white/40 dark:bg-slate-700/50 rounded-full appearance-none outline-none cursor-pointer shadow-inner"
-              style={{
-                background: `linear-gradient(to right, #818cf8 ${progress}%, rgba(148,163,184,0.4) ${progress}%)`,
-              }}
-            />
-            <span className="w-10">{formatTime(duration)}</span>
-          </div>
-
-          {/* 🌟 核心拦截：使用我们上面写的 safe 函数，阻止事件冒泡 */}
-          <div className="flex items-center justify-center gap-6">
-            <button
-              type="button"
-              aria-label="上一首"
-              onClick={safePrevSong}
-              className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors drop-shadow-sm relative z-20"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              aria-label={isPlaying ? "暂停" : "播放"}
-              onClick={safeTogglePlay}
-              className="w-12 h-12 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white/50 dark:border-slate-600 relative z-20"
-            >
-              {isPlaying ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                </svg>
-              ) : (
-                <svg
-                  className="w-5 h-5 ml-1"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
-            </button>
-
-            <button
-              type="button"
-              aria-label="下一首"
-              onClick={safeNextSong}
-              className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors drop-shadow-sm relative z-20"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-              </svg>
-            </button>
-          </div>
-        </div>
       </div>
-    </>
+
+      <div className={styles.playerFooter}>
+        {ready ? (
+          <>
+            <div className={styles.timeline}>
+              <time>{formatTime(currentTime)}</time>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                aria-label="播放进度"
+                aria-valuetext={`${formatTime(currentTime)} / ${formatTime(duration)}`}
+                value={seekProgress}
+                onChange={handleSeek}
+                className={styles.seek}
+                style={{ "--music-progress": `${seekProgress}%` } as CSSProperties}
+              />
+              <time>{formatTime(duration)}</time>
+            </div>
+            <div className={styles.controls}>
+              <button
+                type="button"
+                aria-label="上一首"
+                onClick={prevSong}
+                className={styles.control}
+              >
+                <SkipBack size={20} fill="currentColor" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                aria-label={isPlaying ? "暂停" : "播放"}
+                onClick={togglePlay}
+                className={`${styles.control} ${styles.primaryControl}`}
+              >
+                {isPlaying ? (
+                  <Pause size={20} fill="currentColor" aria-hidden="true" />
+                ) : (
+                  <Play size={20} fill="currentColor" aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
+                aria-label="下一首"
+                onClick={nextSong}
+                className={styles.control}
+              >
+                <SkipForward size={20} fill="currentColor" aria-hidden="true" />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className={styles.recovery}>
+            {loading ? (
+              <p>音乐准备好后，即可从这里播放。</p>
+            ) : (
+              <button type="button" onClick={retryMusic} className={styles.retry}>
+                <RotateCcw size={14} aria-hidden="true" /> 重试连接
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
   )
 }
