@@ -127,13 +127,16 @@ export async function putBlob(
   throw new Error(`Vercel Blob upload failed: ${lastError}`)
 }
 
-export async function fetchBlob(pathname: string, options: { ifNoneMatch?: string } = {}) {
+export async function fetchBlob(
+  pathname: string,
+  options: { ifNoneMatch?: string; useCache?: boolean } = {},
+) {
   const auth = getBlobAuth()
   const credentials =
     auth.kind === "oidc" ? { oidcToken: auth.token, storeId: auth.storeId } : { token: auth.token }
   const result = await getVercelBlob(cleanBlobPath(pathname), {
     access: BLOB_ACCESS,
-    useCache: true,
+    useCache: options.useCache ?? true,
     ifNoneMatch: options.ifNoneMatch,
     abortSignal: AbortSignal.timeout(10_000),
     ...credentials,
