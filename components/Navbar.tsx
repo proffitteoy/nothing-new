@@ -9,20 +9,16 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
+  useReducedMotion,
   PanInfo,
 } from "framer-motion"
 import { siteConfig } from "../siteConfig"
+import styles from "./Navbar.module.css"
+import EulerBridgeMark from "./EulerBridgeMark"
 
 const getMobileDragConstraints = () => {
-  if (typeof window === "undefined") {
-    return { top: 0, bottom: 0 }
-  }
-
-  const vh = window.innerHeight
-  return {
-    top: -(vh / 2) + 80,
-    bottom: vh / 2 - 80,
-  }
+  if (typeof window === "undefined") return { top: 0, bottom: 0 }
+  return { top: -(window.innerHeight / 2) + 80, bottom: window.innerHeight / 2 - 80 }
 }
 
 export const navigationLinks = [
@@ -39,102 +35,132 @@ export const navigationLinks = [
 export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+  const reducedMotion = useReducedMotion()
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const triggerDragged = useRef(false)
+  const wheelDragged = useRef(false)
 
-  // --- 🌟 物理引擎：菜单转动逻辑 ---
   const wheelRef = useRef<HTMLDivElement>(null)
   const rawRotation = useMotionValue(0)
   const smoothRotation = useSpring(rawRotation, { stiffness: 200, damping: 25 })
-  const inverseRotation = useTransform(smoothRotation, (r) => -r)
+  const rotation = reducedMotion ? rawRotation : smoothRotation
+  const inverseRotation = useTransform(rotation, (r) => -r)
 
   const handlePan = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (!wheelRef.current) return
     const rect = wheelRef.current.getBoundingClientRect()
     const centerX = rect.left + rect.width / 2
     const centerY = rect.top + rect.height / 2
-    const currX = info.point.x
-    const currY = info.point.y
-    const prevX = currX - info.delta.x
-    const prevY = currY - info.delta.y
-    const prevAngle = Math.atan2(prevY - centerY, prevX - centerX)
-    const currAngle = Math.atan2(currY - centerY, currX - centerX)
+    const prevAngle = Math.atan2(
+      info.point.y - info.delta.y - centerY,
+      info.point.x - info.delta.x - centerX,
+    )
+    const currAngle = Math.atan2(info.point.y - centerY, info.point.x - centerX)
     let deltaAngle = (currAngle - prevAngle) * (180 / Math.PI)
     if (deltaAngle > 180) deltaAngle -= 360
     if (deltaAngle < -180) deltaAngle += 360
     rawRotation.set(rawRotation.get() + deltaAngle)
   }
 
-  // --- 🌟 物理引擎：手机端按钮拖拽逻辑 ---
   const dragY = useMotionValue(0)
-  const [constraints] = useState(getMobileDragConstraints)
+  const [constraints, setConstraints] = useState(getMobileDragConstraints)
 
   useEffect(() => {
-    if (isMobileMenuOpen) rawRotation.set(0)
-  }, [isMobileMenuOpen, rawRotation])
+    const resize = () => {
+      const next = getMobileDragConstraints()
+      setConstraints(next)
+      dragY.set(Math.max(next.top, Math.min(next.bottom, dragY.get())))
+      if (window.innerWidth >= 768) setIsMobileMenuOpen(false)
+    }
+    window.addEventListener("resize", resize)
+    return () => window.removeEventListener("resize", resize)
+  }, [dragY])
 
   useEffect(() => {
     if (!isMobileMenuOpen) return
+    rawRotation.set(0)
+    closeRef.current?.focus({ preventScroll: true })
+    const trigger = triggerRef.current
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setIsMobileMenuOpen(false)
+      if (event.key !== "Tab") return
+      const controls = dialogRef.current?.querySelectorAll<HTMLElement>("a[href], button")
+      if (!controls?.length) return
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isMobileMenuOpen])
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      document.body.style.overflow = previousOverflow
+      trigger?.focus({ preventScroll: true })
+    }
+  }, [isMobileMenuOpen, rawRotation])
 
   const navLinks = navigationLinks.map((link) =>
     link.href === "/blog" ? { ...link, href: blogHref } : link,
   )
-
-  // 🌟 手机端使用同一份链接，圆盘会基于实际长度均匀排布
-  const mobileNavLinks = navLinks
+  const isCurrent = (link: (typeof navigationLinks)[number]) =>
+    link.name === "笔记"
+      ? pathname === "/blog" || pathname.startsWith("/blog/")
+      : pathname === link.href || (link.href !== "/" && pathname.startsWith(`${link.href}/`))
 
   return (
     <>
-      {/* PC端导航栏 */}
-      <header
-        data-field-obstacle
-        data-site-ui
-        className="hidden md:block w-full fixed top-0 left-0 right-0 z-50 border-b bg-white/40 dark:bg-slate-900/50 backdrop-blur-xl border-white/20 dark:border-white/5 shadow-sm"
-      >
-        <div className="w-[90%] max-w-6xl mx-auto h-16 flex items-center justify-between px-4 sm:px-[30px] box-border">
-          <Link
-            href="/"
-            className="text-xl font-black text-slate-800 dark:text-white tracking-tighter hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-300"
-          >
-            {siteConfig.navTitle || siteConfig.authorName}
-            <span className="text-indigo-500 mx-1">{siteConfig.navSuffix || "の"}</span>
-            {siteConfig.navAfter || "宝藏之地"}
+      <header data-field-obstacle data-site-ui className={`${styles.visualScope} ${styles.header}`}>
+        <div className={styles.desktopInner}>
+          <Link href="/" className={styles.brand}>
+            <EulerBridgeMark className={styles.fieldMark} />
+            <span>
+              {siteConfig.navTitle || siteConfig.authorName}
+              <span className={styles.brandAccent}>{siteConfig.navSuffix || "の"}</span>
+              {siteConfig.navAfter || "宝藏之地"}
+            </span>
           </Link>
-          <nav className="flex gap-8 text-sm font-bold">
-            {/* PC端依然使用全量的 navLinks */}
-            {navLinks.map((link) => {
-              const isActive =
-                link.name === "笔记"
-                  ? pathname.startsWith("/blog")
-                  : pathname === link.href || pathname.startsWith(`${link.href}/`)
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  prefetch={true}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`relative py-1 transition-colors ${isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-700 dark:text-slate-200 hover:text-indigo-600"}`}
-                >
-                  {link.name}
-                  {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full animate-pulse"></span>
-                  )}
-                </Link>
-              )
-            })}
+          <nav aria-label="主导航" className={styles.desktopLinks}>
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                prefetch={true}
+                aria-current={isCurrent(link) ? "page" : undefined}
+                className={styles.desktopLink}
+              >
+                {link.name}
+                {isCurrent(link) && (
+                  <motion.span
+                    className={styles.activeLine}
+                    layoutId="navigation-active-line"
+                    transition={{ duration: reducedMotion ? 0 : 0.3, ease: "easeInOut" }}
+                    aria-hidden="true"
+                  >
+                    <svg viewBox="0 0 40 5" preserveAspectRatio="none" fill="none">
+                      <path d="M1 4Q20 -2 39 4" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                  </motion.span>
+                )}
+              </Link>
+            ))}
           </nav>
         </div>
       </header>
 
-      {/* 📱 手机端：可拖拽吸附的触发球 */}
-      <div className="md:hidden" data-site-ui>
+      <div className={`${styles.visualScope} ${styles.mobile}`} data-site-ui>
         <motion.button
+          ref={triggerRef}
           type="button"
           aria-label="打开导航"
           aria-expanded={isMobileMenuOpen}
@@ -144,21 +170,20 @@ export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
           dragElastic={0.1}
           dragMomentum={false}
           style={{ y: dragY }}
-          onClick={() => {
-            if (Math.abs(dragY.getVelocity()) < 10) {
-              setIsMobileMenuOpen(true)
-            }
+          onPointerDown={() => {
+            triggerDragged.current = false
           }}
-          className={`fixed top-1/2 right-0 -translate-y-1/2 w-12 h-28 bg-indigo-500/80 backdrop-blur-xl rounded-l-full shadow-[-5px_0_20px_rgba(99,102,241,0.4)] z-[60] flex items-center justify-center transition-all duration-500 border-y border-l border-white/30 touch-none ${isMobileMenuOpen ? "translate-x-full opacity-0 pointer-events-none" : "translate-x-0 opacity-100"}`}
+          onDragStart={() => {
+            triggerDragged.current = true
+          }}
+          onClick={(event) => {
+            if (event.detail === 0 || !triggerDragged.current) setIsMobileMenuOpen(true)
+          }}
+          className={styles.trigger}
         >
-          <div className="flex flex-col gap-1.5 items-center justify-center mr-2">
-            <div className="w-1.5 h-1.5 bg-white/90 rounded-full"></div>
-            <div className="w-1.5 h-1.5 bg-white/90 rounded-full"></div>
-            <div className="w-1.5 h-1.5 bg-white/90 rounded-full"></div>
-          </div>
+          {!isMobileMenuOpen && <EulerBridgeMark className={styles.fieldMark} />}
         </motion.button>
 
-        {/* 2. 居中展开的巨型全圆转轴 */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <>
@@ -166,69 +191,76 @@ export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: reducedMotion ? 0 : 0.18 }}
                 aria-hidden="true"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[65]"
+                className={styles.backdrop}
               />
-
               <motion.div
-                initial={{ scale: 0.5, opacity: 0, rotate: -90 }}
-                animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                exit={{ scale: 0.5, opacity: 0, rotate: 90 }}
-                transition={{ type: "spring", damping: 20, stiffness: 150 }}
+                ref={dialogRef}
+                initial={reducedMotion ? false : { scale: 0.92, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: reducedMotion ? 1 : 0.92, opacity: 0 }}
+                transition={{ duration: reducedMotion ? 0 : 0.3, ease: "easeOut" }}
                 id="mobile-nav-wheel"
                 role="dialog"
                 aria-modal="true"
                 aria-label="移动导航"
-                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] z-[70] pointer-events-none"
+                className={styles.wheelDialog}
               >
+                <p className={styles.wheelCaption}>目录 / INDEX</p>
                 <motion.div
                   ref={wheelRef}
-                  style={{ rotate: smoothRotation }}
+                  style={{ rotate: rotation }}
+                  onPointerDownCapture={() => {
+                    wheelDragged.current = false
+                  }}
+                  onPanStart={() => {
+                    wheelDragged.current = true
+                  }}
                   onPan={handlePan}
-                  className="w-full h-full rounded-full border border-white/30 dark:border-slate-500/50 bg-white/40 dark:bg-slate-800/50 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] pointer-events-auto relative cursor-grab active:cursor-grabbing"
+                  onClickCapture={(event) => {
+                    // A rotation gesture ending over a link must not navigate.
+                    if (event.detail !== 0 && wheelDragged.current) {
+                      event.preventDefault()
+                      event.stopPropagation()
+                    }
+                  }}
+                  className={styles.wheel}
                 >
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-700 border-4 border-slate-300 dark:border-slate-500 flex items-center justify-center shadow-inner z-10">
-                    <button
-                      type="button"
-                      aria-label="关闭导航"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center text-white font-black shadow-lg hover:bg-red-500 hover:rotate-90 transition-all duration-300 active:scale-95"
-                    >
-                      <span aria-hidden="true">✕</span>
-                    </button>
-                  </div>
-
-                  {/* 🌟 手机端轮盘渲染：使用过滤后的 mobileNavLinks */}
-                  {mobileNavLinks.map((link, index) => {
-                    const isActive =
-                      link.name === "笔记"
-                        ? pathname.startsWith("/blog")
-                        : pathname === link.href || pathname.startsWith(`${link.href}/`)
-                    // 🌟 角度计算也会基于过滤后的长度，保证图标自动均匀排布！
-                    const angle = index * (360 / mobileNavLinks.length)
-
+                  <motion.button
+                    ref={closeRef}
+                    type="button"
+                    aria-label="关闭导航"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{ rotate: inverseRotation }}
+                    className={styles.wheelCenter}
+                  >
+                    <EulerBridgeMark className={styles.fieldMark} />
+                    <span>关闭</span>
+                  </motion.button>
+                  {navLinks.map((link, index) => {
+                    const angle = index * (360 / navLinks.length)
                     return (
                       <div
                         key={link.href}
-                        className="absolute top-1/2 left-1/2 w-14 h-14 -ml-7 -mt-7 flex items-center justify-center"
+                        className={styles.wheelItem}
                         style={{
-                          transform: `rotate(${angle}deg) translateY(-115px) rotate(${-angle}deg)`,
+                          transform: `rotate(${angle}deg) translateY(calc(var(--wheel-size) * -0.35)) rotate(${-angle}deg)`,
                         }}
                       >
-                        <motion.div style={{ rotate: inverseRotation }} className="w-full h-full">
+                        <motion.div
+                          style={{ rotate: inverseRotation }}
+                          className={styles.counterRotation}
+                        >
                           <Link
                             href={link.href}
                             prefetch={true}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            aria-current={isActive ? "page" : undefined}
-                            className={`flex items-center justify-center w-full h-full rounded-full transition-all duration-300 ${
-                              isActive
-                                ? "bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.8)] scale-110"
-                                : "bg-white/90 dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-md hover:scale-110 border border-white/50 dark:border-slate-600"
-                            }`}
+                            aria-current={isCurrent(link) ? "page" : undefined}
+                            className={styles.wheelLink}
                           >
-                            <span className="text-[11px] font-black">{link.name}</span>
+                            {link.name}
                           </Link>
                         </motion.div>
                       </div>

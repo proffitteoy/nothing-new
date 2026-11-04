@@ -1,0 +1,326 @@
+/* Visual renewal tokens stay inside the navigation until each page is reviewed. */
+.visualScope {
+  --journal-paper: #f8f7f3;
+  --journal-ink: #252936;
+  --journal-muted: #626875;
+  --journal-accent: #625eb0;
+  --journal-line: #dddde2;
+  --journal-pink: #e8a8b5;
+  --journal-ui: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --journal-display: "Newsreader", "Source Han Serif SC", "Noto Serif SC", "SimSun", serif;
+  color: var(--journal-ink);
+  font-family: var(--journal-ui);
+}
+
+:global(.dark) .visualScope {
+  --journal-paper: #141923;
+  --journal-ink: #e9eaf0;
+  --journal-muted: #a1a7b5;
+  --journal-accent: #a4a0ee;
+  --journal-line: #343a48;
+  --journal-pink: #d68ea9;
+}
+
+.visualScope a:focus-visible,
+.visualScope button:focus-visible {
+  outline: 2px solid var(--journal-accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  display: none;
+  border-bottom: 1px solid var(--journal-line);
+  background: color-mix(in srgb, var(--journal-paper) 96%, transparent);
+}
+
+.desktopInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: calc(100% - 64px);
+  max-width: 1248px;
+  height: 72px;
+  margin-inline: auto;
+}
+
+.brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--journal-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.brandAccent {
+  color: var(--journal-accent);
+}
+
+.brandAccent {
+  margin-inline: 3px;
+}
+
+.fieldMark {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.desktopLinks {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 14px;
+}
+
+.desktopLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding-inline: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  transition: color 180ms ease;
+}
+
+.desktopLink:hover,
+.desktopLink[aria-current="page"] {
+  color: var(--journal-accent);
+}
+
+.desktopLink::after {
+  position: absolute;
+  inset: auto 9px 15px;
+  height: 1px;
+  background: var(--journal-line);
+  content: "";
+  transform: scaleX(0);
+  transition: transform 180ms ease;
+}
+
+.desktopLink:hover::after {
+  transform: scaleX(1);
+}
+
+.activeLine {
+  position: absolute;
+  inset: auto 7px 12px;
+  height: 5px;
+  color: var(--journal-accent);
+  pointer-events: none;
+}
+
+.activeLine svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mobile {
+  --wheel-size: min(320px, calc(100vw - 32px), calc(100dvh - 96px));
+}
+
+.trigger {
+  position: fixed;
+  top: 50%;
+  right: 8px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 72px;
+  translate: 0 -50%;
+  border: 1px solid var(--journal-line);
+  border-radius: 28px;
+  background: var(--journal-paper);
+  box-shadow: 0 4px 18px rgb(20 25 35 / 12%);
+  cursor: grab;
+  touch-action: none;
+}
+
+.trigger:active,
+.wheel:active {
+  cursor: grabbing;
+}
+
+.trigger[aria-expanded="true"] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  background: rgb(20 25 35 / 46%);
+  backdrop-filter: blur(4px);
+}
+
+.wheelDialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 70;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+  translate: -50% -50%;
+}
+
+.wheelCaption {
+  position: absolute;
+  inset: -32px 0 auto;
+  color: #f8f7f3;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.wheel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--journal-line);
+  border-radius: 50%;
+  background: var(--journal-paper);
+  box-shadow: 0 16px 64px rgb(20 25 35 / 20%);
+  cursor: grab;
+  touch-action: none;
+}
+
+.wheel::before,
+.wheel::after {
+  position: absolute;
+  border: 1px solid var(--journal-line);
+  border-radius: 50%;
+  pointer-events: none;
+  content: "";
+}
+
+.wheel::before {
+  inset: 14%;
+}
+
+.wheel::after {
+  inset: 25%;
+  border-color: color-mix(in srgb, var(--journal-pink) 55%, var(--journal-line));
+  transform: scaleX(0.72) rotate(-35deg);
+}
+
+.wheelCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 76px;
+  height: 76px;
+  margin: -38px;
+  border: 1px solid var(--journal-line);
+  border-radius: 50%;
+  background: var(--journal-paper);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.wheelItem {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  margin: -26px;
+}
+
+.counterRotation {
+  width: 100%;
+  height: 100%;
+}
+
+.wheelLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--journal-line);
+  border-radius: 50%;
+  background: var(--journal-paper);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease;
+}
+
+.wheelLink:hover {
+  color: var(--journal-accent);
+  border-color: var(--journal-accent);
+}
+
+.wheelLink[aria-current="page"] {
+  color: var(--journal-paper);
+  border-color: var(--journal-accent);
+  background: var(--journal-accent);
+}
+
+@media (min-width: 768px) {
+  .header {
+    display: block;
+  }
+
+  .mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .desktopInner {
+    width: calc(100% - 40px);
+    gap: 16px;
+  }
+
+  .brand {
+    gap: 8px;
+    font-size: 18px;
+  }
+
+  .brand .fieldMark {
+    width: 26px;
+    height: 26px;
+  }
+
+  .desktopLinks {
+    gap: 0;
+  }
+
+  .desktopLink {
+    padding-inline: 7px;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visualScope a,
+  .visualScope button,
+  .desktopLink::after {
+    transition: none;
+  }
+}

@@ -4,6 +4,8 @@
 
 ## 目录说明
 
+- `navigation-preview.py`：使用可选的 Python Playwright 截取八个栏目，并检查桌面／手机导航；运行 `npm run test:navigation` 前先按[导航验收说明](../docs/project/navigation-renewal.md)安装浏览器依赖。仅在本地写入已被 Git 忽略的 `docs/images/navigation-renewal/` 截图，不改业务数据或线上环境。
+
 - assign-chatter-covers.mjs：为 content/misc/ 杂谈分配并固定封面；正文有图片时使用第一张，否则从 public/chatter-covers/ 补充分配。
 - `sync-image-assets.mjs`：把站点头像、背景、杂谈封面与构建后的 Quartz 文章图片增量同步到私有 Vercel Blob。
 - `obsidian-sync.mjs`：把 Obsidian 源目录中的已批准内容同步到 `content/`。
