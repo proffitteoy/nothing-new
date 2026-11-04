@@ -4,6 +4,8 @@
 
 ## 目录说明
 
+- `mode-panels-preview.py`：#49 两面板的七种宽度、四种组合截图与操作回归；仅写入忽略目录 `.sync/tmp-mode-panels/`，用法见[面板验收说明](../docs/project/home-mode-panels.md)。
+
 - `navigation-preview.py`：使用可选的 Python Playwright 截取八个栏目，并检查桌面／手机导航；运行 `npm run test:navigation` 前先按[导航验收说明](../docs/project/navigation-renewal.md)安装浏览器依赖。仅在本地写入已被 Git 忽略的 `docs/images/navigation-renewal/` 截图，不改业务数据或线上环境。
 
 - assign-chatter-covers.mjs：为 content/misc/ 杂谈分配并固定封面；正文有图片时使用第一张，否则从 public/chatter-covers/ 补充分配。
