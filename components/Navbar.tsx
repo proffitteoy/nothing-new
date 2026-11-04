@@ -14,6 +14,7 @@ import {
 } from "framer-motion"
 import { siteConfig } from "../siteConfig"
 import styles from "./Navbar.module.css"
+import EulerBridgeMark from "./EulerBridgeMark"
 
 const getMobileDragConstraints = () => {
   if (typeof window === "undefined") return { top: 0, bottom: 0 }
@@ -30,21 +31,6 @@ export const navigationLinks = [
   { name: "友链", href: "/friends" },
   { name: "关于", href: "/about" },
 ]
-
-// A static geometric signature: no additional canvas or animation loop.
-function FieldMark() {
-  return (
-    <svg className={styles.fieldMark} viewBox="0 0 40 40" fill="none" aria-hidden="true">
-      <circle cx="20" cy="20" r="17" stroke="currentColor" strokeOpacity="0.25" />
-      <path
-        d="M4 23C12 4 22 36 36 17M5 29C15 10 23 40 35 11M5 16C17 0 25 30 35 5"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
 
 export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -137,7 +123,7 @@ export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
       <header data-field-obstacle data-site-ui className={`${styles.visualScope} ${styles.header}`}>
         <div className={styles.desktopInner}>
           <Link href="/" className={styles.brand}>
-            <FieldMark />
+            <EulerBridgeMark className={styles.fieldMark} />
             <span>
               {siteConfig.navTitle || siteConfig.authorName}
               <span className={styles.brandAccent}>{siteConfig.navSuffix || "の"}</span>
@@ -195,7 +181,7 @@ export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
           }}
           className={styles.trigger}
         >
-          <FieldMark />
+          {!isMobileMenuOpen && <EulerBridgeMark className={styles.fieldMark} />}
         </motion.button>
 
         <AnimatePresence>
@@ -250,7 +236,7 @@ export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
                     style={{ rotate: inverseRotation }}
                     className={styles.wheelCenter}
                   >
-                    <FieldMark />
+                    <EulerBridgeMark className={styles.fieldMark} />
                     <span>关闭</span>
                   </motion.button>
                   {navLinks.map((link, index) => {

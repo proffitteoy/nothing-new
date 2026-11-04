@@ -60,8 +60,7 @@
   white-space: nowrap;
 }
 
-.brandAccent,
-.fieldMark {
+.brandAccent {
   color: var(--journal-accent);
 }
 
