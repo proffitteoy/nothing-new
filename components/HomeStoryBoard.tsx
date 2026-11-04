@@ -14,7 +14,7 @@ export default async function HomeStoryBoard() {
       aria-label="主题与论文周报"
     >
       <div
-        className="grid min-h-[280px] grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-4 lg:min-h-[340px] lg:grid-cols-1 lg:grid-rows-2 lg:self-start"
+        className="grid min-h-[280px] grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-4 lg:min-h-[340px] lg:grid-cols-1 lg:grid-rows-2"
         data-field-obstacle
       >
         <ThemeToggleBlock />

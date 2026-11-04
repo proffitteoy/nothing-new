@@ -10,8 +10,17 @@
 
 .cover {
   position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
   min-height: 320px;
+  text-align: left;
   color: white;
+  cursor: pointer;
+}
+.cover:focus-visible {
+  outline: 2px solid #bae6fd;
+  outline-offset: -6px;
 }
 .shade {
   position: absolute;
@@ -25,21 +34,25 @@
   padding: 1.75rem;
 }
 .eyebrow {
+  display: block;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.25em;
   color: #bae6fd;
 }
-.heading h2 {
+.title {
+  display: block;
   margin-top: 0.65rem;
   font-size: clamp(1.8rem, 4vw, 2.4rem);
   line-height: 1.3;
 }
 .subtitle {
+  display: block;
   margin-top: 0.5rem;
   font-size: 0.85rem;
   color: #e2e8f0;
 }
+.coverMeta,
 .issue {
   display: flex;
   flex-wrap: wrap;
@@ -48,20 +61,111 @@
   margin-top: 1.25rem;
   font-size: 0.75rem;
 }
-.issue span {
+.coverMeta {
+  justify-content: space-between;
+  color: #e2e8f0;
+}
+.openHint,
+.issue > span {
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
 }
+.openHint {
+  color: #bae6fd;
+}
+.dialog {
+  width: min(720px, calc(100vw - 2rem));
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: #0f172a;
+}
+.dialog::backdrop {
+  background: rgb(15 23 42 / 48%);
+  backdrop-filter: blur(6px);
+}
+.paperDialog {
+  width: min(680px, calc(100vw - 3rem));
+}
+.paperDialog::backdrop {
+  background: rgb(15 23 42 / 28%);
+  backdrop-filter: blur(2px);
+}
+.window {
+  display: flex;
+  flex-direction: column;
+  max-height: min(80dvh, 820px);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 65%);
+  border-radius: 1.5rem;
+  background: #f8fafc;
+  box-shadow: 0 32px 100px rgb(15 23 42 / 35%);
+}
+.paperDialog .window {
+  max-height: calc(100dvh - 3rem);
+}
+.windowHeader {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid rgb(148 163 184 / 25%);
+}
+.windowHeader h2 {
+  margin-top: 0.3rem;
+  font-size: 1.35rem;
+}
+.windowEyebrow {
+  color: #64748b;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+}
+.iconButton {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.iconButton:hover {
+  background: rgb(100 116 139 / 12%);
+}
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  font-size: 0.8rem;
+  color: #537187;
+  cursor: pointer;
+}
+.issue {
+  margin: 0 0 1.25rem;
+  justify-content: space-between;
+  color: #64748b;
+}
 .issue select {
   max-width: 100%;
-  border: 1px solid rgb(255 255 255 / 30%);
+  border: 1px solid #cbd5e1;
   border-radius: 0.5rem;
   padding: 0.35rem 0.5rem;
-  background: #172335;
-  color: white;
+  background: #f1f5f9;
+  color: #334155;
 }
 .reading {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   padding: 1.25rem 1.5rem;
 }
 .listLabel {
@@ -99,8 +203,7 @@
     background 0.2s,
     border-color 0.2s;
 }
-.paper:hover,
-.active {
+.paper:hover {
   border-color: #647f94;
   background: #e8f0f4;
 }
@@ -123,20 +226,12 @@
   margin-top: 0.2rem;
   transition: transform 0.2s;
 }
-.active .chevron {
-  transform: rotate(180deg);
-}
 .panel button:focus-visible,
 .panel a:focus-visible,
 .panel select:focus-visible,
 .panel summary:focus-visible {
   outline: 2px solid #0284c7;
   outline-offset: 4px;
-}
-.article {
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid #cbd5e1;
 }
 .articleBar {
   display: flex;
@@ -147,18 +242,7 @@
   font-size: 0.7rem;
   font-weight: 700;
 }
-.articleBar button {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 50%;
-  cursor: pointer;
-}
-.articleBar button:hover {
-  background: rgb(100 116 139 / 12%);
-}
-.article h3 {
+.paperTitle {
   margin: 0.6rem 0 1.3rem;
   font-size: 1.2rem;
   line-height: 1.6;
@@ -249,13 +333,22 @@
   border-color: rgb(255 255 255 / 10%);
   background: rgb(15 23 42 / 92%);
 }
+:global(.dark) .window {
+  background: #0f172a;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+:global(.dark) .issue select {
+  color: #e2e8f0;
+  background: #1e293b;
+  border-color: #475569;
+}
 :global(.dark) .paper {
   border-color: #475569;
   color: #e2e8f0;
   background: rgb(30 41 59 / 60%);
 }
-:global(.dark) .paper:hover,
-:global(.dark) .active {
+:global(.dark) .paper:hover {
   border-color: #7dd3fc;
   background: #253a4a;
 }
@@ -268,16 +361,22 @@
 }
 :global(.dark) .listLabel,
 :global(.dark) .footer,
+:global(.dark) .issue,
+:global(.dark) .windowEyebrow,
 :global(.dark) .number {
   color: #94a3b8;
 }
 :global(.dark) .articleBar,
+:global(.dark) .backButton,
 :global(.dark) .prose a,
 :global(.dark) .source {
   color: #7dd3fc;
 }
-:global(.dark) .article {
-  border-color: #475569;
+
+@media (min-width: 1024px) {
+  .cover {
+    min-height: 340px;
+  }
 }
 
 @media (max-width: 639px) {
@@ -292,6 +391,19 @@
   }
   .papers {
     grid-template-columns: 1fr;
+  }
+  .dialog {
+    width: calc(100vw - 1rem);
+  }
+  .paperDialog {
+    width: calc(100vw - 1.5rem);
+  }
+  .window {
+    max-height: calc(100dvh - 3rem);
+    border-radius: 1.2rem;
+  }
+  .windowHeader {
+    padding: 0.75rem 1.1rem;
   }
 }
 
