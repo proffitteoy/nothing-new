@@ -63,7 +63,7 @@
 - **项目与兴趣归档**：项目页采用可环绕的窗边研究小屋，保留静态预览和可读目录；项目内容由本地数据维护，番剧页通过服务端 Bangumi API 获取收藏数据。
 - **双内容分区**：<code>content/math/</code> 生成笔记，<code>content/misc/</code> 生成普通杂谈卡片，其余公开顶层目录在杂谈页显示为带图片的项目文件夹封面。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理；页面布局由 Next.js 提供，仅保留笔记正文所需的 Quartz 样式。
-- **统一图片存储**：生产部署会把站点背景、头像、杂谈封面与 Quartz 文章图片增量同步到私有 Vercel Blob，并通过原有站内路径读取。
+- **公开图片静态分发**：站点背景、头像、杂谈封面与 Quartz 文章图片直接由构建产物及 CDN 提供。私有 Blob 仅保留动漫快照/封面、论文周报等动态数据；如需维护历史 Blob 图片，显式运行 `npm run images:sync`。
 - **可审阅的发布流程**：Obsidian 同步先判断哪些笔记允许公开，再单向写入 <code>content/</code>；杂谈封面会被固定到 frontmatter，保证后续构建稳定。
 
 ## 技术栈
@@ -179,7 +179,7 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 
 ## 部署
 
-推荐使用 Vercel。导入仓库后保持 Root Directory 为仓库根目录，使用 <code>npm run build</code>，Node.js 版本选择 <code>22.x</code>。连接私有 Vercel Blob 后，构建会增量上传站点自有图片，生产请求统一从 Blob 读取；<code>/avatar</code>、<code>/avatar.jpg</code>、杂谈封面及 Quartz 附件的原有 URL 都保持不变。友链头像等第三方图片仍使用各自来源。如需番剧页面，再在部署环境中配置 <code>BANGUMI_ACCESS_TOKEN</code>。
+Vercel 仍受支持。导入仓库后保持 Root Directory 为仓库根目录，使用 <code>npm run build</code>，Node.js 版本选择 <code>22.x</code>。公开图片直接由静态文件服务分发，保留 <code>/avatar</code>、<code>/avatar.jpg</code>、杂谈封面及 Quartz 附件的原有 URL；构建不再自动上传 Blob。动漫快照、动漫封面和 TDA 论文周报仍使用私有 Blob。友链头像等第三方图片仍使用各自来源。如需番剧页面，再配置 <code>BANGUMI_ACCESS_TOKEN</code>。自托管 Docker 预案与正式切流/备案条件见 [迁移预案](docs/project/vercel-origin-transfer-migration.md)。
 
 部署前建议运行：
 
