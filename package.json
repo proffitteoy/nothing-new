@@ -14,7 +14,7 @@
   "scripts": {
     "notes:build": "node quartz/bootstrap-cli.mjs build -o .quartz-cache/quartz-site",
     "dev": "npm run notes:build && next dev",
-    "build": "npm run notes:build && npm run images:sync && next build",
+    "build": "npm run notes:build && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
