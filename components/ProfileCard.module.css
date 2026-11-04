@@ -1,0 +1,252 @@
+.profile {
+  --profile-paper: #f8f7f3;
+  --profile-ink: #252936;
+  --profile-muted: #626875;
+  --profile-accent: #625eb0;
+  --profile-line: #dddde2;
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: 24px 28px 12px;
+  color: var(--profile-ink);
+  font-family: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+:global(.dark) .profile {
+  --profile-paper: #141923;
+  --profile-ink: #e9eaf0;
+  --profile-muted: #a1a7b5;
+  --profile-accent: #a4a0ee;
+  --profile-line: #343a48;
+}
+
+/* A fading local paper wash keeps the real illustration visible at the edges. */
+.profile::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -16px -8px;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--profile-paper) 96%, transparent) 10%,
+    color-mix(in srgb, var(--profile-paper) 90%, transparent) 72%,
+    transparent
+  );
+  mask-image:
+    linear-gradient(90deg, transparent, #000 6%, #000 85%, transparent),
+    linear-gradient(180deg, transparent, #000 8%, #000 88%, transparent);
+  mask-composite: intersect;
+}
+
+.about {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.eyebrow {
+  margin: 0 0 20px;
+  color: var(--profile-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.16em;
+}
+
+.identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.name {
+  min-width: 0;
+  margin: 12px 0 0;
+  font-family: "Newsreader", "Source Han Serif SC", "Noto Serif SC", "SimSun", serif;
+  font-size: 96px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+  transition: color 180ms ease;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 96px;
+  margin: 0 12px 0 0;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--profile-paper);
+}
+
+.bio {
+  max-width: 29em;
+  margin: 0;
+  font-family: "Source Han Serif SC", "Noto Serif SC", "SimSun", serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 26px 0 0;
+  padding: 18px 0;
+  border-block: 1px solid var(--profile-line);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding-inline: 18px;
+}
+
+.stat:first-child {
+  padding-left: 0;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--profile-line);
+}
+
+.count {
+  order: -1;
+  margin: 0;
+  font-size: 30px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.statLabel {
+  color: var(--profile-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.12em;
+}
+
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  margin-left: -12px;
+}
+
+.social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--profile-muted);
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+.social svg {
+  width: 20px;
+  height: 20px;
+}
+
+.about:hover .name,
+.social:hover {
+  color: var(--profile-accent);
+}
+
+.social:hover {
+  background: color-mix(in srgb, var(--profile-accent) 9%, transparent);
+}
+
+.about:focus-visible,
+.social:focus-visible {
+  outline: 2px solid var(--profile-accent);
+  outline-offset: 5px;
+}
+
+@media (max-width: 767px) {
+  .profile {
+    padding: 20px 20px 8px;
+  }
+
+  .eyebrow {
+    margin-bottom: 18px;
+    letter-spacing: 0.12em;
+  }
+
+  .name {
+    font-size: 72px;
+  }
+
+  .avatar {
+    width: 80px;
+    height: 80px;
+    margin-right: 4px;
+  }
+
+  .bio {
+    font-size: 15px;
+  }
+
+  .stats {
+    margin-top: 22px;
+  }
+
+  .stat {
+    padding-inline: 12px;
+  }
+
+  .count {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 374px) {
+  .profile {
+    padding-inline: 16px;
+  }
+
+  .name {
+    font-size: 60px;
+  }
+
+  .avatar {
+    width: 68px;
+    height: 68px;
+    margin-right: 0;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 20px;
+  }
+
+  .stat:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .name,
+  .social {
+    transition: none;
+  }
+}
