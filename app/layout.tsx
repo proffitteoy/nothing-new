@@ -44,8 +44,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               // Decide before hydration so subpage refreshes never flash the avatar intro.
               document.documentElement.dataset.startupEntry = location.pathname === '/' ? 'home' : 'page';
               document.documentElement.dataset.startupPhase = location.pathname === '/' ? 'loading' : 'preparing';
-              // Never leave the document inaccessible when hydration fails.
-              window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 9000);
+              // Fail open if hydration or the animation fails; allow 7.4 s animation + 10 s logo hold.
+              window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 22000);
             `,
           }}
         />
