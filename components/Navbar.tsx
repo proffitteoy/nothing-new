@@ -117,6 +117,9 @@ export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
       ? pathname === "/blog" || pathname.startsWith("/blog/")
       : pathname === link.href || (link.href !== "/" && pathname.startsWith(`${link.href}/`))
 
+  // Home owns its scoped scene navigation. Keep the existing inner-page shell.
+  if (pathname === "/") return null
+
   return (
     <>
       <header data-field-obstacle data-site-ui className={`${styles.visualScope} ${styles.header}`}>
@@ -134,7 +137,7 @@ export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
               <Link
                 key={link.href}
                 href={link.href}
-                prefetch={true}
+                prefetch={link.href !== "/"}
                 aria-current={isCurrent(link) ? "page" : undefined}
                 className={styles.desktopLink}
               >
@@ -253,8 +256,8 @@ export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
                           className={styles.counterRotation}
                         >
                           <Link
-                            href={link.href}
-                            prefetch={true}
+                            href={link.href === "/" ? "/blog" : link.href}
+                            prefetch={link.href !== "/"}
                             onClick={() => setIsMobileMenuOpen(false)}
                             aria-current={isCurrent(link) ? "page" : undefined}
                             className={styles.wheelLink}

@@ -1,0 +1,21 @@
+{
+  "recorded_at": "2026-11-05T09:13:29.142527+00:00",
+  "scope": "component contract only; #51/#67 composition and #68 destruction unverified",
+  "transport": "fixed music API and HTTP Range WAV; real root MusicProvider and HTMLAudioElement",
+  "checks": [
+    "1024/no-preference: buttons, pointer into controls, Escape/focus, inert closed view, blur, persistent playback, bottom/click-through lyrics, flexible width and long text",
+    "1024/reduce: buttons, pointer into controls, Escape/focus, inert closed view, blur, persistent playback, bottom/click-through lyrics, flexible width and long text",
+    "1280/no-preference: buttons, pointer into controls, Escape/focus, inert closed view, blur, persistent playback, bottom/click-through lyrics, flexible width and long text",
+    "1280/reduce: buttons, pointer into controls, Escape/focus, inert closed view, blur, persistent playback, bottom/click-through lyrics, flexible width and long text",
+    "1440/no-preference: buttons, pointer into controls, Escape/focus, inert closed view, blur, persistent playback, bottom/click-through lyrics, flexible width and long text",
+    "1440/reduce: buttons, pointer into controls, Escape/focus, inert closed view, blur, persistent playback, bottom/click-through lyrics, flexible width and long text",
+    "real audio pause/resume, timed lyrics, keyboard/pointer seek, next/previous, no-lyrics collapse, Next navigation to about and back preserves same playing audio element and time",
+    "actual homepage at 1024/1280/1440 has no old music card or lyric row; same root audio keeps playing",
+    "loading: no invalid controls/lyric placeholder",
+    "empty: no invalid controls/lyric placeholder; retry recovers",
+    "error: no invalid controls/lyric placeholder; retry recovers",
+    "empty parsed lyrics produce no lyric DOM"
+  ],
+  "page_errors": [],
+  "passed": true
+}

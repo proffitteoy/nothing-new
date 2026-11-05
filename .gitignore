@@ -9,6 +9,7 @@ private/
 .sync/obsidian-sync-state.json
 .sync/tmp-*/
 .codex/
+/.worktrees/
 docs/product-design-audit/*.log
 .env*
 !.env.example

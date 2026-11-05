@@ -1,5 +1,6 @@
 import PageTransition from "../../components/PageTransition"
 import ProjectsBoard from "./ProjectsBoard"
+import styles from "./room.module.css"
 import { siteConfig } from "@/siteConfig"
 
 export const metadata = {
@@ -11,10 +12,7 @@ export const metadata = {
 export default function ProjectsPage() {
   return (
     <div className="relative min-h-screen">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0 bg-slate-50/60 backdrop-blur-sm dark:bg-slate-950/60"
-      />
+      <div aria-hidden="true" className={styles.backdrop} />
       <PageTransition>
         <ProjectsBoard />
       </PageTransition>

@@ -13,7 +13,7 @@ test("layout resolves one blog entry for both startup prefetch and navigation", 
   assert.match(layout, /<Navbar blogHref=\{blogHref\}/)
   assert.doesNotMatch(layout, /hasSeenSplash/)
   assert.doesNotMatch(splash, /fieldReady|performanceMode|"particles"/)
-  assert.match(splash, /if \(!roomLoading\) break/)
+  assert.match(splash, /if \(!roomLoading && !homeLoading\) break/)
 })
 
 test("entry bootstrap distinguishes home and subpages and fails open without hydration", () => {
