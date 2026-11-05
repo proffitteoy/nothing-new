@@ -26,7 +26,7 @@
 
 | 页面 | 路径                                                      | 主要内容                                               |
 | ---- | --------------------------------------------------------- | ------------------------------------------------------ |
-| 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 个人资料、内容统计、当前音乐、昼夜与性能模式、站点状态 |
+| 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 当前音乐、昼夜控制与论文周报；个人档案由关于页承载 |
 | 项目 | [<code>/projects</code>](https://nothing-new.cn/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
 | 番剧 | [<code>/anime</code>](https://nothing-new.cn/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
 | 杂谈 | [<code>/chatter</code>](https://nothing-new.cn/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
