@@ -214,6 +214,23 @@ export default function HomeSpectralCanvas({
         inkCtx.clearRect(0, 0, width, height)
         inkCtx.drawImage(back, 0, 0, width, height)
         inkCtx.drawImage(front, 0, 0, width, height)
+        // Keep visit pigment around the central artwork; edge controls and
+        // navigation retain a quiet surround throughout the visit cycle.
+        inkCtx.globalCompositeOperation = "destination-in"
+        const focus = inkCtx.createRadialGradient(
+          width / 2,
+          height * 0.55,
+          0,
+          width / 2,
+          height * 0.55,
+          width * 0.52,
+        )
+        focus.addColorStop(0, "#fff")
+        focus.addColorStop(0.52, "#fff")
+        focus.addColorStop(1, "#ffffff00")
+        inkCtx.fillStyle = focus
+        inkCtx.fillRect(0, 0, width, height)
+        inkCtx.globalCompositeOperation = "source-over"
       }
       artCtx.fillStyle = ground
       artCtx.fillRect(0, 0, width, height)

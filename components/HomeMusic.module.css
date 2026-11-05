@@ -6,7 +6,7 @@
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 18px;
   color: var(--scene-ink, #252936);
-  background: linear-gradient(140deg, rgba(252, 250, 253, 0.79), rgba(247, 243, 252, 0.56));
+  background: var(--scene-surface, #f8f7f3);
   backdrop-filter: blur(18px) saturate(120%);
   box-shadow: 0 12px 40px rgba(44, 35, 66, 0.13);
   font-family: var(--font-geist-sans, sans-serif);
@@ -14,7 +14,7 @@
 :global(.dark) .player {
   color: var(--scene-ink, #e9eaf0);
   border-color: rgba(242, 234, 251, 0.26);
-  background: linear-gradient(140deg, rgba(49, 43, 66, 0.82), rgba(34, 37, 54, 0.63));
+  background: var(--scene-surface, #141923);
 }
 .player[hidden] {
   display: none;
@@ -34,7 +34,7 @@
   height: 58px;
   border: 2px solid rgba(255, 255, 255, 0.64);
   border-radius: 50%;
-  background: radial-gradient(circle at 36% 32%, #e2dfef 0%, #aea8d1 48%, #716a9a 100%);
+  background: #626875;
   color: #fff;
   box-shadow: 0 3px 12px rgba(74, 58, 105, 0.17);
   overflow: hidden;
@@ -65,13 +65,13 @@
 .eyebrow {
   display: inline-block;
   margin-bottom: 3px;
-  color: #7470c8;
+  color: var(--scene-muted, #626875);
   font-size: 0.62rem;
   font-weight: 650;
   letter-spacing: 0.1em;
 }
 :global(.dark) .eyebrow {
-  color: #a4a0ee;
+  color: var(--scene-muted, #bac0ca);
 }
 .title,
 .artist {
@@ -106,7 +106,7 @@
   min-width: 0;
   height: 24px;
   margin: 0;
-  accent-color: #7470c8;
+  accent-color: var(--scene-muted, #626875);
   cursor: pointer;
 }
 .seek:disabled {
@@ -145,17 +145,18 @@
 .primaryControl {
   width: 48px;
   height: 48px;
-  background: var(--scene-accent, #7470c8);
-  color: #f8f7f3;
-  box-shadow: 0 3px 15px rgba(89, 82, 210, 0.29);
+  background: var(--scene-ink, #252936);
+  color: var(--scene-surface, #f8f7f3);
+  box-shadow: none;
 }
 .primaryControl:hover {
-  background: #635fb1;
+  background: var(--scene-ink, #252936);
+  opacity: 0.85;
 }
 .control:focus-visible,
 .retry:focus-visible,
 .seek:focus-visible {
-  outline: 2px solid #7470c8;
+  outline: 2px solid currentColor;
   outline-offset: 3px;
 }
 .emptyState {

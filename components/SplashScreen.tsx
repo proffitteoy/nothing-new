@@ -119,6 +119,9 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     const critical = async () => {
       const started = performance.now()
       const images = Array.from(document.images).filter((img) => {
+        // Hidden sidebars can contain lazy covers whose decode never starts.
+        // Only visible entry artwork belongs in the startup readiness gate.
+        if (!img.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return false
         const rect = img.getBoundingClientRect()
         return img.loading !== "lazy" || (rect.top < innerHeight && rect.bottom > 0)
       })
