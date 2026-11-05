@@ -3,7 +3,6 @@ import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "../components/ThemeProvider"
-import { FieldModeProvider } from "../components/FieldModeProvider"
 import { MusicProvider } from "../components/MusicProvider"
 import { siteConfig } from "../siteConfig"
 import BackgroundSlider from "../components/BackgroundSlider"
@@ -74,7 +73,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
         <ThemeProvider>
-          <FieldModeProvider>
             <SplashScreen blogHref={blogHref} />
 
             <MusicProvider>
@@ -112,7 +110,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 </div>
               </div>
             </MusicProvider>
-          </FieldModeProvider>
         </ThemeProvider>
       </body>
     </html>
