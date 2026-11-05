@@ -1,0 +1,128 @@
+{
+  "scope": "desktop",
+  "layouts": [
+    {
+      "width": 1024,
+      "leads": [
+        {
+          "x": 32,
+          "y": 296.890625,
+          "height": 382.5
+        },
+        {
+          "x": 354,
+          "y": 368.890625,
+          "height": 204
+        },
+        {
+          "x": 676,
+          "y": 320.890625,
+          "height": 408
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "leads": [
+        {
+          "x": 32,
+          "y": 296.890625,
+          "height": 489.15625
+        },
+        {
+          "x": 439.328125,
+          "y": 368.890625,
+          "height": 260.875
+        },
+        {
+          "x": 846.65625,
+          "y": 320.890625,
+          "height": 521.78125
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "leads": [
+        {
+          "x": 91,
+          "y": 296.890625,
+          "height": 506.65625
+        },
+        {
+          "x": 512.328125,
+          "y": 368.890625,
+          "height": 270.21875
+        },
+        {
+          "x": 933.65625,
+          "y": 320.890625,
+          "height": 540.453125
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "leads": [
+        {
+          "x": 331,
+          "y": 296.890625,
+          "height": 506.65625
+        },
+        {
+          "x": 752.328125,
+          "y": 368.890625,
+          "height": 270.21875
+        },
+        {
+          "x": 1173.65625,
+          "y": 320.890625,
+          "height": 540.453125
+        }
+      ]
+    }
+  ],
+  "searches": [
+    {
+      "query": " ",
+      "count": 21
+    },
+    {
+      "query": "ai",
+      "count": 5
+    },
+    {
+      "query": " AI ",
+      "count": 5
+    },
+    {
+      "query": "数学",
+      "count": 1
+    },
+    {
+      "query": "math4ai",
+      "count": 1
+    },
+    {
+      "query": "不存在的思绪_55_no_result",
+      "count": 0
+    }
+  ],
+  "destinations": [
+    {
+      "title": "math4ai",
+      "route": "/chatter/math4ai",
+      "kind": "note"
+    },
+    {
+      "title": "reverse",
+      "route": "/chatter/reverse",
+      "kind": "folder"
+    }
+  ],
+  "errors": [],
+  "background": "existing site artwork, no page colour layer",
+  "entryCount": 21,
+  "loadedImages": 21,
+  "reducedMotion": true
+}

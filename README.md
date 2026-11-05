@@ -43,7 +43,7 @@
   </tr>
   <tr>
     <td width="50%"><strong>番剧收藏</strong><br><img src="./docs/images/readme/anime.jpg" alt="番剧收藏页面"></td>
-    <td width="50%"><strong>杂谈</strong><br><img src="./docs/images/readme/chatter.jpg" alt="杂谈页面"></td>
+    <td width="50%"><strong>杂谈</strong><br><img src="./docs/images/chatter-magazine/desktop.jpg" alt="杂谈页面"></td>
   </tr>
   <tr>
     <td width="50%"><strong>Quartz 笔记</strong><br><img src="./docs/images/readme/notes.jpg" alt="笔记阅读页面"></td>
@@ -60,6 +60,7 @@
 - **首页音乐入口**：只在首页展示轻量歌曲控制及歌词，不再提供独立音乐馆及其粒子场。
 - **音乐播放**：保留现有音频服务和首页基础播放能力，不提供内页悬浮播放器。
 - **项目与兴趣归档**：项目页采用可环绕的窗边研究小屋，保留静态预览和可读目录；项目内容由本地数据维护，番剧页通过服务端 Bangumi API 获取收藏数据。
+- **杂谈杂志排版**：保留原有搜索、文件夹、瀑布流和原画背景，采用不对称大图与封面左下角完整标题；[预览与验收](docs/project/chatter-magazine.md)。
 - **双内容分区**：<code>content/math/</code> 生成笔记，<code>content/misc/</code> 生成普通杂谈卡片，其余公开顶层目录在杂谈页显示为带图片的项目文件夹封面。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理；页面布局由 Next.js 提供，仅保留笔记正文所需的 Quartz 样式。
 - **公开图片静态分发**：站点背景、头像、杂谈封面与 Quartz 文章图片直接由构建产物及 CDN 提供。私有 Blob 仅保留动漫快照/封面、论文周报等动态数据；如需维护历史 Blob 图片，显式运行 `npm run images:sync`。
