@@ -54,6 +54,10 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     // must not change the startup sequence or replay it.
     const homeEntry = window.location.pathname === "/"
     const alreadyRevealed = document.documentElement.classList.contains("splash-seen")
+    if (alreadyRevealed) {
+      reveal()
+      return () => controller.abort()
+    }
 
     // Router prefetch has no completion promise. It warms all navigation targets,
     // including the resolved note URL and the otherwise hidden mobile menu.
