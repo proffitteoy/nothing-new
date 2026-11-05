@@ -4,6 +4,14 @@
 
 ## 目录说明
 
+- `home-scene-preview.py`：首页总装、边缘交互、谱场与移动分流验证；详见[首页总装](../docs/project/home-scene.md)。
+- `celestial-preview.py`：#49 日月与显示入口测试，详见[日月设计](../docs/project/home-mode-panels.md)。
+- `profile-preview.py`：#47 首页个人信息退场与联系操作测试，详见[个人区调整](../docs/project/profile-renewal.md)。
+- `home-music-preview.py`：#48 音乐控制与舞台歌词测试，详见[音乐](../docs/project/home-music-renewal.md)。
+- `projects-preview.py`：#52 研究小屋与六项目交互测试；`npm run test:projects`，详见[项目页](../docs/project/projects-room.md)。
+- `about-preview.py`：#58 关于页响应式和贡献信息测试，详见[关于页](../docs/project/about-profile.md)。
+- `chatter-preview.py`：#55 杂谈图版、搜索和跳转测试；`npm run test:chatter`，详见[杂谈](../docs/project/chatter-magazine.md)。
+
 - `friends-preview.py`：#57 的可选 Python Playwright 验收，`npm run test:friends` 检查原位覆盖、按需加载、全部友链与申请操作。默认只写忽略目录 `.sync/tmp-friends-evidence/`；显式加 `--capture-homepages` 才会访问公开友链并更新 `public/friends-previews/` 的首页快照及来源清单。[使用说明](../docs/project/friends-preview.md)。
 
 - `paper-monitor-preview.py`：可选 Python Playwright 验收周报封面、单列目录和双层阅读，`npm run test:papers` 执行交互检查；[使用说明](../docs/project/tda-paper-monitor.md)。原始截图和检查记录写入 Git 忽略的 `.sync/tmp-paper-monitor/`；`--compare` 会更新两张入库的压缩对照图，不修改业务数据或线上状态。

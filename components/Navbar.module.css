@@ -1,6 +1,6 @@
 /* Visual renewal tokens stay inside the navigation until each page is reviewed. */
 .visualScope {
-  --journal-paper: #f8f7f3;
+  --journal-paper: #ffffff;
   --journal-ink: #252936;
   --journal-muted: #626875;
   --journal-accent: #625eb0;
@@ -181,7 +181,7 @@
 .wheelCaption {
   position: absolute;
   inset: -32px 0 auto;
-  color: #f8f7f3;
+  color: #ffffff;
   font-size: 11px;
   letter-spacing: 0.2em;
   text-align: center;

@@ -1,0 +1,33 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.action:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.action:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}

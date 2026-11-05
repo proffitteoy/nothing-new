@@ -1,0 +1,70 @@
+.preview {
+  width: 100%;
+  padding: 6rem 2rem 2rem;
+  color: #332f43;
+  background: transparent;
+  font-family: sans-serif;
+}
+
+.preview h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.preview > p {
+  max-width: 60rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.stage {
+  position: relative;
+  min-height: 440px;
+  height: min(60vh, 620px);
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255,255,255,.35);
+  background: linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,.08)), url('/background.png') center / cover no-repeat;
+  overflow: hidden;
+}
+
+.host {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 260px; /* Preview fixture only; not a #67 size contract. */
+  max-width: calc(100% - 2rem);
+  background: transparent;
+}
+
+.host > button {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.preview a {
+  display: inline-block;
+  padding: 0.75rem 0;
+  text-decoration: underline;
+}
+
+.host > button:focus-visible,
+.preview a:focus-visible {
+  outline: 2px solid #7064ba;
+  outline-offset: 2px;
+}
+
+.placeholder {
+  position: absolute;
+  top: 45%;
+  left: 45%;
+  margin: 0;
+  color: rgba(58,48,78,.7);
+  pointer-events: none;
+  font-size: 0.875rem;
+}
+
+.stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 -54px 60px -66px rgba(38,27,65,.6); }
+.host { z-index: 2; }
+.placeholder { display: none; }

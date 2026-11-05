@@ -2,6 +2,8 @@ import "katex/dist/katex.min.css"
 import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
+import { FieldModeProvider } from "../components/FieldModeProvider"
+import SiteDisplayControls from "../components/SiteDisplayControls"
 import { ThemeProvider } from "../components/ThemeProvider"
 import { MusicProvider } from "../components/MusicProvider"
 import { siteConfig } from "../siteConfig"
@@ -44,7 +46,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               // Decide before hydration so subpage refreshes never flash the avatar intro.
               document.documentElement.dataset.startupEntry = location.pathname === '/' ? 'home' : 'page';
               document.documentElement.dataset.startupPhase = location.pathname === '/' ? 'loading' : 'preparing';
-              // Fail open if hydration or the animation fails; allow 7.4 s animation + 10 s logo hold.
+              // Fail open if hydration or the animation fails; allow 7.4s animation and at most 10s logo hold.
               window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 22000);
             `,
           }}
@@ -66,6 +68,36 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             `,
           }}
         />
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `
+          if (location.pathname === '/') {
+            var mobileHome = !/bot|crawler|spider/i.test(navigator.userAgent) &&
+              (/Android|iPhone|iPad|iPod|Mobile|Tablet|Silk|Kindle/i.test(navigator.userAgent) ||
+              (!/Windows/i.test(navigator.userAgent) && matchMedia('(hover: none) and (pointer: coarse)').matches));
+            if (mobileHome) {
+              document.documentElement.dataset.homeDevice = 'mobile';
+              location.replace('/blog');
+            } else {
+              var homeElapsed = 0;
+              var homeSince = document.hidden ? null : performance.now();
+              var homeVisibility = function (at, visible) {
+                if (homeSince !== null) homeElapsed += Math.max(0, at - homeSince);
+                homeSince = visible ? at : null;
+              };
+              var homeVisibilityListener = function () { homeVisibility(performance.now(), !document.hidden); };
+              document.addEventListener('visibilitychange', homeVisibilityListener);
+              window.__homeVisitClock = {
+                read: function (at) { return homeElapsed + (homeSince === null ? 0 : Math.max(0, at - homeSince)); },
+                visibility: homeVisibility,
+                stop: function () { document.removeEventListener('visibilitychange', homeVisibilityListener); }
+              };
+            }
+          }
+        `,
+          }}
+        />
         <noscript>
           <style>{`[data-startup-overlay] { display: none !important; } [data-site-ui] { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }`}</style>
         </noscript>
@@ -73,43 +105,37 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
         <ThemeProvider>
-          <SplashScreen blogHref={blogHref} />
+          <FieldModeProvider>
+            <SplashScreen blogHref={blogHref} />
 
-          <MusicProvider>
-            <div
-              id="app-mount-root"
-              className="flex-1 flex flex-col transition-opacity duration-1000"
-            >
-              <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                {!siteConfig.useGradient && <BackgroundSlider />}
-                <div
-                  className="absolute inset-0 z-[1] bg-white/[0.12] transition-colors duration-1000 dark:bg-slate-950/25"
-                  style={{
-                    backgroundImage: `linear-gradient(135deg, ${siteConfig.themeColors
-                      .map((color) => `${color}24`)
-                      .join(", ")})`,
-                  }}
-                />
-              </div>
-
-
-              <Navbar blogHref={blogHref} />
-              <ScrollRootManager />
-
+            <MusicProvider>
               <div
-                id="app-scroll-root"
-                className="relative z-10 flex-1 flex flex-col"
-                data-scroll-root
-                data-site-ui
+                id="app-mount-root"
+                className="flex-1 flex flex-col transition-opacity duration-1000"
               >
-                {children}
-              </div>
+                <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                  {!siteConfig.useGradient && <BackgroundSlider />}
+                </div>
 
-              <div className="md:hidden block" data-site-ui>
-                <MobileBackButton />
+                <Navbar blogHref={blogHref} />
+                <ScrollRootManager />
+                <SiteDisplayControls />
+
+                <div
+                  id="app-scroll-root"
+                  className="relative z-10 flex-1 flex flex-col"
+                  data-scroll-root
+                  data-site-ui
+                >
+                  {children}
+                </div>
+
+                <div className="md:hidden block" data-site-ui>
+                  <MobileBackButton />
+                </div>
               </div>
-            </div>
-          </MusicProvider>
+            </MusicProvider>
+          </FieldModeProvider>
         </ThemeProvider>
       </body>
     </html>

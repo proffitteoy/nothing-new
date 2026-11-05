@@ -8,7 +8,6 @@ import { useReducedMotion } from "framer-motion"
 import {
   ArrowUpRight,
   ArrowLeft,
-  BookOpen,
   Headphones,
   List,
   LoaderCircle,
@@ -24,7 +23,16 @@ import {
 import { useTheme } from "../../components/ThemeProvider"
 import { useMusic } from "../../components/MusicProvider"
 import { projects, type Project, type RoomTarget } from "./projects"
+import { sampleSpectralFamily, spectralParameterAt } from "../../components/field/spectralField"
 import styles from "./room.module.css"
+
+// A frozen sample of the site's spectral family: artwork only, with no new render loop.
+const archiveCurves = Array.from({ length: 3 }, (_, index) =>
+  Array.from({ length: 160 }, (_, step) => {
+    const point = sampleSpectralFamily(spectralParameterAt(index + 8), step * 0.07, 2)
+    return `${step ? "L" : "M"}${(158 + point.x * 140).toFixed(2)},${(84 + point.y * 96).toFixed(2)}`
+  }).join(" "),
+)
 
 const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false })
 
@@ -289,7 +297,11 @@ export default function ProjectsBoard() {
                   {selected.contribution ? "OPEN SOURCE / 协作" : "SELECTED WORK / 项目"}
                 </p>
                 <div className={styles.detailIllustration} aria-hidden="true">
-                  <BookOpen size={48} strokeWidth={1} />
+                  <svg className={styles.archiveMotif} viewBox="0 0 320 168" fill="none">
+                    {archiveCurves.map((path, index) => (
+                      <path key={index} d={path} />
+                    ))}
+                  </svg>
                   <span>{String(projects.indexOf(selected) + 1).padStart(2, "0")}</span>
                   <small>{selected.object}</small>
                 </div>

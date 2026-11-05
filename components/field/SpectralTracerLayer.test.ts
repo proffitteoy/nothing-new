@@ -49,6 +49,22 @@ test("both tracer layers respect obstacles beyond the former 16-card limit", () 
       "unobstructed layers should draw",
     )
 
+    const originalGeometry = [...counts]
+    counts.fill(0)
+    controller.render({
+      ...frame,
+      colours: [
+        [74, 130, 192],
+        [118, 103, 193],
+        [201, 117, 150],
+      ],
+    })
+    assert.deepEqual(
+      counts,
+      originalGeometry,
+      "colouring preserves the original geometry and density",
+    )
+
     counts.fill(0)
     controller.render({ ...frame, foregroundCount: 0 })
     assert.ok(counts[0] > 0, "immersive pages retain the background field")
@@ -82,7 +98,7 @@ test("both tracer layers respect obstacles beyond the former 16-card limit", () 
   }
 })
 
-test("the about obstacle belongs to the card containing the article, not the page grid", () => {
+test("the about obstacle belongs to the article, not the page grid", () => {
   const source = readFileSync(new URL("../AboutClient.tsx", import.meta.url), "utf8")
   const tree = ts.createSourceFile(
     "AboutClient.tsx",
@@ -105,7 +121,7 @@ test("the about obstacle belongs to the card containing the article, not the pag
   }
   visit(tree)
   assert.equal(obstacles.length, 1)
-  assert.match(obstacles[0].openingElement.getText(tree), /bg-white\/60/)
+  assert.equal(obstacles[0].openingElement.tagName.getText(tree), "article")
   assert.match(obstacles[0].getText(tree), /dangerouslySetInnerHTML/)
 })
 

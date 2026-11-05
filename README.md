@@ -18,7 +18,7 @@
 
 ## 关于这个站点
 
-“阿の宝藏之地”不是单一用途的博客模板，而是一套围绕个人内容建立的长期归档系统：项目与开源经历有独立展柜，番剧、杂谈与数学笔记共享同一套视觉语言，首页提供轻量音乐控制。
+“阿の宝藏之地”不是单一用途的博客模板，而是一套围绕个人内容建立的长期归档系统：项目与开源经历有独立展柜，番剧、杂谈与数学笔记共享同一套视觉语言，首页提供桌面沉浸式场景和边缘音乐、周报交互。
 
 站点由 **Next.js 主站**与经过本地化改造的 **Quartz 内容管线**共同组成。Markdown 仍是内容源，构建时会生成可供主站读取的文章、目录、搜索索引、反向链接和静态资源；Obsidian 只是可选的写作入口，并不是运行依赖。
 
@@ -26,7 +26,7 @@
 
 | 页面 | 路径                                                      | 主要内容                                               |
 | ---- | --------------------------------------------------------- | ------------------------------------------------------ |
-| 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 个人资料、内容统计、当前音乐、昼夜与性能模式、站点状态 |
+| 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 桌面中心人物场景、边缘音乐与周报；移动访问进入笔记 |
 | 项目 | [<code>/projects</code>](https://nothing-new.cn/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
 | 番剧 | [<code>/anime</code>](https://nothing-new.cn/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
 | 杂谈 | [<code>/chatter</code>](https://nothing-new.cn/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
@@ -39,11 +39,11 @@
 <table>
   <tr>
     <td width="50%"><strong>项目档案</strong><br><img src="./docs/images/readme/projects.jpg" alt="项目档案页面"></td>
-    <td width="50%"><strong>首页音乐入口</strong><br><img src="./docs/images/readme/home.jpg" alt="首页轻量音乐控制"></td>
+    <td width="50%"><strong>首页改造前预览</strong><br><img src="./docs/images/readme/home.jpg" alt="首页改造前预览"></td>
   </tr>
   <tr>
     <td width="50%"><strong>番剧收藏</strong><br><img src="./docs/images/readme/anime.jpg" alt="番剧收藏页面"></td>
-    <td width="50%"><strong>杂谈</strong><br><img src="./docs/images/readme/chatter.jpg" alt="杂谈页面"></td>
+    <td width="50%"><strong>杂谈</strong><br><img src="./docs/images/chatter-magazine/desktop.jpg" alt="杂谈页面"></td>
   </tr>
   <tr>
     <td width="50%"><strong>Quartz 笔记</strong><br><img src="./docs/images/readme/notes.jpg" alt="笔记阅读页面"></td>
@@ -53,14 +53,19 @@
 
 ## 核心实现
 
+- **桌面首页总装**：中心原图、边缘音乐／周报、移动根路径分流、谱场及五分钟周期的集成说明见[桌面首页总装与集中验证](docs/project/home-scene.md)；最终画面仍待人工验收。
+
+- **友链首页预览**：按需加载首页快照，支持键盘与移动端操作，见[友链说明](docs/project/friends-preview.md)。
 - **按入口启动**：首页刷新先播放原有开场，再进行有上限的资源准备；其他页面刷新跳过首页开场，直接准备内容并预热导航与小屋资源，不显示全局粒子。支持跳过与 hydration 失败兜底。实现、预算与验证边界见[全站启动与导航](docs/project/site-startup.md)。
+- **关于页个人档案**：保留 Markdown 与 GitHub 贡献记录，原画背景与局部半透明阅读层，见[关于页](docs/project/about-profile.md)。
 - **统一的页面外壳**：响应式导航、全站背景、日夜主题、动态场景和播放器状态在不同页面间保持一致。
+- **日月与显示入口**：首页以可点击天体切换昼夜，全站紧凑入口保留主题与性能选择，见[设计与预览验收](docs/project/home-mode-panels.md)。
 - **导航视觉更新**：桌面采用纸张色与曲线栏目指示，手机保留可拖动／转动圆盘；局部设计规范、改造前后截图和本地预览见[导航视觉更新与验收](docs/project/navigation-renewal.md)。
-- **友链首页预览**：悬停、键盘聚焦或点击预览按钮后，才加载对方首页快照，并原位覆盖当前友链卡片；手机保留直接访问和独立预览入口。[截图、复现和快照维护](docs/project/friends-preview.md)。
 - **TDA 文献雷达**：首页研究工作台卡片按论文展开阅读，监控仓库的 Action 将完整周报推送至博客，无需每周重新部署；配置见 [TDA 论文周报](docs/project/tda-paper-monitor.md)。
-- **首页音乐入口**：只在首页展示轻量歌曲控制及歌词，不再提供独立音乐馆及其粒子场。
-- **音乐播放**：保留现有音频服务和首页基础播放能力，不提供内页悬浮播放器。
+- **首页音乐返工**：旧音乐卡片已移除；紧凑控制与舞台歌词已在桌面首页接入。[接口、隔离预览与验证边界](docs/project/home-music-renewal.md)。
+- **音乐播放**：保留现有音频服务及根 Provider 的跨页状态，不提供内页悬浮播放器或独立音乐页。
 - **项目与兴趣归档**：项目页采用可环绕的窗边研究小屋，保留静态预览和可读目录；项目内容由本地数据维护，番剧页通过服务端 Bangumi API 获取收藏数据。
+- **杂谈杂志排版**：不对称图版、完整封面标题和搜索导航，见[杂谈验收](docs/project/chatter-magazine.md)。
 - **双内容分区**：<code>content/math/</code> 生成笔记，<code>content/misc/</code> 生成普通杂谈卡片，其余公开顶层目录在杂谈页显示为带图片的项目文件夹封面。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理；页面布局由 Next.js 提供，仅保留笔记正文所需的 Quartz 样式。
 - **公开图片静态分发**：站点背景、头像、杂谈封面与 Quartz 文章图片直接由构建产物及 CDN 提供。私有 Blob 仅保留动漫快照/封面、论文周报等动态数据；如需维护历史 Blob 图片，显式运行 `npm run images:sync`。

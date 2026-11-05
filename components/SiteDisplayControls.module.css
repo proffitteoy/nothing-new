@@ -1,0 +1,100 @@
+.trigger,
+.menu {
+  --control-ink: #252936;
+  --control-line: #dddde2;
+  font-family: "Inter", "Microsoft YaHei", sans-serif;
+  color: var(--control-ink);
+  font-size: 12px;
+}
+:global(.dark) .trigger,
+:global(.dark) .menu {
+  --control-ink: #e9eaf0;
+  --control-line: #343a48;
+}
+.trigger {
+  position: fixed;
+  z-index: 90;
+  right: 18px;
+  bottom: 16px;
+  min-width: 58px;
+  min-height: 44px;
+  border: 0;
+  border-bottom: 1px solid var(--control-line);
+  padding: 8px;
+  background: rgba(248, 244, 250, 0.35);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  border-radius: 2px;
+  opacity: 0.7;
+  transition:
+    opacity 180ms ease,
+    background-color 180ms ease;
+}
+:global(.dark) .trigger {
+  background: rgba(39, 34, 53, 0.4);
+}
+.trigger > span {
+  font-size: 17px;
+}
+.menu {
+  position: fixed;
+  inset: auto 22px 76px auto;
+  width: 200px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--control-line);
+  border-radius: 3px;
+  background: #f8f7f3;
+}
+:global(.dark) .menu {
+  background: #141923;
+}
+.menu:popover-open {
+  display: grid;
+  gap: 10px;
+}
+.caption {
+  margin: 0;
+  padding-bottom: 8px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--control-line);
+}
+.menu button {
+  font: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  padding: 4px 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.menu button > span:last-child {
+  border-bottom: 1px solid var(--control-line);
+  padding-bottom: 3px;
+}
+.trigger:focus-visible,
+.menu button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+@media (max-width: 767px) {
+  .menu {
+    right: 80px;
+    width: 192px;
+  }
+}
+
+.trigger:hover,
+.trigger:focus-visible {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trigger {
+    transition: none;
+  }
+}

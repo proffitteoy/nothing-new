@@ -35,7 +35,9 @@
     "test": "tsx --test",
     "test:navigation": "python scripts/navigation-preview.py --stage after --check-only",
     "test:papers": "python scripts/paper-monitor-preview.py --stage after --check-only",
-    "test:friends": "python scripts/friends-preview.py"
+    "test:friends": "python scripts/friends-preview.py",
+    "test:projects": "python scripts/projects-preview.py",
+    "test:chatter": "python scripts/chatter-preview.py"
   },
   "engines": {
     "node": "22.x",

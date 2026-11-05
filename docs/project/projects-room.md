@@ -145,3 +145,61 @@ node scripts/encode-project-room.mjs
 近景：
 
 ![屏幕、键帽与书本近景](../images/projects-3d-research/implementation-closeup.webp)
+
+## 界面整理（#52）
+
+依据本地 `frontend refactoring.md` 的 §2、§3.3、§8.1、§9，以及 `interaction research.md` 对中心视觉与外围控件的区分。后者是本地研究原稿，本次不上传。首页的人物、斜切侧栏和时间周期属于首页任务，不移植到项目页。
+
+### 视觉规则
+
+- 日间直接采用原方案 `#F8F7F3 / #252936 / #747985 / #7470C8 / #E8A8B5 / #DDDDE2`；夜间采用 `#141923 / #E9EAF0 / #A1A7B5 / #A4A0EE / #D68EA9 / #343A48`。移除项目页原有的 slate 灰色蒙层，配色限定在本页 CSS 模块。
+- 研究小屋继续是主视觉，不增加场景外框。标题与长说明采用宋体／Newsreader 回退，操作与元信息使用原方案的 Inter／思源黑体回退；不请求外部字体。
+- 工具栏使用细线、文字与可辨认的状态反馈，避免大面积实心强调色。热点保留编号、命中区域与避让逻辑，标签采用同一日夜表面与樱花粉细线。
+- 项目档案按编号、物件、项目状态、标题、正文、技术信息、真实仓库链接分层。静态曲线复用既有 `sampleSpectralFamily` 的低阶采样，只在模块初始化时生成 SVG 路径，没有第二套 Canvas 或持续动画循环。
+- 控件悬停 180ms、档案入场 300ms；减少动态效果仍可使用全部操作。手机保留文档滚动，平板粗指针布局单独预留桌面导航的 72px 空间。
+
+### 隔离预览与复现
+
+独立分支 `feat/projects-room-52`。本地预览不需要 Blob、Bangumi 或 GitHub Token；外部番剧预热不可用不影响小屋和项目档案。
+
+```powershell
+npm.cmd ci
+npm.cmd run build
+npm.cmd run start -- --hostname 127.0.0.1 --port 3152
+```
+
+打开 <http://127.0.0.1:3152/projects>。保持服务器运行，在具备可选 Python Playwright 的第二个终端执行：
+
+```powershell
+python -m venv .sync/tmp-projects-tools
+.\.sync\tmp-projects-tools\Scripts\Activate.ps1
+python -m pip install playwright
+python -m playwright install chromium
+npm.cmd run test:projects
+# 可使用本机 Chromium；--case 可单独复现一个尺寸。
+npm.cmd run test:projects -- --browser "C:\Program Files\Google\Chrome\Application\chrome.exe" --case 390x844
+```
+
+脚本仅将截图和 `report.json` 写入忽略目录 `.sync/tmp-projects-52-evidence/`；`--output` 可指定其他目录。音乐 API 与支持 Range 的 WAV 只在测试浏览器中拦截，运行真实根 Provider 与 HTMLAudioElement，不代表外部音乐服务验收。3D 模型、贴图、项目内容、热点、旋转、焦点返回和静态回退继续使用原实现。
+
+### 桌面画面与本轮验证
+
+2026-11-05，Node 22.23.3、Windows、Chrome 无头生产预览：
+
+- ESLint 0 errors（4 条既有 warning）、Next 类型生成与 TypeScript、83 项现有测试、Prettier 和完整生产构建通过；构建生成 247 个页面，保留既有 KaTeX 中文警告和 GitHub 贡献接口超时回退。
+- 1440×1000、960×800 日夜模式下，六项目均能由热点及目录打开；真实仓库链接、Escape／关闭与焦点返回、热点标签、拖动环绕与回到桌前均通过。
+- 共享 ThemeProvider 切换、耳机打开音乐面板、真实单一 audio 的播放／暂停、静态／3D 切换、GLB 请求失败及 WebGL context loss 后降级／重试通过。正常浏览器路径未捕获 pageerror；故障检查主动制造资源错误。
+- 顺带完成 Chromium 的 768×1024、390×844、320×568、844×390 日夜仿真；按本次用户收尾要求，手机不作为本轮视觉交付和继续打磨范围，也不代表实机验收。
+- 模型、贴图、项目数据及 RoomScene 交互代码与 main 一致。没有运行外部图片上传、修改生产配置或合并 main。音乐使用本地 WAV 夹具，外部音乐服务、Safari 与真机未据此声明通过。
+
+以下为最终生产构建的原始浏览器截图，仅压缩为 WebP；完整 PNG 和报告保留在本机 `.sync/tmp-projects-52-final/`。
+
+![桌面日间](../images/projects-room-renewal/desktop-day.webp)
+
+![桌面夜间](../images/projects-room-renewal/desktop-night.webp)
+
+![项目档案](../images/projects-room-renewal/project-archive.webp)
+
+![热点标签](../images/projects-room-renewal/hotspot-labels.webp)
+
+人工视觉验收仍待进行。保持 Draft，不合并 main，不修改生产部署配置。

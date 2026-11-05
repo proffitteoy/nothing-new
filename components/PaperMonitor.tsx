@@ -6,7 +6,15 @@ import { ArrowLeft, ArrowUpRight, ChevronDown, X } from "lucide-react"
 import type { PaperReport } from "../lib/papers"
 import styles from "./PaperMonitor.module.css"
 
-export default function PaperMonitor({ initialReports }: { initialReports: PaperReport[] }) {
+export default function PaperMonitor({
+  initialReports,
+  compact = false,
+  active = true,
+}: {
+  initialReports: PaperReport[]
+  compact?: boolean
+  active?: boolean
+}) {
   const [reports, setReports] = useState(initialReports)
   const [date, setDate] = useState(initialReports[0]?.date ?? "")
   const [selected, setSelected] = useState<number | null>(null)
@@ -76,30 +84,37 @@ export default function PaperMonitor({ initialReports }: { initialReports: Paper
 
   return (
     <section
-      className={`${styles.panel} lg:col-span-8`}
+      className={`${styles.panel} ${compact ? styles.compact : "lg:col-span-8"}`}
       aria-label="TDA 论文周报"
       data-field-obstacle
     >
       <button
         type="button"
-        className={styles.cover}
+        className={compact ? styles.summary : styles.cover}
+        data-paper-summary={compact ? "" : undefined}
+        inert={compact && !active}
+        tabIndex={compact && !active ? -1 : undefined}
         aria-label="打开 TDA 论文周报"
         aria-haspopup="dialog"
         aria-controls="tda-issue-dialog"
         onClick={() => setIssueOpen(true)}
       >
-        <Image
-          src="/profile-studio.png"
-          alt=""
-          fill
-          className="object-cover"
-          sizes="(max-width: 1023px) calc(100vw - 2rem), 704px"
-        />
-        <span className={styles.shade} />
+        {!compact && (
+          <>
+            <Image
+              src="/profile-studio.png"
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 1023px) calc(100vw - 2rem), 704px"
+            />
+            <span className={styles.shade} />
+          </>
+        )}
         <span className={styles.heading}>
           <span className={styles.eyebrow}>PAPER NOTES / WEEKLY</span>
           <strong className={styles.title}>TDA 论文周报</strong>
-          <span className={styles.subtitle}>在新的论文里，寻找下一个问题。</span>
+          {!compact && <span className={styles.subtitle}>在新的论文里，寻找下一个问题。</span>}
           <span className={styles.coverMeta}>
             <span>
               {latestReport ? (
