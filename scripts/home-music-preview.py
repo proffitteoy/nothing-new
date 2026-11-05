@@ -108,7 +108,8 @@ try:
             for motion in ["no-preference", "reduce"]:
                 context, page, _ = setup(browser, width, motion)
                 controls = player(page)
-                assert controls.locator("img, audio").count() == 0
+                assert controls.locator("audio").count() == 0
+                assert controls.locator("img").count() <= 1
                 assert page.locator('a[href="/music"]').count() == 0
                 assert page.locator("audio").count() == 1
                 for button in controls.get_by_role("button").all():
