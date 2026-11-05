@@ -1,10 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
-import Image, { getImageProps } from "next/image"
+import { getImageProps } from "next/image"
 import { useRouter } from "next/navigation"
-import { siteConfig } from "../siteConfig"
 import { navigationLinks } from "./Navbar"
 import { loadAnimeSnapshot } from "../lib/anime/client"
 import { preloadRoomAssets } from "../app/projects/room-preload"
@@ -29,7 +27,8 @@ const sleep = (ms: number, signal: AbortSignal) =>
 
 export default function SplashScreen({ blogHref }: { blogHref: string }) {
   const [phase, setPhase] = useState<Phase>("loading")
-  const reduced = useReducedMotion()
+  const [showAnimation, setShowAnimation] = useState(false)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   const router = useRouter()
   const skipped = useRef(false)
   const changePhase = useCallback((next: Phase) => {
@@ -104,122 +103,141 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         noteStyle.remove()
       }
     }
-    const important = warm().catch(() => {})
-    const run = async () => {
-      if (alreadyRevealed) {
-        reveal()
-        return
+    // Preloads begin concurrently with the animation. They form the readiness
+    // gate, but cannot hold the completed logo for more than ten seconds.
+    const critical = async () => {
+      const started = performance.now()
+      const images = Array.from(document.images).filter((img) => {
+        const rect = img.getBoundingClientRect()
+        return img.loading !== "lazy" || (rect.top < innerHeight && rect.bottom > 0)
+      })
+      await Promise.allSettled([document.fonts.ready, ...images.map((img) => img.decode())])
+      while (performance.now() - started < 4000) {
+        const roomLoading =
+          document.querySelector<HTMLElement>("[data-room-status]")?.dataset.roomStatus ===
+          "loading"
+        if (!roomLoading) break
+        await sleep(32, signal)
       }
-      const critical = async () => {
-        const started = performance.now()
-        const images = Array.from(document.images).filter((img) => {
-          const rect = img.getBoundingClientRect()
-          return img.loading !== "lazy" || (rect.top < innerHeight && rect.bottom > 0)
-        })
-        await Promise.allSettled([document.fonts.ready, ...images.map((img) => img.decode())])
-        while (performance.now() - started < 4000) {
-          const roomLoading =
-            document.querySelector<HTMLElement>("[data-room-status]")?.dataset.roomStatus ===
-            "loading"
-          if (!roomLoading) break
-          await sleep(32, signal)
-        }
-      }
-      const criticalReady = critical().catch(() => {})
-      // Only a home entry plays the avatar intro. Other entry routes spend
-      // their bounded preparation stage preparing the current page immediately.
-      if (homeEntry) {
-        changePhase("loading")
-        await Promise.all([sleep(2200, signal), Promise.race([criticalReady, sleep(4000, signal)])])
-      }
-      if (signal.aborted || skipped.current) return
-      const motionReduced = matchMedia("(prefers-reduced-motion: reduce)").matches
-      if (!motionReduced) {
-        changePhase("preparing")
-        await Promise.all([
-          sleep(500, signal),
-          Promise.race([Promise.allSettled([important, criticalReady]), sleep(2000, signal)]),
-        ])
-      }
-      if (!signal.aborted && !skipped.current) reveal()
     }
-    void run().catch(() => {
-      if (!signal.aborted && !skipped.current) reveal()
+
+    // Never load the large SVG scene on subpages, small screens or in reduced
+    // motion / data-saving modes.
+    const animateHome =
+      homeEntry &&
+      matchMedia("(min-width: 768px)").matches &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      !constrained
+
+    let logoFinished = false
+    let preloadFinished = false
+    let logoHoldTimer: number | undefined
+    let animationFallbackTimer: number | undefined
+
+    const checkReady = () => {
+      if (logoFinished && preloadFinished && !signal.aborted && !skipped.current) {
+        if (logoHoldTimer !== undefined) window.clearTimeout(logoHoldTimer)
+        reveal()
+      }
+    }
+
+    const finishLogo = () => {
+      if (logoFinished || signal.aborted || skipped.current) return
+      logoFinished = true
+      if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
+      // Keep the exact EulerBridgeMark final frame in view while warming.
+      changePhase("preparing")
+      logoHoldTimer = window.setTimeout(() => {
+        if (!signal.aborted && !skipped.current) reveal()
+      }, 10_000)
+      checkReady()
+    }
+
+    const onAnimationMessage = (event: MessageEvent) => {
+      if (
+        event.origin !== window.location.origin ||
+        event.source !== iframeRef.current?.contentWindow ||
+        event.data?.type !== "alpha-splash:complete"
+      )
+        return
+      finishLogo()
+    }
+
+    const onFrameLoaded = () => {
+      // Fail open if the embedded animation cannot signal its completion.
+      if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
+      animationFallbackTimer = window.setTimeout(finishLogo, 9500)
+    }
+
+    window.addEventListener("message", onAnimationMessage)
+    window.addEventListener("alpha-splash:frame-loaded", onFrameLoaded)
+
+    const preloads = Promise.allSettled([warm(), critical()]).then(() => {
+      preloadFinished = true
+      checkReady()
     })
+
+    if (animateHome) {
+      changePhase("loading")
+      setShowAnimation(true)
+    } else {
+      changePhase("preparing")
+      // Non-home and accessibility fallbacks stay short; preload work may
+      // continue without blocking the site.
+      void Promise.race([preloads, sleep(2500, signal)])
+        .then(() => {
+          if (!signal.aborted && !skipped.current) reveal()
+        })
+        .catch(() => {
+          if (!signal.aborted && !skipped.current) reveal()
+        })
+    }
+
     return () => {
       controller.abort()
+      if (logoHoldTimer !== undefined) window.clearTimeout(logoHoldTimer)
+      if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
+      window.removeEventListener("message", onAnimationMessage)
+      window.removeEventListener("alpha-splash:frame-loaded", onFrameLoaded)
     }
   }, [blogHref, changePhase, reveal, router])
 
   return (
     <>
-      <AnimatePresence>
-        {phase === "loading" && (
-          <motion.div
-            key="splash-screen-container"
-            data-startup-overlay
-            data-startup-loading
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2, ease: "easeOut" }}
-            className="fixed inset-0 z-[100000] flex flex-col items-center justify-center bg-white dark:bg-slate-950"
-          >
-            <div className="relative z-10 flex flex-col items-center">
-              {/* 头像光环 */}
-              <div className="relative w-24 h-24 mb-8">
-                <motion.div
-                  animate={reduced ? undefined : { rotate: 360 }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-60 blur-[3px]"
-                />
-                <div className="relative w-full h-full rounded-full p-1.5 bg-white dark:bg-slate-900 shadow-xl">
-                  <Image
-                    src={siteConfig.avatarUrl}
-                    alt="头像"
-                    width={128}
-                    height={128}
-                    preload
-                    sizes="128px"
-                    quality={85}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-              </div>
-
-              <h1 className="text-2xl font-black text-slate-800 dark:text-white mb-2 tracking-[0.2em] uppercase">
-                {siteConfig.authorName}
-              </h1>
-              <p
-                role="status"
-                className="text-[10px] font-black text-slate-400 tracking-[0.5em] mb-12"
-              >
-                正在初始化站点
-              </p>
-
-              <div className="w-40 h-[1.5px] bg-slate-200 dark:bg-slate-800 relative">
-                <motion.div
-                  initial={{ width: "0%" }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: 1.8, ease: "easeInOut" }}
-                  className="absolute top-0 left-0 h-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.8)]"
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {phase !== "ready" && (
         <div
           data-startup-overlay
-          className="fixed inset-x-0 bottom-10 z-[100001] flex items-center justify-center gap-6 text-xs text-slate-600 dark:text-slate-300"
+          data-startup-loading
+          className="fixed inset-0 z-[100000] overflow-hidden bg-[#07121e]"
         >
-          {phase === "preparing" && <span role="status">正在准备页面资源…</span>}
+          {showAnimation && (
+            <iframe
+              ref={iframeRef}
+              src="/alpha-opening-v6.html"
+              title="Alpha 复形开屏动画"
+              aria-hidden="true"
+              tabIndex={-1}
+              onLoad={() => window.dispatchEvent(new Event("alpha-splash:frame-loaded"))}
+              className="h-full w-full border-0 pointer-events-none"
+            />
+          )}
+        </div>
+      )}
+      {phase !== "ready" && (
+        <div
+          data-startup-overlay
+          className="fixed inset-x-0 bottom-8 z-[100001] flex items-center justify-center gap-4 text-xs text-slate-200"
+        >
+          {phase === "preparing" && showAnimation && (
+            <span role="status">图标已就绪，正在预加载页面…</span>
+          )}
           <button
             type="button"
             onClick={() => {
               skipped.current = true
               reveal()
             }}
-            className="rounded-full border border-slate-300/60 bg-white/70 px-4 py-2 backdrop-blur-sm focus-visible:outline-2 focus-visible:outline-indigo-500 dark:border-white/20 dark:bg-slate-900/70"
+            className="rounded-full border border-white/25 bg-[#07121e]/75 px-4 py-2 backdrop-blur-sm focus-visible:outline-2 focus-visible:outline-sky-300"
           >
             跳过开场
           </button>
