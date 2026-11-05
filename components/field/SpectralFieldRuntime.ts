@@ -1,26 +1,17 @@
-"use client"
-
-import { useEffect, useRef } from "react"
-import { usePathname } from "next/navigation"
-import { siteConfig } from "../siteConfig"
-import { useFieldMode } from "./FieldModeProvider"
-import { useTheme } from "./ThemeProvider"
 import {
   SPECTRAL_TRACER_BACKGROUND,
   SPECTRAL_TRACER_FOREGROUND,
-  SpectralTracerLayer,
   createSpectralTracerController,
   type TracerObstacle,
-} from "./field/SpectralTracerLayer"
+} from "./SpectralTracerLayer"
 import {
   SPECTRAL_PLAYBACK_RATE,
   sampleSpectralFamily,
   spectralParameterAt,
-} from "./field/spectralField"
+} from "./spectralField"
 
 const TAU = Math.PI * 2
 const PHI = (1 + Math.sqrt(5)) / 2
-const NORMAL_FRAME_MS = 1000 / 30
 const NORMAL_PIXEL_RATIO = 1.25
 const EFFECT_COUNTS = {
   sakura: 40,
@@ -109,11 +100,6 @@ function wrap(value: number, size: number) {
   return ((value % size) + size) % size
 }
 
-function smoothstep(value: number) {
-  const bounded = clamp(value, 0, 1)
-  return bounded * bounded * (3 - 2 * bounded)
-}
-
 function sideWeightedPosition(index: number, seed: number) {
   const position = hash(index, seed)
   const edgePosition =
@@ -142,43 +128,40 @@ function createFireflySprite() {
   return sprite
 }
 
-export default function FieldScene() {
-  const pathname = usePathname()
-  // Unmount the entire renderer outside music, including its canvases and RAF loop.
-  return pathname === "/music" ? <MusicFieldScene /> : null
+/**
+ * Detached, opt-in spectral field runtime. Importing this module does not mount
+ * canvases, subscribe to events or start requestAnimationFrame.
+ */
+export interface SpectralFieldRuntimeOptions {
+  speciesCanvas: HTMLCanvasElement
+  backCanvas: HTMLCanvasElement
+  frontCanvas: HTMLCanvasElement
+  interactionCanvas: HTMLCanvasElement
+  obstacleSelector?: string
+  danmakuTexts?: readonly string[]
+  desktopOnly?: boolean
 }
 
-function MusicFieldScene() {
-  const speciesCanvasRef = useRef<HTMLCanvasElement>(null)
-  const backCanvasRef = useRef<HTMLCanvasElement>(null)
-  const frontCanvasRef = useRef<HTMLCanvasElement>(null)
-  const interactionCanvasRef = useRef<HTMLCanvasElement>(null)
-  const { isDark } = useTheme()
-  const { performanceMode } = useFieldMode()
-  const darkRef = useRef(isDark)
-  const modeRef = useRef(performanceMode)
+export interface SpectralFieldRuntime {
+  setDark(isDark: boolean): void
+  destroy(): void
+}
 
-  useEffect(() => {
-    darkRef.current = isDark
-    window.dispatchEvent(new Event("site-startup-phase"))
-  }, [isDark])
-
-  useEffect(() => {
-    modeRef.current = performanceMode
-    document.documentElement.dataset.performanceMode = performanceMode
-    window.dispatchEvent(new Event("site-startup-phase"))
-  }, [performanceMode])
-
-  useEffect(() => {
-    const speciesCanvas = speciesCanvasRef.current
-    const backCanvas = backCanvasRef.current
-    const frontCanvas = frontCanvasRef.current
-    const interactionCanvas = interactionCanvasRef.current
-    if (!speciesCanvas || !backCanvas || !frontCanvas || !interactionCanvas) return
-
+export function createSpectralFieldRuntime({
+  speciesCanvas,
+  backCanvas,
+  frontCanvas,
+  interactionCanvas,
+  obstacleSelector = "[data-field-obstacle]",
+  danmakuTexts = [],
+  desktopOnly = true,
+}: SpectralFieldRuntimeOptions): SpectralFieldRuntime | null {
+    if (typeof window === "undefined") return null
     const speciesContext = speciesCanvas.getContext("2d", { alpha: true })
     const interactionContext = interactionCanvas.getContext("2d", { alpha: true })
-    if (!speciesContext || !interactionContext) return
+    if (!speciesContext || !interactionContext) return null
+    let dark = document.documentElement.classList.contains("dark")
+    let destroyed = false
 
     const sakura = Array.from({ length: EFFECT_COUNTS.sakura }, (_, index) => ({
       x0: sideWeightedPosition(index, 1),
@@ -235,9 +218,9 @@ function MusicFieldScene() {
         spectralParameter: { u: x, v: 1 },
       }
     })
-    const danmaku = siteConfig.danmakuList.length
+    const danmaku = danmakuTexts.length
       ? Array.from({ length: EFFECT_COUNTS.danmaku }, (_, index) => ({
-          text: siteConfig.danmakuList[Math.floor(hash(index, 1) * siteConfig.danmakuList.length)],
+          text: danmakuTexts[Math.floor(hash(index, 1) * danmakuTexts.length)],
           y: 0.12 + hash(index, 2) * 0.36,
           speed: 24 + hash(index, 3) * 18,
           phase: hash(index, 4) * 42,
@@ -254,9 +237,8 @@ function MusicFieldScene() {
     let height = 0
     let animationFrame = 0
     let lastFrame = 0
-    let startTime = performance.now()
-    let fieldBlend = modeRef.current === "field" ? 1 : 0
-    let themeBlend = darkRef.current ? 1 : 0
+    let elapsedSeconds = 0
+    let themeBlend = dark ? 1 : 0
     let qualityIndex = desktopQuery.matches ? 1 : FIELD_QUALITY.length - 1
     let obstacleSampleAt = 0
     let frameCount = 0
@@ -291,14 +273,10 @@ function MusicFieldScene() {
     }
 
     const refreshObstacleElements = () => {
-      obstacleElements = Array.from(document.querySelectorAll<HTMLElement>("[data-field-obstacle]"))
+      obstacleElements = Array.from(document.querySelectorAll<HTMLElement>(obstacleSelector))
     }
 
     const sampleObstacles = () => {
-      if (!document.documentElement.classList.contains("splash-seen")) {
-        obstacles = []
-        return
-      }
       obstacles = obstacleElements
         .map((element) => element.getBoundingClientRect())
         .filter(
@@ -320,7 +298,7 @@ function MusicFieldScene() {
 
     const drawSpecies = (time: number, spectralTime: number, modeCount: number) => {
       speciesContext.clearRect(0, 0, width, height)
-      const fieldAmount = smoothstep(fieldBlend)
+      const fieldAmount = 1
 
       speciesContext.font = '700 18px "Source Han Serif SC", "Noto Serif SC", serif'
       speciesContext.textBaseline = "middle"
@@ -498,9 +476,7 @@ function MusicFieldScene() {
     const renderFrame = (now: number, force = false) => {
       const elapsedSinceLastFrame = now - lastFrame
       const quality = FIELD_QUALITY[qualityIndex]
-      const transitioning = fieldBlend > 0.001 && fieldBlend < 0.999
-      const targetFrameMs =
-        modeRef.current === "field" || transitioning ? quality.frameMs : NORMAL_FRAME_MS
+      const targetFrameMs = quality.frameMs
       const throttled = targetFrameMs > 1000 / 55
       if (!force && throttled && elapsedSinceLastFrame < targetFrameMs - 0.5) return
       lastFrame = throttled ? now - (elapsedSinceLastFrame % targetFrameMs) : now
@@ -508,25 +484,24 @@ function MusicFieldScene() {
       const deltaSeconds = clamp(elapsedSinceLastFrame / 1000, 0, 0.1)
 
       if (reducedMotionQuery.matches) {
-        fieldBlend = modeRef.current === "field" ? 1 : 0
-        themeBlend = darkRef.current ? 1 : 0
+        themeBlend = dark ? 1 : 0
       } else {
-        const fieldTarget = modeRef.current === "field" ? 1 : 0
-        const themeTarget = darkRef.current ? 1 : 0
-        fieldBlend += clamp(fieldTarget - fieldBlend, -deltaSeconds / 0.9, deltaSeconds / 0.9)
+        const themeTarget = dark ? 1 : 0
         themeBlend += clamp(themeTarget - themeBlend, -deltaSeconds, deltaSeconds)
       }
 
-      const time = (now - startTime) / 1000
+      // Preserve elapsed scene time across tab visibility pauses.
+      elapsedSeconds += deltaSeconds
+      const time = elapsedSeconds
       const spectralTime = time * SPECTRAL_PLAYBACK_RATE
-      if (fieldBlend > 0.001 && now - obstacleSampleAt >= 100) {
+      if (now - obstacleSampleAt >= 100) {
         // Layout reads precede canvas writes, at 10 Hz. Never truncate the obstacle list.
         sampleObstacles()
         obstacleSampleAt = now
       }
       if (desktopQuery.matches) drawSpecies(time, spectralTime, quality.modeCount)
 
-      if (fieldBlend > 0.001 && !tracerController) {
+      if (!tracerController) {
         tracerController = createSpectralTracerController(backCanvas, frontCanvas)
         tracerController?.resize(
           width,
@@ -536,14 +511,11 @@ function MusicFieldScene() {
       }
       if (tracerController) {
         tracerController.render({
-          alpha: smoothstep(fieldBlend),
+          alpha: 1,
           theme: themeBlend,
           time: spectralTime,
           backgroundCount: quality.backgroundCount,
-          foregroundCount:
-            document.documentElement.dataset.projectRoomActive === "true"
-              ? 0
-              : quality.foregroundCount,
+          foregroundCount: quality.foregroundCount,
           trailSamples: quality.trailSamples,
           modeCount: quality.modeCount,
           width,
@@ -552,13 +524,9 @@ function MusicFieldScene() {
         })
       }
 
-      if (document.documentElement.dataset.projectRoomActive === "true") {
-        interactionContext.clearRect(0, 0, width, height)
-      } else {
-        drawInteractions()
-      }
+      drawInteractions()
 
-      if (modeRef.current === "field" && !reducedMotionQuery.matches) {
+      if (!reducedMotionQuery.matches) {
         frameCount += 1
         if (now - frameWindowStartedAt >= 2000) {
           const fps = (frameCount * 1000) / (now - frameWindowStartedAt)
@@ -591,9 +559,7 @@ function MusicFieldScene() {
 
     const syncAnimation = () => {
       stopAnimation()
-      const intro = document.documentElement.dataset.startupPhase === "particles"
-      if (!desktopQuery.matches && !intro) {
-        document.documentElement.dataset.fieldReady = "true"
+      if (desktopOnly && !desktopQuery.matches) {
         speciesCanvas.width = 1
         backCanvas.width = 1
         frontCanvas.width = 1
@@ -603,33 +569,29 @@ function MusicFieldScene() {
       if (document.visibilityState !== "visible") return
       resizeCanvases()
       const now = performance.now()
-      if (!lastFrame) {
-        startTime = now
-        lastFrame = now - NORMAL_FRAME_MS
-      }
+      lastFrame = now - FIELD_QUALITY[qualityIndex].frameMs
       renderFrame(now, true)
-      document.documentElement.dataset.fieldReady = "true"
       if (document.visibilityState === "visible" && !reducedMotionQuery.matches) {
         animationFrame = window.requestAnimationFrame(animate)
       }
     }
 
     const handleResize = () => {
-      if (!desktopQuery.matches) return
+      if (desktopOnly && !desktopQuery.matches) return
       resizeCanvases()
       renderFrame(performance.now(), true)
     }
 
     const handleClick = (event: MouseEvent) => {
-      if (modeRef.current !== "field") {
-        ripples.push({
-          x: event.clientX,
-          y: event.clientY,
-          radius: 0,
-          opacity: 0.6,
-          velocity: 2.5,
-        })
-      }
+      if (desktopOnly && !desktopQuery.matches) return
+      if (ripples.length >= 64) ripples.shift()
+      ripples.push({
+        x: event.clientX,
+        y: event.clientY,
+        radius: 0,
+        opacity: 0.6,
+        velocity: 2.5,
+      })
     }
 
     const obstacleObserver = new MutationObserver(refreshObstacleElements)
@@ -641,7 +603,6 @@ function MusicFieldScene() {
     })
     refreshObstacleElements()
 
-    window.addEventListener("site-startup-phase", syncAnimation)
     window.addEventListener("resize", handleResize)
     window.addEventListener("click", handleClick)
     document.addEventListener("visibilitychange", syncAnimation)
@@ -649,33 +610,38 @@ function MusicFieldScene() {
     reducedMotionQuery.addEventListener("change", syncAnimation)
     syncAnimation()
 
-    return () => {
+    const setDark = (isDark: boolean) => {
+      if (destroyed) return
+      dark = isDark
+      if (reducedMotionQuery.matches && document.visibilityState === "visible") {
+        renderFrame(performance.now(), true)
+      }
+    }
+    const themeObserver = new MutationObserver(() => {
+      setDark(document.documentElement.classList.contains("dark"))
+    })
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    })
+
+    const destroy = () => {
+      if (destroyed) return
+      destroyed = true
       stopAnimation()
       tracerController?.destroy()
       obstacleObserver.disconnect()
-      delete document.documentElement.dataset.fieldReady
-      window.removeEventListener("site-startup-phase", syncAnimation)
+      themeObserver.disconnect()
       window.removeEventListener("resize", handleResize)
       window.removeEventListener("click", handleClick)
       document.removeEventListener("visibilitychange", syncAnimation)
       desktopQuery.removeEventListener("change", syncAnimation)
       reducedMotionQuery.removeEventListener("change", syncAnimation)
+      for (const canvas of [speciesCanvas, backCanvas, frontCanvas, interactionCanvas]) {
+        canvas.width = 1
+        canvas.height = 1
+      }
     }
-  }, [])
 
-  return (
-    <>
-      <canvas
-        ref={speciesCanvasRef}
-        className="pointer-events-none fixed inset-0 z-[2] hidden h-full w-full md:block"
-        data-field-layer="species"
-        aria-hidden="true"
-      />
-      <SpectralTracerLayer
-        backCanvasRef={backCanvasRef}
-        frontCanvasRef={frontCanvasRef}
-        interactionCanvasRef={interactionCanvasRef}
-      />
-    </>
-  )
+    return { setDark, destroy }
 }

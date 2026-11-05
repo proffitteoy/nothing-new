@@ -8,7 +8,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes = new Set([
     "/",
     "/projects",
-    "/music",
     "/anime",
     "/chatter",
     "/friends",
