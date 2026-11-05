@@ -33,7 +33,8 @@
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
     "test": "tsx --test",
-    "test:navigation": "python scripts/navigation-preview.py --stage after --check-only"
+    "test:navigation": "python scripts/navigation-preview.py --stage after --check-only",
+    "test:papers": "python scripts/paper-monitor-preview.py --stage after --check-only"
   },
   "engines": {
     "node": "22.x",

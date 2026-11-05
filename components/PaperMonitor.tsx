@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, ArrowUpRight, BookOpen, ChevronDown, X } from "lucide-react"
+import { ArrowLeft, ArrowUpRight, ChevronDown, X } from "lucide-react"
 import type { PaperReport } from "../lib/papers"
 import styles from "./PaperMonitor.module.css"
 
@@ -15,6 +15,7 @@ export default function PaperMonitor({ initialReports }: { initialReports: Paper
   const issueDialog = useRef<HTMLDialogElement>(null)
   const paperDialog = useRef<HTMLDialogElement>(null)
   const pendingReports = useRef<PaperReport[] | null>(null)
+  const latestReport = reports[0]
   const report = reports.find((item) => item.date === date) ?? reports[0]
   const paper = selected === null ? null : report?.papers[selected]
 
@@ -96,15 +97,25 @@ export default function PaperMonitor({ initialReports }: { initialReports: Paper
         />
         <span className={styles.shade} />
         <span className={styles.heading}>
-          <span className={styles.eyebrow}>Paper Notes · 拓扑文献雷达</span>
+          <span className={styles.eyebrow}>PAPER NOTES / WEEKLY</span>
           <strong className={styles.title}>TDA 论文周报</strong>
           <span className={styles.subtitle}>在新的论文里，寻找下一个问题。</span>
           <span className={styles.coverMeta}>
             <span>
-              {reports[0]?.date} · {reports[0]?.papers.length ?? 0} 篇选读
+              {latestReport ? (
+                <>
+                  <time dateTime={latestReport.date}>{latestReport.date.replaceAll("-", ".")}</time>
+                  {" / "}
+                  <span aria-label={`${latestReport.papers.length} 篇选读`}>
+                    {String(latestReport.papers.length).padStart(2, "0")} PAPERS
+                  </span>
+                </>
+              ) : (
+                "周报待发布"
+              )}
             </span>
             <span className={styles.openHint}>
-              打开本期周报 <ArrowUpRight size={15} aria-hidden />
+              阅读本期 <ArrowUpRight size={16} aria-hidden />
             </span>
           </span>
         </span>
@@ -123,8 +134,8 @@ export default function PaperMonitor({ initialReports }: { initialReports: Paper
         <div className={styles.window}>
           <header className={styles.windowHeader}>
             <div>
-              <p className={styles.windowEyebrow}>Paper Notes · 拓扑文献雷达</p>
-              <h2 id="tda-issue-title">本期论文选读</h2>
+              <p className={styles.windowEyebrow}>PAPER NOTES / WEEKLY</p>
+              <h2 id="tda-issue-title">TDA 论文周报</h2>
             </div>
             <button
               type="button"
@@ -138,12 +149,18 @@ export default function PaperMonitor({ initialReports }: { initialReports: Paper
           </header>
           <div className={styles.reading}>
             <div className={styles.issue}>
-              <span>
-                <BookOpen size={14} aria-hidden /> {report?.papers.length ?? 0} 篇选读
-              </span>
+              <div className={styles.issueSummary}>
+                {report && (
+                  <time dateTime={report.date} className={styles.issueDate}>
+                    {report.date.replaceAll("-", ".")}
+                  </time>
+                )}
+                <span>本期 {report?.papers.length ?? 0} 篇选读</span>
+              </div>
               <label>
-                <span className="sr-only">选择周报日期</span>
+                <span>选择期数</span>
                 <select
+                  aria-label="选择周报日期"
                   value={report?.date ?? ""}
                   onChange={(event) => {
                     setDate(event.target.value)
@@ -159,34 +176,50 @@ export default function PaperMonitor({ initialReports }: { initialReports: Paper
               </label>
             </div>
             <div className={styles.listLabel}>
-              <span>本期论文</span>
+              <span>CONTENTS / 本期论文</span>
               <span>点选一篇，展开阅读</span>
             </div>
-            <div className={styles.papers}>
+            <ol className={styles.papers}>
               {report?.papers.map((item, index) => (
-                <button
-                  key={`${report.date}-${index}`}
-                  type="button"
-                  className={styles.paper}
-                  aria-haspopup="dialog"
-                  aria-controls="tda-paper-dialog"
-                  onClick={() => setSelected(index)}
-                >
-                  <span className={styles.number}>{String(index + 1).padStart(2, "0")}</span>
-                  <span className={styles.paperName}>{item.title}</span>
-                  <ArrowUpRight size={15} aria-hidden className={styles.chevron} />
-                </button>
+                <li key={`${report.date}-${index}`}>
+                  <button
+                    type="button"
+                    className={styles.paper}
+                    aria-haspopup="dialog"
+                    aria-controls="tda-paper-dialog"
+                    onClick={() => setSelected(index)}
+                  >
+                    <span className={styles.number}>{String(index + 1).padStart(2, "0")}</span>
+                    <span className={styles.paperInfo}>
+                      <span className={styles.paperName}>{item.title}</span>
+                      {item.priority && (
+                        <span className={styles.priority}>阅读优先级 · {item.priority}</span>
+                      )}
+                    </span>
+                    <ArrowUpRight size={18} aria-hidden className={styles.chevron} />
+                  </button>
+                </li>
               ))}
-            </div>
-            {report && (
+            </ol>
+            {report && (report.introduction || report.conclusion) && (
               <details className={styles.overview} key={report.date}>
                 <summary>
                   本期导读与综合判断 <ChevronDown size={14} aria-hidden />
                 </summary>
-                <div
-                  className={styles.prose}
-                  dangerouslySetInnerHTML={{ __html: report.introduction + report.conclusion }}
-                />
+                <div className={styles.overviewBody}>
+                  {report.introduction && (
+                    <div
+                      className={styles.prose}
+                      dangerouslySetInnerHTML={{ __html: report.introduction }}
+                    />
+                  )}
+                  {report.conclusion && (
+                    <div
+                      className={styles.prose}
+                      dangerouslySetInnerHTML={{ __html: report.conclusion }}
+                    />
+                  )}
+                </div>
               </details>
             )}
             <p className={styles.footer} role="status">
@@ -227,18 +260,21 @@ export default function PaperMonitor({ initialReports }: { initialReports: Paper
               </button>
             </header>
             <article className={styles.reading} aria-label={paper.title}>
-              <p className={styles.articleBar}>
-                {paper.priority ? `阅读优先级 · ${paper.priority}` : "论文选读"}
-              </p>
-              <h3 id="tda-paper-title" className={styles.paperTitle}>
-                {paper.title}
-              </h3>
-              <div className={styles.prose} dangerouslySetInnerHTML={{ __html: paper.html }} />
-              {paper.url && (
-                <a className={styles.source} href={paper.url} target="_blank" rel="noreferrer">
-                  阅读原文 <ArrowUpRight size={14} aria-hidden />
-                </a>
-              )}
+              <div className={styles.articleContent}>
+                <p className={styles.articleBar}>
+                  <span>{report?.date.replaceAll("-", ".")}</span>
+                  <span>{paper.priority ? `阅读优先级 · ${paper.priority}` : "论文选读"}</span>
+                </p>
+                <h2 id="tda-paper-title" className={styles.paperTitle}>
+                  {paper.title}
+                </h2>
+                <div className={styles.prose} dangerouslySetInnerHTML={{ __html: paper.html }} />
+                {paper.url && (
+                  <a className={styles.source} href={paper.url} target="_blank" rel="noreferrer">
+                    阅读原文 <ArrowUpRight size={14} aria-hidden />
+                  </a>
+                )}
+              </div>
             </article>
           </div>
         )}
