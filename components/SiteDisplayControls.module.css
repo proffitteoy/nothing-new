@@ -14,19 +14,22 @@
 .trigger {
   position: fixed;
   z-index: 90;
-  right: 22px;
-  bottom: 18px;
-  min-width: 60px;
+  right: 18px;
+  bottom: 16px;
+  min-width: 58px;
   min-height: 44px;
   border: 0;
   border-bottom: 1px solid var(--control-line);
   padding: 8px;
-  background: #eeeaeecc;
+  background: rgba(248, 244, 250, .35);
+  backdrop-filter: blur(8px);
   cursor: pointer;
   border-radius: 2px;
+  opacity: .7;
+  transition: opacity 180ms ease, background-color 180ms ease;
 }
 :global(.dark) .trigger {
-  background: #302c3bd9;
+  background: rgba(39,34,53,.4);
 }
 .trigger > span {
   font-size: 17px;
@@ -83,3 +86,6 @@
     width: 192px;
   }
 }
+
+.trigger:hover, .trigger:focus-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .trigger { transition: none; } }
