@@ -50,7 +50,7 @@ test("entry bootstrap distinguishes home and subpages and fails open without hyd
       location: { pathname },
       window: {
         setTimeout: (callback: () => void, delay: number) => {
-          assert.equal(delay, 9000)
+          assert.equal(delay, 22000)
           timers.push(callback)
         },
         dispatchEvent: (event: Event) => events.push(event.type),
@@ -69,4 +69,17 @@ test("entry bootstrap distinguishes home and subpages and fails open without hyd
   }
   assert.match(layout, /<noscript>/)
   assert.match(layout, /html\[data-startup-entry="page"\] \[data-startup-loading\]/)
+})
+
+test("Alpha opening uses the prepared V6 asset and bounded logo hold", () => {
+  assert.match(splash, /src="\/alpha-opening-v6\.html"/)
+  assert.match(splash, /event\.source !== iframeRef\.current\?\.contentWindow/)
+  assert.match(splash, /event\.origin !== window\.location\.origin/)
+  assert.match(splash, /logoHoldTimer = window\.setTimeout\(\(\) =>/)
+  assert.match(splash, /}, 10_000\)/)
+  assert.match(splash, /if \(logoFinished && preloadFinished/)
+  assert.match(splash, /window\.setTimeout\(finishLogo, 9500\)/)
+  assert.match(splash, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/)
+  assert.match(splash, /\(min-width: 768px\)/)
+  assert.doesNotMatch(splash, /头像光环|siteConfig\.avatarUrl/)
 })
