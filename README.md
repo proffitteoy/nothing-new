@@ -18,7 +18,7 @@
 
 ## 关于这个站点
 
-“阿の宝藏之地”不是单一用途的博客模板，而是一套围绕个人内容建立的长期归档系统：项目与开源经历有独立展柜，音乐、番剧、杂谈与数学笔记共享同一套视觉语言，播放器和场景效果则贯穿整个站点。
+“阿の宝藏之地”不是单一用途的博客模板，而是一套围绕个人内容建立的长期归档系统：项目与开源经历有独立展柜，番剧、杂谈与数学笔记共享同一套视觉语言，首页提供轻量音乐控制。
 
 站点由 **Next.js 主站**与经过本地化改造的 **Quartz 内容管线**共同组成。Markdown 仍是内容源，构建时会生成可供主站读取的文章、目录、搜索索引、反向链接和静态资源；Obsidian 只是可选的写作入口，并不是运行依赖。
 
@@ -28,7 +28,6 @@
 | ---- | --------------------------------------------------------- | ------------------------------------------------------ |
 | 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 个人资料、内容统计、当前音乐、昼夜与性能模式、站点状态 |
 | 项目 | [<code>/projects</code>](https://nothing-new.cn/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
-| 音乐 | [<code>/music</code>](https://nothing-new.cn/music)       | 网易云歌单、歌词、播放列表与全局悬浮播放器             |
 | 番剧 | [<code>/anime</code>](https://nothing-new.cn/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
 | 杂谈 | [<code>/chatter</code>](https://nothing-new.cn/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
 | 笔记 | [<code>/blog</code>](https://nothing-new.cn/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接 |
@@ -40,7 +39,7 @@
 <table>
   <tr>
     <td width="50%"><strong>项目档案</strong><br><img src="./docs/images/readme/projects.jpg" alt="项目档案页面"></td>
-    <td width="50%"><strong>音乐馆</strong><br><img src="./docs/images/readme/music.jpg" alt="音乐播放页面"></td>
+    <td width="50%"><strong>首页音乐入口</strong><br><img src="./docs/images/readme/home.jpg" alt="首页轻量音乐控制"></td>
   </tr>
   <tr>
     <td width="50%"><strong>番剧收藏</strong><br><img src="./docs/images/readme/anime.jpg" alt="番剧收藏页面"></td>
@@ -59,12 +58,12 @@
 - **首页模式面板**：昼夜使用落樱天空／流萤夜空，性能使用稀疏／叠加曲线；原有主题和模式规则保留，见[设计与预览验收](docs/project/home-mode-panels.md)。
 - **导航视觉更新**：桌面采用纸张色与曲线栏目指示，手机保留可拖动／转动圆盘；局部设计规范、改造前后截图和本地预览见[导航视觉更新与验收](docs/project/navigation-renewal.md)。
 - **TDA 文献雷达**：首页研究工作台卡片按论文展开阅读，监控仓库的 Action 将完整周报推送至博客，无需每周重新部署；配置见 [TDA 论文周报](docs/project/tda-paper-monitor.md)。
-- **音乐页专属粒子**：音乐页的封面粒子按原有逻辑独立显示，不受“性能交替”开关影响。首页开关保留原位置、文案与模式切换，默认关闭（常规模式），只影响音乐页的额外谱场；音乐页不新增开关。其他页面无论开关状态如何都不挂载粒子场，离开音乐页时释放渲染资源。音乐粒子保留更密采样、更小点径与收敛光晕；移动端控制增量，减少动态效果模式保持原有粒子预算。
-- **跨页面音乐体验**：音乐页提供完整播放界面，桌面端同时保留全局悬浮控制器。
+- **首页音乐入口**：只在首页展示轻量歌曲控制及歌词，不再提供独立音乐馆及其粒子场。
+- **音乐播放**：保留现有音频服务和首页基础播放能力，不提供内页悬浮播放器。
 - **项目与兴趣归档**：项目页采用可环绕的窗边研究小屋，保留静态预览和可读目录；项目内容由本地数据维护，番剧页通过服务端 Bangumi API 获取收藏数据。
 - **双内容分区**：<code>content/math/</code> 生成笔记，<code>content/misc/</code> 生成普通杂谈卡片，其余公开顶层目录在杂谈页显示为带图片的项目文件夹封面。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理；页面布局由 Next.js 提供，仅保留笔记正文所需的 Quartz 样式。
-- **统一图片存储**：生产部署会把站点背景、头像、杂谈封面与 Quartz 文章图片增量同步到私有 Vercel Blob，并通过原有站内路径读取。
+- **公开图片静态分发**：站点背景、头像、杂谈封面与 Quartz 文章图片直接由构建产物及 CDN 提供。私有 Blob 仅保留动漫快照/封面、论文周报等动态数据；如需维护历史 Blob 图片，显式运行 `npm run images:sync`。
 - **可审阅的发布流程**：Obsidian 同步先判断哪些笔记允许公开，再单向写入 <code>content/</code>；杂谈封面会被固定到 frontmatter，保证后续构建稳定。
 
 ## 技术栈
@@ -180,7 +179,7 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 
 ## 部署
 
-推荐使用 Vercel。导入仓库后保持 Root Directory 为仓库根目录，使用 <code>npm run build</code>，Node.js 版本选择 <code>22.x</code>。连接私有 Vercel Blob 后，构建会增量上传站点自有图片，生产请求统一从 Blob 读取；<code>/avatar</code>、<code>/avatar.jpg</code>、杂谈封面及 Quartz 附件的原有 URL 都保持不变。友链头像等第三方图片仍使用各自来源。如需番剧页面，再在部署环境中配置 <code>BANGUMI_ACCESS_TOKEN</code>。
+Vercel 仍受支持。导入仓库后保持 Root Directory 为仓库根目录，使用 <code>npm run build</code>，Node.js 版本选择 <code>22.x</code>。公开图片直接由静态文件服务分发，保留 <code>/avatar</code>、<code>/avatar.jpg</code>、杂谈封面及 Quartz 附件的原有 URL；构建不再自动上传 Blob。动漫快照、动漫封面和 TDA 论文周报仍使用私有 Blob。友链头像等第三方图片仍使用各自来源。如需番剧页面，再配置 <code>BANGUMI_ACCESS_TOKEN</code>。自托管 Docker 预案与正式切流/备案条件见 [迁移预案](docs/project/vercel-origin-transfer-migration.md)。
 
 部署前建议运行：
 

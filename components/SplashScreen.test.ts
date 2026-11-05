@@ -32,7 +32,7 @@ test("entry bootstrap distinguishes home and subpages and fails open without hyd
   }
   visit(tree)
   assert.ok(bootstrap)
-  for (const pathname of ["/", "/about", "/music", "/blog/math/test"]) {
+  for (const pathname of ["/", "/about", "/blog/math/test"]) {
     const classes = new Set<string>()
     const dataset: Record<string, string> = {}
     const timers: (() => void)[] = []

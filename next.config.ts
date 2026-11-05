@@ -1,37 +1,11 @@
 import type { NextConfig } from "next"
 
-const blobImagesEnabled = Boolean(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN)
-
 const nextConfig: NextConfig = {
+  // Keep public site-owned images on the static/CDN path, regardless of Blob credentials.
+  // Private Blob remains in use for the anime snapshot and cover APIs.
+  output: process.env.HOSTING_STANDALONE === "1" ? "standalone" : undefined,
   async rewrites() {
-    return {
-      beforeFiles: blobImagesEnabled
-        ? [
-            { source: "/avatar", destination: "/assets/avatar.jpg" },
-            { source: "/avatar.jpg", destination: "/assets/avatar.jpg" },
-            { source: "/about-cover.png", destination: "/assets/about-cover.png" },
-            { source: "/background.png", destination: "/assets/background.png" },
-            { source: "/profile-studio.png", destination: "/assets/profile-studio.png" },
-            {
-              source: "/chatter-covers/:path*",
-              destination: "/assets/chatter-covers/:path*",
-            },
-            {
-              source: "/quartz-assets/content/:path*",
-              destination: "/assets/quartz-assets/content/:path*",
-            },
-          ]
-        : [],
-      afterFiles: blobImagesEnabled
-        ? []
-        : [
-            {
-              source: "/avatar",
-              destination: "/avatar.jpg",
-            },
-          ],
-      fallback: [],
-    }
+    return [{ source: "/avatar", destination: "/avatar.jpg" }]
   },
   async headers() {
     return [
@@ -47,11 +21,17 @@ const nextConfig: NextConfig = {
     ]
   },
   images: {
-    formats: ["image/avif", "image/webp"],
-    qualities: [60, 75, 85],
-    minimumCacheTTL: 86_400,
-    deviceSizes: [640, 750, 828, 1080, 1200, 1440, 1920],
-    imageSizes: [32, 48, 64, 96, 128, 256, 384],
+    // One modern format avoids duplicating AVIF/WebP cache variants.
+    // Keep image optimization enabled to limit source/origin transfer.
+    formats: ["image/webp"],
+    qualities: [75, 85],
+    // Site-owned covers and content-addressed anime images change infrequently.
+    // Vercel recommends 31 days to reduce revalidation transformations.
+    minimumCacheTTL: 2_678_400,
+    // Match actual 128px avatars, 170px anime covers, ~390px cards, and
+    // ~896px hero images while avoiding unnecessary transformation widths.
+    deviceSizes: [640, 828, 1200, 1440, 1920],
+    imageSizes: [64, 128, 256, 384],
     localPatterns: [
       { pathname: "/avatar", search: "" },
       { pathname: "/avatar.jpg", search: "" },

@@ -1,0 +1,14 @@
+node_modules
+.next
+.quartz-cache
+.git
+.github
+.env*
+!.env.example
+.sync
+.obsidian
+private
+docs/images
+*.log
+coverage
+tsconfig.tsbuildinfo
