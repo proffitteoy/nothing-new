@@ -1,0 +1,65 @@
+.preview {
+  width: 100%;
+  padding: 6rem 2rem 2rem;
+  color: #e2e8f0;
+  background: #171f2c;
+  font-family: sans-serif;
+}
+
+.preview h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.preview > p {
+  max-width: 60rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.stage {
+  position: relative;
+  min-height: 440px;
+  height: min(60vh, 620px);
+  margin-bottom: 1rem;
+  border: 1px dashed #64748b;
+  background: #202c3b;
+}
+
+.host {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 260px; /* Preview fixture only; not a #67 size contract. */
+  max-width: calc(100% - 2rem);
+  background: #243244;
+}
+
+.host > button {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.preview a {
+  display: inline-block;
+  padding: 0.75rem 0;
+  text-decoration: underline;
+}
+
+.host > button:focus-visible,
+.preview a:focus-visible {
+  outline: 2px solid #e2e8f0;
+  outline-offset: 2px;
+}
+
+.placeholder {
+  position: absolute;
+  top: 45%;
+  left: 45%;
+  margin: 0;
+  color: #94a3b8;
+  pointer-events: none;
+  font-size: 0.875rem;
+}

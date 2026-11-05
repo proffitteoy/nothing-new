@@ -97,7 +97,6 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           window.location.pathname === "/projects"
             ? Promise.resolve()
             : import("../app/projects/RoomScene").then((module) => module.preloadRoomScene()),
-          import("../app/music/MusicClient"),
           loadAnimeSnapshot(),
           cover.decode(),
         ])

@@ -1,67 +1,79 @@
-# 首页播放器与歌词视觉更新（#48）
+# 首页紧凑音乐控制与沉底歌词（#48 / PR #65）
 
-依据[原始视觉设计](<./frontend refactoring.md>)的 5.1、5.2 与第九章，以及[导航已确认的局部规范](./navigation-renewal.md)。基线为导航 PR #61 已合并的 `deeb493`，独立分支为 `feat/home-music-visual`。本 PR 需人工视觉验收后合并。
+## 设计依据与交付边界
 
-## 构图与边界
+已核对[原始视觉稿](<./frontend refactoring.md>)第 5.1、5.2 与第九章。其右侧 5/12 杂志播放器、纸面歌词带及手机首页方向已被 [#51 新首页合同](https://github.com/proffitteoy/nothing-new/issues/51)、[更新后的 #48](https://github.com/proffitteoy/nothing-new/issues/48) 和 [PR #65 返工要求](https://github.com/proffitteoy/nothing-new/pull/65#issuecomment-6647530960)覆盖。[#48 最新主账号回复](https://github.com/proffitteoy/nothing-new/issues/48#issuecomment-6648892839)进一步取消所有独立音乐页入口；主线 PR #72 的删除结果保持不变。
 
-播放器以顶部栏目栏、居中方形封面和歌曲文字、底部进度及三键建立共同对齐轴。封面最大 148px，标题使用现有展示衬线字体回退；歌名和歌手最多两行，完整文字保留在 DOM 和 title 中。日夜色值与导航一致，字体不新增网络依赖。没有旋转唱片、厚阴影、毛玻璃或额外数学背景；数学视觉留给 #44。
+本轮只交付可独立挂载的紧凑音乐内容和舞台底边歌词，移除旧首页音乐列与歌词行。其他首页模块保留，未实现 #51 的中心人物总装。人物原图安全区审计、#67 容器几何及接口尚未冻结，因此产品首页暂不挂载音乐控件，等待 #67 接入。此分支不重建侧栏、导航、谱场循环、天体或移动首页。
 
-歌词是共享纸张色、细线和字体的横向信息带。五柱波形仅在播放时温和变化，歌词直接读取 Provider，约 200ms 淡入；取消两处逐字计时器和播放器中的重复歌词。减少动态效果时保留静态歌词和短线波形。
+PR #65 保持 OPEN / Draft；无关闭 Issue 语义、无合并、无生产变更。原杂志卡片及手机对照截图、旧验收结论已删除。
 
-所有音乐状态使用同一框架：加载显示静态占位线；空歌单和错误显示原因及重试；音乐页入口始终可见；封面失败仅替换本地 CSS 占位，不影响音频，切歌重新尝试图片。进度采用原生 range，保留键盘和指针操作，时间对非有限数显示 00:00。主按钮 48px，两侧热区 44px。
+## 组件接口
 
-`app/page.tsx` 仅移除歌词外层空容器，因此无歌时不会多出一个 flex 行间距。首页 7:5 网格、ProfileCard、其他区块、导航、背景、MusicProvider、FloatingPlayer 和完整音乐页均不改。手机仅在音乐内容内部给右侧既有导航与返回按钮留出 44px 安全空隙，保留原有顺序。
+两个组件必须使用根布局中已有的 `MusicProvider`，不添加新的 Provider、audio 或歌词计时器。
 
-## 隔离本地预览
+```tsx
+// #67 控制开关、焦点及放置位置。示例不规定容器几何。
+<CloudPlayer id="home-music-controls" active={musicOpen} className={hostClass} />
 
-Node 22、npm 10+，检出本 PR 分支后：
+// 舞台 UI 层须 position: relative，置于可破坏场景之外。
+<LyricBar active={stageVisible} className={lyricClass} />
+```
+
+- `CloudPlayer`：`active` 默认 true，false 时同时 `hidden` 与 `inert`，不停止音频。曲名／歌手单行截断，完整文字保留在 DOM 和 title；无封面、旋转唱片、跳转入口或舞台定位。播放／暂停、上一首／下一首各有至少 44px 热区；原生 range 保留键盘和指针寻址，未知时长时禁用。加载、空歌单与失败状态保持简洁；后两者可重试。
+- `LyricBar`：`active` 默认 true，读取当前歌曲的真实已解析歌词；无歌、加载、失败、纯音乐或空歌词时返回 null。暂停保留当前歌词，不显示 Provider 的缓冲／纯享提示。绝对定位于父舞台底边，透明背景、单行截断、点击穿透；约 180ms 透明度淡入，reduced-motion 下无动画。
+- 宿主可通过 `--music-ink`、`--music-lyric-inset`、`--music-lyric-bottom` 调整文字颜色和安全区。歌词底边默认 0，水平留白默认 1rem；这不是人物安全区结论。宿主负责层级和底部场景对比度。
+- #67 负责切片、热区、hover 延迟、展开／关闭、失焦策略和焦点恢复。本组件不监听全局键盘或指针；宿主关闭时须恢复／转移焦点。歌词可以独立于控件展开状态显示。#68 应保持 UI 层及真实热区稳定；最终破坏阶段联调尚待完成。
+
+## 隔离预览与可复现检查
+
+要求 Node 22、npm 10+。`HOME_MUSIC_PREVIEW=1` 仅开启本地接口演示；未设置时 `/preview/home-music` 返回 404，页面始终 noindex，不加入导航或 sitemap。不要在生产环境配置该开关。
 
 ```powershell
 npm.cmd ci
+$env:HOME_MUSIC_PREVIEW = '1'
 npm.cmd run dev -- --hostname 127.0.0.1 --port 3148
 ```
 
-访问 <http://127.0.0.1:3148>，等待开场结束或跳过，首页「昼夜交替」切换主题。开发服务器默认可用 Turbopack；若用 junction 复用另一个工作树的 node_modules，可在本地追加 `--webpack`，无需修改项目配置。无 Blob 凭据时使用本地图片，不需要部署。外部音乐 API 是否可用取决于网络。
+访问 <http://127.0.0.1:3148/preview/home-music>。若 node_modules 是跨工作树 junction，可追加 `--webpack`。预览仅用中性白模和普通开关演示真实组件，260px 示例宿主宽度不是 #67 的几何标准。Escape 关闭并回到开关，Tab 离开宿主后关闭且保留外部焦点；移入音乐按钮不会收起。歌词挂在独立舞台底边，收起控件后继续显示。
 
-## 可重复状态与交互验收
-
-Python Playwright 仅是可选本地验收依赖，不参与产品构建：
+安装可选本地 Python Playwright，或使用已有环境：
 
 ```powershell
-python -m venv .sync/tmp-home-music-qa/venv
-.\.sync\tmp-home-music-qa\venv\Scripts\Activate.ps1
 python -m pip install playwright
 python -m playwright install chromium
 python scripts/home-music-preview.py --url http://127.0.0.1:3148
 ```
 
-可用 `--browser 路径` 指定现有 Chromium，`--output 目录` 改变输出位置，`--check-only` 跳过四张对照采样。默认输出 `.sync/tmp-home-music-evidence/after/` 的 PNG 与 `report.json`，不写生产数据、API 或应用状态测试钩子。
+`--browser 路径` 指定现有 Chromium，`--output 目录` 改变默认 `.sync/tmp-home-music-rework-evidence/`，`--check-only` 不截屏。脚本仅在浏览器拦截音乐 API 和支持 HTTP Range 的 WAV 传输，运行真实组件、根 Provider 和 HTMLAudioElement；测试曲目为固定虚构数据，不证明外部服务可用。
 
-脚本只在浏览器内拦截音乐 API 和音频传输，以三首固定测试歌曲、现有本地图片、支持 HTTP Range 的一分钟 WAV 复现状态；组件、MusicProvider 和 HTMLAudioElement 为真实实现。测试数据不代表线上曲库或真实艺人。检查播放／暂停、时间与歌词更新、上一首／下一首、原生键盘和鼠标寻址、纯音乐、封面失败与恢复、首页 → 音乐 → 关于 → 首页的音频与进度连续性，并确认只有一个音频元素。另检查加载、空歌单、503 错误与重试、歌词行完全隐藏、长中英日混合文本、320／375／390／768／1280／1440px、日夜主题、减少动态效果，以及手机固定按钮避让。
+覆盖 1024/1280/1440 与 reduced-motion、开关／Escape／失焦、关闭时 inert 和跳过 Tab、收起仍播放、舞台歌词落底及点击穿透、长混合文本／无空栏、播放／暂停／切歌／键盘及鼠标寻址、空／加载／503／重试、预览 → 关于 → 返回时同一个音频元素及进度连续。报告不允许未预期的 pageerror。
 
-对照基线使用同样脚本的 `--stage before`，运行在改造前 `deeb493` 的隔离预览上。四组图片按左侧改造前、右侧改造后排列，未修改页面内容；截图使用固定测试歌曲。完整原始 PNG 不提交，仅保留压缩对照图。
+## 验证记录与待接入项
 
-| 对照         | 截图                                                                     |
-| ------------ | ------------------------------------------------------------------------ |
-| 1440px 日间  | ![1440px 日间对照](../images/home-music-renewal/desktop-day.webp)        |
-| 1440px 夜间  | ![1440px 夜间对照](../images/home-music-renewal/desktop-night.webp)      |
-| 390px 播放   | ![390px 播放对照](../images/home-music-renewal/mobile-playing.webp)      |
-| 320px 长标题 | ![320px 长标题对照](../images/home-music-renewal/mobile-long-title.webp) |
+2026-11-05，独立工作树以 Node 22.23.4 验证：
 
-加载、空歌单、连接失败、播放、暂停及封面失败／纯音乐的实际状态截图（上排前三项，下排后三项）：
+- ESLint 0 错误，3 条既有警告；现有 83 项测试全部通过。
+- `npm run typecheck` 通过；Quartz 内容构建和 `next build --webpack` 通过，生成 247 个页面。
+- 生产预览上的脚本全部通过，12 组记录、0 个 pageerror；包括三种桌面尺寸及 reduced-motion、真实音频操作、受控显隐与焦点、异常重试、关于页往返连续播放。实际首页在 1024/1280/1440 下已无旧音乐卡片及歌词行，音频仍连续播放。
+- 未启用开关时，预览路由与已删除的音乐页均为 HTTP 404；预览路由不在 sitemap 中。
+- 共享安装最初缺少启动器且 SWC 损坏，随后改用工作树独立锁定依赖，并清理已删除路由的旧开发类型缓存后重跑通过；未修改主工作区依赖或项目锁文件。
 
-![音乐状态验收](../images/home-music-renewal/states.webp)
+以下均为带明确范围提示的接口白模，未叠加真实人物、安全区或斜切容器。旧截图不再作为本轮视觉验收。
 
-## 验证记录
+| 场景               | 最新证据                                                |
+| ------------------ | ------------------------------------------------------- |
+| 1024px 展开        | [截图](../images/home-music-renewal/desktop-1024.jpg)   |
+| 1280px 展开        | [截图](../images/home-music-renewal/desktop-1280.jpg)   |
+| 1440px 展开        | [截图](../images/home-music-renewal/desktop-1440.jpg)   |
+| 收起后继续显示歌词 | [截图](../images/home-music-renewal/closed.jpg)         |
+| 长曲名／歌手／歌词 | [截图](../images/home-music-renewal/long-content.jpg)   |
+| 纯音乐无歌词栏     | [截图](../images/home-music-renewal/instrumental.jpg)   |
+| 连接失败与重试     | [截图](../images/home-music-renewal/error.jpg)          |
+| 完整检查范围与结果 | [report.json](../images/home-music-renewal/report.json) |
 
-2026-11-05 本地验证：
+![1440px 组件接口白模](../images/home-music-renewal/desktop-1440.jpg)
 
-- Node 22.23.4，ESLint 0 错误、7 条现有警告；原生封面 img 继续保留网易云尺寸、CORS 和 referrer 兼容行为。
-- `npm run typecheck` 通过；现有 87 项测试通过。
-- 完整 `npm run build` 通过，生成 250 个页面；图片同步明确跳过，未上传 Blob。
-- Chromium 开发与生产预览通过上述音乐交互、异常恢复、跨页连续性、尺寸／主题／减少动态效果检查。状态测试使用固定音乐传输数据，保持真实 Provider 和音频元素；完整报告可由脚本复现。无歌场景另核对下方模块与首行之间只保留一个正常的 24px gap。
-- 仅保留四张压缩前后对照及一张状态组合图；完整 PNG 和过程日志在本地忽略目录中。
+预热日志中仍可见未配置 Bangumi／Blob 的既有回退信息；本轮浏览器没有 pageerror。音乐传输使用固定 fixture，因此不代表线上曲库可用。
 
-音乐／3D 预热期间记录到既有 `Cannot read properties of undefined (reading 'isReady')`；开发模式减少动态效果仍有原有 PageTransition hydration 属性警告（导航验收已记录同类问题）。这两处不属于本次改动，音乐交互检查没有被阻断。脚本保留错误记录，并对其余未预期的页面异常失败退出。未配置 Blob／Bangumi 时，番剧统计按原有逻辑回退，可能出现 503；不以此证明线上数据可用。
-
-真实外部音乐服务、iOS Safari、Android 实机与线上环境尚未验收。
+尚待 #51/#67 接入后验证人物安全区、真实斜切热区和 hover 不误收、场景日月／入口避让、#68 整场破坏重组稳定性；#69 移动分流由其独立任务负责。白模组件回归不代表这些集成项通过。真实音乐服务、移动实机、Safari 与生产环境也不在本轮本地 fixture 验证范围内。
