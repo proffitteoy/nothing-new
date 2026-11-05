@@ -1,6 +1,6 @@
 # 杂谈页杂志排版与验收
 
-对应 #55，基线 `08012ef`，独立分支 `feat/chatter-magazine-55`。本页仍待人工视觉验收，工程检查不代表艺术认可；不合并 `main`，不改生产部署设置。
+对应 #55，当前基线 `706d72a`，独立分支 `feat/chatter-magazine-55`。本页仍待人工视觉验收，工程检查不代表艺术认可；不合并 `main`，不改生产部署设置。
 
 ## 设计依据与参考
 
@@ -70,7 +70,7 @@ npm.cmd run test:chatter -- --browser "C:/Program Files/Google/Chrome/Applicatio
 
 ## 验证边界
 
-- Node 22 下运行完整生产构建、ESLint、Next.js 类型生成／TypeScript 与现有 83 项测试。
+- Node 22 下运行完整生产构建、ESLint、Next.js 类型生成／TypeScript 与现有 84 项测试。
 - Chromium 仅检查电脑端：1024／1280／1440／1920px、三列高低错位、大图不同高度、原画未被新增表面遮挡、标题在封面内完整显示；同时检查原搜索、清空恢复、键盘、文章／文件夹跳转、图片失败、日夜及减少动态效果。完整结果见截图目录中的 `report.json`。
 - 既有 lint 警告来自友链、旧播放器、笔记样式和同步配置。Quartz 有既有 KaTeX 中文数学警告；本地关于页 GitHub 贡献接口可能超时后回退。
 - 手机端已按用户要求退出本轮调试和验收。Safari 与人工艺术验收尚未完成，不以自动化通过代替视觉认可。
