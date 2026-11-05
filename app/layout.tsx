@@ -2,6 +2,8 @@ import "katex/dist/katex.min.css"
 import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
+import { FieldModeProvider } from "../components/FieldModeProvider"
+import SiteDisplayControls from "../components/SiteDisplayControls"
 import { ThemeProvider } from "../components/ThemeProvider"
 import { MusicProvider } from "../components/MusicProvider"
 import { siteConfig } from "../siteConfig"
@@ -73,43 +75,45 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
         <ThemeProvider>
-          <SplashScreen blogHref={blogHref} />
+          <FieldModeProvider>
+            <SplashScreen blogHref={blogHref} />
 
-          <MusicProvider>
-            <div
-              id="app-mount-root"
-              className="flex-1 flex flex-col transition-opacity duration-1000"
-            >
-              <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                {!siteConfig.useGradient && <BackgroundSlider />}
-                <div
-                  className="absolute inset-0 z-[1] bg-white/[0.12] transition-colors duration-1000 dark:bg-slate-950/25"
-                  style={{
-                    backgroundImage: `linear-gradient(135deg, ${siteConfig.themeColors
-                      .map((color) => `${color}24`)
-                      .join(", ")})`,
-                  }}
-                />
-              </div>
-
-
-              <Navbar blogHref={blogHref} />
-              <ScrollRootManager />
-
+            <MusicProvider>
               <div
-                id="app-scroll-root"
-                className="relative z-10 flex-1 flex flex-col"
-                data-scroll-root
-                data-site-ui
+                id="app-mount-root"
+                className="flex-1 flex flex-col transition-opacity duration-1000"
               >
-                {children}
-              </div>
+                <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                  {!siteConfig.useGradient && <BackgroundSlider />}
+                  <div
+                    className="absolute inset-0 z-[1] bg-white/[0.12] transition-colors duration-1000 dark:bg-slate-950/25"
+                    style={{
+                      backgroundImage: `linear-gradient(135deg, ${siteConfig.themeColors
+                        .map((color) => `${color}24`)
+                        .join(", ")})`,
+                    }}
+                  />
+                </div>
 
-              <div className="md:hidden block" data-site-ui>
-                <MobileBackButton />
+                <Navbar blogHref={blogHref} />
+                <ScrollRootManager />
+                <SiteDisplayControls />
+
+                <div
+                  id="app-scroll-root"
+                  className="relative z-10 flex-1 flex flex-col"
+                  data-scroll-root
+                  data-site-ui
+                >
+                  {children}
+                </div>
+
+                <div className="md:hidden block" data-site-ui>
+                  <MobileBackButton />
+                </div>
               </div>
-            </div>
-          </MusicProvider>
+            </MusicProvider>
+          </FieldModeProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -1,78 +1,56 @@
-# 首页昼夜与性能面板
+# 日月天体与显示入口（#49 / #70）
 
-本次对应 #49，基线为 `deeb493`。对照[原始视觉方案](<./frontend refactoring.md>)的 2.1、6.1、9.3 节，并沿用[导航已验收的局部规范](./navigation-renewal.md)。原稿中的全站 Field Motif 仍属于 #44；首页没有挂载实际谱场。
+按 #49 最新正文与 PR #62 的返工回复，旧两张模式面板已撤下。原 PR 保持 OPEN / DRAFT，待人工视觉验收。
 
-## 实现与边界
+## 实际设计依据
 
-两张面板共用纸面、细边框、14px 圆角、19px 标题、12px 状态与外置键盘焦点。日间和夜间分别使用导航的暖白与深蓝灰 Token；性能选择只改变曲线，不改变纸面。状态文字始终显示，整张原生按钮均可点击。
+已查看 `public/background.png` 原图，尺寸为 1672×941，SHA256 为 `DF00CF1DC7D744EBF7F304A5A21D2FC825166DCB01385F41D4B6F82CE269CE69`。原图右上是漫射亮区，没有可辨认的太阳实体；不能把新增天体的位置声称为原画太阳坐标。
 
-昼夜插画使用内联 SVG：日间包含天空、暖阳、远近云层、樱花枝与花瓣；夜间包含靛蓝天空、弯月、稀疏星点、前景草叶和四处小范围流萤。两组画面交叉淡化 900ms，太阳和月亮只移动 6px。两个花瓣缓慢漂移、流萤轻微明灭；没有新增 Canvas、动画依赖、每帧数学计算或 JavaScript 渲染循环。减少动态效果时取消所有局部动画和过渡，完整静态画面及操作保留。
+候选美术锚点为原图 `(1390, 145)`，按现有居中 cover 和 1.01 缩放投影，另限制距顶部和右边界的安全距离。实际热区为 80×80px，焦点与现有 72px 导航分开。该点采样为 `#EAE5D9`，附近 `(1415,165)` 为 `#ECE9DF`；太阳的暖光与月亮的灰紫层次据此与人物衣饰协调。主体虚线是人工审图的包络，不是已经交付给谱场的精确保护掩膜。
 
-性能插画在模块加载时一次性采样有限频率曲线：常规为三条平缓曲线，谱场为五条相关曲线，其中主线完全相同，其余线条叠加二倍频与局部振幅包络。两组辅助线交叉淡化 400ms，不插值路径、不建立预览状态。这只是已选模式的指示图形；真实场景仍在 `/music`。
+![原图审计与候选锚点](../images/celestial/background-audit.jpg)
 
-桌面及手机采用左文右图；640–1023px 沿用首页原有双列，在面板容器宽度不足时把图形置于文字上方。320px 收紧局部留白，保留完整中文状态。没有修改 `HomeStoryBoard` 的网格、周报封面或全站排版。
+## 实现
 
-| 文件                                    | 必要性                                                               |
-| --------------------------------------- | -------------------------------------------------------------------- |
-| `components/ThemeToggleBlock.tsx`       | 天空插画，保留 `useTheme()`、提示、`aria-pressed` 和立即切换         |
-| `components/PerformanceToggleBlock.tsx` | 固定曲线示意，保留 `useFieldMode()`、提示、`aria-pressed` 和立即切换 |
-| `components/ModePanel.module.css`       | 两面板局部 Token、排版、容器查询、反馈与减少动态效果                 |
-| `scripts/mode-panels-preview.py`        | 可复现的截图与真实浏览器回归，不修改业务数据                         |
-| 本文、文档入口和三张截图汇总            | 设计核对、前后视觉证据、预览与验证记录                               |
+- `HomeCelestialControl.tsx` 内联可编辑 SVG 路径：实体光盘、不对称光晕、确定性纹理；负形月相、月面分层与环轨迹。直接点击仅调用既有 `toggleTheme()`，日夜交叉过渡 1000ms；减少动态效果时立即切换。
+- `SiteDisplayControls.tsx` 提供默认收起的原生 Popover，主题与 normal/field 独立操作；内页和窄桌面窗口仍可切换主题。Escape、外部点击由浏览器处理，手机菜单与返回按钮错开。
+- `FieldModeProvider.tsx` 保留原有状态、持久化和 storage / 自定义事件同步契约。主分支已取消 `/music`，此处不恢复音乐馆、不挂载谱场；性能选项保存用户选择，后续首页引擎由 #71 接入。
+- `HomeStoryBoard` 移除旧设置列，周报占满原容器，不留一列空洞；周报阅读逻辑不改。`app/layout.tsx` 仅接入共享状态和紧凑控制。
+- 删除旧纸面样式、旧主题面板、旧三张对照图及旧面板脚本。原版提交仍在 PR 历史中。
 
-未修改 Provider、`FieldScene`、`components/field/*`、首页布局、全局样式、音乐组件或配置；没有新增 npm 依赖。
+## 新版独立场景预览
 
-## 视觉证据
+以下截图复用真实根布局、背景、七入口导航、Provider 和生产天体组件；是 #49 的独立展示，不冒充已经完成的 #51 全首页总装。当前根路径其余旧内容的编排、嵌入式导航、移动根路径跳转及五分钟周期分别由 #51 / #67 / #69 / #68 负责。现有背景的日夜呈现沿用根布局，本次没有新增第二张背景或重绘整幅原画。
 
-截图包含两张面板与周报的相对关系。改造前为 `deeb493` 的本地开发预览，改造后为独立 #49 worktree 的生产构建；汇总仅排布原始浏览器截图，未替换页面内容。全部七种宽度、四种组合的原始 JPEG 与报告保留在本机 `.sync/tmp-mode-panels/production/after/`，不会批量提交二进制。
+![日间完整场景](../images/celestial/scene-day.jpg)
 
-![1440px 改造前后](../images/mode-panels/desktop-comparison.jpg)
+![夜间完整场景](../images/celestial/scene-night.jpg)
 
-![1440px 日间与夜间、常规与谱场四种组合](../images/mode-panels/desktop-states.jpg)
-
-![390px 前后、日夜与 320px 极窄状态](../images/mode-panels/mobile-comparison.jpg)
-
-## 本地预览与复现
-
-检出 `feat/home-mode-panels-visual`，使用 Node 22、npm 10+：
+使用 Node 22 / npm 10+，安装可选 Python Playwright（见导航验收说明）后：
 
 ```powershell
 npm.cmd ci
-npm.cmd run dev -- --hostname 127.0.0.1 --port 3119
+python scripts/celestial-preview.py --prepare-study
+npm.cmd run dev -- --hostname 127.0.0.1 --port 3129
 ```
 
-打开 <http://127.0.0.1:3119>。原有开场结束或跳过后，滚动到「主题与论文周报」，点击两张面板可检查四种组合。按 Tab、Enter、Space 操作，并在系统或浏览器中打开减少动态效果复查静态画面。预览无需生产凭据，不修改线上环境；本地外部音乐、番剧服务可能超时。
-
-可选 Python Playwright 依赖的安装方法同[导航验收说明](./navigation-renewal.md)。保持服务器运行：
+打开 <http://127.0.0.1:3129/celestial-study>。另一个终端执行：
 
 ```powershell
-python scripts/mode-panels-preview.py --stage after --url http://127.0.0.1:3119
+python scripts/celestial-preview.py --url http://127.0.0.1:3129
 ```
 
-支持 `--browser Chromium可执行文件路径`、`--output 输出目录`，以及仅重跑功能检查的 `--checks-only`。默认只向被 Git 忽略的 `.sync/tmp-mode-panels/after/` 写入截图和 `report.json`，不写业务数据、不上传资源、不连接生产环境。`--stage before` 只抓取改造前截图，应在基线代码上运行；不要覆盖已有基线。
+原始截图和报告写入忽略目录 `.sync/tmp-celestial/`。支持 `--browser Chromium路径`、`--checks-only`、`--record-only`。预览生成的 `app/celestial-study/page.tsx` 不提交、不部署；结束后执行 `python scripts/celestial-preview.py --clean-study` 删除。
 
-无图片上传的构建方式：
+## 已验证与剩余边界
 
-```powershell
-npm.cmd run notes:build
-npx.cmd next build
-npm.cmd run start -- --hostname 127.0.0.1 --port 3119
-```
+2026-11-05，独立 worktree、Node 22.23.4：
 
-本次隔离 worktree 通过目录联接复用已安装依赖，因此构建使用 `npx.cmd next build --webpack`，未改 Next 配置。没有执行含 `images:sync` 的 `npm run build`。
+- 生产构建通过；83 项现有测试全部通过；改动 TSX 的 ESLint 通过。
+- Chromium：1440×900、1280×800、1024×768 的日夜 × 常规/谱场四组合通过，热区不与导航重叠，无横向溢出。
+- 键盘、焦点、主题与性能独立、刷新恢复、跨标签页和同页事件同步、减少动态效果、首页不挂载 Canvas 通过。
+- 320/390px 手机内页触摸、主题访问和菜单/返回按钮边界通过。
+- 06:00/18:00 自动切换、手动覆盖刷新恢复及边界释放通过；最终浏览器报告 `pageErrors` 为空。
+- 主题切换不导航、不刷新、不创建时钟或渲染循环。#68 的真实周期尚未在此分支装配，不能宣称已完成其端到端“不归零”验收。
 
-## 验证记录与验收边界
-
-2026-11-05，Node 22.23.4 / npm 11.6.2 / Chromium 的独立 worktree 验证：
-
-- `npm run typecheck`、两张 TSX 的 ESLint、三份组件文件的 Prettier、`git diff --check` 通过。
-- `npm test`：87 项全部通过。
-- `npm run notes:build` 后 `next build --webpack` 通过，生成 250 个静态页面，无图片同步或上传。
-- 浏览器在 320、390、640、768、1024、1280、1440px 检查日间/夜间 × 常规/谱场，均无页面横向溢出、状态文字截断或按钮热区不足；桌面单面板高度小于 180px。
-- 鼠标、真实触摸、Tab/Enter/Space、连续切换、焦点轮廓、主题与性能独立、刷新恢复、性能跨标签页同步、同标签页自定义事件通过。
-- 使用浏览器虚拟时钟验证 06:00/18:00 自动边界，手动覆盖可刷新恢复，并在下一边界释放。
-- 纸面文字与焦点色对比度：日间主文字 13.52:1、次文字 5.22:1、强调色 5.23:1；夜间分别 14.66:1、7.30:1、7.41:1。
-- 减少动态效果下局部 SVG 无运行中的动画，日夜静态截图完整；首页无场景 Canvas。
-- 首页选择谱场后进入 `/music`，真实渲染器采用 `field`；切到 `normal` 后返回首页，选择一致且场景 Canvas 已释放。
-
-独立生产预览的最终报告 `pageErrors` 为空。本地未配置 Blob / Bangumi 凭据时，原有预热请求会返回服务错误；开发预览也观察到原有 `PageTransition` 的减少动态效果 hydration 提示，本次没有修改范围外逻辑。艺术验收和 iOS Safari / Android 实机仍需人工完成；本 PR 不合并 `main`，不修改线上部署。
+**待补：切换录屏、人工艺术验收、与 #51/#67/#68/#69 总装后的联合验收。** 录屏依赖安装遇到浏览器版本不匹配，现有静态证据与功能报告不替代录像。不合并 main，不修改线上。
