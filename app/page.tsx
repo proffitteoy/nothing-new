@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import PageTransition from "../components/PageTransition"
 import CloudPlayer from "../components/CloudPlayer"
 import SiteDashboard from "../components/SiteDashboard"
-import LyricBar from "../components/LyricBar"
 import HomeStoryBoard from "../components/HomeStoryBoard"
 import { ToastProvider } from "../components/ToastProvider"
 

@@ -6,6 +6,7 @@
 
 - `celestial-preview.py`：#49 / #70 的临时真实场景预览、截图与交互检查；仅向忽略目录写入证据，预览路由需清理，见[使用说明](../docs/project/home-mode-panels.md)。
 - `profile-preview.py`：可选 Python Playwright 检查 #47 的桌面个人区退场与独立联系操作；[使用说明](../docs/project/profile-renewal.md)。截图、功能夹具和浏览器日志仅写入 `--output` 指定的本地目录，不修改业务数据或线上状态。
+- `home-music-preview.py`：可选 Python Playwright 检查 #48 紧凑音乐组件、舞台歌词及真实音频跨页状态。需先显式启用本地接口预览；[使用说明与集成边界](../docs/project/home-music-renewal.md)。输出写入忽略目录 `.sync/tmp-home-music-rework-evidence/`，不修改产品数据或生产环境。
 
 - `paper-monitor-preview.py`：可选 Python Playwright 验收周报封面、单列目录和双层阅读，`npm run test:papers` 执行交互检查；[使用说明](../docs/project/tda-paper-monitor.md)。原始截图和检查记录写入 Git 忽略的 `.sync/tmp-paper-monitor/`；`--compare` 会更新两张入库的压缩对照图，不修改业务数据或线上状态。
 
