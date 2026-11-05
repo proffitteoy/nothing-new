@@ -4,6 +4,8 @@
 
 ## 目录说明
 
+- `projects-preview.py`：用可选 Python Playwright 检查真实 `/projects` 的六项目热点／目录、主题、旋转、音乐、静态与失败恢复；`npm run test:projects` 运行。仅将截图与报告写入 Git 忽略的 `.sync/tmp-projects-52-evidence/`，音乐数据和 WAV 仅在测试浏览器中拦截。详见[项目页界面验收](../docs/project/projects-room.md#界面整理52)。
+
 - `paper-monitor-preview.py`：可选 Python Playwright 验收周报封面、单列目录和双层阅读，`npm run test:papers` 执行交互检查；[使用说明](../docs/project/tda-paper-monitor.md)。原始截图和检查记录写入 Git 忽略的 `.sync/tmp-paper-monitor/`；`--compare` 会更新两张入库的压缩对照图，不修改业务数据或线上状态。
 
 - `navigation-preview.py`：使用可选的 Python Playwright 截取八个栏目，并检查桌面／手机导航；运行 `npm run test:navigation` 前先按[导航验收说明](../docs/project/navigation-renewal.md)安装浏览器依赖。仅在本地写入已被 Git 忽略的 `docs/images/navigation-renewal/` 截图，不改业务数据或线上环境。

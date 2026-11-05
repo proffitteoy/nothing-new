@@ -34,7 +34,8 @@
     "format": "npx prettier . --write",
     "test": "tsx --test",
     "test:navigation": "python scripts/navigation-preview.py --stage after --check-only",
-    "test:papers": "python scripts/paper-monitor-preview.py --stage after --check-only"
+    "test:papers": "python scripts/paper-monitor-preview.py --stage after --check-only",
+    "test:projects": "python scripts/projects-preview.py"
   },
   "engines": {
     "node": "22.x",
