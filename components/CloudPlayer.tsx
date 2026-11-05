@@ -1,8 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useMusic } from "./MusicProvider"
-// 🌟 核心引入：Next.js 路由钩子
-import { useRouter } from "next/navigation"
 import { getSizedMusicCoverUrl, isNeteaseMusicCoverUrl } from "../lib/image-loading"
 
 const formatTime = (time: number) => {
@@ -35,8 +33,6 @@ export default function CloudPlayer() {
     retryMusic,
   } = useMusic()
   const [displayedLyric, setDisplayedLyric] = useState("")
-  // 🌟 初始化路由
-  const router = useRouter()
 
   useEffect(() => {
     let i = 0
@@ -108,13 +104,6 @@ export default function CloudPlayer() {
             className="rounded-full bg-indigo-500 px-4 py-2 text-xs font-black text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-600"
           >
             重试连接
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/music")}
-            className="rounded-full bg-white/50 px-4 py-2 text-xs font-black text-slate-700 border border-white/60 transition hover:bg-white/70 dark:bg-slate-900/40 dark:text-slate-200 dark:border-white/10"
-          >
-            打开音乐页
           </button>
         </div>
       </div>
@@ -191,13 +180,6 @@ export default function CloudPlayer() {
               <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 tracking-widest bg-white/50 dark:bg-slate-900/50 px-2 py-0.5 rounded-sm shadow-sm transition-colors duration-700">
                 云端音乐
               </span>
-              <button
-                type="button"
-                onClick={() => router.push("/music")}
-                className="rounded-full bg-white/50 px-2.5 py-1 text-[10px] font-black tracking-widest text-slate-600 shadow-sm transition hover:bg-white/70 dark:bg-slate-900/50 dark:text-slate-300"
-              >
-                完整播放器
-              </button>
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white truncate drop-shadow-sm transition-colors duration-700">
               {currentSong.title}

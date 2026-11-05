@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import PageTransition from "../components/PageTransition"
-import { siteConfig } from "../siteConfig"
 import CloudPlayer from "../components/CloudPlayer"
 import ProfileCard from "../components/ProfileCard"
 import SiteDashboard from "../components/SiteDashboard"
@@ -30,11 +29,7 @@ export default async function Home() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
                 {/* 手机上占满1列，电脑上占7列 */}
                 <div className="col-span-1 lg:col-span-7 flex flex-col">
-                  <ProfileCard
-                    postCount={blogCount}
-                    chatterCount={chatterCount}
-                    musicCount={siteConfig.cloudMusicIds.length}
-                  />
+                  <ProfileCard postCount={blogCount} chatterCount={chatterCount} />
                 </div>
                 {/* 手机上占满1列，电脑上占5列 */}
                 <div className="col-span-1 lg:col-span-5 flex flex-col">

@@ -1,4 +1,4 @@
-"""Capture the eight existing pages without mocking their data or changing routes.
+"""Capture the seven existing pages without mocking their data or changing routes.
 
 Requires Python Playwright; see docs/project/navigation-renewal.md.
 """
@@ -19,8 +19,8 @@ parser.add_argument("--check-only", action="store_true", help="Check navigation 
 args = parser.parse_args()
 output = Path(__file__).resolve().parents[1] / "docs/images/navigation-renewal" / args.stage
 output.mkdir(parents=True, exist_ok=True)
-routes = ["/", "/projects", "/music", "/anime", "/chatter", "/blog", "/friends", "/about"]
-names = ["首页", "项目", "音乐", "番剧", "杂谈", "笔记", "友链", "关于"]
+routes = ["/", "/projects", "/anime", "/chatter", "/blog", "/friends", "/about"]
+names = ["首页", "项目", "番剧", "杂谈", "笔记", "友链", "关于"]
 
 
 def visit(page, route):
@@ -44,7 +44,7 @@ def check_navigation(browser):
     nav = page.get_by_role("navigation", name="主导航", exact=True)
     assert nav.get_by_role("link").all_text_contents() == names
     hrefs = nav.get_by_role("link").evaluate_all("links => links.map(a => a.getAttribute('href'))")
-    assert hrefs[:5] == routes[:5] and hrefs[5].startswith("/blog") and hrefs[6:] == routes[6:]
+    assert hrefs[:4] == routes[:4] and hrefs[4].startswith("/blog") and hrefs[5:] == routes[5:]
     for width in [768, 960, 1280, 1440]:
         page.set_viewport_size({"width": width, "height": 900})
         bounds = [link.bounding_box() for link in nav.get_by_role("link").all()]
@@ -68,7 +68,7 @@ def check_navigation(browser):
     page.screenshot(path=str(output / "navigation-desktop-dark.jpg"), type="jpeg", quality=85,
                     clip={"x": 0, "y": 0, "width": 1440, "height": 88})
     context.close()
-    print("PASS desktop: 768/960/1280/1440, eight destinations, current section, keyboard, dark theme", flush=True)
+    print("PASS desktop: 768/960/1280/1440, seven destinations, current section, keyboard, dark theme", flush=True)
 
     for width, theme, reduced in [(320, "light", "reduce"), (390, "light", "no-preference"), (390, "dark", "reduce")]:
         context = browser.new_context(viewport={"width": width, "height": 844}, has_touch=True,
@@ -152,7 +152,7 @@ def check_navigation(browser):
         dialog.wait_for(state="hidden")
         assert page.evaluate("document.body.style.overflow") != "hidden"
         context.close()
-        print(f"PASS mobile {width}/{theme}/{reduced}: bounds, focus, close, touch drag/rotate, eight links, back, resize", flush=True)
+        print(f"PASS mobile {width}/{theme}/{reduced}: bounds, focus, close, touch drag/rotate, seven links, back, resize", flush=True)
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, executable_path=args.browser)
