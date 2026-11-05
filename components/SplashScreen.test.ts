@@ -83,3 +83,32 @@ test("Alpha opening uses the prepared V6 asset and bounded logo hold", () => {
   assert.match(splash, /\(min-width: 768px\)/)
   assert.doesNotMatch(splash, /头像光环|siteConfig\.avatarUrl/)
 })
+
+test("Alpha opening keeps its 7.4s duration even when frames are slow", () => {
+  const animation = readFileSync(
+    new URL("../public/alpha-opening-v6.html", import.meta.url),
+    "utf8",
+  )
+  const tick = animation.match(/function tick\(now\)\{[^\n]+/u)?.[0]
+  assert.ok(tick)
+  const progress: number[] = []
+  const messages: unknown[] = []
+  const context = {
+    previous: null,
+    playing: true,
+    elapsed: 0,
+    DURATION: 7400,
+    render: (p: number) => progress.push(p),
+    $: () => ({ textContent: "" }),
+    requestAnimationFrame: () => {},
+    window: {
+      parent: { postMessage: (data: unknown) => messages.push(data) },
+      location: { origin: "https://nothing-new.cn" },
+    },
+  }
+  runInNewContext(`${tick};tick(0);tick(1000);tick(6000);tick(7400);tick(9000)`, context)
+  assert.deepEqual(progress, [0, 1000 / 7400, 6000 / 7400, 1])
+  assert.deepEqual(JSON.parse(JSON.stringify(messages)), [{ type: "alpha-splash:complete" }])
+  assert.equal(context.elapsed, 7400)
+  assert.equal(context.playing, false)
+})

@@ -22,7 +22,6 @@ const getMobileDragConstraints = () => {
 }
 
 export const navigationLinks = [
-  { name: "首页", href: "/" },
   { name: "项目", href: "/projects" },
   { name: "番剧", href: "/anime" },
   { name: "杂谈", href: "/chatter" },

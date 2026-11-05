@@ -82,7 +82,6 @@ export default function HomeScene({
               key={link.href}
               href={link.href === "/blog" ? blogHref : link.href}
               prefetch={false}
-              aria-current={link.href === "/" ? "page" : undefined}
             >
               {link.name}
             </Link>
@@ -155,7 +154,6 @@ export default function HomeScene({
                   }
                 }}
               >
-                <span className={styles.tabArt} aria-hidden="true" />
                 {side === "music" ? (
                   <Music2 size={17} aria-hidden />
                 ) : (
@@ -169,7 +167,6 @@ export default function HomeScene({
                 inert={!expanded}
                 aria-hidden={!expanded}
               >
-                <span className={styles.panelArt} aria-hidden="true" />
                 <div className={styles.panelContent}>
                   <div className={styles.panelHeader}>
                     <span>{side === "music" ? "正在聆听" : "每周选读"}</span>

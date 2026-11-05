@@ -99,7 +99,17 @@ export default function PaperMonitor({
         aria-controls="tda-issue-dialog"
         onClick={() => setIssueOpen(true)}
       >
-        {!compact && (
+        {compact ? (
+          <span className={styles.summaryArt}>
+            <Image
+              src="/profile-studio.png"
+              alt="TDA 论文周报封面"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1023px) 220px, 264px"
+            />
+          </span>
+        ) : (
           <>
             <Image
               src="/profile-studio.png"

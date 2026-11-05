@@ -47,36 +47,45 @@
 .summary {
   display: block;
   width: 100%;
-  padding: 4px 0;
+  padding: 0;
   border: 0;
-  background: transparent;
+  background: var(--paper-surface);
   color: var(--paper-ink);
   cursor: pointer;
   text-align: left;
 }
+.summaryArt {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
 .summary .heading {
   position: static;
   display: block;
-  padding: 0;
+  padding: 14px 0;
 }
 .summary .eyebrow {
-  display: none;
+  color: var(--paper-muted);
+  font-size: 9px;
+  letter-spacing: 0.08em;
 }
 .summary .title {
-  font-size: clamp(17px, 1.5vw, 23px);
-  margin-top: 9px;
+  font-size: clamp(18px, 1.5vw, 23px);
+  margin-top: 8px;
 }
 .summary .coverMeta {
   display: flex;
   flex-direction: column;
   align-items: start;
-  gap: 14px;
+  gap: 10px;
   font-size: 11px;
-  margin-top: 18px;
+  margin-top: 12px;
+  border-color: var(--paper-line);
 }
 .summary .openHint {
   min-height: 44px;
-  color: var(--paper-accent);
+  color: var(--paper-ink);
   border-bottom: 1px solid var(--paper-line);
 }
 .summary:focus-visible {

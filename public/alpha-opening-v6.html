@@ -1716,7 +1716,7 @@ function render(p){
  $('scrub').value=Math.round(p*1000);
  $('timer').textContent='00:'+String(Math.floor(p*DURATION/1000)).padStart(2,'0');
 }
-function tick(now){if(previous==null)previous=now;if(playing){elapsed=Math.min(DURATION,elapsed+Math.max(0,Math.min(55,now-previous)));render(elapsed/DURATION);if(elapsed===DURATION){playing=false;$('play').textContent='播放';if(window.parent!==window)window.parent.postMessage({type:'alpha-splash:complete'},window.location.origin);}}previous=now;requestAnimationFrame(tick)}
+function tick(now){if(previous==null)previous=now;if(playing){elapsed=Math.min(DURATION,elapsed+Math.max(0,now-previous));render(elapsed/DURATION);if(elapsed===DURATION){playing=false;$('play').textContent='播放';if(window.parent!==window)window.parent.postMessage({type:'alpha-splash:complete'},window.location.origin);}}previous=now;requestAnimationFrame(tick)}
 function pause(){playing=!playing;previous=null;$('play').textContent=playing?'暂停':'播放'}
 $('play').addEventListener('click',pause);
 $('restart').addEventListener('click',()=>{playing=true;previous=null;elapsed=0;$('play').textContent='暂停';render(0)});

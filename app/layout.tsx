@@ -3,7 +3,6 @@ import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
 import { FieldModeProvider } from "../components/FieldModeProvider"
-import SiteDisplayControls from "../components/SiteDisplayControls"
 import { ThemeProvider } from "../components/ThemeProvider"
 import { MusicProvider } from "../components/MusicProvider"
 import { siteConfig } from "../siteConfig"
@@ -119,7 +118,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
                 <Navbar blogHref={blogHref} />
                 <ScrollRootManager />
-                <SiteDisplayControls />
 
                 <div
                   id="app-scroll-root"

@@ -75,7 +75,7 @@ with sync_playwright() as p:
         for width,height in [(1440,900),(1280,800),(1024,768)]:
             context = context_for(browser,width,height)
             page = visit(context)
-            assert page.get_by_role('navigation', name='首页主导航').get_by_role('link').count() == 7
+            assert page.get_by_role('navigation', name='首页主导航').get_by_role('link').count() == 6
             assert page.locator('[data-home-canvas]').count() == 1
             assert page.locator('img[src*="background"]').count() == 0
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
