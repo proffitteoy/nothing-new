@@ -1,0 +1,23 @@
+# A staging-first deployment. Put TLS termination and DNS outside this Compose file.
+services:
+  website:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nothing-new:selfhost
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEBSITE_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      # External hosting cannot rely on Vercel's runtime OIDC injection.
+      BLOB_READ_WRITE_TOKEN: ${BLOB_READ_WRITE_TOKEN:-}
+      BANGUMI_USERNAME: ${BANGUMI_USERNAME:-}
+      BANGUMI_ACCESS_TOKEN: ${BANGUMI_ACCESS_TOKEN:-}
+      ANIME_SYNC_SECRET: ${ANIME_SYNC_SECRET:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      PAPERS_SYNC_SECRET: ${PAPERS_SYNC_SECRET:-}
+    security_opt:
+      - no-new-privileges:true

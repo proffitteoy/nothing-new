@@ -1,37 +1,11 @@
 import type { NextConfig } from "next"
 
-const blobImagesEnabled = Boolean(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN)
-
 const nextConfig: NextConfig = {
+  // Keep public site-owned images on the static/CDN path, regardless of Blob credentials.
+  // Private Blob remains in use for the anime snapshot and cover APIs.
+  output: process.env.HOSTING_STANDALONE === "1" ? "standalone" : undefined,
   async rewrites() {
-    return {
-      beforeFiles: blobImagesEnabled
-        ? [
-            { source: "/avatar", destination: "/assets/avatar.jpg" },
-            { source: "/avatar.jpg", destination: "/assets/avatar.jpg" },
-            { source: "/about-cover.png", destination: "/assets/about-cover.png" },
-            { source: "/background.png", destination: "/assets/background.png" },
-            { source: "/profile-studio.png", destination: "/assets/profile-studio.png" },
-            {
-              source: "/chatter-covers/:path*",
-              destination: "/assets/chatter-covers/:path*",
-            },
-            {
-              source: "/quartz-assets/content/:path*",
-              destination: "/assets/quartz-assets/content/:path*",
-            },
-          ]
-        : [],
-      afterFiles: blobImagesEnabled
-        ? []
-        : [
-            {
-              source: "/avatar",
-              destination: "/avatar.jpg",
-            },
-          ],
-      fallback: [],
-    }
+    return [{ source: "/avatar", destination: "/avatar.jpg" }]
   },
   async headers() {
     return [
