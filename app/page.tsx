@@ -15,14 +15,11 @@ export default function Home() {
     <ToastProvider>
       <div className="min-h-screen relative pb-10">
         <PageTransition>
-          {/* 🌟 调整整体容器的内边距，适应手机端更小的屏幕 */}
           <div className="w-full max-w-6xl mx-auto mt-24 sm:mt-28 px-4 sm:px-6 lg:px-10 relative z-10">
             <main className="flex flex-col gap-6 w-full mt-6">
-              {/* #47 removes the personal block; #51 / #67 own the remaining stage layout. */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
-                <div className="col-span-1 lg:col-start-8 lg:col-span-5 flex flex-col">
-                  <CloudPlayer />
-                </div>
+              {/* Temporary music mount only; #51 / #67 replace the legacy homepage composition. */}
+              <div className="w-full max-w-md self-end">
+                <CloudPlayer />
               </div>
 
               {/* 歌词栏 */}
