@@ -41,7 +41,7 @@ export default function CloudPlayer({
   const title = currentSong?.title || currentSong?.name || "未知歌曲"
   const artist = currentSong?.artist || currentSong?.author || "未知歌手"
   const cover = currentSong?.cover || currentSong?.pic || ""
-  const coverUrl = cover ? getSizedMusicCoverUrl(cover, 160) : ""
+  const coverUrl = cover ? getSizedMusicCoverUrl(cover, 128) : ""
   const seekProgress = Number.isFinite(progress) ? Math.min(100, Math.max(0, progress)) : 0
 
   return (
