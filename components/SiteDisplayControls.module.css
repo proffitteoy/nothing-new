@@ -1,15 +1,15 @@
 .trigger,
 .menu {
-  --control-ink: #514959;
-  --control-line: #92859466;
+  --control-ink: #252936;
+  --control-line: #dddde2;
   font-family: "Inter", "Microsoft YaHei", sans-serif;
   color: var(--control-ink);
   font-size: 12px;
 }
 :global(.dark) .trigger,
 :global(.dark) .menu {
-  --control-ink: #eee8f1;
-  --control-line: #c2b8ca66;
+  --control-ink: #e9eaf0;
+  --control-line: #343a48;
 }
 .trigger {
   position: fixed;
@@ -21,15 +21,17 @@
   border: 0;
   border-bottom: 1px solid var(--control-line);
   padding: 8px;
-  background: rgba(248, 244, 250, .35);
+  background: rgba(248, 244, 250, 0.35);
   backdrop-filter: blur(8px);
   cursor: pointer;
   border-radius: 2px;
-  opacity: .7;
-  transition: opacity 180ms ease, background-color 180ms ease;
+  opacity: 0.7;
+  transition:
+    opacity 180ms ease,
+    background-color 180ms ease;
 }
 :global(.dark) .trigger {
-  background: rgba(39,34,53,.4);
+  background: rgba(39, 34, 53, 0.4);
 }
 .trigger > span {
   font-size: 17px;
@@ -42,10 +44,10 @@
   padding: 16px;
   border: 1px solid var(--control-line);
   border-radius: 3px;
-  background: #eeeaee;
+  background: #f8f7f3;
 }
 :global(.dark) .menu {
-  background: #302c3b;
+  background: #141923;
 }
 .menu:popover-open {
   display: grid;
@@ -87,5 +89,12 @@
   }
 }
 
-.trigger:hover, .trigger:focus-visible { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .trigger { transition: none; } }
+.trigger:hover,
+.trigger:focus-visible {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trigger {
+    transition: none;
+  }
+}

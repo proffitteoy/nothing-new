@@ -2,8 +2,11 @@
   --scene-unit: max(calc(100vw / 1672), calc(100dvh / 941));
   position: fixed;
   z-index: 40;
-  left: clamp(56px, calc(50vw + 554 * var(--scene-unit) * 1.01), calc(100vw - 56px));
-  top: max(128px, calc(50dvh - 325.5 * var(--scene-unit) * 1.01));
+  left: var(
+    --home-sun-x,
+    clamp(56px, calc(50vw + 554 * var(--scene-unit) * 1.01), calc(100vw - 56px))
+  );
+  top: var(--home-sun-y, max(128px, calc(50dvh - 325.5 * var(--scene-unit) * 1.01)));
   width: 80px;
   height: 80px;
   transform: translate(-50%, -50%);

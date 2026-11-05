@@ -54,6 +54,7 @@ export type SpectralTracerFrame = {
   width: number
   height: number
   obstacles: TracerObstacle[]
+  colours?: readonly [TracerColor, TracerColor, TracerColor]
 }
 
 export type SpectralTracerController = {
@@ -344,6 +345,7 @@ function createLayerRenderer(
     width,
     height,
     obstacles,
+    colours,
   }: SpectralTracerFrame) => {
     context.setTransform(logicalPixelRatio, 0, 0, logicalPixelRatio, 0, 0)
     context.clearRect(0, 0, logicalWidth, logicalHeight)
@@ -402,21 +404,17 @@ function createLayerRenderer(
       }
 
       context.globalCompositeOperation = "lighter"
-      context.strokeStyle = mixColor(
-        DAY_TRACER_COLORS[bucket],
-        NIGHT_TRACER_GLOW_COLORS[bucket],
-        themeAmount,
-      )
+      context.strokeStyle = colours
+        ? mixColor(colours[bucket], colours[bucket], 0)
+        : mixColor(DAY_TRACER_COLORS[bucket], NIGHT_TRACER_GLOW_COLORS[bucket], themeAmount)
       context.globalAlpha = glowAlpha
       context.lineWidth = glowWidth
       context.stroke(path)
 
       context.globalCompositeOperation = "source-over"
-      context.strokeStyle = mixColor(
-        DAY_TRACER_COLORS[bucket],
-        NIGHT_TRACER_CORE_COLORS[bucket],
-        themeAmount,
-      )
+      context.strokeStyle = colours
+        ? mixColor(colours[bucket], colours[bucket], 0)
+        : mixColor(DAY_TRACER_COLORS[bucket], NIGHT_TRACER_CORE_COLORS[bucket], themeAmount)
       context.globalAlpha = coreAlpha
       context.lineWidth = coreWidth
       context.stroke(path)

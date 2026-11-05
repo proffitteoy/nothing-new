@@ -8,6 +8,7 @@ import { siteConfig } from "../siteConfig"
 import { navigationLinks } from "./Navbar"
 import { loadAnimeSnapshot } from "../lib/anime/client"
 import { preloadRoomAssets } from "../app/projects/room-preload"
+import { isMobileHomeClient } from "../lib/home-scene"
 
 type Phase = "loading" | "preparing" | "ready"
 const sleep = (ms: number, signal: AbortSignal) =>
@@ -54,6 +55,11 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     // Snapshot the entry route once. Soft navigation keeps this layout and
     // must not change the startup sequence or replay it.
     const homeEntry = window.location.pathname === "/"
+    const mobile = isMobileHomeClient()
+    if (homeEntry && mobile) {
+      document.documentElement.classList.add("splash-seen")
+      return () => controller.abort()
+    }
     const alreadyRevealed = document.documentElement.classList.contains("splash-seen")
 
     // Router prefetch has no completion promise. It warms all navigation targets,
@@ -61,6 +67,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     const prefetchNavigation = async () => {
       for (const link of navigationLinks) {
         if (signal.aborted) return
+        if (mobile && link.href === "/") continue
         router.prefetch(link.href === "/blog" ? blogHref : link.href)
         await sleep(constrained ? 180 : 80, signal)
       }
@@ -68,7 +75,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     const warm = async () => {
       await sleep(300, signal)
       const routes = prefetchNavigation()
-      if (constrained) {
+      if (constrained || mobile) {
         await routes
         return
       }
@@ -121,7 +128,10 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           const roomLoading =
             document.querySelector<HTMLElement>("[data-room-status]")?.dataset.roomStatus ===
             "loading"
-          if (!roomLoading) break
+          const homeArtwork =
+            document.querySelector<HTMLElement>("[data-home-artwork]")?.dataset.homeArtwork
+          const homeLoading = homeEntry && homeArtwork !== "ready" && homeArtwork !== "error"
+          if (!roomLoading && !homeLoading) break
           await sleep(32, signal)
         }
       }

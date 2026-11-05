@@ -1,21 +1,17 @@
 "use client"
 
 import { useId, useState } from "react"
-import { usePathname } from "next/navigation"
 import { useTheme } from "./ThemeProvider"
 import { useFieldMode } from "./FieldModeProvider"
-import HomeCelestialControl from "./HomeCelestialControl"
 import styles from "./SiteDisplayControls.module.css"
 
 export default function SiteDisplayControls() {
-  const isHome = usePathname() === "/"
   const { isDark, toggleTheme } = useTheme()
   const { performanceMode, togglePerformanceMode } = useFieldMode()
   const [isOpen, setIsOpen] = useState(false)
   const id = useId()
   return (
     <div data-site-ui>
-      {isHome && <HomeCelestialControl />}
       <button
         type="button"
         className={styles.trigger}

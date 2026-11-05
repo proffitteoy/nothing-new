@@ -1,40 +1,15 @@
 import type { Metadata } from "next"
-import PageTransition from "../components/PageTransition"
-import CloudPlayer from "../components/CloudPlayer"
-import SiteDashboard from "../components/SiteDashboard"
-import HomeStoryBoard from "../components/HomeStoryBoard"
-import { ToastProvider } from "../components/ToastProvider"
+import HomeDeviceGate from "../components/HomeDeviceGate"
+import seedReports from "../data/tda-reports.json"
+import { compilePaperReports } from "../lib/papers"
+import { getBlogEntryRoute } from "../lib/notes/server"
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/" },
-}
+export const metadata: Metadata = { alternates: { canonical: "/" } }
 
-export default function Home() {
-  return (
-    <ToastProvider>
-      <div className="min-h-screen relative pb-10">
-        <PageTransition>
-          <div className="w-full max-w-6xl mx-auto mt-24 sm:mt-28 px-4 sm:px-6 lg:px-10 relative z-10">
-            <main className="flex flex-col gap-6 w-full mt-6">
-              {/* Temporary music mount only; #51 / #67 replace the legacy homepage composition. */}
-              <div className="w-full max-w-md self-end">
-                <CloudPlayer />
-              </div>
-
-              {/* 歌词栏 */}
-              <div className="w-full mt-[-10px]">
-                <LyricBar />
-              </div>
-
-              <HomeStoryBoard />
-              {/* 底部数据面板 */}
-              <div className="w-full mt-4">
-                <SiteDashboard />
-              </div>
-            </main>
-          </div>
-        </PageTransition>
-      </div>
-    </ToastProvider>
-  )
+export default async function Home() {
+  const [reports, blogHref] = await Promise.all([
+    compilePaperReports(seedReports),
+    getBlogEntryRoute(),
+  ])
+  return <HomeDeviceGate reports={reports} blogHref={blogHref} />
 }

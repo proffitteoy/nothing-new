@@ -4,6 +4,8 @@
 
 ## 目录说明
 
+- `home-scene-preview.py`：一次性检查首页三桌面断面、边缘操作、周报、音乐和移动分流，并提供加速／真实双周期录屏。仅向本地忽略目录写入证据；详见[首页总装](../docs/project/home-scene.md)。
+
 - `celestial-preview.py`：#49 / #70 的临时真实场景预览、截图与交互检查；仅向忽略目录写入证据，预览路由需清理，见[使用说明](../docs/project/home-mode-panels.md)。
 - `profile-preview.py`：可选 Python Playwright 检查 #47 的桌面个人区退场与独立联系操作；[使用说明](../docs/project/profile-renewal.md)。截图、功能夹具和浏览器日志仅写入 `--output` 指定的本地目录，不修改业务数据或线上状态。
 - `home-music-preview.py`：可选 Python Playwright 检查 #48 紧凑音乐组件、舞台歌词及真实音频跨页状态。需先显式启用本地接口预览；[使用说明与集成边界](../docs/project/home-music-renewal.md)。输出写入忽略目录 `.sync/tmp-home-music-rework-evidence/`，不修改产品数据或生产环境。
