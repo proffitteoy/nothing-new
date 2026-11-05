@@ -4,7 +4,7 @@
 
 ## 目录说明
 
-- `about-preview.py`：使用可选 Python Playwright 检查关于页的响应式、主题、键盘日历与富文本排版；支持在临时本地进程回放真实 GitHub HTML。截图写入 `docs/images/about-profile/`，日志和临时文件写入 Git 忽略的 `.sync/tmp-about-58/`；[运行方式与数据边界](../docs/project/about-profile.md)。
+- `about-preview.py`：使用可选 Python Playwright 检查关于页的响应式、主题、键盘日历与富文本排版、透明外层与滚动背景连续性。截图写入 `docs/images/about-profile/`，日志和临时文件写入 Git 忽略的 `.sync/tmp-about-58/`；[运行方式与数据边界](../docs/project/about-profile.md)。
 
 - `paper-monitor-preview.py`：可选 Python Playwright 验收周报封面、单列目录和双层阅读，`npm run test:papers` 执行交互检查；[使用说明](../docs/project/tda-paper-monitor.md)。原始截图和检查记录写入 Git 忽略的 `.sync/tmp-paper-monitor/`；`--compare` 会更新两张入库的压缩对照图，不修改业务数据或线上状态。
 

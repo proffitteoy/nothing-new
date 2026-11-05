@@ -52,7 +52,7 @@ export default function AboutClient({
             alt="关于页封面"
             fill
             preload
-            sizes="(max-width: 767px) 100vw, (max-width: 1248px) 70vw, 874px"
+            sizes="(max-width: 767px) 100vw, (max-width: 1248px) 60vw, 725px"
             quality={75}
             className={styles.coverImage}
           />
