@@ -49,7 +49,7 @@
   width: 100%;
   padding: 0;
   border: 0;
-  background: var(--paper-surface);
+  background: transparent;
   color: var(--paper-ink);
   cursor: pointer;
   text-align: left;
@@ -59,34 +59,7 @@
   display: block;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-}
-.summary .heading {
-  position: static;
-  display: block;
-  padding: 14px 0;
-}
-.summary .eyebrow {
-  color: var(--paper-muted);
-  font-size: 9px;
-  letter-spacing: 0.08em;
-}
-.summary .title {
-  font-size: clamp(18px, 1.5vw, 23px);
-  margin-top: 8px;
-}
-.summary .coverMeta {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  gap: 10px;
-  font-size: 11px;
-  margin-top: 12px;
-  border-color: var(--paper-line);
-}
-.summary .openHint {
-  min-height: 44px;
-  color: var(--paper-ink);
-  border-bottom: 1px solid var(--paper-line);
+  border-radius: 12px 0 0 12px;
 }
 .summary:focus-visible {
   outline: 2px solid currentColor;

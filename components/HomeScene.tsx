@@ -112,7 +112,7 @@ export default function HomeScene({
                       ?.contains(document.activeElement)
                   )
                     setOpen((current) => (current === side ? null : current))
-                }, 500)
+                }, 120)
               }}
               onBlur={(event) => {
                 if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
@@ -122,7 +122,7 @@ export default function HomeScene({
                   if (document.querySelector("dialog[open]")) return
                   pinned.current = false
                   setOpen(null)
-                }, 500)
+                }, 120)
               }}
             >
               <button
@@ -161,33 +161,35 @@ export default function HomeScene({
                 )}
                 <span>{label}</span>
               </button>
-              <div
-                id={`home-${side}-panel`}
-                className={styles.panel}
-                inert={!expanded}
-                aria-hidden={!expanded}
-              >
-                <div className={styles.panelContent}>
-                  <div className={styles.panelHeader}>
-                    <span>{side === "music" ? "正在聆听" : "每周选读"}</span>
-                    <button
-                      type="button"
-                      aria-label={`关闭${label}侧栏`}
-                      onClick={() => close(true)}
-                    >
-                      <X size={16} aria-hidden />
-                    </button>
+              {side === "music" && (
+                <div
+                  id={`home-${side}-panel`}
+                  className={styles.panel}
+                  inert={!expanded}
+                  aria-hidden={!expanded}
+                >
+                  <div className={styles.panelContent}>
+                    <div className={styles.panelHeader}>
+                      <span>正在聆听</span>
+                      <button
+                        type="button"
+                        aria-label={`关闭${label}侧栏`}
+                        onClick={() => close(true)}
+                      >
+                        <X size={16} aria-hidden />
+                      </button>
+                    </div>
+                    <CloudPlayer className={styles.music} />
                   </div>
-                  {side === "music" ? <CloudPlayer className={styles.music} /> : null}
-                  {side === "music" && <p className={styles.panelNote}>让一首歌，陪你停留。</p>}
                 </div>
-              </div>
+              )}
             </aside>
           )
         })}
         {/* Keep dialogs outside inert panels so native focus restoration and the
             two-level report reader survive panel dismissal and stage fracture. */}
         <div
+          id="home-papers-panel"
           className={styles.paperSlot}
           data-open={open === "papers"}
           data-home-reading
@@ -202,7 +204,7 @@ export default function HomeScene({
                     ?.contains(document.activeElement)
                 )
                   setOpen(null)
-              }, 500)
+              }, 120)
           }}
         >
           <PaperMonitor initialReports={reports} compact active={open === "papers"} />

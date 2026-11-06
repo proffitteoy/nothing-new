@@ -162,7 +162,10 @@ def check_homepage_previews(browser):
         assert len(requests) == 1
         bounds = dialog.bounding_box()
         card_bounds = rows.first.bounding_box()
-        assert all(abs(bounds[key] - card_bounds[key]) < 2 for key in ["x", "y", "width", "height"]), "Preview must cover exactly its own card"
+        insets = [bounds["x"] - card_bounds["x"], bounds["y"] - card_bounds["y"],
+                  card_bounds["x"] + card_bounds["width"] - bounds["x"] - bounds["width"],
+                  card_bounds["y"] + card_bounds["height"] - bounds["y"] - bounds["height"]]
+        assert all(1 <= inset <= 2 for inset in insets), "Preview must remain 1–2px inside its own card"
         assert dialog.get_by_role("link", name="打开网站", exact=False).get_attribute("href") == expected["friends"][0]["url"]
         screenshot(page, f"homepage-preview-{width}-{theme}.jpg")
         if width > 767:
@@ -197,7 +200,10 @@ def check_homepage_previews(browser):
                 assert friend["name"] in dialog.inner_text()
                 card_bounds = row.bounding_box()
                 bounds = dialog.bounding_box()
-                assert all(abs(bounds[key] - card_bounds[key]) < 2 for key in ["x", "y", "width", "height"])
+                insets = [bounds["x"] - card_bounds["x"], bounds["y"] - card_bounds["y"],
+                          card_bounds["x"] + card_bounds["width"] - bounds["x"] - bounds["width"],
+                          card_bounds["y"] + card_bounds["height"] - bounds["y"] - bounds["height"]]
+                assert all(1 <= inset <= 2 for inset in insets)
                 page.mouse.move(4, 100)
                 dialog.wait_for(state="detached")
             rows.last.hover()
@@ -209,7 +215,7 @@ def check_homepage_previews(browser):
             dialog.wait_for()
             page.evaluate("window.scrollBy(0,100)")
             dialog.wait_for(state="detached")
-        passed(f"homepage preview {width}px {theme}: lazy request, actual snapshot, exact own-card overlay, close, touch/keyboard and dismissal")
+        passed(f"homepage preview {width}px {theme}: lazy request, actual snapshot, 1–2px inset overlay, close, touch/keyboard and dismissal")
         context.close()
 
     context = browser.new_context(viewport={"width": 1440, "height": 900})

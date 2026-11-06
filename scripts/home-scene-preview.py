@@ -88,10 +88,13 @@ with sync_playwright() as p:
                 trigger = page.locator(f'[data-edge-trigger={side}]')
                 trigger.hover(); page.wait_for_timeout(430)
                 expect(trigger).to_have_attribute('aria-expanded','true')
-                page.wait_for_timeout(350)  # let the 320ms transform settle before measuring
+                page.wait_for_timeout(350)  # let the panel transform settle before measuring
                 panel = page.locator(f'#home-{side}-panel')
                 box=panel.bounding_box(); assert box
-                page.mouse.move(box['x']+box['width']/2,box['y']+150)
+                if side=='papers':
+                    assert panel.locator('[data-paper-summary]').inner_text()==''
+                    assert panel.locator('[data-paper-summary] img').count()==1
+                page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2)
                 page.wait_for_timeout(650)
                 expect(trigger).to_have_attribute('aria-expanded','true')
                 capture(page,f'{width}-day-{side}')
@@ -123,7 +126,7 @@ with sync_playwright() as p:
             after=page.locator('audio').evaluate('e=>({time:e.currentTime,src:e.currentSrc})')
             assert after['src'] == before['src'] and after['time'] >= before['time']
             capture(page,f'{width}-inner-friends')
-            page.get_by_role('navigation',name='主导航',exact=True).get_by_role('link',name='首页',exact=True).click()
+            page.locator('header[data-site-ui] a[href="/"]').click()
             page.wait_for_selector('[data-home-scene]')
             assert float(state(page)['homeElapsed']) < 5
             check(f'{width}: hover/focus/Escape, reader, theme continuity, music across routes, re-entry',state(page))
@@ -156,7 +159,10 @@ with sync_playwright() as p:
             expect(page.locator('.katex').first).to_be_visible()
             page.get_by_role('button',name='打开导航',exact=True).click()
             expect(page.get_by_role('dialog',name='移动导航')).to_be_visible()
-            assert page.get_by_role('dialog',name='移动导航').get_by_role('link',name='首页',exact=True).get_attribute('href')=='/blog'
+            mobile_nav=page.get_by_role('dialog',name='移动导航')
+            assert mobile_nav.get_by_role('link').count()==6
+            assert mobile_nav.get_by_role('link',name='笔记',exact=True).get_attribute('href').startswith('/blog/')
+            assert mobile_nav.locator('a[href="/"]').count()==0
             page.keyboard.press('Escape')
             capture(page,'mobile-'+name)
             response=context.request.get(args.url,headers={'User-Agent':ua},max_redirects=0)
@@ -187,7 +193,7 @@ with sync_playwright() as p:
             page.locator(f'[data-edge-trigger={side}]').hover()
             page.wait_for_timeout(800)
             box=page.locator(f'#home-{side}-panel').bounding_box()
-            page.mouse.move(box['x']+box['width']/2,box['y']+150)
+            page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2)
             page.wait_for_timeout(1000)
             move_out(page)
             page.locator(f'[data-edge-trigger={side}]').focus()
