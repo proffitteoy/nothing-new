@@ -93,6 +93,7 @@
 .right {
   --edge-width: var(--right-edge-width);
   right: 0;
+  pointer-events: none;
 }
 .edge[data-open="true"] {
   width: calc(var(--edge-width) + 56px);
@@ -130,6 +131,7 @@
 .right .tab {
   right: 0;
   border-radius: 18px 0 0 18px;
+  pointer-events: auto;
 }
 .panel {
   position: absolute;

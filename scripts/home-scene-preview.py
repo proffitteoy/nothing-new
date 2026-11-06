@@ -66,7 +66,6 @@ def capture(page, name):
 
 def move_out(page):
     page.mouse.move(720, 680)
-    page.locator('[data-home-scene]').evaluate('()=>document.activeElement?.blur()')
     page.wait_for_timeout(650)
 
 with sync_playwright() as p:
@@ -119,6 +118,35 @@ with sync_playwright() as p:
             page.keyboard.press('Escape'); expect(page.locator('#tda-issue-dialog')).not_to_be_visible()
             page.keyboard.press('Escape')
             expect(page.locator('[data-edge-trigger=papers]')).to_have_attribute('aria-expanded','false')
+            for dismiss in ['button','escape','pinned']:
+                trigger=page.locator('[data-edge-trigger=papers]')
+                trigger.hover()
+                expect(trigger).to_have_attribute('aria-expanded','true')
+                if dismiss=='pinned': trigger.click()
+                page.locator('[data-paper-summary]').click()
+                expect(page.locator('#tda-issue-dialog')).to_be_visible()
+                if dismiss!='escape':
+                    page.get_by_role('button',name='关闭周报',exact=True).click()
+                else:
+                    page.keyboard.press('Escape')
+                move_out(page)
+                expect(trigger).to_have_attribute('aria-expanded','false')
+            trigger.hover()
+            expect(trigger).to_have_attribute('aria-expanded','true')
+            tab=trigger.bounding_box()
+            page.mouse.move(tab['x']+tab['width']/2,tab['y']+tab['height']+8)
+            expect(trigger).to_have_attribute('aria-expanded','false')
+            trigger.focus()
+            page.keyboard.press('Tab')
+            expect(page.locator('[data-paper-summary]')).to_be_focused()
+            page.keyboard.press('Enter')
+            expect(page.locator('#tda-issue-dialog')).to_be_visible()
+            page.keyboard.press('Escape')
+            expect(page.locator('[data-paper-summary]')).to_be_focused()
+            page.wait_for_timeout(250)
+            expect(trigger).to_have_attribute('aria-expanded','true')
+            page.keyboard.press('Tab')
+            expect(trigger).to_have_attribute('aria-expanded','false')
             before=page.locator('audio').evaluate('e=>({time:e.currentTime,src:e.currentSrc})')
             page.get_by_role('navigation',name='首页主导航').get_by_role('link',name='友链',exact=True).click()
             page.wait_for_url('**/friends'); page.wait_for_timeout(500)

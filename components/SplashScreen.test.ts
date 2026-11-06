@@ -112,3 +112,48 @@ test("Alpha opening keeps its 7.4s duration even when frames are slow", () => {
   assert.equal(context.elapsed, 7400)
   assert.equal(context.playing, false)
 })
+
+test("Alpha ending reveals the complete mark without changing its paths", () => {
+  const animation = readFileSync(
+    new URL("../public/alpha-opening-v6.html", import.meta.url),
+    "utf8",
+  )
+  const render = animation.slice(
+    animation.indexOf("function render(p){"),
+    animation.indexOf("function tick(now)"),
+  )
+  const elements = new Map<
+    string,
+    { style: Record<string, string>; value?: number; textContent?: string }
+  >()
+  const context = {
+    data: { rStop: 34.8, intervals: [] },
+    DURATION: 7400,
+    clamp: (value: number) => Math.max(0, Math.min(1, value)),
+    at: (p: number, start: number, end: number) => {
+      const t = Math.max(0, Math.min(1, (p - start) / (end - start)))
+      return t * t * (3 - 2 * t)
+    },
+    fmt: (value: number) => value.toFixed(2),
+    edges: [],
+    faces: [],
+    trcycles: [],
+    discs: [],
+    $: (id: string) => {
+      if (!elements.has(id)) elements.set(id, { style: {} })
+      return elements.get(id)!
+    },
+  }
+  runInNewContext(`${render};render(0.6)`, context)
+  assert.equal(elements.get("brand-group")?.style.opacity, "0.00")
+  runInNewContext(`${render};render(0.86)`, context)
+  assert.equal(elements.get("brand-group")?.style.opacity, "0.50")
+  assert.equal(elements.get("brand-nodes")?.style.opacity, "1")
+  runInNewContext(`${render};render(1)`, context)
+  assert.equal(elements.get("brand-group")?.style.opacity, "1.00")
+  assert.ok(
+    [...elements.values()].every((element) =>
+      Object.keys(element.style).every((key) => key === "opacity"),
+    ),
+  )
+})
