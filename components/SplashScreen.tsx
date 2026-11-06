@@ -158,7 +158,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       if (logoFinished || signal.aborted || skipped.current) return
       logoFinished = true
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
-      // Keep the exact EulerBridgeMark final frame in view while warming.
+      // Hold the generated Alpha complex while entry resources finish.
       changePhase("preparing")
       logoHoldTimer = window.setTimeout(() => {
         if (!signal.aborted && !skipped.current) reveal()
@@ -259,7 +259,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           className="fixed inset-x-0 bottom-8 z-[100001] flex items-center justify-center gap-4 text-xs text-slate-200"
         >
           {phase === "preparing" && showAnimation && (
-            <span role="status">图标已就绪，正在预加载页面…</span>
+            <span role="status">开场已完成，正在准备页面…</span>
           )}
           <button
             type="button"

@@ -113,7 +113,7 @@ test("Alpha opening keeps its 7.4s duration even when frames are slow", () => {
   assert.equal(context.playing, false)
 })
 
-test("Alpha ending reveals the complete mark without changing its paths", () => {
+test("Alpha complex keeps growing and remains visible through the final frame", () => {
   const animation = readFileSync(
     new URL("../public/alpha-opening-v6.html", import.meta.url),
     "utf8",
@@ -122,38 +122,66 @@ test("Alpha ending reveals the complete mark without changing its paths", () => 
     animation.indexOf("function render(p){"),
     animation.indexOf("function tick(now)"),
   )
+  const helpers = animation.slice(
+    animation.indexOf("const clamp="),
+    animation.indexOf("const edges="),
+  )
   const elements = new Map<
     string,
     { style: Record<string, string>; value?: number; textContent?: string }
   >()
+  const frames: {
+    alpha: number
+    edges: number[]
+    faces: number[]
+    points: number
+    discs: number
+  }[] = []
+  const radii: number[] = []
   const context = {
     data: { rStop: 34.8, intervals: [] },
     DURATION: 7400,
-    clamp: (value: number) => Math.max(0, Math.min(1, value)),
-    at: (p: number, start: number, end: number) => {
-      const t = Math.max(0, Math.min(1, (p - start) / (end - start)))
-      return t * t * (3 - 2 * t)
-    },
     fmt: (value: number) => value.toFixed(2),
-    edges: [],
-    faces: [],
+    edges: [8, 24].map((alpha) => ({ dataset: { alpha: String(alpha) }, style: { opacity: "0" } })),
+    faces: [12, 30].map((alpha) => ({
+      dataset: { alpha: String(alpha) },
+      style: { opacity: "0" },
+    })),
     trcycles: [],
-    discs: [],
+    discs: [
+      {
+        setAttribute: (name: string, value: string) => {
+          assert.equal(name, "r")
+          radii.push(Number(value))
+        },
+      },
+    ],
+    frames,
     $: (id: string) => {
       if (!elements.has(id)) elements.set(id, { style: {} })
       return elements.get(id)!
     },
   }
-  runInNewContext(`${render};render(0.6)`, context)
-  assert.equal(elements.get("brand-group")?.style.opacity, "0.00")
-  runInNewContext(`${render};render(0.86)`, context)
-  assert.equal(elements.get("brand-group")?.style.opacity, "0.50")
-  assert.equal(elements.get("brand-nodes")?.style.opacity, "1")
-  runInNewContext(`${render};render(1)`, context)
-  assert.equal(elements.get("brand-group")?.style.opacity, "1.00")
-  assert.ok(
-    [...elements.values()].every((element) =>
-      Object.keys(element.style).every((key) => key === "opacity"),
-    ),
+  runInNewContext(
+    `${helpers}\n${render}
+    for (const p of [0, .2, .5, .8, .94, 1]) {
+      render(p);
+      frames.push({ alpha: +$('alpha').textContent,
+        edges: edges.map(e => +e.style.opacity), faces: faces.map(e => +e.style.opacity),
+        points: +$('points').style.opacity, discs: +$('discs').style.opacity });
+    }`,
+    context,
   )
+  for (let i = 1; i < frames.length; i++) {
+    assert.ok(frames[i].alpha >= frames[i - 1].alpha)
+    assert.ok(radii[i] >= radii[i - 1])
+    for (const kind of ["edges", "faces"] as const)
+      assert.ok(frames[i][kind].every((opacity, j) => opacity >= frames[i - 1][kind][j]))
+    assert.ok(frames[i].points > 0 && frames[i].discs > 0)
+  }
+  assert.equal(frames.at(-1)?.alpha, 34.8)
+  assert.equal(radii.at(-1), 34.8)
+  assert.ok(frames.at(-1)!.edges.every((opacity) => opacity > 0))
+  assert.ok(frames.at(-1)!.faces.every((opacity) => opacity > 0))
+  assert.ok(![...elements.keys()].some((id) => id.startsWith("brand")))
 })

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Alpha opening — EulerBridgeMark</title>
+<title>Alpha 复形生成</title>
 <style>
 :root{color-scheme:dark;--sky:#8bafd3;--brass:#d4ad72;--void:#07121e}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0}
@@ -18,10 +18,6 @@ body{overflow:hidden;background:var(--void);font:11px/1.4 ui-monospace,SFMono-Re
 .transient{fill:none;stroke:#d4ad72;stroke-width:1.35;opacity:0;stroke-linejoin:round;stroke-linecap:round}
 .local-edge{fill:none;stroke-width:1.25;stroke-linejoin:round;stroke-linecap:round;opacity:0;vector-effect:non-scaling-stroke}
 .route{fill:none;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;opacity:0;vector-effect:non-scaling-stroke}
-#brand-group{opacity:0;}
-#brand-glow{opacity:.0;filter:url(#blur);}
-#brand-paths path{paint-order:stroke;}
-#brand-nodes{opacity:0}
 #caption{position:absolute;left:32px;top:28px;z-index:3;pointer-events:none;color:#99b1c8;letter-spacing:.18em;font-size:10px;text-transform:uppercase;opacity:.65;transition:opacity .2s}
 #caption .tiny{letter-spacing:.32em;font-size:9px;opacity:.6;margin-bottom:10px}
 #caption span{color:var(--brass)}
@@ -35,17 +31,13 @@ body{overflow:hidden;background:var(--void);font:11px/1.4 ui-monospace,SFMono-Re
 @media(max-width:700px){#caption{left:18px;top:15px;transform:scale(.8);transform-origin:top left}#clocktag{right:18px;bottom:80px}#bar{opacity:.8}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-#brand-group{opacity:0}
-#brand-glow{opacity:0;filter:url(#blur)}
-#brand-paths path{stroke-width:2.1}
 
 #bar,#caption,#clocktag{display:none!important}\n</style>
 </head>
 <body>
 <div id="stage">
-<svg id="art" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="均匀点云中的 Alpha 复形生成并淡出，完整网站图标整体显现。">
+<svg id="art" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="点云中随 Alpha 半径增大逐步生成边与三角形的复形。">
 <defs>
-<filter id="blur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation=".95"/></filter>
 <clipPath clipPathUnits="userSpaceOnUse" id="v14"><path d="M1301.3 18.5 L1292.7 65.0 L1326.8 59.9 L1328.6 54.5 L1305.2 12.5 L1301.3 18.5 Z"/></clipPath>
 <clipPath clipPathUnits="userSpaceOnUse" id="v25"><path d="M220.2 261.2 L200.6 264.8 L192.6 301.4 L193.6 301.9 L227.6 294.1 L220.2 261.2 Z"/></clipPath>
 <clipPath clipPathUnits="userSpaceOnUse" id="v48"><path d="M797.6 377.6 L782.8 360.2 L777.0 361.5 L775.5 363.3 L762.9 399.3 L775.8 407.6 L797.6 377.6 Z"/></clipPath>
@@ -1523,24 +1515,9 @@ body{overflow:hidden;background:var(--void);font:11px/1.4 ui-monospace,SFMono-Re
 
 
 
-<!-- The precise source paths and nodes; no substitute contour is generated. -->
-<g id="brand-group" transform="translate(500.0000 150.0000) scale(6.0000)">
- <g id="brand-glow"><path data-name="bridge" d="M 49.606 8.503 C 95.494 8.503 85.527 39.345 49.600 54.600 C 13.673 69.855 15.100 91.000 49.609 91.000" stroke="#8bafd3" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-<path data-name="lower-arc" d="M 49.609 91.000 C 26.550 91.000 7.856 72.412 7.856 49.482" stroke="#8bafd3" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-<path data-name="bronze" d="M 7.856 49.482 C 14.000 74.000 39.000 85.000 53.000 76.000 C 67.000 67.000 44.000 47.000 59.000 32.000 C 74.000 17.000 92.066 22.000 92.066 49.483" stroke="#d4ad72" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-<path data-name="upper-arc" d="M 92.066 49.483 C 92.066 26.850 73.056 8.503 49.606 8.503" stroke="#d4ad72" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
- <g id="brand-paths"><path data-name="bridge" d="M 49.606 8.503 C 95.494 8.503 85.527 39.345 49.600 54.600 C 13.673 69.855 15.100 91.000 49.609 91.000" stroke="#8bafd3" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-<path data-name="lower-arc" d="M 49.609 91.000 C 26.550 91.000 7.856 72.412 7.856 49.482" stroke="#8bafd3" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-<path data-name="bronze" d="M 7.856 49.482 C 14.000 74.000 39.000 85.000 53.000 76.000 C 67.000 67.000 44.000 47.000 59.000 32.000 C 74.000 17.000 92.066 22.000 92.066 49.483" stroke="#d4ad72" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-<path data-name="upper-arc" d="M 92.066 49.483 C 92.066 26.850 73.056 8.503 49.606 8.503" stroke="#d4ad72" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
- <g id="brand-nodes"><circle cx="49.606" cy="8.503" r="3.1" fill="#d4ad72"/>
-<circle cx="92.066" cy="49.483" r="3.1" fill="#d4ad72"/>
-<circle cx="49.609" cy="91.000" r="3.1" fill="#8bafd3"/>
-<circle cx="7.856" cy="49.482" r="3.1" fill="#8bafd3"/></g>
-</g>
 </svg>
 <div id="caption"><div class="tiny">NOTHING NEW · TOPOLOGICAL FORMATION</div><div id="status">ALPHA <span id="alpha">0.0</span> / BETTI₁ <span id="betti">0</span></div></div>
-<div id="clocktag">EULER BRIDGE / GEOMETRIC STUDY 06</div>
+<div id="clocktag">ALPHA COMPLEX / FILTRATION</div>
 <div id="bar"><button id="play" aria-label="播放或暂停">暂停</button><input id="scrub" type="range" min="0" max="1000" value="0" aria-label="动画进度"/><output id="timer">00:00</output><button id="restart" aria-label="从头播放">↻</button></div>
 </div>
 <script>
@@ -1558,24 +1535,14 @@ let playing=true,elapsed=0,previous=null;
 const fmt=(x)=>x.toFixed(2);
 function render(p){
  p=clamp(p);
- const alpha=data.rStop*at(p,.045,.54);
- const faceExit=1-at(p,.54,.695);
- const meshExit=1-at(p,.61,.91);
- const pointExit=1-at(p,.665,.96);
- // Alpha expansion and authentic one-dimensional deaths remain unchanged.
- for(const e of edges){let r=+e.dataset.alpha;let on=smooth((alpha-r+1.35)/3.3);e.style.opacity=fmt(on*meshExit*.72)}
- for(const e of faces){let r=+e.dataset.alpha;let on=smooth((alpha-r+2)/4.3);e.style.opacity=fmt(on*faceExit*.86)}
- for(const e of trcycles){let born=at(alpha,+e.dataset.b-1,+e.dataset.b+1.2),died=at(alpha,+e.dataset.d-1,+e.dataset.d+1.2);e.style.opacity=fmt(born*(1-died)*faceExit*.43)}
- $('discs').style.opacity=fmt(.69*(1-at(p,.35,.60)));
- if(p<.615)for(const e of discs)e.setAttribute('r',fmt(alpha));
- $('points').style.opacity=fmt(.54*pointExit);
- // Reveal the complete source mark as one layer; never trace its contour.
- const logo=at(p,.78,.94);
- $('brand-group').style.opacity=fmt(logo);
- $('brand-nodes').style.opacity='1';
- $('brand-glow').style.opacity='.1';
- $('caption').style.opacity=fmt(.62*(1-at(p,.78,.965)));
- $('clocktag').style.opacity=fmt(.32*(1-at(p,.78,.965)));
+ // Keep the original filtration data: radius grows, edges and faces enter.
+ const alpha=data.rStop*at(p,.045,.94);
+ for(const e of edges){let r=+e.dataset.alpha;let on=smooth((alpha-r+1.35)/3.3);e.style.opacity=fmt(on*.72)}
+ for(const e of faces){let r=+e.dataset.alpha;let on=smooth((alpha-r+2)/4.3);e.style.opacity=fmt(on*.86)}
+ for(const e of trcycles){let born=at(alpha,+e.dataset.b-1,+e.dataset.b+1.2),died=at(alpha,+e.dataset.d-1,+e.dataset.d+1.2);e.style.opacity=fmt(born*(1-died)*.43)}
+ $('discs').style.opacity='.69';
+ for(const e of discs)e.setAttribute('r',fmt(alpha));
+ $('points').style.opacity='.54';
  $('alpha').textContent=fmt(alpha);
  $('betti').textContent=String(data.intervals.reduce((n,v)=>n+(v[0]<=alpha&&alpha<v[1]?1:0),0));
  $('scrub').value=Math.round(p*1000);
