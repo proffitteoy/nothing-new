@@ -96,6 +96,9 @@ export default function HomeSpectralCanvas({
     const render = (now: number) => {
       frame = 0
       if (stopped || document.hidden) return
+      // The opening owns the main thread until its final frame. A hidden
+      // full-screen spectral renderer must not compete with it for frames.
+      if (document.documentElement.dataset.startupPhase !== "ready") return
       const settings = options()
       const interval = reduced.matches
         ? 1000
@@ -149,7 +152,6 @@ export default function HomeSpectralCanvas({
       if (Math.abs(blend - Number(settings.isDark)) < 0.001) blend = Number(settings.isDark)
       const ground = `rgb(${248 - 228 * blend},${247 - 222 * blend},${243 - 208 * blend})`
       if (image.complete && image.naturalWidth) {
-        surface.dataset.homeArtwork = "ready"
         const level = Math.round(blend * 60) / 60
         if (pictureBlend !== level) {
           picture.width = HOME_IMAGE_SIZE.width
@@ -326,8 +328,10 @@ export default function HomeSpectralCanvas({
     document.addEventListener("visibilitychange", visibility)
     window.addEventListener("home-scene-settings", redraw)
     window.addEventListener("resize", redraw)
+    window.addEventListener("site-startup-phase", redraw)
     reduced.addEventListener("change", redraw)
     image.onload = () => {
+      surface.dataset.homeArtwork = "ready"
       pictureBlend = -1
       redraw()
     }
@@ -339,6 +343,7 @@ export default function HomeSpectralCanvas({
       document.removeEventListener("visibilitychange", visibility)
       window.removeEventListener("home-scene-settings", redraw)
       window.removeEventListener("resize", redraw)
+      window.removeEventListener("site-startup-phase", redraw)
       reduced.removeEventListener("change", redraw)
       image.onload = null
       image.onerror = null

@@ -56,12 +56,16 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     const homeEntry = window.location.pathname === "/"
     const mobile = isMobileHomeClient()
     if (homeEntry && mobile) {
-      reveal()
+      queueMicrotask(() => {
+        if (!signal.aborted) reveal()
+      })
       return () => controller.abort()
     }
     const alreadyRevealed = document.documentElement.classList.contains("splash-seen")
     if (alreadyRevealed) {
-      reveal()
+      queueMicrotask(() => {
+        if (!signal.aborted) reveal()
+      })
       return () => controller.abort()
     }
 
@@ -101,21 +105,13 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       cover.srcset = props.srcSet ?? ""
       cover.src = props.src
       try {
-        await Promise.allSettled([
-          routes,
-          preloadRoomAssets(),
-          window.location.pathname === "/projects"
-            ? Promise.resolve()
-            : import("../app/projects/RoomScene").then((module) => module.preloadRoomScene()),
-          loadAnimeSnapshot(),
-          cover.decode(),
-        ])
+        await Promise.allSettled([routes, preloadRoomAssets(), loadAnimeSnapshot(), cover.decode()])
       } finally {
         noteStyle.remove()
       }
     }
-    // Preloads begin concurrently with the animation. They form the readiness
-    // gate, but cannot hold the completed logo for more than ten seconds.
+    // Only entry artwork belongs in the readiness gate. Unrelated routes,
+    // model downloads and image decoding wait until the opening is finished.
     const critical = async () => {
       const started = performance.now()
       const images = Array.from(document.images).filter((img) => {
@@ -189,16 +185,32 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     window.addEventListener("message", onAnimationMessage)
     window.addEventListener("alpha-splash:frame-loaded", onFrameLoaded)
 
-    const preloads = Promise.allSettled([warm(), critical()]).then(() => {
-      preloadFinished = true
-      checkReady()
-    })
+    let warming = false
+    const startWarm = () => {
+      if (warming || signal.aborted || document.documentElement.dataset.startupPhase === "loading")
+        return
+      warming = true
+      void warm().catch(() => {})
+    }
+    window.addEventListener("site-startup-phase", startWarm)
+
+    const preloads = Promise.race([critical(), sleep(4000, signal)])
+      .catch(() => {})
+      .then(() => {
+        preloadFinished = true
+        checkReady()
+      })
 
     if (animateHome) {
-      changePhase("loading")
-      setShowAnimation(true)
+      queueMicrotask(() => {
+        if (signal.aborted) return
+        changePhase("loading")
+        setShowAnimation(true)
+      })
     } else {
-      changePhase("preparing")
+      queueMicrotask(() => {
+        if (!signal.aborted) changePhase("preparing")
+      })
       // Non-home and accessibility fallbacks stay short; preload work may
       // continue without blocking the site.
       void Promise.race([preloads, sleep(2500, signal)])
@@ -216,6 +228,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
       window.removeEventListener("message", onAnimationMessage)
       window.removeEventListener("alpha-splash:frame-loaded", onFrameLoaded)
+      window.removeEventListener("site-startup-phase", startWarm)
     }
   }, [blogHref, changePhase, reveal, router])
 

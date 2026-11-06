@@ -28,6 +28,7 @@ export default function PaperMonitor({
   const paper = selected === null ? null : report?.papers[selected]
 
   useEffect(() => {
+    if (compact && !active) return
     const controller = new AbortController()
     fetch("/api/papers", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
@@ -45,7 +46,7 @@ export default function PaperMonitor({
         if (!controller.signal.aborted) setStatus("暂时无法检查更新，正在展示已保存的周报。")
       })
     return () => controller.abort()
-  }, [])
+  }, [compact, active])
 
   useEffect(() => {
     const dialog = issueDialog.current
@@ -121,29 +122,33 @@ export default function PaperMonitor({
             <span className={styles.shade} />
           </>
         )}
-        <span className={styles.heading}>
-          <span className={styles.eyebrow}>PAPER NOTES / WEEKLY</span>
-          <strong className={styles.title}>TDA 论文周报</strong>
-          {!compact && <span className={styles.subtitle}>在新的论文里，寻找下一个问题。</span>}
-          <span className={styles.coverMeta}>
-            <span>
-              {latestReport ? (
-                <>
-                  <time dateTime={latestReport.date}>{latestReport.date.replaceAll("-", ".")}</time>
-                  {" / "}
-                  <span aria-label={`${latestReport.papers.length} 篇选读`}>
-                    {String(latestReport.papers.length).padStart(2, "0")} PAPERS
-                  </span>
-                </>
-              ) : (
-                "周报待发布"
-              )}
-            </span>
-            <span className={styles.openHint}>
-              阅读本期 <ArrowUpRight size={16} aria-hidden />
+        {!compact && (
+          <span className={styles.heading}>
+            <span className={styles.eyebrow}>PAPER NOTES / WEEKLY</span>
+            <strong className={styles.title}>TDA 论文周报</strong>
+            {!compact && <span className={styles.subtitle}>在新的论文里，寻找下一个问题。</span>}
+            <span className={styles.coverMeta}>
+              <span>
+                {latestReport ? (
+                  <>
+                    <time dateTime={latestReport.date}>
+                      {latestReport.date.replaceAll("-", ".")}
+                    </time>
+                    {" / "}
+                    <span aria-label={`${latestReport.papers.length} 篇选读`}>
+                      {String(latestReport.papers.length).padStart(2, "0")} PAPERS
+                    </span>
+                  </>
+                ) : (
+                  "周报待发布"
+                )}
+              </span>
+              <span className={styles.openHint}>
+                阅读本期 <ArrowUpRight size={16} aria-hidden />
+              </span>
             </span>
           </span>
-        </span>
+        )}
       </button>
 
       <dialog

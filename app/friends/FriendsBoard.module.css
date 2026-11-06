@@ -309,7 +309,7 @@
 }
 .preview {
   position: absolute;
-  inset: -1px;
+  inset: 1px;
   z-index: 3;
   display: flex;
   flex-direction: column;
