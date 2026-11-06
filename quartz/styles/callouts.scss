@@ -75,16 +75,16 @@
   }
 
   &[data-callout="question"] {
-    --color: #dba642;
-    --border: #dba64244;
-    --bg: #dba64210;
+    --color: var(--secondary);
+    --border: color-mix(in srgb, var(--secondary) 27%, transparent);
+    --bg: color-mix(in srgb, var(--secondary) 7%, transparent);
     --callout-icon: var(--callout-icon-question);
   }
 
   &[data-callout="warning"] {
-    --color: #db8942;
-    --border: #db894244;
-    --bg: #db894210;
+    --color: var(--secondary);
+    --border: color-mix(in srgb, var(--secondary) 27%, transparent);
+    --bg: color-mix(in srgb, var(--secondary) 7%, transparent);
     --callout-icon: var(--callout-icon-warning);
   }
 

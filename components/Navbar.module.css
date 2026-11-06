@@ -1,11 +1,11 @@
-/* Visual renewal tokens stay inside the navigation until each page is reviewed. */
+/* Navigation aliases follow the shared day/night blue palette. */
 .visualScope {
-  --journal-paper: #ffffff;
-  --journal-ink: #252936;
-  --journal-muted: #626875;
-  --journal-accent: #625eb0;
-  --journal-line: #dddde2;
-  --journal-pink: #e8a8b5;
+  --journal-paper: var(--site-surface);
+  --journal-ink: var(--site-ink);
+  --journal-muted: var(--site-muted);
+  --journal-accent: var(--site-accent);
+  --journal-line: var(--site-line);
+  --journal-pink: var(--site-detail);
   --journal-ui: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --journal-display: "Newsreader", "Source Han Serif SC", "Noto Serif SC", "SimSun", serif;
   color: var(--journal-ink);
@@ -13,12 +13,12 @@
 }
 
 :global(.dark) .visualScope {
-  --journal-paper: #141923;
-  --journal-ink: #e9eaf0;
-  --journal-muted: #a1a7b5;
-  --journal-accent: #a4a0ee;
-  --journal-line: #343a48;
-  --journal-pink: #d68ea9;
+  --journal-paper: var(--site-surface);
+  --journal-ink: var(--site-ink);
+  --journal-muted: var(--site-muted);
+  --journal-accent: var(--site-accent);
+  --journal-line: var(--site-line);
+  --journal-pink: var(--site-detail);
 }
 
 .visualScope a:focus-visible,

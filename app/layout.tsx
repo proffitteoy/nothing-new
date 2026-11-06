@@ -102,7 +102,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         </noscript>
       </head>
 
-      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
+      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-[var(--site-bg)] font-serif">
         <ThemeProvider>
           <FieldModeProvider>
             <SplashScreen blogHref={blogHref} />

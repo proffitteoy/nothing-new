@@ -1,20 +1,20 @@
 .board,
 .preview {
-  --surface: #f4f7fc;
-  --ink: #252936;
-  --muted: #636d80;
-  --accent: #7470c8;
-  --line: #d7dfed;
+  --surface: var(--site-surface);
+  --ink: var(--site-ink);
+  --muted: var(--site-muted);
+  --accent: var(--site-accent);
+  --line: var(--site-line);
   color: var(--ink);
   font-family: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
 :global(.dark) .board,
 :global(.dark) .preview {
-  --surface: #182030;
-  --ink: #e9eaf0;
-  --muted: #b8c2d4;
-  --accent: #a4a0ee;
-  --line: #4a5770;
+  --surface: var(--site-surface);
+  --ink: var(--site-ink);
+  --muted: var(--site-muted);
+  --accent: var(--site-accent);
+  --line: var(--site-line);
 }
 .board {
   min-height: 100vh;
@@ -330,7 +330,7 @@
 }
 :global(.dark) .preview {
   --muted: #d4deed;
-  --accent: #d0cbff;
+  --accent: var(--site-accent);
   border-color: rgb(235 245 255 / 62%);
   background: rgb(18 31 48 / 74%);
 }
