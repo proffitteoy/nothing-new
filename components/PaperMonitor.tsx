@@ -10,10 +10,12 @@ export default function PaperMonitor({
   initialReports,
   compact = false,
   active = true,
+  onIssueClose,
 }: {
   initialReports: PaperReport[]
   compact?: boolean
   active?: boolean
+  onIssueClose?: () => void
 }) {
   const [reports, setReports] = useState(initialReports)
   const [date, setDate] = useState(initialReports[0]?.date ?? "")
@@ -156,7 +158,10 @@ export default function PaperMonitor({
         id="tda-issue-dialog"
         className={styles.dialog}
         aria-labelledby="tda-issue-title"
-        onClose={closeIssue}
+        onClose={() => {
+          closeIssue()
+          onIssueClose?.()
+        }}
         onClick={(event) => {
           if (event.target === event.currentTarget) closeIssue()
         }}

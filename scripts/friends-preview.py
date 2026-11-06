@@ -166,6 +166,9 @@ def check_homepage_previews(browser):
                   card_bounds["x"] + card_bounds["width"] - bounds["x"] - bounds["width"],
                   card_bounds["y"] + card_bounds["height"] - bounds["y"] - bounds["height"]]
         assert all(1 <= inset <= 2 for inset in insets), "Preview must remain 1–2px inside its own card"
+        assert not page.evaluate("([x,y]) => !!document.elementFromPoint(x,y).closest('#friend-homepage-preview')",
+                                 [card_bounds['x'] + .5, card_bounds['y'] + card_bounds['height'] / 2]), "Preview must not intercept its card's outer border"
+        assert '20px' in dialog.evaluate("el => getComputedStyle(el).backdropFilter"), "Preview uses its own bounded glass layer"
         assert dialog.get_by_role("link", name="打开网站", exact=False).get_attribute("href") == expected["friends"][0]["url"]
         screenshot(page, f"homepage-preview-{width}-{theme}.jpg")
         if width > 767:

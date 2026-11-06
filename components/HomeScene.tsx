@@ -29,6 +29,7 @@ export default function HomeScene({
   const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const pinned = useRef(false)
+  const keyboardSide = useRef<Side | null>(null)
   const clear = () => {
     clearTimeout(openTimer.current)
     clearTimeout(closeTimer.current)
@@ -38,7 +39,27 @@ export default function HomeScene({
     if (restore && open)
       root.current?.querySelector<HTMLButtonElement>(`[data-edge-trigger="${open}"]`)?.focus()
     pinned.current = false
+    keyboardSide.current = null
     setOpen(null)
+  }
+  const scheduleClose = (side: Side) => {
+    clearTimeout(openTimer.current)
+    clearTimeout(closeTimer.current)
+    closeTimer.current = setTimeout(() => {
+      if (pinned.current || document.querySelector("dialog[open]")) return
+      const hovered = root.current?.querySelector(
+        side === "papers"
+          ? '[data-edge-trigger="papers"]:hover, [data-paper-summary]:hover'
+          : '[data-home-edge="music"]:hover',
+      )
+      const focused = (document.activeElement as Element | null)?.closest(
+        side === "papers"
+          ? '[data-home-edge="papers"], [data-paper-summary]'
+          : '[data-home-edge="music"]',
+      )
+      if (!hovered && !(keyboardSide.current === side && focused))
+        setOpen((current) => (current === side ? null : current))
+    }, 120)
   }
 
   useEffect(() => {
@@ -99,30 +120,16 @@ export default function HomeScene({
               data-open={expanded}
               onPointerEnter={(event) => {
                 if (event.pointerType !== "mouse") return
+                keyboardSide.current = null
                 clearTimeout(closeTimer.current)
               }}
-              onPointerLeave={() => {
-                clearTimeout(openTimer.current)
-                if (pinned.current) return
-                closeTimer.current = setTimeout(() => {
-                  if (
-                    !document.querySelector("dialog[open]") &&
-                    !root.current
-                      ?.querySelector(`[data-home-edge="${side}"]`)
-                      ?.contains(document.activeElement)
-                  )
-                    setOpen((current) => (current === side ? null : current))
-                }, 120)
-              }}
+              onPointerLeave={() => scheduleClose(side)}
               onBlur={(event) => {
                 if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
                 if ((event.relatedTarget as Element | null)?.closest("dialog, [data-home-reading]"))
                   return
-                closeTimer.current = setTimeout(() => {
-                  if (document.querySelector("dialog[open]")) return
-                  pinned.current = false
-                  setOpen(null)
-                }, 120)
+                if (!document.querySelector("dialog[open]")) pinned.current = false
+                scheduleClose(side)
               }}
             >
               <button
@@ -140,8 +147,10 @@ export default function HomeScene({
                     setOpen(side)
                   }, 350)
                 }}
-                onFocus={() => {
+                onPointerLeave={() => scheduleClose(side)}
+                onFocus={(event) => {
                   clear()
+                  keyboardSide.current = event.currentTarget.matches(":focus-visible") ? side : null
                   setOpen(side)
                 }}
                 onClick={() => {
@@ -193,21 +202,37 @@ export default function HomeScene({
           className={styles.paperSlot}
           data-open={open === "papers"}
           data-home-reading
-          onPointerEnter={() => clearTimeout(closeTimer.current)}
-          onPointerLeave={() => {
-            if (!pinned.current)
-              closeTimer.current = setTimeout(() => {
-                if (
-                  !document.querySelector("dialog[open]") &&
-                  !root.current
-                    ?.querySelector("[data-home-reading]")
-                    ?.contains(document.activeElement)
-                )
-                  setOpen(null)
-              }, 120)
+          onPointerEnter={(event) => {
+            if (event.pointerType !== "mouse" || (event.target as Element).closest("dialog")) return
+            keyboardSide.current = null
+            clearTimeout(closeTimer.current)
+          }}
+          onPointerLeave={() => scheduleClose("papers")}
+          onPointerDownCapture={(event) => {
+            if ((event.target as Element).closest("[data-paper-summary]"))
+              keyboardSide.current = null
+          }}
+          onKeyDownCapture={(event) => {
+            if (
+              (event.key === "Enter" || event.key === " ") &&
+              (event.target as Element).closest("[data-paper-summary]")
+            )
+              keyboardSide.current = "papers"
+          }}
+          onBlur={(event) => {
+            if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+            scheduleClose("papers")
           }}
         >
-          <PaperMonitor initialReports={reports} compact active={open === "papers"} />
+          <PaperMonitor
+            initialReports={reports}
+            compact
+            active={open === "papers"}
+            onIssueClose={() => {
+              pinned.current = false
+              scheduleClose("papers")
+            }}
+          />
         </div>
         <div className={styles.contact} data-home-contact>
           <button

@@ -132,6 +132,8 @@
 }
 .friendRow {
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-width: 0;
   min-height: 300px;
   border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
@@ -146,6 +148,11 @@
 .friendRow:focus-within {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+.friendRow:has(.preview) {
+  border-color: rgb(255 255 255 / 65%);
+  background: transparent;
+  backdrop-filter: none;
 }
 .friend {
   display: flex;
@@ -314,9 +321,21 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  background: var(--surface);
+  padding: 8px;
+  border: 1px solid rgb(255 255 255 / 90%);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 60%);
+  backdrop-filter: blur(20px) saturate(115%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 35%);
+}
+:global(.dark) .preview {
+  --muted: #d4deed;
+  --accent: #d0cbff;
+  border-color: rgb(235 245 255 / 62%);
+  background: rgb(18 31 48 / 74%);
+}
+.friendRow :is(a, button):focus-visible {
+  outline-offset: -3px;
 }
 .previewHeader {
   display: flex;
@@ -361,6 +380,8 @@
   position: relative;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+  border-radius: 4px;
   background: color-mix(in srgb, var(--accent) 5%, var(--surface));
 }
 .previewImage img {
