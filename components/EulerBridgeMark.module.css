@@ -1,13 +1,13 @@
 .mark {
-  --euler-bridge-ink: #0a284c;
-  --euler-bridge-bronze: #b48746;
+  --euler-bridge-ink: var(--site-accent);
+  --euler-bridge-bronze: var(--site-detail);
   display: block;
   flex-shrink: 0;
 }
 
 :global(.dark) .mark {
-  --euler-bridge-ink: #8bafd3;
-  --euler-bridge-bronze: #d4ad72;
+  --euler-bridge-ink: var(--site-accent);
+  --euler-bridge-bronze: var(--site-detail);
 }
 
 @media (prefers-reduced-motion: reduce) {

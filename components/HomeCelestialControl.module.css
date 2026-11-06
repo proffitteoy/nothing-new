@@ -24,12 +24,12 @@
   overflow: visible;
 }
 .control:focus-visible {
-  outline: 2px solid #64546f;
+  outline: 2px solid var(--site-accent);
   outline-offset: 6px;
 }
 :global(.dark) .control:focus-visible {
-  outline-color: #eee8f4;
-  box-shadow: 0 0 0 7px #3d354a88;
+  outline-color: var(--site-ink);
+  box-shadow: 0 0 0 7px rgb(18 36 59 / 54%);
 }
 .sun,
 .moon {

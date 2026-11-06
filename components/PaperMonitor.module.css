@@ -1,9 +1,9 @@
 .panel {
-  --paper-surface: #ffffff;
-  --paper-ink: #252936;
-  --paper-muted: #626875;
-  --paper-accent: #625eb0;
-  --paper-line: #dddde2;
+  --paper-surface: var(--site-surface);
+  --paper-ink: var(--site-ink);
+  --paper-muted: var(--site-muted);
+  --paper-accent: var(--site-accent);
+  --paper-line: var(--site-line);
   --paper-ui: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --paper-serif:
     "Newsreader", Georgia, "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
@@ -17,11 +17,11 @@
 }
 
 :global(.dark) .panel {
-  --paper-surface: #141923;
-  --paper-ink: #e9eaf0;
-  --paper-muted: #a1a7b5;
-  --paper-accent: #a4a0ee;
-  --paper-line: #343a48;
+  --paper-surface: var(--site-surface);
+  --paper-ink: var(--site-ink);
+  --paper-muted: var(--site-muted);
+  --paper-accent: var(--site-accent);
+  --paper-line: var(--site-line);
 }
 
 .cover {
@@ -36,9 +36,9 @@
 }
 .compact,
 :global(.dark) .compact {
-  --paper-accent: var(--scene-accent, #7470c8);
-  --paper-ink: var(--scene-ink, #252936);
-  --paper-line: var(--scene-line, #dddde2);
+  --paper-accent: var(--scene-accent, var(--site-accent));
+  --paper-ink: var(--scene-ink, var(--site-ink));
+  --paper-line: var(--scene-line, var(--site-line));
   border: 0;
   border-radius: 0;
   background: transparent;

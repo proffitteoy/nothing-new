@@ -3,6 +3,65 @@
 /* 1. 声明暗黑模式变体 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* 冰蓝 / 钴蓝 / 深海蓝：全站唯一的界面色卡。 */
+@theme {
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #172554;
+}
+
+:root {
+  color-scheme: light;
+  --site-bg: #edf5ff;
+  --site-surface: #f4f8ff;
+  --site-recess: #e4effc;
+  --site-ink: #17324f;
+  --site-muted: #526b88;
+  --site-accent: #245fc5;
+  --site-detail: #167ca6;
+  --site-line: #bdd0e7;
+  --site-glass: rgb(228 239 252 / 78%);
+  --site-wash: rgb(36 95 197 / 8%);
+  --site-art-filter: grayscale(1) sepia(1) hue-rotate(175deg) saturate(0.75);
+}
+
+.dark {
+  color-scheme: dark;
+  --site-bg: #0b1628;
+  --site-surface: #12243b;
+  --site-recess: #0d1c30;
+  --site-ink: #e5f0ff;
+  --site-muted: #a6bedb;
+  --site-accent: #8dbbff;
+  --site-detail: #79cbe8;
+  --site-line: #314e70;
+  --site-glass: rgb(18 36 59 / 82%);
+  --site-wash: rgb(141 187 255 / 10%);
+}
+
+/* Grade media itself, keeping the shared artwork visible without a page overlay.
+   This also removes warm paper/lighting baked into covers and room previews. */
+img,
+video,
+pre,
+[data-home-canvas],
+[data-startup-loading] iframe {
+  filter: var(--site-art-filter);
+}
+
+::selection {
+  color: var(--site-ink);
+  background: color-mix(in srgb, var(--site-accent) 24%, var(--site-surface));
+}
+
 /* 2. 基础环境与性能优化 */
 @layer base {
   :root {
@@ -11,16 +70,22 @@
 
   body {
     font-family: var(--font-serif);
-    @apply transition-colors duration-1000 text-slate-900 bg-slate-50;
+    @apply transition-colors duration-1000;
+    color: var(--site-ink);
+    background: var(--site-bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   .dark body {
-    @apply text-slate-100 bg-slate-950;
+    color: var(--site-ink);
+    background: var(--site-bg);
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-weight: 900;
     letter-spacing: -0.02em;
   }
@@ -28,7 +93,7 @@
   .dark .prose {
     --tw-prose-body: var(--color-slate-200);
     --tw-prose-headings: var(--color-white);
-    --tw-prose-links: var(--color-indigo-400);
+    --tw-prose-links: var(--color-blue-400);
   }
 
   .group:hover img {
@@ -37,12 +102,13 @@
 }
 
 /* 3. 音乐播放器进度条样式 */
-input[type=range]::-webkit-slider-thumb {
+input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 12px; height: 12px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: #6366f1;
+  background: var(--site-accent);
   cursor: pointer;
 }
 
@@ -54,7 +120,8 @@ input[type=range]::-webkit-slider-thumb {
     }
   }
 
-  html, body {
+  html,
+  body {
     min-height: 100%;
     margin: 0;
     padding: 0;
@@ -100,11 +167,11 @@ input[type=range]::-webkit-slider-thumb {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
+  background: color-mix(in srgb, var(--site-accent) 30%, transparent);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.8);
+  background: color-mix(in srgb, var(--site-accent) 80%, transparent);
 }
 
 /* ========================================================
@@ -112,7 +179,7 @@ input[type=range]::-webkit-slider-thumb {
    ======================================================== */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+  scrollbar-color: color-mix(in srgb, var(--site-accent) 30%, transparent) transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
