@@ -190,9 +190,9 @@ export default function AboutClient({
 }
 
 function getContributionColor(level: 0 | 1 | 2 | 3 | 4) {
-  if (level === 0) return "bg-[#dbeafe] dark:bg-[#12243b]"
-  if (level === 1) return "bg-[#93c5fd] dark:bg-[#1e3a8a]"
-  if (level === 2) return "bg-[#60a5fa] dark:bg-[#245fc5]"
-  if (level === 3) return "bg-[#2563eb] dark:bg-[#5296df]"
-  return "bg-[#1e40af] dark:bg-[#8dbbff]"
+  if (level === 0) return "bg-[#e8eef0] dark:bg-[#162a2a]"
+  if (level === 1) return "bg-[#a4dec9] dark:bg-[#1b534a]"
+  if (level === 2) return "bg-[#63ba99] dark:bg-[#247b65]"
+  if (level === 3) return "bg-[#2d997c] dark:bg-[#43ac86]"
+  return "bg-[#14745e] dark:bg-[#82d5b1]"
 }

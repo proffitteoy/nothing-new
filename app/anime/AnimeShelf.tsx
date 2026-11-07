@@ -141,7 +141,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
         data-field-obstacle
         className="relative mt-3 overflow-hidden rounded-[1.75rem] border border-white/55 bg-white/45 px-4 py-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6"
       >
-        <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10" />
+        <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-rose-300/20 blur-3xl dark:bg-rose-500/10" />
         <div className="relative flex items-center justify-between gap-4 sm:justify-start">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/65 text-blue-600 shadow-sm dark:border-white/10 dark:bg-slate-950/35 dark:text-blue-300">
             <Clapperboard className="h-5 w-5" aria-hidden="true" />
@@ -172,23 +172,23 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
         >
           <a
             href="#watching"
-            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-blue-200/70 bg-blue-50/65 px-3 py-2.5 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-100/70 dark:border-blue-400/15 dark:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-blue-500/15"
+            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-teal-200/70 bg-teal-50/65 px-3 py-2.5 text-teal-800 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-100/70 dark:border-teal-400/20 dark:bg-teal-500/10 dark:text-teal-200 dark:hover:bg-teal-500/15"
           >
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">01</span>
             <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">正在看</span>
-            <span className="ml-auto rounded-full bg-blue-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
+            <span className="ml-auto rounded-full bg-teal-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
               {watching.length}
             </span>
           </a>
           <a
             href="#watched"
-            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-blue-200/70 bg-blue-50/65 px-3 py-2.5 text-blue-800 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-100/70 dark:border-blue-300/15 dark:bg-blue-400/10 dark:text-blue-200 dark:hover:bg-blue-400/15"
+            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-violet-200/70 bg-violet-50/65 px-3 py-2.5 text-violet-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-100/70 dark:border-violet-300/20 dark:bg-violet-400/10 dark:text-violet-200 dark:hover:bg-violet-400/15"
           >
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">02</span>
             <Star className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">看过</span>
-            <span className="ml-auto rounded-full bg-blue-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
+            <span className="ml-auto rounded-full bg-violet-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
               {watched.length}
             </span>
           </a>
@@ -239,7 +239,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                         "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-lg font-black shadow-sm " +
                         (group.score === null
                           ? "border-slate-200/70 bg-white/55 text-slate-500 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-300"
-                          : "border-blue-200/70 bg-blue-50/75 text-blue-700 dark:border-blue-300/15 dark:bg-blue-400/10 dark:text-blue-200")
+                          : "border-rose-200/70 bg-rose-50/75 text-rose-700 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-200")
                       }
                     >
                       {group.score ?? "—"}
@@ -353,7 +353,7 @@ function AnimeGrid({
                     "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm backdrop-blur-md sm:right-2 sm:top-2 sm:text-[9px] " +
                     (anime.score === undefined
                       ? "border-white/40 bg-slate-900/55 text-white"
-                      : "border-blue-100/70 bg-blue-400/90 text-blue-950")
+                      : "border-rose-200/70 bg-rose-700/95 text-white")
                   }
                 >
                   {anime.score === undefined ? "未评" : `${anime.score} 分`}

@@ -31,9 +31,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -50, scale: 0.9 }}
             className={`fixed top-20 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-xl border
-              ${toastMsg.type === "success" ? "bg-green-500/90 border-green-400 text-white" : ""}
-              ${toastMsg.type === "warning" ? "bg-blue-500/90 border-blue-400 text-white" : ""}
-              ${toastMsg.type === "error" ? "bg-red-500/90 border-red-400 text-white" : ""}
+              ${toastMsg.type === "success" ? "bg-teal-700/95 border-teal-500 text-white" : ""}
+              ${toastMsg.type === "warning" ? "bg-violet-700/95 border-violet-500 text-white" : ""}
+              ${toastMsg.type === "error" ? "bg-rose-700/95 border-rose-500 text-white" : ""}
               ${toastMsg.type === "info" ? "bg-blue-500/90 border-blue-400 text-white" : ""}
             `}
           >

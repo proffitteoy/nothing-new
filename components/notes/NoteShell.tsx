@@ -59,7 +59,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   {note.tags.map((tag) => (
                     <li
                       key={tag}
-                      className="inline-flex items-center gap-1 rounded-full border border-[var(--site-line)] bg-[var(--site-recess)] px-3 py-1.5 text-[11px] font-bold text-[var(--site-muted)] dark:border-[var(--site-line)] dark:bg-[var(--site-recess)] dark:text-[var(--site-muted)]"
+                      className="inline-flex items-center gap-1 rounded-full border border-violet-200/70 bg-violet-50/80 px-3 py-1.5 text-[11px] font-bold text-violet-800 dark:border-violet-300/20 dark:bg-violet-400/10 dark:text-violet-200"
                     >
                       <Hash className="h-3 w-3" aria-hidden="true" />
                       {tag}

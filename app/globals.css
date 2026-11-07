@@ -3,58 +3,79 @@
 /* 1. 声明暗黑模式变体 */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 冰蓝 / 钴蓝 / 深海蓝：全站唯一的界面色卡。 */
+/* Blue leads navigation; rose, violet and mint give components distinct accents. */
 @theme {
-  --color-blue-50: #eff6ff;
-  --color-blue-100: #dbeafe;
-  --color-blue-200: #bfdbfe;
-  --color-blue-300: #93c5fd;
-  --color-blue-400: #60a5fa;
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
-  --color-blue-700: #1d4ed8;
-  --color-blue-800: #1e40af;
-  --color-blue-900: #1e3a8a;
-  --color-blue-950: #172554;
+  --color-blue-50: #f2f5ff;
+  --color-blue-100: #e7edff;
+  --color-blue-200: #cdd9ff;
+  --color-blue-300: #a4b8ff;
+  --color-blue-400: #7997eb;
+  --color-blue-500: #5a7de0;
+  --color-blue-600: #4266cf;
+  --color-blue-700: #3554b2;
+  --color-blue-800: #2c448c;
+  --color-blue-900: #24355f;
+  --color-blue-950: #192440;
+  --color-rose-50: #fff1f7;
+  --color-rose-100: #fbdce9;
+  --color-rose-200: #f4bad2;
+  --color-rose-300: #f18fb8;
+  --color-rose-400: #e875a5;
+  --color-rose-500: #dc6093;
+  --color-rose-600: #ce4a83;
+  --color-rose-700: #ad346c;
+  --color-rose-800: #8c2b59;
+  --color-violet-50: #f5f1fc;
+  --color-violet-100: #e9def9;
+  --color-violet-200: #d6c1ef;
+  --color-violet-300: #bba0ee;
+  --color-violet-400: #a085de;
+  --color-violet-500: #916bd4;
+  --color-violet-600: #805ac8;
+  --color-violet-700: #68449f;
+  --color-violet-800: #503578;
+  --color-violet-950: #271b3e;
+  --color-teal-50: #eefaf5;
+  --color-teal-100: #d8f3e8;
+  --color-teal-200: #ade3d2;
+  --color-teal-300: #70ccb6;
+  --color-teal-400: #48b8a0;
+  --color-teal-500: #269e8b;
+  --color-teal-600: #168579;
+  --color-teal-700: #146d64;
+  --color-teal-800: #15584f;
 }
 
 :root {
   color-scheme: light;
-  --site-bg: #edf5ff;
-  --site-surface: #f4f8ff;
-  --site-recess: #e4effc;
-  --site-ink: #17324f;
-  --site-muted: #526b88;
-  --site-accent: #245fc5;
-  --site-detail: #167ca6;
-  --site-line: #bdd0e7;
-  --site-glass: rgb(228 239 252 / 78%);
-  --site-wash: rgb(36 95 197 / 8%);
-  --site-art-filter: grayscale(1) sepia(1) hue-rotate(175deg) saturate(0.75);
+  --site-bg: #f2f5fa;
+  --site-surface: #ffffff;
+  --site-recess: #edf1f8;
+  --site-ink: #29354b;
+  --site-muted: #627087;
+  --site-accent: #4266cf;
+  --site-detail: #ad346c;
+  --site-violet: #805ac8;
+  --site-mint: #146d64;
+  --site-line: #d8dfeb;
+  --site-glass: rgb(247 249 255 / 78%);
+  --site-wash: rgb(66 102 207 / 8%);
 }
 
 .dark {
   color-scheme: dark;
-  --site-bg: #0b1628;
-  --site-surface: #12243b;
-  --site-recess: #0d1c30;
-  --site-ink: #e5f0ff;
-  --site-muted: #a6bedb;
-  --site-accent: #8dbbff;
-  --site-detail: #79cbe8;
-  --site-line: #314e70;
-  --site-glass: rgb(18 36 59 / 82%);
-  --site-wash: rgb(141 187 255 / 10%);
-}
-
-/* Grade media itself, keeping the shared artwork visible without a page overlay.
-   This also removes warm paper/lighting baked into covers and room previews. */
-img,
-video,
-pre,
-[data-home-canvas],
-[data-startup-loading] iframe {
-  filter: var(--site-art-filter);
+  --site-bg: #101523;
+  --site-surface: #1a2233;
+  --site-recess: #141b2a;
+  --site-ink: #e6eaf3;
+  --site-muted: #abb6cb;
+  --site-accent: #a4b8ff;
+  --site-detail: #f18fb8;
+  --site-violet: #bba0ee;
+  --site-mint: #70ccb6;
+  --site-line: #354056;
+  --site-glass: rgb(26 34 51 / 82%);
+  --site-wash: rgb(164 184 255 / 10%);
 }
 
 ::selection {

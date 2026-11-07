@@ -1,13 +1,13 @@
 .mark {
   --euler-bridge-ink: var(--site-accent);
-  --euler-bridge-bronze: var(--site-detail);
+  --euler-bridge-bronze: var(--site-mint);
   display: block;
   flex-shrink: 0;
 }
 
 :global(.dark) .mark {
   --euler-bridge-ink: var(--site-accent);
-  --euler-bridge-bronze: var(--site-detail);
+  --euler-bridge-bronze: var(--site-mint);
 }
 
 @media (prefers-reduced-motion: reduce) {

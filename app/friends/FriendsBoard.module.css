@@ -146,7 +146,7 @@
 }
 .friendRow:hover,
 .friendRow:focus-within {
-  border-color: var(--accent);
+  border-color: var(--site-mint);
   background: color-mix(in srgb, var(--surface) 92%, transparent);
 }
 .friendRow:has(.preview) {
@@ -217,8 +217,8 @@
 }
 .previewToggle:hover,
 .previewToggle[aria-expanded="true"] {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--site-mint);
+  background: color-mix(in srgb, var(--site-mint) 10%, transparent);
 }
 .application {
   display: grid;
@@ -252,13 +252,13 @@
   min-height: 44px;
   margin-top: 20px;
   padding: 11px 18px;
-  color: var(--accent);
-  border: 1px solid var(--accent);
+  color: var(--site-mint);
+  border: 1px solid var(--site-mint);
   border-radius: 5px;
   font-size: 12px;
 }
 .applyLink:hover {
-  background: var(--accent);
+  background: var(--site-mint);
   color: var(--surface);
 }
 .format {
@@ -366,6 +366,18 @@
   height: 5px;
   border: 1px solid var(--muted);
   border-radius: 50%;
+}
+.windowDots i:nth-child(1) {
+  border-color: var(--site-detail);
+  background: var(--site-detail);
+}
+.windowDots i:nth-child(2) {
+  border-color: var(--site-violet);
+  background: var(--site-violet);
+}
+.windowDots i:nth-child(3) {
+  border-color: var(--site-mint);
+  background: var(--site-mint);
 }
 .previewHeader button {
   display: flex;

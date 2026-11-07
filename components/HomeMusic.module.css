@@ -65,13 +65,13 @@
 .eyebrow {
   display: inline-block;
   margin-bottom: 3px;
-  color: var(--scene-muted, var(--site-muted));
+  color: var(--site-violet);
   font-size: 0.62rem;
   font-weight: 650;
   letter-spacing: 0.1em;
 }
 :global(.dark) .eyebrow {
-  color: var(--scene-muted, var(--site-muted));
+  color: var(--site-violet);
 }
 .title,
 .artist {
@@ -106,7 +106,7 @@
   min-width: 0;
   height: 24px;
   margin: 0;
-  accent-color: var(--scene-muted, var(--site-muted));
+  accent-color: var(--site-detail);
   cursor: pointer;
 }
 .seek:disabled {
@@ -136,7 +136,7 @@
 }
 .control:hover,
 .retry:hover {
-  background: var(--site-wash);
+  background: color-mix(in srgb, var(--site-violet) 12%, transparent);
 }
 .control:active,
 .retry:active {
@@ -145,12 +145,12 @@
 .primaryControl {
   width: 48px;
   height: 48px;
-  background: var(--scene-ink, var(--site-ink));
-  color: var(--scene-surface, var(--site-surface));
+  background: var(--site-violet);
+  color: var(--site-surface);
   box-shadow: none;
 }
 .primaryControl:hover {
-  background: var(--scene-ink, var(--site-ink));
+  background: var(--site-violet);
   opacity: 0.85;
 }
 .control:focus-visible,

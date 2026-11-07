@@ -72,7 +72,7 @@
   width: 44px;
   height: 2px;
   margin-top: 24px;
-  background: var(--about-accent);
+  background: var(--about-pink);
   content: "";
 }
 .greeting {
@@ -198,7 +198,7 @@
   margin-block: 10px;
 }
 .prose li::marker {
-  color: var(--about-accent);
+  color: var(--site-violet);
 }
 .prose a,
 .githubLink {
@@ -220,7 +220,7 @@
 .prose blockquote {
   margin-block: 24px;
   padding: 8px 20px;
-  border-left: 2px solid var(--about-accent);
+  border-left: 2px solid var(--site-violet);
 }
 .prose blockquote p:last-child {
   margin-bottom: 0;

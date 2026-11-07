@@ -23,24 +23,24 @@ export default function HomeCelestialControl() {
       <svg viewBox="0 0 128 128" fill="none" aria-hidden="true" data-celestial-art>
         <defs>
           <radialGradient id={`${id}-day`} cx=".42" cy=".36" r=".66">
-            <stop stopColor="#EFF7FF" />
-            <stop offset=".55" stopColor="#C5E1FF" />
-            <stop offset=".88" stopColor="#79ABE0" />
-            <stop offset="1" stopColor="#416FAD" />
+            <stop stopColor="#FFF3FB" />
+            <stop offset=".55" stopColor="#F0BEDC" />
+            <stop offset=".88" stopColor="#D775AD" />
+            <stop offset="1" stopColor="#934C8B" />
           </radialGradient>
           <radialGradient id={`${id}-halo`}>
-            <stop offset=".35" stopColor="#93C5FD" stopOpacity=".34" />
-            <stop offset=".7" stopColor="#60A5FA" stopOpacity=".12" />
-            <stop offset="1" stopColor="#60A5FA" stopOpacity="0" />
+            <stop offset=".35" stopColor="#E48CB9" stopOpacity=".34" />
+            <stop offset=".7" stopColor="#CE4A83" stopOpacity=".12" />
+            <stop offset="1" stopColor="#CE4A83" stopOpacity="0" />
           </radialGradient>
           <radialGradient id={`${id}-lunar`} cx=".32" cy=".28" r=".85">
-            <stop stopColor="#ECF5FF" />
-            <stop offset=".58" stopColor="#BCD4EE" />
-            <stop offset="1" stopColor="#6B91BF" />
+            <stop stopColor="#F4F0FF" />
+            <stop offset=".58" stopColor="#D8C8F1" />
+            <stop offset="1" stopColor="#9984C6" />
           </radialGradient>
           <radialGradient id={`${id}-night-halo`}>
-            <stop offset=".3" stopColor="#5686B8" stopOpacity=".25" />
-            <stop offset="1" stopColor="#5686B8" stopOpacity="0" />
+            <stop offset=".3" stopColor="#8F79BD" stopOpacity=".25" />
+            <stop offset="1" stopColor="#8F79BD" stopOpacity="0" />
           </radialGradient>
           <filter id={`${id}-grain`} x="0" y="0" width="100%" height="100%">
             <feTurbulence type="fractalNoise" baseFrequency=".16" numOctaves="3" seed="8" />
@@ -60,7 +60,7 @@ export default function HomeCelestialControl() {
             d="M66 3c23 5 48 12 53 39 5 25-4 55-25 70-23 14-56 12-74-7C2 86 2 54 15 31 26 12 45 1 66 3Z"
             fill={`url(#${id}-halo)`}
           />
-          <g className={styles.corona} stroke="#6CA4DF" strokeWidth=".65" strokeLinecap="round">
+          <g className={styles.corona} stroke="#BD5B94" strokeWidth=".65" strokeLinecap="round">
             <path
               d="M30 42c-8 10-10 26-5 40m70-54c14 11 17 26 15 37M37 105c15 8 34 9 47 2"
               opacity=".48"
@@ -70,39 +70,39 @@ export default function HomeCelestialControl() {
           <circle cx="64" cy="64" r="34" fill={`url(#${id}-day)`} />
           <path
             d="M41 46c5-9 16-13 26-12m20 43c-3 10-9 15-19 17"
-            stroke="#E8F5FF"
+            stroke="#FFF4FC"
             strokeWidth="1.2"
             opacity=".55"
             strokeLinecap="round"
           />
           <path
             d="M40 68c7-8 12-4 19-8 10-5 15-2 24 1 4 1 7-1 10-4-1 15-10 29-23 32-15 3-26-4-30-21Z"
-            fill="#8DBBEB"
+            fill="#D98ABB"
             opacity=".18"
           />
-          <circle cx="64" cy="64" r="33" fill="#355B8C" filter={`url(#${id}-grain)`} />
-          <circle cx="64" cy="64" r="33.5" stroke="#548BC7" strokeOpacity=".3" />
+          <circle cx="64" cy="64" r="33" fill="#774E8D" filter={`url(#${id}-grain)`} />
+          <circle cx="64" cy="64" r="33.5" stroke="#B5629A" strokeOpacity=".3" />
         </g>
         <g className={styles.moon}>
           <circle cx="64" cy="64" r="61" fill={`url(#${id}-night-halo)`} />
           <g mask={`url(#${id}-phase)`}>
             <circle cx="64" cy="64" r="34" fill={`url(#${id}-lunar)`} />
-            <g fill="#6A94C1" opacity=".3">
+            <g fill="#8F78AD" opacity=".3">
               <path d="M41 65c-7 3-5 13 1 14 8 1 12-10 5-14-2-1-4-1-6 0Z" />
               <circle cx="55" cy="88" r="5.5" />
               <circle cx="62" cy="77" r="2.5" />
               <path d="M35 49c4-6 13-5 14 1 1 7-8 11-12 7-2-2-3-5-2-8Z" />
             </g>
-            <path d="M40 44a31 31 0 0 0 27 51" stroke="#EAF5FF" strokeWidth="1" opacity=".7" />
-            <circle cx="64" cy="64" r="33" fill="#355B8C" filter={`url(#${id}-grain)`} />
+            <path d="M40 44a31 31 0 0 0 27 51" stroke="#F6F0FF" strokeWidth="1" opacity=".7" />
+            <circle cx="64" cy="64" r="33" fill="#774E8D" filter={`url(#${id}-grain)`} />
           </g>
           <path
             d="M89 25c13 8 22 22 23 36M25 93c8 11 21 17 35 18"
-            stroke="#8DB4DF"
+            stroke="#B39AD8"
             strokeOpacity=".45"
             strokeWidth=".65"
           />
-          <g fill="#BCD9F5">
+          <g fill="#D9C7F0">
             <circle cx="99" cy="38" r="1.2" />
             <circle cx="103" cy="86" r=".8" />
             <circle cx="36" cy="26" r=".8" />

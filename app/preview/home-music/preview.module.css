@@ -34,7 +34,6 @@
   inset: 0;
   z-index: -1;
   background: url("/background.png") center / cover no-repeat;
-  filter: var(--site-art-filter);
 }
 
 .host {

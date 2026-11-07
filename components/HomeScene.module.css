@@ -20,7 +20,7 @@
   --scene-surface: var(--site-glass);
   --scene-ink: var(--site-ink);
   --scene-muted: var(--site-muted);
-  --scene-accent: var(--site-ink);
+  --scene-accent: var(--site-accent);
   --scene-line: var(--site-line);
   background: var(--site-surface);
 }

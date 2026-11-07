@@ -40,12 +40,12 @@ try:
             assert page.get_by_role('heading', name='关于我', exact=True).is_visible()
             assert page.locator('html').evaluate("el=>el.classList.contains('dark')") == (theme == 'dark')
             article = page.locator('article[aria-labelledby="about-title"]')
-            surface = 'rgb(18, 36, 59)' if theme == 'dark' else 'rgb(244, 248, 255)'
+            surface = 'rgb(26, 34, 51)' if theme == 'dark' else 'rgb(255, 255, 255)'
             page_surface = page.locator('main').locator('..').locator('..')
             assert page_surface.evaluate('(el)=>getComputedStyle(el).backgroundColor') == 'rgba(0, 0, 0, 0)'
             assert article.locator('[class*="_cover"]').first.evaluate('(el)=>getComputedStyle(el,"::after").content') in ('none', 'normal')
             if width >= 768:
-                assert page.get_by_role('navigation',name='主导航',exact=True).evaluate('''(el)=>{const c=document.createElement('canvas').getContext('2d');c.fillStyle=getComputedStyle(el).getPropertyValue('--journal-paper');return c.fillStyle}''') == ('#12243b' if theme == 'dark' else '#f4f8ff')
+                assert page.get_by_role('navigation',name='主导航',exact=True).evaluate('''(el)=>{const c=document.createElement('canvas').getContext('2d');c.fillStyle=getComputedStyle(el).getPropertyValue('--journal-paper');return c.fillStyle}''') == ('#1a2233' if theme == 'dark' else '#ffffff')
                 assert page.get_by_role('navigation',name='主导航',exact=True).evaluate('(el)=>getComputedStyle(el.closest("header")).backgroundColor') == 'rgba(0, 0, 0, 0)'
                 assert page.locator('#app-scroll-root').bounding_box()['y'] >= 72
             prose = article.locator('[class*="_prose"]')

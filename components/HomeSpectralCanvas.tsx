@@ -150,7 +150,7 @@ export default function HomeSpectralCanvas({
       rect.x = (width - rect.width) * pan
       blend += (Number(settings.isDark) - blend) * (reduced.matches ? 1 : 1 - Math.exp(-dt / 200))
       if (Math.abs(blend - Number(settings.isDark)) < 0.001) blend = Number(settings.isDark)
-      const ground = `rgb(${237 - 226 * blend},${245 - 223 * blend},${255 - 215 * blend})`
+      const ground = `rgb(${242 - 226 * blend},${245 - 224 * blend},${250 - 215 * blend})`
       if (image.complete && image.naturalWidth) {
         const level = Math.round(blend * 60) / 60
         if (pictureBlend !== level) {
@@ -164,7 +164,7 @@ export default function HomeSpectralCanvas({
           if (level) {
             pictureCtx.globalCompositeOperation = "color"
             pictureCtx.globalAlpha = level * 0.45
-            pictureCtx.fillStyle = "#0b1628"
+            pictureCtx.fillStyle = "#101523"
             pictureCtx.fillRect(0, 0, picture.width, picture.height)
           }
           pictureCtx.globalAlpha = 1
@@ -178,18 +178,18 @@ export default function HomeSpectralCanvas({
         // grid, streamline geometry and glow. Only the carried pigment varies.
         const light = [
           [74, 130, 192],
-          [62, 153, 202],
-          [86, 116, 196],
+          [128, 96, 200],
+          [206, 74, 131],
         ]
         const dark = [
           [30, 61, 120],
-          [25, 88, 132],
-          [42, 66, 140],
+          [80, 52, 142],
+          [149, 42, 92],
         ]
         const night = [
           [128, 185, 232],
-          [121, 203, 232],
-          [147, 177, 245],
+          [187, 160, 238],
+          [241, 143, 184],
         ]
         const pigment = (i: number): readonly [number, number, number] => {
           const channel = (c: number) => {

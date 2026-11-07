@@ -19,7 +19,7 @@ export const siteConfig = {
 
   // 3. 全站背景：只保留一个背景源，首页、普通页面、博客和杂谈统一使用
   useGradient: false,
-  themeColors: ["#245fc5", "#5296df", "#8dbbff", "#c5e8ff"], // 呼吸流动的颜色组合
+  themeColors: ["#4266cf", "#805ac8", "#ce4a83", "#168579"], // 蓝色为主，紫／玫红／青绿点缀
   backgroundImage: "/background.png",
 
   // 4. 文章默认封面图 (当 Markdown 没写 cover 时显示)

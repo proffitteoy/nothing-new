@@ -16,7 +16,7 @@
   --line: var(--site-line);
   --accent: var(--site-accent);
   --wash: var(--site-wash);
-  --pink: var(--site-detail);
+  --pink: var(--site-mint);
   --ui-font: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --title-font: "Newsreader", var(--font-serif);
   position: relative;
@@ -32,7 +32,7 @@
   --line: var(--site-line);
   --accent: var(--site-accent);
   --wash: var(--site-wash);
-  --pink: var(--site-detail);
+  --pink: var(--site-mint);
 }
 .stage {
   position: relative;
@@ -50,16 +50,16 @@
   pointer-events: none;
   background: linear-gradient(
     90deg,
-    rgba(228, 239, 252, 0.85),
-    rgba(228, 239, 252, 0.22) 40%,
+    rgba(246, 248, 252, 0.85),
+    rgba(246, 248, 252, 0.22) 40%,
     transparent 75%
   );
 }
 :global(.dark) .stage::before {
   background: linear-gradient(
     90deg,
-    rgba(18, 36, 59, 0.85),
-    rgba(18, 36, 59, 0.25) 40%,
+    rgba(26, 34, 51, 0.85),
+    rgba(26, 34, 51, 0.25) 40%,
     transparent 75%
   );
 }
@@ -161,7 +161,6 @@
 }
 .canvas {
   display: block;
-  filter: var(--site-art-filter);
   width: 100%;
   height: 100%;
   outline: none;
@@ -293,8 +292,6 @@
   letter-spacing: 0.06em;
 }
 .toolbar {
-  /* Keep LCD text fringes cold too, including the scrolling directory layer. */
-  filter: var(--site-art-filter);
   position: absolute;
   bottom: 54px;
   left: clamp(24px, 4vw, 64px);
