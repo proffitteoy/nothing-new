@@ -1,28 +1,28 @@
 .scene {
-  --scene-ink: #243e50;
-  --scene-muted: #50697a;
-  --scene-accent: #416b85;
-  --scene-line: rgb(65 107 133 / 20%);
+  --scene-ink: var(--site-ink);
+  --scene-muted: var(--site-muted);
+  --scene-accent: var(--site-accent);
+  --scene-line: var(--site-line);
   --edge-width: clamp(184px, 18.3vw, 264px);
   --right-edge-width: var(--edge-width);
   --edge-top: max(142px, 20dvh);
-  --scene-surface: rgb(225 237 245 / 78%);
+  --scene-surface: var(--site-glass);
   --home-break: 0;
   position: fixed;
   inset: 0;
   overflow: hidden;
   isolation: isolate;
   color: var(--scene-ink);
-  background: #dde8ef;
+  background: var(--site-bg);
   font-family: "Inter", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
 }
 :global(.dark) .scene {
-  --scene-surface: rgb(20 36 52 / 82%);
-  --scene-ink: #e9eaf0;
-  --scene-muted: #bac0ca;
-  --scene-accent: #e9eaf0;
-  --scene-line: rgb(161 193 213 / 22%);
-  background: #141923;
+  --scene-surface: var(--site-glass);
+  --scene-ink: var(--site-ink);
+  --scene-muted: var(--site-muted);
+  --scene-accent: var(--site-accent);
+  --scene-line: var(--site-line);
+  background: var(--site-surface);
 }
 .scene canvas {
   position: absolute;
@@ -228,7 +228,7 @@
   text-shadow: 0 1px 8px #e1edf5;
 }
 :global(.dark) .lyrics p {
-  text-shadow: 0 1px 8px #141923;
+  text-shadow: 0 1px 8px var(--site-surface);
 }
 .contact {
   position: absolute;

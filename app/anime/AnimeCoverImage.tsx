@@ -24,7 +24,7 @@ export default function AnimeCoverImage({
 
   if (!src || failed) {
     return (
-      <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-200/80 via-white/60 to-pink-200/80 px-2 text-center text-[8px] font-black tracking-[0.14em] text-indigo-700 dark:from-indigo-950 dark:via-slate-900 dark:to-pink-950 dark:text-indigo-200 sm:text-[9px]">
+      <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-200/80 via-white/60 to-rose-200/80 px-2 text-center text-[8px] font-black tracking-[0.14em] text-blue-700 dark:from-blue-950 dark:via-slate-900 dark:to-violet-950 dark:text-blue-200 sm:text-[9px]">
         NO COVER
       </span>
     )

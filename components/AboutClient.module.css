@@ -1,12 +1,12 @@
 /* Keep the existing site backdrop visible; surfaces belong to readable content only. */
 .page {
-  --about-surface: rgb(255 255 255 / 68%);
+  --about-surface: var(--site-glass);
   --about-text-shadow: 0 1px 5px #ffffff, 0 0 12px #ffffff;
-  --about-ink: #252936;
-  --about-muted: #747985;
-  --about-accent: #7470c8;
-  --about-pink: #e8a8b5;
-  --about-line: #dddde2;
+  --about-ink: var(--site-ink);
+  --about-muted: var(--site-muted);
+  --about-accent: var(--site-accent);
+  --about-pink: var(--site-detail);
+  --about-line: var(--site-line);
   --about-ui: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   position: relative;
   min-height: 100%;
@@ -15,13 +15,13 @@
 }
 
 :global(.dark) .page {
-  --about-surface: rgb(20 25 35 / 68%);
-  --about-text-shadow: 0 1px 5px #141923, 0 0 12px #141923;
-  --about-ink: #e9eaf0;
-  --about-muted: #a1a7b5;
-  --about-accent: #a4a0ee;
-  --about-pink: #d68ea9;
-  --about-line: #343a48;
+  --about-surface: var(--site-glass);
+  --about-text-shadow: 0 1px 5px var(--site-surface), 0 0 12px var(--site-surface);
+  --about-ink: var(--site-ink);
+  --about-muted: var(--site-muted);
+  --about-accent: var(--site-accent);
+  --about-pink: var(--site-detail);
+  --about-line: var(--site-line);
 }
 
 .main {
@@ -72,7 +72,7 @@
   width: 44px;
   height: 2px;
   margin-top: 24px;
-  background: var(--about-accent);
+  background: var(--about-pink);
   content: "";
 }
 .greeting {
@@ -198,7 +198,7 @@
   margin-block: 10px;
 }
 .prose li::marker {
-  color: var(--about-accent);
+  color: var(--site-violet);
 }
 .prose a,
 .githubLink {
@@ -220,7 +220,7 @@
 .prose blockquote {
   margin-block: 24px;
   padding: 8px 20px;
-  border-left: 2px solid var(--about-accent);
+  border-left: 2px solid var(--site-violet);
 }
 .prose blockquote p:last-child {
   margin-bottom: 0;
@@ -431,12 +431,12 @@
 /* Match the shared navigation only while /about is mounted. */
 :global(body):has(.page) :global(header:has(nav[aria-label="主导航"])),
 :global(body):has(.page) :global([data-site-ui]:has(> button[aria-controls="mobile-nav-wheel"])) {
-  --journal-paper: #ffffff;
+  --journal-paper: var(--site-surface);
 }
 :global(.dark body):has(.page) :global(header:has(nav[aria-label="主导航"])),
 :global(.dark body):has(.page)
   :global([data-site-ui]:has(> button[aria-controls="mobile-nav-wheel"])) {
-  --journal-paper: #141923;
+  --journal-paper: var(--site-surface);
 }
 
 :global(body):has(.page) :global(header:has(nav[aria-label="主导航"])) {
@@ -447,8 +447,8 @@
 }
 :global(.dark body):has(.page) :global(header:has(nav[aria-label="主导航"])) {
   text-shadow:
-    0 1px 5px #141923,
-    0 0 12px #141923;
+    0 1px 5px var(--site-surface),
+    0 0 12px var(--site-surface);
 }
 
 @media (min-width: 768px) {

@@ -150,7 +150,7 @@ export default function AboutClient({
                               title={label}
                               aria-label={label}
                               className={
-                                "h-[11px] w-[11px] rounded-[3px] transition hover:ring-2 hover:ring-indigo-500/50 md:h-[13px] md:w-[13px] " +
+                                "h-[11px] w-[11px] rounded-[3px] transition hover:ring-2 hover:ring-blue-500/50 md:h-[13px] md:w-[13px] " +
                                 getContributionColor(day.level)
                               }
                             />
@@ -190,9 +190,9 @@ export default function AboutClient({
 }
 
 function getContributionColor(level: 0 | 1 | 2 | 3 | 4) {
-  if (level === 0) return "bg-[#ebedf0] dark:bg-[#161b22]"
-  if (level === 1) return "bg-[#9be9a8] dark:bg-[#0e4429]"
-  if (level === 2) return "bg-[#40c463] dark:bg-[#006d32]"
-  if (level === 3) return "bg-[#30a14e] dark:bg-[#26a641]"
-  return "bg-[#216e39] dark:bg-[#39d353]"
+  if (level === 0) return "bg-[#e8eef0] dark:bg-[#162a2a]"
+  if (level === 1) return "bg-[#a4dec9] dark:bg-[#1b534a]"
+  if (level === 2) return "bg-[#63ba99] dark:bg-[#247b65]"
+  if (level === 3) return "bg-[#2d997c] dark:bg-[#43ac86]"
+  return "bg-[#14745e] dark:bg-[#82d5b1]"
 }

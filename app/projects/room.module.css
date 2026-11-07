@@ -1,22 +1,22 @@
-/* Palette and type follow frontend refactoring.md §2 verbatim. */
+/* Shared blue palette; keep the room layout and typography. */
 .backdrop {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: #f8f7f3;
+  background: var(--site-surface);
 }
 :global(.dark) .backdrop {
-  background: #141923;
+  background: var(--site-surface);
 }
 .page {
-  --ink: #252936;
-  --muted: #747985;
-  --surface: #f8f7f3;
-  --line: #dddde2;
-  --accent: #7470c8;
-  --wash: #7470c80a;
-  --pink: #e8a8b5;
+  --ink: var(--site-ink);
+  --muted: var(--site-muted);
+  --surface: var(--site-surface);
+  --line: var(--site-line);
+  --accent: var(--site-accent);
+  --wash: var(--site-wash);
+  --pink: var(--site-mint);
   --ui-font: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --title-font: "Newsreader", var(--font-serif);
   position: relative;
@@ -26,13 +26,13 @@
   font-family: var(--ui-font);
 }
 :global(.dark) .page {
-  --ink: #e9eaf0;
-  --muted: #a1a7b5;
-  --surface: #141923;
-  --line: #343a48;
-  --accent: #a4a0ee;
-  --wash: #a4a0ee0c;
-  --pink: #d68ea9;
+  --ink: var(--site-ink);
+  --muted: var(--site-muted);
+  --surface: var(--site-surface);
+  --line: var(--site-line);
+  --accent: var(--site-accent);
+  --wash: var(--site-wash);
+  --pink: var(--site-mint);
 }
 .stage {
   position: relative;
@@ -50,16 +50,16 @@
   pointer-events: none;
   background: linear-gradient(
     90deg,
-    rgba(248, 247, 243, 0.85),
-    rgba(248, 247, 243, 0.22) 40%,
+    rgba(246, 248, 252, 0.85),
+    rgba(246, 248, 252, 0.22) 40%,
     transparent 75%
   );
 }
 :global(.dark) .stage::before {
   background: linear-gradient(
     90deg,
-    rgba(20, 25, 35, 0.85),
-    rgba(20, 25, 35, 0.25) 40%,
+    rgba(26, 34, 51, 0.85),
+    rgba(26, 34, 51, 0.25) 40%,
     transparent 75%
   );
 }

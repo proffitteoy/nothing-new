@@ -141,13 +141,13 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
         data-field-obstacle
         className="relative mt-3 overflow-hidden rounded-[1.75rem] border border-white/55 bg-white/45 px-4 py-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6"
       >
-        <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-pink-300/20 blur-3xl dark:bg-pink-500/10" />
+        <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-rose-300/20 blur-3xl dark:bg-rose-500/10" />
         <div className="relative flex items-center justify-between gap-4 sm:justify-start">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/65 text-indigo-600 shadow-sm dark:border-white/10 dark:bg-slate-950/35 dark:text-indigo-300">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/65 text-blue-600 shadow-sm dark:border-white/10 dark:bg-slate-950/35 dark:text-blue-300">
             <Clapperboard className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-[9px] font-black tracking-[0.24em] text-indigo-600 dark:text-indigo-300">
+            <p className="text-[9px] font-black tracking-[0.24em] text-blue-600 dark:text-blue-300">
               ANIME INDEX
             </p>
             <div className="mt-0.5 flex items-baseline gap-3">
@@ -158,7 +158,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                 href={`https://bgm.tv/user/${encodeURIComponent(snapshot.username)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] font-black text-slate-500 transition hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300"
+                className="text-[10px] font-black text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300"
               >
                 @{snapshot.username}
               </a>
@@ -172,23 +172,23 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
         >
           <a
             href="#watching"
-            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-indigo-200/70 bg-indigo-50/65 px-3 py-2.5 text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-100/70 dark:border-indigo-400/15 dark:bg-indigo-500/10 dark:text-indigo-200 dark:hover:bg-indigo-500/15"
+            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-teal-200/70 bg-teal-50/65 px-3 py-2.5 text-teal-800 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-100/70 dark:border-teal-400/20 dark:bg-teal-500/10 dark:text-teal-200 dark:hover:bg-teal-500/15"
           >
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">01</span>
             <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">正在看</span>
-            <span className="ml-auto rounded-full bg-indigo-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
+            <span className="ml-auto rounded-full bg-teal-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
               {watching.length}
             </span>
           </a>
           <a
             href="#watched"
-            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-amber-200/70 bg-amber-50/65 px-3 py-2.5 text-amber-800 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-100/70 dark:border-amber-300/15 dark:bg-amber-400/10 dark:text-amber-200 dark:hover:bg-amber-400/15"
+            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-violet-200/70 bg-violet-50/65 px-3 py-2.5 text-violet-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-100/70 dark:border-violet-300/20 dark:bg-violet-400/10 dark:text-violet-200 dark:hover:bg-violet-400/15"
           >
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">02</span>
             <Star className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">看过</span>
-            <span className="ml-auto rounded-full bg-amber-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
+            <span className="ml-auto rounded-full bg-violet-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
               {watched.length}
             </span>
           </a>
@@ -239,7 +239,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                         "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-lg font-black shadow-sm " +
                         (group.score === null
                           ? "border-slate-200/70 bg-white/55 text-slate-500 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-300"
-                          : "border-amber-200/70 bg-amber-50/75 text-amber-700 dark:border-amber-300/15 dark:bg-amber-400/10 dark:text-amber-200")
+                          : "border-rose-200/70 bg-rose-50/75 text-rose-700 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-200")
                       }
                     >
                       {group.score ?? "—"}
@@ -299,7 +299,7 @@ function SectionHeading({
   return (
     <div data-field-obstacle className="mb-5 flex items-end justify-between gap-5 px-1">
       <div>
-        <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.22em] text-indigo-600 dark:text-indigo-300">
+        <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.22em] text-blue-600 dark:text-blue-300">
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
           {eyebrow}
         </div>
@@ -353,14 +353,14 @@ function AnimeGrid({
                     "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm backdrop-blur-md sm:right-2 sm:top-2 sm:text-[9px] " +
                     (anime.score === undefined
                       ? "border-white/40 bg-slate-900/55 text-white"
-                      : "border-amber-100/70 bg-amber-400/90 text-amber-950")
+                      : "border-rose-200/70 bg-rose-700/95 text-white")
                   }
                 >
                   {anime.score === undefined ? "未评" : `${anime.score} 分`}
                 </span>
               )}
             </span>
-            <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-indigo-600 dark:text-slate-100 dark:group-hover:text-indigo-300 sm:mt-2.5 sm:text-xs sm:leading-5">
+            <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-300 sm:mt-2.5 sm:text-xs sm:leading-5">
               {title}
             </span>
           </a>
@@ -376,7 +376,7 @@ function EmptyShelf({ message }: { message: string }) {
       data-field-obstacle
       className="rounded-[1.75rem] border border-dashed border-white/60 bg-white/35 px-6 py-14 text-center shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35"
     >
-      <Clapperboard className="mx-auto h-8 w-8 text-indigo-400" aria-hidden="true" />
+      <Clapperboard className="mx-auto h-8 w-8 text-blue-400" aria-hidden="true" />
       <p className="mt-4 text-sm font-black text-slate-700 dark:text-slate-200">{message}</p>
     </div>
   )
@@ -399,7 +399,7 @@ function LoadMoreControl({
         data-field-obstacle
         type="button"
         onClick={onLoadMore}
-        className="relative inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/55 px-5 py-3 text-xs font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-600 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-indigo-300"
+        className="relative inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/55 px-5 py-3 text-xs font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-blue-300"
       >
         <ChevronDown className="h-4 w-4 animate-bounce" aria-hidden="true" />
         继续展开 · 还有 {remaining} 部
@@ -424,14 +424,14 @@ function ShelfState({
         data-field-obstacle
         className="mt-8 rounded-[1.75rem] border border-white/55 bg-white/45 px-6 py-16 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45"
       >
-        <Clapperboard className="mx-auto h-9 w-9 text-indigo-400" aria-hidden="true" />
+        <Clapperboard className="mx-auto h-9 w-9 text-blue-400" aria-hidden="true" />
         <h1 className="mt-5 text-xl font-black text-slate-950 dark:text-white">{title}</h1>
         <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">{description}</p>
         {action && (
           <button
             type="button"
             onClick={action}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-4 py-2.5 text-xs font-black text-slate-700 shadow-md transition hover:text-indigo-600 dark:border-white/10 dark:bg-slate-950/35 dark:text-slate-200 dark:hover:text-indigo-300"
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-4 py-2.5 text-xs font-black text-slate-700 shadow-md transition hover:text-blue-600 dark:border-white/10 dark:bg-slate-950/35 dark:text-slate-200 dark:hover:text-blue-300"
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             重试
