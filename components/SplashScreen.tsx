@@ -110,8 +110,8 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         noteStyle.remove()
       }
     }
-    // Only entry artwork belongs in the readiness gate. Unrelated routes,
-    // model downloads and image decoding wait until the opening is finished.
+    // Warm resources alongside the intro, without parsing the room scene or
+    // rendering the hidden homepage. The final logo waits for this work.
     const critical = async () => {
       const started = performance.now()
       const images = Array.from(document.images).filter((img) => {
@@ -158,7 +158,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       if (logoFinished || signal.aborted || skipped.current) return
       logoFinished = true
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
-      // Hold the generated Alpha complex while entry resources finish.
+      // Keep the original final logo in view while entry resources finish.
       changePhase("preparing")
       logoHoldTimer = window.setTimeout(() => {
         if (!signal.aborted && !skipped.current) reveal()
@@ -185,16 +185,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     window.addEventListener("message", onAnimationMessage)
     window.addEventListener("alpha-splash:frame-loaded", onFrameLoaded)
 
-    let warming = false
-    const startWarm = () => {
-      if (warming || signal.aborted || document.documentElement.dataset.startupPhase === "loading")
-        return
-      warming = true
-      void warm().catch(() => {})
-    }
-    window.addEventListener("site-startup-phase", startWarm)
-
-    const preloads = Promise.race([critical(), sleep(4000, signal)])
+    const preloads = Promise.allSettled([warm(), Promise.race([critical(), sleep(4000, signal)])])
       .catch(() => {})
       .then(() => {
         preloadFinished = true
@@ -228,7 +219,6 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
       window.removeEventListener("message", onAnimationMessage)
       window.removeEventListener("alpha-splash:frame-loaded", onFrameLoaded)
-      window.removeEventListener("site-startup-phase", startWarm)
     }
   }, [blogHref, changePhase, reveal, router])
 
@@ -259,7 +249,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           className="fixed inset-x-0 bottom-8 z-[100001] flex items-center justify-center gap-4 text-xs text-slate-200"
         >
           {phase === "preparing" && showAnimation && (
-            <span role="status">开场已完成，正在准备页面…</span>
+            <span role="status">图标已就绪，正在预加载页面…</span>
           )}
           <button
             type="button"
