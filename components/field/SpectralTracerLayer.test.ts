@@ -4,108 +4,132 @@ import { test } from "node:test"
 import ts from "typescript"
 import {
   createSpectralTracerController,
-  SPECTRAL_TRACER_BACKGROUND,
-  SPECTRAL_TRACER_FOREGROUND,
+  spectralDirectionAt,
   type SpectralTracerFrame,
 } from "./SpectralTracerLayer"
+import { SPECTRAL_LAMBDAS } from "./spectralField"
 
-test("flow-field particles advance persistently and protect every article obstacle", () => {
+test("the original eigenmode field remains the only source of tracer velocity", () => {
+  const x = 321
+  const y = 177
+  const time = 0.6
+  const width = 1200
+  const height = 800
+  const aspect = width / height
+  const phase = (x / width * 2 - 1) * aspect + 2 * (y / height * 2 - 1) +
+    SPECTRAL_LAMBDAS[0] * time + 0.31
+  const cosine = Math.cos(phase)
+  const vx = 2 * cosine / aspect
+  const vy = -cosine
+  const magnitude = Math.hypot(vx, vy)
+  const actual = spectralDirectionAt(x, y, time, width, height, 1)
+  assert.ok(Math.abs(actual.x - vx / magnitude) < 1e-12)
+  assert.ok(Math.abs(actual.y - vy / magnitude) < 1e-12)
+  assert.notDeepEqual(actual, spectralDirectionAt(x, y, time, width, height, 6))
+})
+
+test("homepage long spectral curves render immediately, remain visible, and fade over time", () => {
   class TestPath {
     segments = 0
     moveTo() {}
     lineTo() { this.segments++ }
   }
-  const originalPath = Object.getOwnPropertyDescriptor(globalThis, "Path2D")
+  const savedPath = Object.getOwnPropertyDescriptor(globalThis, "Path2D")
   Object.defineProperty(globalThis, "Path2D", { configurable: true, value: TestPath })
-  const segments = [0, 0]
-  const erased = [0, 0]
-  const fills = [0, 0]
+  const paths = [0, 0]
+  const widths: number[][] = [[], []]
   const colours: string[][] = [[], []]
-  const canvas = (layer: number) =>
-    ({
-      width: 0,
-      height: 0,
-      style: {},
-      getContext: () => ({
-        setTransform() {},
-        clearRect() { erased[layer]++ },
-        fillRect() { fills[layer]++ },
-        stroke(path: TestPath) {
-          segments[layer] += path.segments
-          colours[layer].push(this.strokeStyle)
-        },
-      }),
-    }) as unknown as HTMLCanvasElement
+  const composites: string[][] = [[], []]
+  const canvas = (index: number) => ({
+    width: 0,
+    height: 0,
+    style: {},
+    getContext: () => ({
+      globalCompositeOperation: "source-over",
+      globalAlpha: 1,
+      lineWidth: 1,
+      strokeStyle: "",
+      setTransform() {},
+      clearRect() {},
+      fillRect() { composites[index].push(this.globalCompositeOperation) },
+      stroke(path: TestPath) {
+        if (!path.segments) return
+        paths[index] += path.segments
+        widths[index].push(this.lineWidth)
+        colours[index].push(this.strokeStyle)
+      },
+    }),
+  }) as unknown as HTMLCanvasElement
 
   try {
-    const back = canvas(0)
-    const front = canvas(1)
-    const controller = createSpectralTracerController(back, front)
+    const controller = createSpectralTracerController(canvas(0), canvas(1))
     assert.ok(controller)
     controller.resize(1200, 800, 1)
     const frame: SpectralTracerFrame = {
-      alpha: 1,
+      alpha: 2.8,
       theme: 1,
-      time: 0,
-      backgroundCount: SPECTRAL_TRACER_BACKGROUND,
-      foregroundCount: SPECTRAL_TRACER_FOREGROUND,
+      time: 0.1,
+      backgroundCount: 3200,
+      foregroundCount: 120,
       trailSamples: 8,
       modeCount: 6,
       width: 1200,
       height: 800,
       obstacles: [],
-    }
-    controller.render(frame)
-    assert.ok(segments.every((value) => value > 0), "both layers should move particles")
-    assert.ok(fills.every((value) => value > 0), "both layers must fade old trails")
-
-    segments.fill(0)
-    controller.render(frame)
-    assert.deepEqual(segments, [0, 0], "the same timestamp must not advance particles")
-
-    controller.render({
-      ...frame,
-      time: 0.01,
       colours: [
         [74, 130, 192],
-        [118, 103, 193],
-        [201, 117, 150],
+        [128, 96, 200],
+        [206, 74, 131],
       ],
-    })
-    assert.ok(segments.every((value) => value > 0))
+    }
+    controller.render(frame)
+    assert.ok(paths[0] > 1000, "long spectral streamlines must be visible on the first frame")
+    assert.ok(paths[1] > 100, "foreground curves must be visible")
+    assert.ok(widths[0].some((width) => width >= 1.9))
+    assert.ok(widths[1].some((width) => width >= 2.4))
     assert.ok(colours[0].includes("rgb(74, 130, 192)"))
 
-    segments.fill(0)
-    controller.render({ ...frame, time: 0.02, foregroundCount: 0 })
-    assert.ok(segments[0] > 0)
-    assert.equal(segments[1], 0, "immersive pages can hide foreground particles")
+    paths.fill(0)
+    controller.render({ ...frame, time: 0.115 })
+    assert.ok(paths.every((count) => count > 0), "later frames add visible new path segments")
+    assert.deepEqual(composites.map((list) => list.includes("destination-out")), [true, true])
 
-    segments.fill(0)
+    paths.fill(0)
     controller.render({
       ...frame,
-      time: 0.03,
+      time: 0.13,
       obstacles: [
-        ...Array.from({ length: 16 }, () => ({ left: 5000, top: 5000, right: 5100, bottom: 5100 })),
+        ...Array.from({ length: 16 }, () => ({
+          left: 5000, top: 5000, right: 5100, bottom: 5100,
+        })),
         { left: -1000, top: -1000, right: 2200, bottom: 1800 },
       ],
     })
-    assert.deepEqual(segments, [0, 0], "the 17th obstacle must protect both layers")
-    assert.ok(erased.every((value) => value >= 17), "persistent trails must be masked")
+    assert.deepEqual(paths, [0, 0], "the seventeenth obstacle covers both layers")
 
-    segments.fill(0)
-    controller.render({ ...frame, time: 0.04 })
-    assert.ok(segments.every((value) => value > 0), "both layers must recover after obstacles leave")
+    paths.fill(0)
+    controller.render({ ...frame, time: 0.16 })
+    assert.ok(paths.every((count) => count > 0), "removing the obstacle respawns curves")
 
-    segments.fill(0)
-    controller.render({ ...frame, time: 0.05, alpha: 0 })
-    assert.deepEqual(segments, [0, 0], "reduced-motion requests must not render trails")
+    paths.fill(0)
+    controller.render({ ...frame, time: 0, alpha: 0 })
+    assert.deepEqual(paths, [0, 0])
     controller.destroy()
-    controller.render({ ...frame, time: 0.06 })
-    assert.deepEqual(segments, [0, 0], "destroy must prevent further painting")
   } finally {
-    if (originalPath) Object.defineProperty(globalThis, "Path2D", originalPath)
+    if (savedPath) Object.defineProperty(globalThis, "Path2D", savedPath)
     else Reflect.deleteProperty(globalThis, "Path2D")
   }
+})
+
+test("home canvas still consumes the six-mode spectral render path, not a separate noise field", () => {
+  const home = readFileSync(new URL("../HomeSpectralCanvas.tsx", import.meta.url), "utf8")
+  assert.match(home, /createSpectralTracerController\(back, front\)/)
+  assert.match(home, /modeCount: 6/)
+  assert.match(home, /SPECTRAL_PLAYBACK_RATE/)
+  assert.match(home, /colours/)
+  const tracer = readFileSync(new URL("./SpectralTracerLayer.tsx", import.meta.url), "utf8")
+  assert.doesNotMatch(tracer, /createPerlinNoise|noise3\(/)
+  assert.match(tracer, /FIELD_KX|FIELD_KY/)
 })
 
 test("the about obstacle belongs to the article, not the page grid", () => {

@@ -174,8 +174,9 @@ export default function HomeSpectralCanvas({
       }
 
       if (!reduced.matches) {
-        // Use the original renderer unchanged: same seeds, density, velocity
-        // grid, streamline geometry and glow. Only the carried pigment varies.
+        // Keep the original six-mode spectral field and visit-time pigments.
+        // The renderer now accumulates legible paths of moving particles rather
+        // than recomputing thousands of short hair-like streamlines per frame.
         const light = [
           [74, 130, 192],
           [128, 96, 200],
