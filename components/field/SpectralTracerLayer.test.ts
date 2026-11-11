@@ -21,9 +21,10 @@ test("spectral flow keeps the six original eigenfrequencies and direction field"
   const ny = (y / h) * 2 - 1
   const phase = nx * (w / h) + 2 * ny + SPECTRAL_LAMBDAS[0] * time + 0.31
   const cosine = Math.cos(phase)
-  const expectedMagnitude = Math.hypot(2 * cosine, -cosine)
+  const correctedX = (2 * cosine) / (w / h)
+  const expectedMagnitude = Math.hypot(correctedX, -cosine)
   const first = spectralDirectionAt(x, y, time, w, h, 1)
-  assert.ok(Math.abs(first.x - (2 * cosine) / expectedMagnitude) < 1e-12)
+  assert.ok(Math.abs(first.x - correctedX / expectedMagnitude) < 1e-12)
   assert.ok(Math.abs(first.y + cosine / expectedMagnitude) < 1e-12)
   assert.notDeepEqual(
     spectralDirectionAt(x, y, time, w, h, 1),
