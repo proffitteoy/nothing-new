@@ -1,35 +1,45 @@
 "use client"
 
 import type { RefObject } from "react"
-import { SPECTRAL_PLAYBACK_RATE } from "./spectralField"
+import { SPECTRAL_LAMBDAS, SPECTRAL_PLAYBACK_RATE } from "./spectralField"
 
 /*
- * Flow-field motion and the seeded 3D Perlin implementation are adapted from
- * evoluteur/flow-fields, Copyright (c) 2026 Olivier Giulieri (MIT).
- * See third_party/flow-fields/LICENSE for the upstream license.
+ * Keep Nothing New's own six-mode spectral stream function and its curves.
+ * The independent particle integration / trail lifecycle is informed by the
+ * Flow Fields demo: https://github.com/evoluteur/flow-fields .
+ * No upstream Perlin implementation or source code is embedded here.
  */
 
-export const SPECTRAL_TRACER_BACKGROUND = 400
-export const SPECTRAL_TRACER_FOREGROUND = 32
-export const SPECTRAL_TRACER_CAPACITY = 512
+export const SPECTRAL_TRACER_BACKGROUND = 150
+export const SPECTRAL_TRACER_FOREGROUND = 30
+export const SPECTRAL_TRACER_CAPACITY = 256
 
-const BACKGROUND_CLEARANCE = 24
-const FOREGROUND_CLEARANCE = 12
-const MAX_SPAWN_ATTEMPTS = 20
-const TAU = Math.PI * 2
+const BACKGROUND_CLEARANCE = 36
+const FOREGROUND_CLEARANCE = 8
+const MAX_TRAIL_POINTS = 128
+const PREWARM_INTERVAL = 1 / 45
+const R2_G = 1.324717957244746
+const R2_A1 = 1 / R2_G
+const R2_A2 = 1 / (R2_G * R2_G)
+
+// Original spectrum, amplitudes and phases from the spectral tracer system.
+const FIELD_KX = [1, 2, 3, 1, 4, 2] as const
+const FIELD_KY = [2, -1, 1, -3, 2, 5] as const
+const FIELD_AMPLITUDES = [1, 0.72, 0.5, 0.38, 0.26, 0.18] as const
+const FIELD_PHASES = [0.31, 2.17, 4.02, 5.41, 1.24, 3.52] as const
 
 type TracerColor = readonly [number, number, number]
 
-const DAY_COLORS = [
-  [57, 117, 177],
-  [79, 147, 192],
-  [113, 113, 169],
+const DAY_TRACER_COLORS = [
+  [31, 101, 179],
+  [45, 126, 190],
+  [99, 75, 171],
 ] as const satisfies readonly TracerColor[]
 
-const NIGHT_COLORS = [
-  [100, 166, 210],
-  [123, 177, 221],
-  [157, 149, 213],
+const NIGHT_TRACER_COLORS = [
+  [78, 201, 250],
+  [99, 173, 254],
+  [177, 142, 254],
 ] as const satisfies readonly TracerColor[]
 
 export type TracerObstacle = {
@@ -65,158 +75,195 @@ type SpectralTracerLayerProps = {
   interactionCanvasRef: RefObject<HTMLCanvasElement | null>
 }
 
-type LayerRenderer = SpectralTracerController
-
-type Particle = {
+type TracerParticle = {
   x: number
   y: number
-  life: number
-  color: number
+  age: number
+  lifetime: number
+  bucket: number
+  // Circular history, oldest -> newest, for continuous, visible spectral curves.
+  trail: Float32Array
+  head: number
+  length: number
 }
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value))
 }
 
-function randomGenerator(seed: number) {
-  let state = seed >>> 0
-  return () => {
-    state = (Math.imul(state, 1664525) + 1013904223) >>> 0
-    return state / 4294967296
-  }
+function fract(value: number) {
+  return value - Math.floor(value)
 }
 
-// Ported from the seeded improved-Perlin implementation in evoluteur/flow-fields.
-// The permutation is local to each renderer: mounting a field cannot mutate
-// global noise state or the state of another canvas.
-function createPerlinNoise(seed: number) {
-  const permutation = new Uint8Array(512)
-  const source = Array.from({ length: 256 }, (_, index) => index)
-  let state = seed >>> 0 || 1
-  const random = () => {
-    state ^= state << 13
-    state ^= state >>> 17
-    state ^= state << 5
-    return (state >>> 0) / 4294967296
-  }
-
-  for (let index = 255; index > 0; index--) {
-    const other = Math.floor(random() * (index + 1))
-    ;[source[index], source[other]] = [source[other], source[index]]
-  }
-  for (let index = 0; index < 512; index++) {
-    permutation[index] = source[index & 255]
-  }
-
-  const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10)
-  const lerp = (t: number, from: number, to: number) => from + t * (to - from)
-  const grad = (hash: number, x: number, y: number, z: number) => {
-    const u = (hash & 15) < 8 ? x : y
-    const v = (hash & 15) < 4 ? y : (hash & 15) === 12 || (hash & 15) === 14 ? x : z
-    return ((hash & 1) === 0 ? u : -u) + ((hash & 2) === 0 ? v : -v)
-  }
-
-  return (x: number, y: number, z: number) => {
-    const fx = Math.floor(x)
-    const fy = Math.floor(y)
-    const fz = Math.floor(z)
-    const X = fx & 255
-    const Y = fy & 255
-    const Z = fz & 255
-    x -= fx
-    y -= fy
-    z -= fz
-    const u = fade(x)
-    const v = fade(y)
-    const w = fade(z)
-    const A = permutation[X] + Y
-    const AA = permutation[A] + Z
-    const AB = permutation[A + 1] + Z
-    const B = permutation[X + 1] + Y
-    const BA = permutation[B] + Z
-    const BB = permutation[B + 1] + Z
-
-    return lerp(
-      w,
-      lerp(
-        v,
-        lerp(u, grad(permutation[AA], x, y, z), grad(permutation[BA], x - 1, y, z)),
-        lerp(u, grad(permutation[AB], x, y - 1, z), grad(permutation[BB], x - 1, y - 1, z)),
-      ),
-      lerp(
-        v,
-        lerp(u, grad(permutation[AA + 1], x, y, z - 1), grad(permutation[BA + 1], x - 1, y, z - 1)),
-        lerp(u, grad(permutation[AB + 1], x, y - 1, z - 1), grad(permutation[BB + 1], x - 1, y - 1, z - 1)),
-      ),
-    )
-  }
+function mixColor(a: TracerColor, b: TracerColor, amount: number) {
+  const channel = (index: number) => Math.round(a[index] + (b[index] - a[index]) * amount)
+  return "rgb(" + channel(0) + ", " + channel(1) + ", " + channel(2) + ")"
 }
 
-function intersectsObstacle(
+/**
+ * The original spectral flow: V = J grad(psi), where
+ * psi = sum a_k sin(k_x * nx * aspect + k_y * ny + lambda_k*t + phase_k).
+ * The common coordinate derivative cancels when calculating direction.
+ * In particular, the original eigenfrequencies remain the flow's driver.
+ */
+export function spectralDirectionAt(
+  x: number,
+  y: number,
+  time: number,
+  width: number,
+  height: number,
+  modeCount: number,
+) {
+  const safeHeight = Math.max(height, 1)
+  const aspect = Math.max(width, 1) / safeHeight
+  const nx = (x / Math.max(width, 1)) * 2 - 1
+  const ny = (y / safeHeight) * 2 - 1
+  let vx = 0
+  let vy = 0
+
+  for (let mode = 0; mode < Math.min(Math.max(0, modeCount), FIELD_KX.length); mode++) {
+    const phase =
+      FIELD_KX[mode] * nx * aspect +
+      FIELD_KY[mode] * ny +
+      SPECTRAL_LAMBDAS[mode] * time +
+      FIELD_PHASES[mode]
+    const term = FIELD_AMPLITUDES[mode] * Math.cos(phase)
+    vx += FIELD_KY[mode] * term
+    vy -= FIELD_KX[mode] * term
+  }
+
+  const magnitude = Math.hypot(vx, vy)
+  if (magnitude < 1e-6) return { x: 0, y: 0 }
+  return { x: vx / magnitude, y: vy / magnitude }
+}
+
+function pointInObstacle(
   x: number,
   y: number,
   obstacles: readonly TracerObstacle[],
   clearance: number,
 ) {
   return obstacles.some(
-    (obstacle) =>
-      x >= obstacle.left - clearance &&
-      x <= obstacle.right + clearance &&
-      y >= obstacle.top - clearance &&
-      y <= obstacle.bottom + clearance,
+    (o) =>
+      x >= o.left - clearance &&
+      x <= o.right + clearance &&
+      y >= o.top - clearance &&
+      y <= o.bottom + clearance,
   )
 }
 
-function mixColor(a: TracerColor, b: TracerColor, theme: number) {
-  const mix = (index: number) => Math.round(a[index] + (b[index] - a[index]) * theme)
-  return "rgb(" + mix(0) + ", " + mix(1) + ", " + mix(2) + ")"
+// Midpoint integration is much less angular than Euler's method and retains
+// smooth spectral arcs even as the eigenmode phases evolve in time.
+function traceStep(
+  x: number,
+  y: number,
+  time: number,
+  seconds: number,
+  speed: number,
+  width: number,
+  height: number,
+  modes: number,
+) {
+  const first = spectralDirectionAt(x, y, time, width, height, modes)
+  const middleX = x + first.x * seconds * speed * 0.5
+  const middleY = y + first.y * seconds * speed * 0.5
+  const middle = spectralDirectionAt(
+    middleX,
+    middleY,
+    time + seconds * SPECTRAL_PLAYBACK_RATE * 0.5,
+    width,
+    height,
+    modes,
+  )
+  return { x: x + middle.x * seconds * speed, y: y + middle.y * seconds * speed }
 }
 
-function createLayerRenderer(
-  canvas: HTMLCanvasElement,
-  layer: 0 | 1,
-): LayerRenderer | null {
+function pushTrail(p: TracerParticle, x: number, y: number) {
+  const offset = p.head * 2
+  p.trail[offset] = x
+  p.trail[offset + 1] = y
+  p.head = (p.head + 1) % MAX_TRAIL_POINTS
+  p.length = Math.min(MAX_TRAIL_POINTS, p.length + 1)
+}
+
+function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
   const context = canvas.getContext("2d", { alpha: true })
   if (!context) return null
-
-  const random = randomGenerator(0x2a6b8f03 + layer * 317)
-  const noise = createPerlinNoise(0x5d12c1ef)
-  const particles: Particle[] = []
+  const particles: TracerParticle[] = []
   const clearance = layer === 0 ? BACKGROUND_CLEARANCE : FOREGROUND_CLEARANCE
+  const speed = layer === 0 ? 86 : 75
   let width = 1
   let height = 1
   let pixelRatio = 1
+  let seedIndex = layer === 0 ? 0 : 10007
   let previousTime: number | null = null
   let destroyed = false
 
-  const spawn = (particle: Particle, obstacles: readonly TracerObstacle[]) => {
-    for (let attempt = 0; attempt < MAX_SPAWN_ATTEMPTS; attempt++) {
-      const x = random() * width
-      const y = random() * height
-      if (intersectsObstacle(x, y, obstacles, clearance)) continue
-      particle.x = x
-      particle.y = y
-      particle.life = 3.5 + random() * 6
-      particle.color = Math.floor(random() * 3)
-      return true
+  function spawn(p: TracerParticle, frame: SpectralTracerFrame, length: number) {
+    // R2 quasirandom positions avoid visual clumping and retain the site's
+    // deterministic seed distribution. No per-frame full-screen reseeding.
+    for (let attempt = 0; attempt < 36; attempt++) {
+      const sample = ++seedIndex
+      const x = fract(0.5 + R2_A1 * sample) * width
+      const y = fract(0.5 + R2_A2 * sample) * height
+      if (pointInObstacle(x, y, frame.obstacles, clearance)) continue
+
+      p.x = x
+      p.y = y
+      p.age = 0
+      p.lifetime = 5 + fract(sample * R2_A1) * 6
+      p.bucket = sample % 3
+      p.head = 0
+      p.length = 0
+
+      // Seed a long *connected* part of the original spectral streamline.
+      // Curves are visible immediately, not only after 3 seconds of animation.
+      const backward: Array<{ x: number; y: number }> = []
+      let cursorX = x
+      let cursorY = y
+      const warmCount = Math.min(length - 1, 80)
+      for (let index = 1; index <= warmCount; index++) {
+        const previous = traceStep(
+          cursorX,
+          cursorY,
+          frame.time - (index - 1) * PREWARM_INTERVAL * SPECTRAL_PLAYBACK_RATE,
+          -PREWARM_INTERVAL,
+          speed,
+          width,
+          height,
+          frame.modeCount,
+        )
+        if (
+          previous.x < 0 || previous.x > width || previous.y < 0 || previous.y > height ||
+          pointInObstacle(previous.x, previous.y, frame.obstacles, clearance)
+        ) break
+        backward.push(previous)
+        cursorX = previous.x
+        cursorY = previous.y
+      }
+      for (let index = backward.length - 1; index >= 0; index--) {
+        pushTrail(p, backward[index].x, backward[index].y)
+      }
+      pushTrail(p, x, y)
+      return
     }
-    particle.life = 0
-    return false
+    p.length = 0
+    p.age = p.lifetime
   }
 
   const resize = (nextWidth: number, nextHeight: number, ratio: number) => {
     if (destroyed) return
-    const actualWidth = Math.max(1, nextWidth)
-    const actualHeight = Math.max(1, nextHeight)
-    const actualRatio = Math.max(1, ratio)
-    const physicalWidth = Math.max(1, Math.floor(actualWidth * actualRatio))
-    const physicalHeight = Math.max(1, Math.floor(actualHeight * actualRatio))
+    const targetWidth = Math.max(1, nextWidth)
+    const targetHeight = Math.max(1, nextHeight)
+    const targetRatio = Math.max(1, ratio)
+    const physicalWidth = Math.max(1, Math.floor(targetWidth * targetRatio))
+    const physicalHeight = Math.max(1, Math.floor(targetHeight * targetRatio))
     const changed =
-      canvas.width !== physicalWidth || canvas.height !== physicalHeight ||
-      actualWidth !== width || actualHeight !== height
-    width = actualWidth
-    height = actualHeight
-    pixelRatio = actualRatio
+      width !== targetWidth || height !== targetHeight ||
+      canvas.width !== physicalWidth || canvas.height !== physicalHeight
+    width = targetWidth
+    height = targetHeight
+    pixelRatio = targetRatio
     if (canvas.width !== physicalWidth) canvas.width = physicalWidth
     if (canvas.height !== physicalHeight) canvas.height = physicalHeight
     canvas.style.width = width + "px"
@@ -229,99 +276,117 @@ function createLayerRenderer(
     }
   }
 
-  const maskObstacles = (obstacles: readonly TracerObstacle[]) => {
-    // Persistent trails must be erased under the latest layout, even after
-    // scrolling or a panel entering a previously unobstructed region.
-    for (const obstacle of obstacles) {
-      context.clearRect(
-        obstacle.left - clearance,
-        obstacle.top - clearance,
-        obstacle.right - obstacle.left + clearance * 2,
-        obstacle.bottom - obstacle.top + clearance * 2,
-      )
-    }
-  }
-
   const render = (frame: SpectralTracerFrame) => {
     if (destroyed) return
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-    const requested = layer === 0 ? frame.backgroundCount : frame.foregroundCount
-    const count = clamp(Math.round(requested), 0, SPECTRAL_TRACER_CAPACITY)
-    if (frame.alpha <= 0.001 || count === 0) {
-      context.clearRect(0, 0, width, height)
+    context.globalCompositeOperation = "source-over"
+    context.globalAlpha = 1
+    context.clearRect(0, 0, width, height)
+    const count = clamp(
+      Math.round(layer === 0 ? frame.backgroundCount : frame.foregroundCount),
+      0,
+      SPECTRAL_TRACER_CAPACITY,
+    )
+    if (count === 0 || frame.alpha <= 0.001) {
       particles.length = 0
       previousTime = frame.time
       return
     }
-
-    const rawDelta =
-      previousTime === null ? 1 / 60 : Math.max(0, (frame.time - previousTime) / SPECTRAL_PLAYBACK_RATE)
+    const dt = previousTime === null
+      ? 0
+      : clamp((frame.time - previousTime) / SPECTRAL_PLAYBACK_RATE, 0, 0.05)
     previousTime = frame.time
-    const dt = Math.min(rawDelta, 0.05)
-    if (dt <= 0) {
-      maskObstacles(frame.obstacles)
-      return
-    }
-
+    const trailLength = clamp(Math.round(frame.trailSamples * 13), 64, MAX_TRAIL_POINTS)
     while (particles.length > count) particles.pop()
     while (particles.length < count) {
-      const particle: Particle = { x: 0, y: 0, life: 0, color: 0 }
-      spawn(particle, frame.obstacles)
+      const particle: TracerParticle = {
+        x: 0,
+        y: 0,
+        age: 0,
+        lifetime: 0,
+        bucket: 0,
+        trail: new Float32Array(MAX_TRAIL_POINTS * 2),
+        head: 0,
+        length: 0,
+      }
+      spawn(particle, frame, trailLength)
       particles.push(particle)
     }
 
-    // Translucent destination-out fading retains the actual trajectory of each
-    // moving particle without painting an opaque background over the page.
-    const persistence = clamp(frame.trailSamples / 8, 0.6, 1.3)
-    context.globalCompositeOperation = "destination-out"
-    context.globalAlpha = 1 - Math.exp(-dt / ((layer === 0 ? 1.5 : 1.1) * persistence))
-    context.fillRect(0, 0, width, height)
-
-    const paths = [new Path2D(), new Path2D(), new Path2D()]
-    const speed = layer === 0 ? 34 : 26
-    const movement = Math.min(speed * dt, 2.4)
-    const fieldScale = 0.0018
-    const twist = 2.6 + 0.12 * (clamp(frame.modeCount, 1, 6) - 4)
     for (const particle of particles) {
-      if (particle.life <= 0 && !spawn(particle, frame.obstacles)) continue
-      // Perlin angular flow from flow-fields: positions, not fixed seeds,
-      // are integrated through the field as time advances.
-      const angle = noise(
-        particle.x * fieldScale,
-        particle.y * fieldScale,
-        frame.time * 0.11,
-      ) * twist + 0.18
-      const nextX = particle.x + Math.cos(angle) * movement
-      const nextY = particle.y + Math.sin(angle) * movement
+      if (particle.length === 0 || particle.age >= particle.lifetime) {
+        spawn(particle, frame, trailLength)
+      }
+      if (dt === 0 || particle.length === 0) continue
+      const next = traceStep(
+        particle.x, particle.y, frame.time, dt, speed, width, height, frame.modeCount,
+      )
       if (
-        nextX < 0 || nextY < 0 || nextX > width || nextY > height ||
-        intersectsObstacle(nextX, nextY, frame.obstacles, clearance)
+        next.x < 0 || next.x > width || next.y < 0 || next.y > height ||
+        pointInObstacle(next.x, next.y, frame.obstacles, clearance)
       ) {
-        spawn(particle, frame.obstacles)
+        spawn(particle, frame, trailLength)
         continue
       }
-      const path = paths[particle.color]
-      path.moveTo(particle.x, particle.y)
-      path.lineTo(nextX, nextY)
-      particle.x = nextX
-      particle.y = nextY
-      particle.life -= dt
+      particle.x = next.x
+      particle.y = next.y
+      particle.age += dt
+      pushTrail(particle, next.x, next.y)
     }
 
-    context.globalCompositeOperation = "source-over"
-    context.lineCap = "round"
-    context.lineJoin = "round"
-    context.lineWidth = layer === 0 ? 0.85 : 1.05
-    context.globalAlpha = clamp(frame.alpha, 0, 1) * (layer === 0 ? 0.22 : 0.3)
+    const paths = Array.from({ length: 3 }, () =>
+      Array.from({ length: 3 }, () => new Path2D()),
+    )
+    for (const p of particles) {
+      const length = Math.min(p.length, trailLength)
+      if (length < 2) continue
+      const first = (p.head - length + MAX_TRAIL_POINTS) % MAX_TRAIL_POINTS
+      let previousX = 0
+      let previousY = 0
+      let previousValid = false
+      for (let index = 0; index < length; index++) {
+        const position = ((first + index) % MAX_TRAIL_POINTS) * 2
+        const x = p.trail[position]
+        const y = p.trail[position + 1]
+        const valid = !pointInObstacle(x, y, frame.obstacles, clearance)
+        if (previousValid && valid) {
+          const segment = Math.min(2, Math.floor((index * 3) / length))
+          const path = paths[p.bucket][segment]
+          path.moveTo(previousX, previousY)
+          path.lineTo(x, y)
+        }
+        previousX = x
+        previousY = y
+        previousValid = valid
+      }
+    }
 
     const theme = clamp(frame.theme, 0, 1)
-    for (let index = 0; index < paths.length; index++) {
-      context.strokeStyle = frame.colours
-        ? mixColor(frame.colours[index], frame.colours[index], 0)
-        : mixColor(DAY_COLORS[index], NIGHT_COLORS[index], theme)
-      context.stroke(paths[index])
+    const baseAlpha = clamp(frame.alpha, 0, 1)
+    const level = layer === 0 ? 0.76 : 0.94
+    const sectionAlpha = [0.22, 0.48, 0.84]
+    context.lineCap = "round"
+    context.lineJoin = "round"
+    for (let bucket = 0; bucket < 3; bucket++) {
+      const colour = frame.colours
+        ? mixColor(frame.colours[bucket], frame.colours[bucket], 0)
+        : mixColor(DAY_TRACER_COLORS[bucket], NIGHT_TRACER_COLORS[bucket], theme)
+      context.strokeStyle = colour
+      for (let segment = 0; segment < 3; segment++) {
+        // Soft wide under-stroke and a clearly legible core, both on the same
+        // spectral arc. Night glow stays subtle; day retains dark contrast.
+        if (theme > 0.02) {
+          context.globalCompositeOperation = "lighter"
+          context.globalAlpha = baseAlpha * level * sectionAlpha[segment] * theme * 0.22
+          context.lineWidth = layer === 0 ? 5.5 : 6.5
+          context.stroke(paths[bucket][segment])
+        }
+        context.globalCompositeOperation = "source-over"
+        context.globalAlpha = baseAlpha * level * sectionAlpha[segment]
+        context.lineWidth = layer === 0 ? 2.1 : 2.7
+        context.stroke(paths[bucket][segment])
+      }
     }
-    maskObstacles(frame.obstacles)
     context.globalAlpha = 1
     context.globalCompositeOperation = "source-over"
   }
@@ -330,7 +395,8 @@ function createLayerRenderer(
     if (destroyed) return
     destroyed = true
     particles.length = 0
-    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+    context.globalAlpha = 1
+    context.globalCompositeOperation = "source-over"
     context.clearRect(0, 0, width, height)
   }
 
@@ -344,11 +410,10 @@ export function createSpectralTracerController(
   const back = createLayerRenderer(backCanvas, 0)
   const front = createLayerRenderer(frontCanvas, 1)
   if (!back || !front) return null
-
   return {
-    resize: (width, height, ratio) => {
-      back.resize(width, height, ratio)
-      front.resize(width, height, ratio)
+    resize: (width, height, pixelRatio) => {
+      back.resize(width, height, pixelRatio)
+      front.resize(width, height, pixelRatio)
     },
     render: (frame) => {
       back.render(frame)
