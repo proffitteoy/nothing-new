@@ -1,40 +1,36 @@
 "use client"
 
 import type { RefObject } from "react"
-import { SPECTRAL_LAMBDAS } from "./spectralField"
+import { SPECTRAL_PLAYBACK_RATE } from "./spectralField"
 
-export const SPECTRAL_TRACER_BACKGROUND = 3200
-export const SPECTRAL_TRACER_FOREGROUND = 120
-export const SPECTRAL_TRACER_CAPACITY = 4096
+/*
+ * Flow-field motion and the seeded 3D Perlin implementation are adapted from
+ * evoluteur/flow-fields, Copyright (c) 2026 Olivier Giulieri (MIT).
+ * See third_party/flow-fields/LICENSE for the upstream license.
+ */
 
-const BACKGROUND_RENDER_CAPACITY = 1280
-const FOREGROUND_RENDER_CAPACITY = 72
-const BACKGROUND_OBSTACLE_CLEARANCE = 36
-const FOREGROUND_OBSTACLE_CLEARANCE = 4
-const FIELD_KX = [1.0, 2.0, 3.0, 1.0, 4.0, 2.0] as const
-const FIELD_KY = [2.0, -1.0, 1.0, -3.0, 2.0, 5.0] as const
-const FIELD_AMPLITUDES = [1.0, 0.72, 0.5, 0.38, 0.26, 0.18] as const
-const FIELD_PHASES = [0.31, 2.17, 4.02, 5.41, 1.24, 3.52] as const
-const R2_G = 1.324717957244746
-const R2_A1 = 1 / R2_G
-const R2_A2 = 1 / (R2_G * R2_G)
-const DAY_TRACER_COLORS = [
-  [64, 145, 220],
-  [68, 170, 228],
-  [105, 112, 210],
-] as const
-const NIGHT_TRACER_GLOW_COLORS = [
-  [73, 203, 255],
-  [91, 171, 255],
-  [158, 130, 255],
-] as const
-const NIGHT_TRACER_CORE_COLORS = [
-  [232, 250, 255],
-  [211, 237, 255],
-  [229, 221, 255],
-] as const
+export const SPECTRAL_TRACER_BACKGROUND = 400
+export const SPECTRAL_TRACER_FOREGROUND = 32
+export const SPECTRAL_TRACER_CAPACITY = 512
+
+const BACKGROUND_CLEARANCE = 24
+const FOREGROUND_CLEARANCE = 12
+const MAX_SPAWN_ATTEMPTS = 20
+const TAU = Math.PI * 2
 
 type TracerColor = readonly [number, number, number]
+
+const DAY_COLORS = [
+  [57, 117, 177],
+  [79, 147, 192],
+  [113, 113, 169],
+] as const satisfies readonly TracerColor[]
+
+const NIGHT_COLORS = [
+  [100, 166, 210],
+  [123, 177, 221],
+  [157, 149, 213],
+] as const satisfies readonly TracerColor[]
 
 export type TracerObstacle = {
   left: number
@@ -69,363 +65,273 @@ type SpectralTracerLayerProps = {
   interactionCanvasRef: RefObject<HTMLCanvasElement | null>
 }
 
-type LayerRenderer = {
-  resize: (width: number, height: number, pixelRatio: number) => void
-  render: (frame: SpectralTracerFrame) => void
-  destroy: () => void
+type LayerRenderer = SpectralTracerController
+
+type Particle = {
+  x: number
+  y: number
+  life: number
+  color: number
 }
 
-function fract(value: number) {
-  return value - Math.floor(value)
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value))
 }
 
-function mix(from: number, to: number, amount: number) {
-  return from + (to - from) * amount
-}
-
-function mixColor(from: TracerColor, to: TracerColor, amount: number) {
-  return `rgb(${Math.round(mix(from[0], to[0], amount))}, ${Math.round(
-    mix(from[1], to[1], amount),
-  )}, ${Math.round(mix(from[2], to[2], amount))})`
-}
-
-function seedAt(index: number, width: number, height: number) {
-  const sample = index + 1
-  const u = fract(0.5 + R2_A1 * sample)
-  const v = fract(0.5 + R2_A2 * sample)
-  return {
-    x: (-0.04 + u * 1.08) * width,
-    y: (-0.04 + v * 1.08) * height,
+function randomGenerator(seed: number) {
+  let state = seed >>> 0
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0
+    return state / 4294967296
   }
 }
 
-function velocityAt(
+// Ported from the seeded improved-Perlin implementation in evoluteur/flow-fields.
+// The permutation is local to each renderer: mounting a field cannot mutate
+// global noise state or the state of another canvas.
+function createPerlinNoise(seed: number) {
+  const permutation = new Uint8Array(512)
+  const source = Array.from({ length: 256 }, (_, index) => index)
+  let state = seed >>> 0 || 1
+  const random = () => {
+    state ^= state << 13
+    state ^= state >>> 17
+    state ^= state << 5
+    return (state >>> 0) / 4294967296
+  }
+
+  for (let index = 255; index > 0; index--) {
+    const other = Math.floor(random() * (index + 1))
+    ;[source[index], source[other]] = [source[other], source[index]]
+  }
+  for (let index = 0; index < 512; index++) {
+    permutation[index] = source[index & 255]
+  }
+
+  const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10)
+  const lerp = (t: number, from: number, to: number) => from + t * (to - from)
+  const grad = (hash: number, x: number, y: number, z: number) => {
+    const u = (hash & 15) < 8 ? x : y
+    const v = (hash & 15) < 4 ? y : (hash & 15) === 12 || (hash & 15) === 14 ? x : z
+    return ((hash & 1) === 0 ? u : -u) + ((hash & 2) === 0 ? v : -v)
+  }
+
+  return (x: number, y: number, z: number) => {
+    const fx = Math.floor(x)
+    const fy = Math.floor(y)
+    const fz = Math.floor(z)
+    const X = fx & 255
+    const Y = fy & 255
+    const Z = fz & 255
+    x -= fx
+    y -= fy
+    z -= fz
+    const u = fade(x)
+    const v = fade(y)
+    const w = fade(z)
+    const A = permutation[X] + Y
+    const AA = permutation[A] + Z
+    const AB = permutation[A + 1] + Z
+    const B = permutation[X + 1] + Y
+    const BA = permutation[B] + Z
+    const BB = permutation[B + 1] + Z
+
+    return lerp(
+      w,
+      lerp(
+        v,
+        lerp(u, grad(permutation[AA], x, y, z), grad(permutation[BA], x - 1, y, z)),
+        lerp(u, grad(permutation[AB], x, y - 1, z), grad(permutation[BB], x - 1, y - 1, z)),
+      ),
+      lerp(
+        v,
+        lerp(u, grad(permutation[AA + 1], x, y, z - 1), grad(permutation[BA + 1], x - 1, y, z - 1)),
+        lerp(u, grad(permutation[AB + 1], x, y - 1, z - 1), grad(permutation[BB + 1], x - 1, y - 1, z - 1)),
+      ),
+    )
+  }
+}
+
+function intersectsObstacle(
   x: number,
   y: number,
-  time: number,
-  width: number,
-  height: number,
-  modeCount: number,
-) {
-  const safeWidth = Math.max(width, 1)
-  const safeHeight = Math.max(height, 1)
-  const aspect = safeWidth / safeHeight
-  const nx = (x / safeWidth) * 2 - 1
-  const ny = (y / safeHeight) * 2 - 1
-  let vx = 0
-  let vy = 0
-  const activeModes = Math.min(modeCount, FIELD_KX.length)
-
-  for (let mode = 0; mode < activeModes; mode++) {
-    const phase =
-      FIELD_KX[mode] * nx * aspect +
-      FIELD_KY[mode] * ny +
-      SPECTRAL_LAMBDAS[mode] * time +
-      FIELD_PHASES[mode]
-    const cosine = Math.cos(phase)
-    const amplitude = FIELD_AMPLITUDES[mode]
-
-    // V = J grad(psi): analytic, smooth and divergence free.
-    vx += amplitude * FIELD_KY[mode] * cosine
-    vy -= amplitude * FIELD_KX[mode] * cosine
-  }
-
-  vx /= Math.max(aspect, 0.65)
-  const magnitude = Math.hypot(vx, vy)
-  if (magnitude < 1e-5) return { x: 1, y: 0 }
-  return { x: vx / magnitude, y: vy / magnitude }
-}
-
-type VelocityGrid = {
-  columns: number
-  rows: number
-  width: number
-  height: number
-  values: Float32Array
-}
-
-type VelocityGridAt = (
-  time: number,
-  width: number,
-  height: number,
-  modeCount: number,
-) => VelocityGrid
-
-function createVelocityGridCache(): VelocityGridAt {
-  let grid: VelocityGrid | null = null
-  let lastTime = Number.NaN
-  let lastModeCount = -1
-
-  return (time, width, height, modeCount) => {
-    const columns = Math.max(36, Math.min(72, Math.ceil(width / 22) + 1))
-    const rows = Math.max(24, Math.min(48, Math.ceil(height / 22) + 1))
-    if (
-      !grid ||
-      grid.columns !== columns ||
-      grid.rows !== rows ||
-      grid.width !== width ||
-      grid.height !== height
-    ) {
-      grid = {
-        columns,
-        rows,
-        width,
-        height,
-        values: new Float32Array(columns * rows * 2),
-      }
-      lastTime = Number.NaN
-    }
-
-    if (time === lastTime && modeCount === lastModeCount) return grid
-
-    for (let row = 0; row < rows; row++) {
-      const y = (row / (rows - 1)) * height
-      for (let column = 0; column < columns; column++) {
-        const x = (column / (columns - 1)) * width
-        const velocity = velocityAt(x, y, time, width, height, modeCount)
-        const offset = (row * columns + column) * 2
-        grid.values[offset] = velocity.x
-        grid.values[offset + 1] = velocity.y
-      }
-    }
-
-    lastTime = time
-    lastModeCount = modeCount
-    return grid
-  }
-}
-
-function sampleVelocityGrid(grid: VelocityGrid, x: number, y: number) {
-  const gridX = Math.min(grid.columns - 1, Math.max(0, (x / grid.width) * (grid.columns - 1)))
-  const gridY = Math.min(grid.rows - 1, Math.max(0, (y / grid.height) * (grid.rows - 1)))
-  const left = Math.floor(gridX)
-  const top = Math.floor(gridY)
-  const right = Math.min(grid.columns - 1, left + 1)
-  const bottom = Math.min(grid.rows - 1, top + 1)
-  const mixX = gridX - left
-  const mixY = gridY - top
-  const topLeft = (top * grid.columns + left) * 2
-  const topRight = (top * grid.columns + right) * 2
-  const bottomLeft = (bottom * grid.columns + left) * 2
-  const bottomRight = (bottom * grid.columns + right) * 2
-  const vxTop = grid.values[topLeft] + (grid.values[topRight] - grid.values[topLeft]) * mixX
-  const vyTop =
-    grid.values[topLeft + 1] + (grid.values[topRight + 1] - grid.values[topLeft + 1]) * mixX
-  const vxBottom =
-    grid.values[bottomLeft] + (grid.values[bottomRight] - grid.values[bottomLeft]) * mixX
-  const vyBottom =
-    grid.values[bottomLeft + 1] +
-    (grid.values[bottomRight + 1] - grid.values[bottomLeft + 1]) * mixX
-  const vx = vxTop + (vxBottom - vxTop) * mixY
-  const vy = vyTop + (vyBottom - vyTop) * mixY
-  const magnitude = Math.hypot(vx, vy)
-  if (magnitude < 1e-5) return { x: 1, y: 0 }
-  return { x: vx / magnitude, y: vy / magnitude }
-}
-
-function circleIntersectsObstacle(
-  centerX: number,
-  centerY: number,
-  radius: number,
-  obstacle: TracerObstacle,
+  obstacles: readonly TracerObstacle[],
   clearance: number,
 ) {
-  const closestX = Math.max(
-    obstacle.left - clearance,
-    Math.min(centerX, obstacle.right + clearance),
+  return obstacles.some(
+    (obstacle) =>
+      x >= obstacle.left - clearance &&
+      x <= obstacle.right + clearance &&
+      y >= obstacle.top - clearance &&
+      y <= obstacle.bottom + clearance,
   )
-  const closestY = Math.max(
-    obstacle.top - clearance,
-    Math.min(centerY, obstacle.bottom + clearance),
-  )
-  const deltaX = centerX - closestX
-  const deltaY = centerY - closestY
-  return deltaX * deltaX + deltaY * deltaY <= radius * radius
 }
 
-function appendObstacleAwareStreamline(
-  path: Path2D,
-  seedX: number,
-  seedY: number,
-  steps: number,
-  stepLength: number,
-  grid: VelocityGrid,
-  obstacles: TracerObstacle[],
-  obstacleClearance: number,
-  strokeRadius: number,
-  points: Float32Array,
-) {
-  const pointsPerDirection = steps * 2
-  let forwardCount = 0
-  let backwardCount = 0
-  let maxRadiusSquared = 0
-
-  for (let directionIndex = 0; directionIndex < 2; directionIndex++) {
-    const direction = directionIndex === 0 ? 1 : -1
-    const offset = directionIndex * pointsPerDirection
-    let count = 0
-    let x = seedX
-    let y = seedY
-
-    for (let step = 0; step < steps; step++) {
-      const velocity = sampleVelocityGrid(grid, x, y)
-      x += velocity.x * stepLength * direction
-      y += velocity.y * stepLength * direction
-
-      if (x < -24 || x > grid.width + 24 || y < -24 || y > grid.height + 24) break
-      points[offset + count * 2] = x
-      points[offset + count * 2 + 1] = y
-      count++
-
-      const deltaX = x - seedX
-      const deltaY = y - seedY
-      maxRadiusSquared = Math.max(maxRadiusSquared, deltaX * deltaX + deltaY * deltaY)
-    }
-
-    if (directionIndex === 0) forwardCount = count
-    else backwardCount = count
-  }
-
-  // The rendered chords and their stroke stay inside this center-fixed support disk.
-  const supportRadius = Math.sqrt(maxRadiusSquared) + strokeRadius
-  if (
-    obstacles.some((obstacle) =>
-      circleIntersectsObstacle(seedX, seedY, supportRadius, obstacle, obstacleClearance),
-    )
-  ) {
-    return
-  }
-
-  for (let directionIndex = 0; directionIndex < 2; directionIndex++) {
-    const count = directionIndex === 0 ? forwardCount : backwardCount
-    const offset = directionIndex * pointsPerDirection
-    path.moveTo(seedX, seedY)
-    for (let pointIndex = 0; pointIndex < count; pointIndex++) {
-      path.lineTo(points[offset + pointIndex * 2], points[offset + pointIndex * 2 + 1])
-    }
-  }
+function mixColor(a: TracerColor, b: TracerColor, theme: number) {
+  const mix = (index: number) => Math.round(a[index] + (b[index] - a[index]) * theme)
+  return "rgb(" + mix(0) + ", " + mix(1) + ", " + mix(2) + ")"
 }
 
 function createLayerRenderer(
   canvas: HTMLCanvasElement,
-  parameterOffset: number,
-  capacity: number,
   layer: 0 | 1,
-  velocityGridAt: VelocityGridAt,
 ): LayerRenderer | null {
   const context = canvas.getContext("2d", { alpha: true })
   if (!context) return null
 
-  let logicalWidth = 1
-  let logicalHeight = 1
-  let logicalPixelRatio = 1
-  const streamlinePoints = new Float32Array(40)
+  const random = randomGenerator(0x2a6b8f03 + layer * 317)
+  const noise = createPerlinNoise(0x5d12c1ef)
+  const particles: Particle[] = []
+  const clearance = layer === 0 ? BACKGROUND_CLEARANCE : FOREGROUND_CLEARANCE
+  let width = 1
+  let height = 1
+  let pixelRatio = 1
+  let previousTime: number | null = null
+  let destroyed = false
 
-  const resize = (width: number, height: number, pixelRatio: number) => {
-    logicalWidth = Math.max(1, width)
-    logicalHeight = Math.max(1, height)
-    logicalPixelRatio = Math.max(1, pixelRatio)
-    const physicalWidth = Math.max(1, Math.floor(logicalWidth * logicalPixelRatio))
-    const physicalHeight = Math.max(1, Math.floor(logicalHeight * logicalPixelRatio))
-    if (canvas.width !== physicalWidth) canvas.width = physicalWidth
-    if (canvas.height !== physicalHeight) canvas.height = physicalHeight
-    canvas.style.width = logicalWidth + "px"
-    canvas.style.height = logicalHeight + "px"
-    context.setTransform(logicalPixelRatio, 0, 0, logicalPixelRatio, 0, 0)
+  const spawn = (particle: Particle, obstacles: readonly TracerObstacle[]) => {
+    for (let attempt = 0; attempt < MAX_SPAWN_ATTEMPTS; attempt++) {
+      const x = random() * width
+      const y = random() * height
+      if (intersectsObstacle(x, y, obstacles, clearance)) continue
+      particle.x = x
+      particle.y = y
+      particle.life = 3.5 + random() * 6
+      particle.color = Math.floor(random() * 3)
+      return true
+    }
+    particle.life = 0
+    return false
   }
 
-  const render = ({
-    alpha,
-    theme,
-    time,
-    backgroundCount,
-    foregroundCount,
-    trailSamples,
-    modeCount,
-    width,
-    height,
-    obstacles,
-    colours,
-  }: SpectralTracerFrame) => {
-    context.setTransform(logicalPixelRatio, 0, 0, logicalPixelRatio, 0, 0)
-    context.clearRect(0, 0, logicalWidth, logicalHeight)
-    if (alpha <= 0.001) return
+  const resize = (nextWidth: number, nextHeight: number, ratio: number) => {
+    if (destroyed) return
+    const actualWidth = Math.max(1, nextWidth)
+    const actualHeight = Math.max(1, nextHeight)
+    const actualRatio = Math.max(1, ratio)
+    const physicalWidth = Math.max(1, Math.floor(actualWidth * actualRatio))
+    const physicalHeight = Math.max(1, Math.floor(actualHeight * actualRatio))
+    const changed =
+      canvas.width !== physicalWidth || canvas.height !== physicalHeight ||
+      actualWidth !== width || actualHeight !== height
+    width = actualWidth
+    height = actualHeight
+    pixelRatio = actualRatio
+    if (canvas.width !== physicalWidth) canvas.width = physicalWidth
+    if (canvas.height !== physicalHeight) canvas.height = physicalHeight
+    canvas.style.width = width + "px"
+    canvas.style.height = height + "px"
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+    if (changed) {
+      particles.length = 0
+      previousTime = null
+      context.clearRect(0, 0, width, height)
+    }
+  }
 
-    const requested = layer === 0 ? backgroundCount : foregroundCount
-    const scale =
-      layer === 0
-        ? BACKGROUND_RENDER_CAPACITY / SPECTRAL_TRACER_BACKGROUND
-        : FOREGROUND_RENDER_CAPACITY / SPECTRAL_TRACER_FOREGROUND
-    const count = Math.max(0, Math.min(Math.round(requested * scale), capacity))
-    if (count <= 0) return
+  const maskObstacles = (obstacles: readonly TracerObstacle[]) => {
+    // Persistent trails must be erased under the latest layout, even after
+    // scrolling or a panel entering a previously unobstructed region.
+    for (const obstacle of obstacles) {
+      context.clearRect(
+        obstacle.left - clearance,
+        obstacle.top - clearance,
+        obstacle.right - obstacle.left + clearance * 2,
+        obstacle.bottom - obstacle.top + clearance * 2,
+      )
+    }
+  }
 
-    const velocityGrid = velocityGridAt(time, width, height, modeCount)
-    const steps =
-      layer === 0
-        ? Math.max(6, Math.min(10, Math.round(trailSamples * 0.65)))
-        : Math.max(5, Math.min(8, Math.round(trailSamples * 0.55)))
-    const baseStep = Math.min(width, height) / (layer === 0 ? 112 : 128)
-    const stepLength = Math.max(
-      layer === 0 ? 6.2 : 5.2,
-      Math.min(layer === 0 ? 9.5 : 7.5, baseStep),
-    )
-    const themeAmount = Math.max(0, Math.min(1, theme))
-    const glowAlpha =
-      alpha * (layer === 0 ? mix(0.075, 0.16, themeAmount) : mix(0.07, 0.18, themeAmount))
-    const glowWidth = layer === 0 ? mix(3.2, 5, themeAmount) : mix(2.8, 4.4, themeAmount)
-    const coreAlpha =
-      alpha * (layer === 0 ? mix(0.22, 0.48, themeAmount) : mix(0.22, 0.58, themeAmount))
-    const coreWidth = layer === 0 ? mix(0.92, 1.18, themeAmount) : mix(1.08, 1.36, themeAmount)
-    const obstacleClearance =
-      layer === 0 ? BACKGROUND_OBSTACLE_CLEARANCE : FOREGROUND_OBSTACLE_CLEARANCE
-    const strokeRadius = Math.max(glowWidth, coreWidth) * 0.5 + 1
-
-    context.lineCap = "round"
-    context.lineJoin = "round"
-
-    for (let bucket = 0; bucket < 3; bucket++) {
-      const path = new Path2D()
-
-      for (let localIndex = bucket; localIndex < count; localIndex += 3) {
-        const index = parameterOffset + localIndex
-        const seed = seedAt(index, width, height)
-        appendObstacleAwareStreamline(
-          path,
-          seed.x,
-          seed.y,
-          steps,
-          stepLength,
-          velocityGrid,
-          obstacles,
-          obstacleClearance,
-          strokeRadius,
-          streamlinePoints,
-        )
-      }
-
-      context.globalCompositeOperation = "lighter"
-      context.strokeStyle = colours
-        ? mixColor(colours[bucket], colours[bucket], 0)
-        : mixColor(DAY_TRACER_COLORS[bucket], NIGHT_TRACER_GLOW_COLORS[bucket], themeAmount)
-      context.globalAlpha = glowAlpha
-      context.lineWidth = glowWidth
-      context.stroke(path)
-
-      context.globalCompositeOperation = "source-over"
-      context.strokeStyle = colours
-        ? mixColor(colours[bucket], colours[bucket], 0)
-        : mixColor(DAY_TRACER_COLORS[bucket], NIGHT_TRACER_CORE_COLORS[bucket], themeAmount)
-      context.globalAlpha = coreAlpha
-      context.lineWidth = coreWidth
-      context.stroke(path)
+  const render = (frame: SpectralTracerFrame) => {
+    if (destroyed) return
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+    const requested = layer === 0 ? frame.backgroundCount : frame.foregroundCount
+    const count = clamp(Math.round(requested), 0, SPECTRAL_TRACER_CAPACITY)
+    if (frame.alpha <= 0.001 || count === 0) {
+      context.clearRect(0, 0, width, height)
+      particles.length = 0
+      previousTime = frame.time
+      return
     }
 
+    const rawDelta =
+      previousTime === null ? 1 / 60 : Math.max(0, (frame.time - previousTime) / SPECTRAL_PLAYBACK_RATE)
+    previousTime = frame.time
+    const dt = Math.min(rawDelta, 0.05)
+    if (dt <= 0) {
+      maskObstacles(frame.obstacles)
+      return
+    }
+
+    while (particles.length > count) particles.pop()
+    while (particles.length < count) {
+      const particle: Particle = { x: 0, y: 0, life: 0, color: 0 }
+      spawn(particle, frame.obstacles)
+      particles.push(particle)
+    }
+
+    // Translucent destination-out fading retains the actual trajectory of each
+    // moving particle without painting an opaque background over the page.
+    const persistence = clamp(frame.trailSamples / 8, 0.6, 1.3)
+    context.globalCompositeOperation = "destination-out"
+    context.globalAlpha = 1 - Math.exp(-dt / ((layer === 0 ? 1.5 : 1.1) * persistence))
+    context.fillRect(0, 0, width, height)
+
+    const paths = [new Path2D(), new Path2D(), new Path2D()]
+    const speed = layer === 0 ? 34 : 26
+    const movement = Math.min(speed * dt, 2.4)
+    const fieldScale = 0.0018
+    const twist = 2.6 + 0.12 * (clamp(frame.modeCount, 1, 6) - 4)
+    for (const particle of particles) {
+      if (particle.life <= 0 && !spawn(particle, frame.obstacles)) continue
+      // Perlin angular flow from flow-fields: positions, not fixed seeds,
+      // are integrated through the field as time advances.
+      const angle = noise(
+        particle.x * fieldScale,
+        particle.y * fieldScale,
+        frame.time * 0.11,
+      ) * twist + 0.18
+      const nextX = particle.x + Math.cos(angle) * movement
+      const nextY = particle.y + Math.sin(angle) * movement
+      if (
+        nextX < 0 || nextY < 0 || nextX > width || nextY > height ||
+        intersectsObstacle(nextX, nextY, frame.obstacles, clearance)
+      ) {
+        spawn(particle, frame.obstacles)
+        continue
+      }
+      const path = paths[particle.color]
+      path.moveTo(particle.x, particle.y)
+      path.lineTo(nextX, nextY)
+      particle.x = nextX
+      particle.y = nextY
+      particle.life -= dt
+    }
+
+    context.globalCompositeOperation = "source-over"
+    context.lineCap = "round"
+    context.lineJoin = "round"
+    context.lineWidth = layer === 0 ? 0.85 : 1.05
+    context.globalAlpha = clamp(frame.alpha, 0, 1) * (layer === 0 ? 0.22 : 0.3)
+
+    const theme = clamp(frame.theme, 0, 1)
+    for (let index = 0; index < paths.length; index++) {
+      context.strokeStyle = frame.colours
+        ? mixColor(frame.colours[index], frame.colours[index], 0)
+        : mixColor(DAY_COLORS[index], NIGHT_COLORS[index], theme)
+      context.stroke(paths[index])
+    }
+    maskObstacles(frame.obstacles)
     context.globalAlpha = 1
     context.globalCompositeOperation = "source-over"
   }
 
   const destroy = () => {
-    context.clearRect(0, 0, logicalWidth, logicalHeight)
+    if (destroyed) return
+    destroyed = true
+    particles.length = 0
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+    context.clearRect(0, 0, width, height)
   }
 
   return { resize, render, destroy }
@@ -435,36 +341,22 @@ export function createSpectralTracerController(
   backCanvas: HTMLCanvasElement,
   frontCanvas: HTMLCanvasElement,
 ): SpectralTracerController | null {
-  const velocityGridAt = createVelocityGridCache()
-  const backRenderer = createLayerRenderer(
-    backCanvas,
-    0,
-    BACKGROUND_RENDER_CAPACITY,
-    0,
-    velocityGridAt,
-  )
-  const frontRenderer = createLayerRenderer(
-    frontCanvas,
-    SPECTRAL_TRACER_BACKGROUND,
-    FOREGROUND_RENDER_CAPACITY,
-    1,
-    velocityGridAt,
-  )
-
-  if (!backRenderer || !frontRenderer) return null
+  const back = createLayerRenderer(backCanvas, 0)
+  const front = createLayerRenderer(frontCanvas, 1)
+  if (!back || !front) return null
 
   return {
-    resize: (width, height, pixelRatio) => {
-      backRenderer.resize(width, height, pixelRatio)
-      frontRenderer.resize(width, height, pixelRatio)
+    resize: (width, height, ratio) => {
+      back.resize(width, height, ratio)
+      front.resize(width, height, ratio)
     },
     render: (frame) => {
-      backRenderer.render(frame)
-      frontRenderer.render(frame)
+      back.render(frame)
+      front.render(frame)
     },
     destroy: () => {
-      backRenderer.destroy()
-      frontRenderer.destroy()
+      back.destroy()
+      front.destroy()
     },
   }
 }
