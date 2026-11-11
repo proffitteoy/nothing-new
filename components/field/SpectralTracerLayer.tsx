@@ -132,6 +132,8 @@ export function spectralDirectionAt(
     vy -= FIELD_KX[mode] * term
   }
 
+  // Keep the original pixel-aspect correction from the old tracer field.
+  vx /= Math.max(aspect, 0.65)
   const magnitude = Math.hypot(vx, vy)
   if (magnitude < 1e-6) return { x: 0, y: 0 }
   return { x: vx / magnitude, y: vy / magnitude }
