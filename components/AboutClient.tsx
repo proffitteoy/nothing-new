@@ -1,198 +1,111 @@
 "use client"
 
-import { useEffect, useMemo, useRef } from "react"
-import Image from "next/image"
-import { siteConfig } from "../siteConfig"
+import { useEffect, useRef, useState } from "react"
+import WebsiteSection from "./about/WebsiteSection"
+import EngineeringSection from "./about/EngineeringSection"
+import ResearchSection from "./about/ResearchSection"
 import styles from "./AboutClient.module.css"
 
-export type GitHubContributions = {
-  total: number
-  days: {
-    date: string
-    count: number
-    level: 0 | 1 | 2 | 3 | 4
-  }[]
-}
+type SectionId = "website" | "engineering" | "research"
+
+const sections: { id: SectionId; target: string; label: string; number: string }[] = [
+  { id: "website", target: "about-website", label: "网站介绍", number: "01" },
+  { id: "engineering", target: "about-engineering", label: "工程身份", number: "02" },
+  { id: "research", target: "about-research", label: "研究身份", number: "03" },
+]
 
 export default function AboutClient({
-  contentHtml,
+  websiteHtml,
+  engineeringHtml,
+  researchHtml,
   coverImage,
-  githubContributions,
 }: {
-  contentHtml: string
+  websiteHtml: string
+  engineeringHtml: string
+  researchHtml: string
   coverImage: string
-  githubContributions: GitHubContributions | null
 }) {
-  const heatmapScrollRef = useRef<HTMLDivElement>(null)
-  const weeks = useMemo(() => {
-    if (!githubContributions) return []
-
-    const result: GitHubContributions["days"][] = []
-    githubContributions.days.forEach((day, index) => {
-      if (index % 7 === 0) result.push([])
-      result.at(-1)?.push(day)
-    })
-    return result
-  }, [githubContributions])
+  const pageRef = useRef<HTMLElement>(null)
+  const [activeSection, setActiveSection] = useState<SectionId>("website")
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      const element = heatmapScrollRef.current
-      if (element) element.scrollLeft = element.scrollWidth
+    const root = document.getElementById("app-scroll-root")
+    const targets = Array.from(
+      pageRef.current?.querySelectorAll<HTMLElement>("[data-about-section]") ?? [],
+    )
+    if (targets.length === 0) return
+
+    let frame = 0
+    const updateActive = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const desktop = window.matchMedia("(min-width: 768px)").matches
+        const rootTop = desktop && root ? root.getBoundingClientRect().top : 0
+        const viewHeight = desktop && root ? root.clientHeight : window.innerHeight
+        const marker = rootTop + Math.min(viewHeight * 0.36, 320)
+        let current: SectionId = "website"
+
+        for (const target of targets) {
+          if (target.getBoundingClientRect().top <= marker) {
+            current = target.dataset.aboutSection as SectionId
+          }
+        }
+        setActiveSection(current)
+      })
+    }
+
+    root?.addEventListener("scroll", updateActive, { passive: true })
+    window.addEventListener("scroll", updateActive, { passive: true })
+    window.addEventListener("resize", updateActive)
+    updateActive()
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      root?.removeEventListener("scroll", updateActive)
+      window.removeEventListener("scroll", updateActive)
+      window.removeEventListener("resize", updateActive)
+    }
+  }, [])
+
+  const goToSection = (target: string, id: SectionId) => {
+    setActiveSection(id)
+    document.getElementById(target)?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      block: "start",
     })
-    return () => cancelAnimationFrame(frame)
-  }, [githubContributions])
+  }
 
   return (
-    <article data-field-obstacle className={styles.profile} aria-labelledby="about-title">
-      <header className={styles.header}>
-        <div className={styles.cover}>
-          <Image
-            src={coverImage}
-            alt="关于页封面"
-            fill
-            preload
-            sizes="(max-width: 767px) 100vw, (max-width: 1248px) 60vw, 725px"
-            quality={75}
-            className={styles.coverImage}
-          />
-        </div>
-        <div className={styles.heading}>
-          <h1 id="about-title">关于我</h1>
-          <p className={styles.greeting}>你好，我是 {siteConfig.authorName}</p>
-        </div>
-      </header>
-
-      <div className={styles.entry}>
-        <aside className={styles.identity} aria-label="个人档案">
-          <div className={styles.avatar}>
-            <Image src={siteConfig.avatarUrl} alt="头像" fill sizes="64px" quality={85} />
-          </div>
-          <span>{siteConfig.authorName}</span>
-          <span className={styles.sectionLabel}>自我介绍</span>
-        </aside>
-        <div className={styles.prose} dangerouslySetInnerHTML={{ __html: contentHtml }} />
-      </div>
-      <div className={styles.entry}>
-        <div className={styles.sectionLabel} aria-hidden="true">
-          GitHub
-        </div>
-        <section className={styles.activity} aria-labelledby="activity-heatmap-title">
-          <div className={styles.activityHeading}>
-            <h2 id="activity-heatmap-title" className={styles.activityTitle}>
-              {githubContributions
-                ? `过去一年 ${githubContributions.total.toLocaleString("zh-CN")} 次 GitHub 贡献`
-                : "GitHub 贡献数据暂时不可用"}
-            </h2>
-            <a
-              href={siteConfig.social.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.githubLink}
-            >
-              GitHub 主页 ↗
-            </a>
-          </div>
-
-          {githubContributions ? (
-            <div className="flex min-w-0 gap-2">
-              <div className="flex shrink-0 flex-col" aria-hidden="true">
-                <div className="mb-1 h-4" />
-                <div className="flex flex-col gap-1 text-[10px] text-[var(--about-ink)]">
-                  <div className="h-[11px] md:h-[13px]" />
-                  <div className="flex h-[11px] items-center leading-none md:h-[13px]">Mon</div>
-                  <div className="h-[11px] md:h-[13px]" />
-                  <div className="flex h-[11px] items-center leading-none md:h-[13px]">Wed</div>
-                  <div className="h-[11px] md:h-[13px]" />
-                  <div className="flex h-[11px] items-center leading-none md:h-[13px]">Fri</div>
-                  <div className="h-[11px] md:h-[13px]" />
-                </div>
-              </div>
-
-              <div
-                ref={heatmapScrollRef}
-                tabIndex={0}
-                role="region"
-                aria-label="可横向滚动的 GitHub 贡献日历"
-                className={styles.heatmapScroll}
-              >
-                <div className="w-max">
-                  <div
-                    className="mb-1 flex h-4 gap-1 text-[10px] text-[var(--about-ink)]"
-                    aria-hidden="true"
-                  >
-                    {weeks.map((week, index) => {
-                      const firstDay = new Date(`${week[0].date}T00:00:00Z`)
-                      return (
-                        <div key={index} className="relative w-[11px] shrink-0 md:w-[13px]">
-                          {firstDay.getUTCDate() <= 7 && (
-                            <span className="absolute left-0 whitespace-nowrap">
-                              {firstDay.toLocaleString("en-US", {
-                                month: "short",
-                                timeZone: "UTC",
-                              })}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  <div className="flex gap-1" aria-label="过去一年的 GitHub 贡献日历">
-                    {weeks.map((week, weekIndex) => (
-                      <div key={weekIndex} className="flex flex-col gap-1">
-                        {week.map((day) => {
-                          const label = `${day.date}: ${day.count.toLocaleString("zh-CN")} 次 GitHub 贡献`
-                          return (
-                            <span
-                              key={day.date}
-                              role="img"
-                              title={label}
-                              aria-label={label}
-                              className={
-                                "h-[11px] w-[11px] rounded-[3px] transition hover:ring-2 hover:ring-blue-500/50 md:h-[13px] md:w-[13px] " +
-                                getContributionColor(day.level)
-                              }
-                            />
-                          )
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300/70 px-4 py-8 text-center text-sm font-medium text-slate-500 dark:border-slate-700 dark:text-[var(--about-ink)]">
-              暂时无法从 GitHub 获取公开贡献记录，请稍后再试。
-            </p>
-          )}
-
-          {githubContributions && (
-            <div className={styles.legend} aria-hidden="true">
-              Less
-              {[0, 1, 2, 3, 4].map((level) => (
-                <span
-                  key={level}
-                  className={
-                    "h-[11px] w-[11px] rounded-[3px] " +
-                    getContributionColor(level as 0 | 1 | 2 | 3 | 4)
-                  }
-                />
+    <article ref={pageRef} className={styles.profile} aria-labelledby="about-title">
+      <div className={styles.layout}>
+        <aside className={styles.indexColumn}>
+          <nav className={styles.indexNav} aria-label="关于页章节导航">
+            <p className={styles.indexTitle}>ABOUT / 目录</p>
+            <div className={styles.indexLinks}>
+              {sections.map((section) => (
+                <button
+                  key={section.id}
+                  type="button"
+                  className={styles.indexButton}
+                  aria-controls={section.target}
+                  aria-current={activeSection === section.id ? "location" : undefined}
+                  onClick={() => goToSection(section.target, section.id)}
+                >
+                  <span className={styles.indexNumber}>{section.number}</span>
+                  <span>{section.label}</span>
+                </button>
               ))}
-              More
             </div>
-          )}
-        </section>
+            <p className={styles.indexHint}>点击章节，或继续向下阅读</p>
+          </nav>
+        </aside>
+
+        <div className={styles.sections}>
+          <WebsiteSection html={websiteHtml} coverImage={coverImage} />
+          <EngineeringSection html={engineeringHtml} />
+          <ResearchSection html={researchHtml} />
+        </div>
       </div>
     </article>
   )
-}
-
-function getContributionColor(level: 0 | 1 | 2 | 3 | 4) {
-  if (level === 0) return "bg-[#e8eef0] dark:bg-[#162a2a]"
-  if (level === 1) return "bg-[#a4dec9] dark:bg-[#1b534a]"
-  if (level === 2) return "bg-[#63ba99] dark:bg-[#247b65]"
-  if (level === 3) return "bg-[#2d997c] dark:bg-[#43ac86]"
-  return "bg-[#14745e] dark:bg-[#82d5b1]"
 }
