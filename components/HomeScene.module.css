@@ -268,9 +268,6 @@
     font-size: 12px;
   }
 }
-.scene :global([data-celestial-art]) {
-  translate: calc(var(--home-break) * 4px) calc(var(--home-break) * -5px);
-}
 .lyrics::before {
   content: "";
   position: absolute;

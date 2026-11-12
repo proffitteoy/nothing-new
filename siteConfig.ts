@@ -17,7 +17,7 @@ export const siteConfig = {
   // 2. 头像设置 (支持网络链接，或将图片放入 public 文件夹后使用 "/me.jpg")
   avatarUrl: "/avatar",
 
-  // 3. 全站背景：只保留一个背景源，首页、普通页面、博客和杂谈统一使用
+  // 3. 内页背景：首页使用纯色谱场画布，其余页面继续使用配置的背景图
   useGradient: false,
   themeColors: ["#4266cf", "#805ac8", "#ce4a83", "#168579"], // 蓝色为主，紫／玫红／青绿点缀
   backgroundImage: "/background.png",

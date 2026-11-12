@@ -9,7 +9,6 @@ import LyricBar from "./LyricBar"
 import PaperMonitor from "./PaperMonitor"
 import ProfileActions from "./ProfileActions"
 import { ToastProvider } from "./ToastProvider"
-import HomeCelestialControl from "./HomeCelestialControl"
 import HomeSpectralCanvas from "./HomeSpectralCanvas"
 import type { PaperReport } from "../lib/papers"
 import styles from "./HomeScene.module.css"
@@ -87,7 +86,7 @@ export default function HomeScene({
         ref={root}
         className={styles.scene}
         data-home-scene
-        aria-label="首页人物场景"
+        aria-label="首页谱场曲线"
         onKeyDown={(event) => {
           if (event.key === "Escape" && !(event.target as Element).closest("dialog")) {
             close(true)
@@ -96,7 +95,7 @@ export default function HomeScene({
         }}
       >
         <h1 className="sr-only">阿の宝藏之地 · Nothing New</h1>
-        <HomeSpectralCanvas host={root} side={open} />
+        <HomeSpectralCanvas host={root} />
         <nav className={styles.nav} aria-label="首页主导航">
           {navigationLinks.map((link) => (
             <Link
@@ -108,7 +107,6 @@ export default function HomeScene({
             </Link>
           ))}
         </nav>
-        <HomeCelestialControl />
         {(["music", "papers"] as const).map((side) => {
           const expanded = open === side
           const label = side === "music" ? "音乐" : "周报"
