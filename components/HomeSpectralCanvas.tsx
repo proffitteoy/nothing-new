@@ -48,6 +48,7 @@ export default function HomeSpectralCanvas({
 
     let frame = 0
     let previous = 0
+    let particleClockOrigin: number | null = null
     let width = 0
     let height = 0
     let ratio = 0
@@ -107,7 +108,11 @@ export default function HomeSpectralCanvas({
       }
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
 
-      const elapsed = clock.read(now) / 1000
+      // Start the spectral motion at the precise post-splash handoff, so
+      // a 7.4-second opening cannot advance or scramble the first curves.
+      const activeTime = clock.read(now)
+      if (particleClockOrigin === null) particleClockOrigin = activeTime
+      const elapsed = Math.max(0, activeTime - particleClockOrigin) / 1000
       tracers.render({
         alpha: 2.8,
         theme: 0,
