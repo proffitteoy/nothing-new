@@ -1,6 +1,5 @@
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
-import { createHash } from "node:crypto"
 import { runInNewContext } from "node:vm"
 import { test } from "node:test"
 import ts from "typescript"
@@ -72,14 +71,14 @@ test("entry bootstrap distinguishes home and subpages and fails open without hyd
   assert.match(layout, /html\[data-startup-entry="page"\] \[data-startup-loading\]/)
 })
 
-test("Alpha opening uses the prepared V6 asset and bounded logo hold", () => {
+test("Alpha opening completes once its geometry vanishes and reveals the home canvas", () => {
   assert.match(splash, /src="\/alpha-opening-v6\.html"/)
   assert.match(splash, /event\.source !== iframeRef\.current\?\.contentWindow/)
   assert.match(splash, /event\.origin !== window\.location\.origin/)
-  assert.match(splash, /logoHoldTimer = window\.setTimeout\(\(\) =>/)
-  assert.match(splash, /}, 10_000\)/)
-  assert.match(splash, /if \(logoFinished && preloadFinished/)
-  assert.match(splash, /window\.setTimeout\(finishLogo, 9500\)/)
+  assert.match(splash, /const finishAnimation = \(\) =>/)
+  assert.match(splash, /animationFinished = true/)
+  assert.match(splash, /window\.setTimeout\(finishAnimation, 9500\)/)
+  assert.doesNotMatch(splash, /logoHoldTimer|logoFinished|preloadFinished/)
   assert.match(splash, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/)
   assert.match(splash, /\(min-width: 768px\)/)
   assert.doesNotMatch(splash, /头像光环|siteConfig\.avatarUrl/)
@@ -100,7 +99,6 @@ test("Alpha opening keeps its 7.4s duration even when frames are slow", () => {
     elapsed: 0,
     DURATION: 7400,
     render: (p: number) => progress.push(p),
-    $: () => ({ textContent: "" }),
     requestAnimationFrame: () => {},
     window: {
       parent: { postMessage: (data: unknown) => messages.push(data) },
@@ -114,16 +112,16 @@ test("Alpha opening keeps its 7.4s duration even when frames are slow", () => {
   assert.equal(context.playing, false)
 })
 
-test("opening preserves the approved PR 74 asset and timeline", () => {
+test("opening renders real Alpha faces, preserves H1 events, and clears completely", () => {
   const animation = readFileSync(
     new URL("../public/alpha-opening-v6.html", import.meta.url),
     "utf8",
   )
-  const original = animation
-    .replaceAll("#79cbe8", "#d4ad72")
-    .replace("Math.max(0,now-previous)", "Math.max(0,Math.min(55,now-previous))")
-  assert.equal(
-    createHash("sha256").update(original).digest("hex"),
-    "f540381a7eed08b2f9cfbe312d2aa9525caeaf8a8d805df0d514ee5dd1af6b6f",
-  )
+  assert.match(animation, /class="mesh-face" data-alpha=/)
+  assert.match(animation, /class="transient" data-b="[0-9.]+" data-d=/)
+  assert.match(animation, /const triangles=source\.getAttribute\('d'\)\.match/)
+  assert.match(animation, /setOpacity\(face,\.92\*smooth/)
+  assert.match(animation, /setOpacity\(point,0\)/)
+  assert.match(animation, /if\(elapsed===DURATION\)/)
+  assert.doesNotMatch(animation, /brand-group|brand-paths|organic-thread|EulerBridgeMark/)
 })
