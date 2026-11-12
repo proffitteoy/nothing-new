@@ -109,8 +109,9 @@ export default function HomeSpectralCanvas({
 
       const elapsed = clock.read(now) / 1000
       tracers.render({
-        alpha: 2.8,
+        alpha: 1.25,
         theme: 0,
+        motion: "ambient",
         time: elapsed * SPECTRAL_PLAYBACK_RATE,
         backgroundCount: degraded ? 1800 : 3200,
         foregroundCount: degraded ? 64 : 120,

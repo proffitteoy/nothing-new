@@ -59,6 +59,8 @@ export type SpectralTracerFrame = {
   backgroundCount: number
   foregroundCount: number
   trailSamples: number
+  // Homepage-only calm playback; default keeps the reusable field runtime unchanged.
+  motion?: "ambient"
   modeCount: number
   width: number
   height: number
@@ -196,7 +198,7 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
   if (!context) return null
   const particles: TracerParticle[] = []
   const clearance = layer === 0 ? BACKGROUND_CLEARANCE : FOREGROUND_CLEARANCE
-  const speed = layer === 0 ? 86 : 75
+  const baseSpeed = layer === 0 ? 86 : 75
   let width = 1
   let height = 1
   let pixelRatio = 1
@@ -204,7 +206,12 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
   let previousTime: number | null = null
   let destroyed = false
 
-  function spawn(p: TracerParticle, frame: SpectralTracerFrame, length: number) {
+  function spawn(
+    p: TracerParticle,
+    frame: SpectralTracerFrame,
+    length: number,
+    prewarm = true,
+  ) {
     // R2 quasirandom positions avoid visual clumping and retain the site's
     // deterministic seed distribution. No per-frame full-screen reseeding.
     for (let attempt = 0; attempt < 36; attempt++) {
@@ -216,7 +223,9 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
       p.x = x
       p.y = y
       p.age = 0
-      p.lifetime = 5 + fract(sample * R2_A1) * 6
+      p.lifetime = frame.motion === "ambient"
+        ? 11 + fract(sample * R2_A1) * 8
+        : 5 + fract(sample * R2_A1) * 6
       p.bucket = sample % 3
       p.head = 0
       p.length = 0
@@ -226,14 +235,16 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
       const backward: Array<{ x: number; y: number }> = []
       let cursorX = x
       let cursorY = y
-      const warmCount = Math.min(length - 1, 52)
+      const warmLimit = frame.motion === "ambient" ? 38 : 52
+      const warmCount = prewarm ? Math.min(length - 1, warmLimit) : 0
+      const motionSpeed = baseSpeed * (frame.motion === "ambient" ? 0.58 : 1)
       for (let index = 1; index <= warmCount; index++) {
         const previous = traceStep(
           cursorX,
           cursorY,
           frame.time - (index - 1) * PREWARM_INTERVAL * SPECTRAL_PLAYBACK_RATE,
           -PREWARM_INTERVAL,
-          speed,
+          motionSpeed,
           width,
           height,
           frame.modeCount,
@@ -286,8 +297,12 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
     const requested = layer === 0 ? frame.backgroundCount : frame.foregroundCount
     const nominal = layer === 0 ? SPECTRAL_TRACER_BACKGROUND : SPECTRAL_TRACER_FOREGROUND
-    const capacity = layer === 0 ? BACKGROUND_RENDER_CAPACITY : FOREGROUND_RENDER_CAPACITY
+    const ambient = frame.motion === "ambient"
+    const capacity = ambient
+      ? (layer === 0 ? 320 : 40)
+      : (layer === 0 ? BACKGROUND_RENDER_CAPACITY : FOREGROUND_RENDER_CAPACITY)
     const count = clamp(Math.round((requested / nominal) * capacity), 0, capacity)
+    const motionSpeed = baseSpeed * (ambient ? 0.58 : 1)
 
     if (count === 0 || frame.alpha <= 0.001) {
       context.globalCompositeOperation = "source-over"
@@ -315,7 +330,8 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
       // Flow Fields accumulation: fade the transparent canvas, then add *only*
       // newly traveled segments. The spectral geometry stays from this site.
       context.globalCompositeOperation = "destination-out"
-      context.globalAlpha = 1 - Math.exp(-dt / (layer === 0 ? 2.6 : 2.1))
+      const persistence = ambient ? (layer === 0 ? 1.7 : 1.5) : (layer === 0 ? 2.6 : 2.1)
+      context.globalAlpha = 1 - Math.exp(-dt / persistence)
       context.fillRect(0, 0, width, height)
     }
     context.globalCompositeOperation = "source-over"
@@ -357,21 +373,22 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
 
     for (const particle of particles) {
       if (particle.length === 0 || particle.age >= particle.lifetime) {
-        spawn(particle, frame, trailLength)
+        // Ambient respawns start at a point, avoiding a sudden 40-pixel streak.
+        spawn(particle, frame, trailLength, !ambient)
         appendSeedCurve(particle)
       }
       if (dt <= 0 || particle.length === 0) continue
       const previousX = particle.x
       const previousY = particle.y
       const next = traceStep(
-        previousX, previousY, frame.time, dt, speed, width, height, frame.modeCount,
+        previousX, previousY, frame.time, dt, motionSpeed, width, height, frame.modeCount,
       )
       if (
         next.x < 0 || next.x > width || next.y < 0 || next.y > height ||
         pointInObstacle(next.x, next.y, frame.obstacles, clearance) ||
         pointInObstacle((next.x + previousX) / 2, (next.y + previousY) / 2, frame.obstacles, clearance)
       ) {
-        spawn(particle, frame, trailLength)
+        spawn(particle, frame, trailLength, !ambient)
         appendSeedCurve(particle)
         continue
       }

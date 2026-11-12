@@ -115,6 +115,32 @@ test("homepage long spectral curves render immediately, remain visible, and fade
     controller.render({ ...frame, time: 0, alpha: 0 })
     assert.deepEqual(paths, [0, 0])
     controller.destroy()
+
+    // Only the homepage opts into the calm profile. Recycled particles must
+    // grow their traces over subsequent frames instead of painting long lines
+    // at an unrelated location in one frame.
+    paths.fill(0)
+    const ambientController = createSpectralTracerController(canvas(0), canvas(1))
+    assert.ok(ambientController)
+    ambientController.resize(1200, 800, 1)
+    const ambientFrame: SpectralTracerFrame = {
+      ...frame,
+      motion: "ambient",
+      obstacles: [],
+    }
+    ambientController.render(ambientFrame)
+    assert.ok(paths[0] > 1000, "initial home streamlines remain visible")
+    paths.fill(0)
+    ambientController.render({
+      ...ambientFrame,
+      time: 0.115,
+      obstacles: [{ left: -1000, top: -1000, right: 2200, bottom: 1800 }],
+    })
+    paths.fill(0)
+    ambientController.render({ ...ambientFrame, time: 0.13 })
+    assert.ok(paths[0] > 0 && paths[0] <= 320, "background respawns cannot flash long paths")
+    assert.ok(paths[1] > 0 && paths[1] <= 40, "foreground respawns cannot flash long paths")
+    ambientController.destroy()
   } finally {
     if (savedPath) Object.defineProperty(globalThis, "Path2D", savedPath)
     else Reflect.deleteProperty(globalThis, "Path2D")
@@ -126,6 +152,7 @@ test("home canvas still consumes the six-mode spectral render path, not a separa
   assert.match(home, /createSpectralTracerController\(back, front\)/)
   assert.match(home, /modeCount: 6/)
   assert.match(home, /SPECTRAL_PLAYBACK_RATE/)
+  assert.match(home, /motion: "ambient"/)
   assert.match(home, /colours/)
   const tracer = readFileSync(new URL("./SpectralTracerLayer.tsx", import.meta.url), "utf8")
   assert.doesNotMatch(tracer, /createPerlinNoise|noise3\(/)
