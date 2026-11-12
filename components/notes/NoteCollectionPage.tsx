@@ -27,16 +27,23 @@ export default function NoteCollectionPage({
   folderRoute?: string
 }) {
   const sectionTitle = section === "blog" ? "笔记" : "杂谈"
+  const isChatter = section === "chatter"
 
   return (
     <div className="relative min-h-screen pb-20">
       <PageTransition>
         <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-12 pt-24 sm:px-6 lg:px-10">
-          <header className="relative overflow-hidden rounded-[2rem] border border-white/55 bg-white/50 p-6 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.55)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/55 md:p-9">
-            <div
-              aria-hidden="true"
-              className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl"
-            />
+          <header className={`relative overflow-hidden rounded-[2rem] border p-6 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.55)] md:p-9 ${
+              isChatter
+                ? "border-[var(--site-line)] bg-[var(--site-surface)]"
+                : "border-white/55 bg-white/50 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/55"
+            }`}>
+            {!isChatter && (
+              <div
+                aria-hidden="true"
+                className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl"
+              />
+            )}
             <div className="relative">
               <p className="text-[10px] font-black tracking-[0.28em] text-sky-700 dark:text-sky-300">
                 {section === "blog" ? "KNOWLEDGE NOTES" : "FIELD NOTES"}
@@ -78,7 +85,11 @@ export default function NoteCollectionPage({
                   <li key={note.route}>
                     <Link
                       href={note.route}
-                      className="group flex h-full min-h-56 flex-col rounded-[1.75rem] border border-white/55 bg-white/50 p-5 shadow-[0_18px_55px_-38px_rgba(15,23,42,0.5)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/70 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 motion-reduce:transform-none dark:border-white/10 dark:bg-slate-900/50 sm:p-6"
+                      className={`group flex h-full min-h-56 flex-col rounded-[1.75rem] border p-5 shadow-[0_18px_55px_-38px_rgba(15,23,42,0.5)] transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/70 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 motion-reduce:transform-none sm:p-6 ${
+                        isChatter
+                          ? "border-[var(--site-line)] bg-[var(--site-surface)]"
+                          : "border-white/55 bg-white/50 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50"
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <BookOpenText
@@ -122,7 +133,11 @@ export default function NoteCollectionPage({
               })}
             </ul>
           ) : (
-            <div className="mt-5 rounded-3xl border border-dashed border-slate-300/80 bg-white/35 p-10 text-center text-sm font-medium text-slate-500 backdrop-blur dark:border-white/10 dark:bg-slate-900/35 dark:text-slate-400">
+            <div className={`mt-5 rounded-3xl border border-dashed p-10 text-center text-sm font-medium text-slate-500 dark:text-slate-400 ${
+              isChatter
+                ? "border-[var(--site-line)] bg-[var(--site-surface)]"
+                : "border-slate-300/80 bg-white/35 backdrop-blur dark:border-white/10 dark:bg-slate-900/35"
+            }`}>
               这个文件夹暂时没有公开笔记。
             </div>
           )}
