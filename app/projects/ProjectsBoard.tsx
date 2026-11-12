@@ -12,15 +12,12 @@ import {
   List,
   LoaderCircle,
   Maximize2,
-  Moon,
   Pause,
   Play,
   RotateCcw,
   Rotate3D,
-  Sun,
   X,
 } from "lucide-react"
-import { useTheme } from "../../components/ThemeProvider"
 import { useMusic } from "../../components/MusicProvider"
 import { projects, type Project, type RoomTarget } from "./projects"
 import { sampleSpectralFamily, spectralParameterAt } from "../../components/field/spectralField"
@@ -37,7 +34,6 @@ const archiveCurves = Array.from({ length: 3 }, (_, index) =>
 const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false })
 
 export default function ProjectsBoard() {
-  const { isDark, toggleTheme } = useTheme()
   const { currentSong, isPlaying, togglePlay, musicStatus } = useMusic()
   const reducedMotion = useReducedMotion()
   const router = useRouter()
@@ -132,23 +128,15 @@ export default function ProjectsBoard() {
           <Link href="/" className={styles.iconButton} aria-label="回到首页">
             <ArrowLeft size={18} />
           </Link>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className={styles.iconButton}
-            aria-label={isDark ? "切换到日间" : "切换到夜间"}
-          >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
         </div>
         {/* Posters use the same perspective and baked surfaces as the live scene. */}
         <picture className={styles.poster} data-visible={!sceneActive}>
           <source
             media="(max-width: 767px)"
-            srcSet={`/projects-room/mobile${isDark ? "-night" : ""}.webp`}
+            srcSet="/projects-room/mobile.webp"
           />
           <img
-            src={`/projects-room/${isDark ? "night" : "day"}.webp`}
+            src="/projects-room/day.webp"
             width={1440}
             height={1000}
             alt="自然窗光照亮胡桃木工作桌，两块副屏向内倾斜，右后方是研究白板，两侧延伸着书籍与阅读角。"
@@ -158,7 +146,7 @@ export default function ProjectsBoard() {
         {!staticView && status !== "error" && (
           <RoomScene
             key={sceneVersion}
-            isDark={isDark}
+            isDark={false}
             reduceMotion={!!reducedMotion}
             rotationEnabled={rotationEnabled}
             paused={panelOpen}
