@@ -1,25 +1,13 @@
 "use client"
 
 import { useEffect, useEffectEvent, useRef, type RefObject } from "react"
-import { getImageProps } from "next/image"
-import { useTheme } from "./ThemeProvider"
 import { useFieldMode } from "./FieldModeProvider"
-import {
-  createHomeVisitClock,
-  HOME_IMAGE_SIZE,
-  homeCycleAt,
-  homeImageRect,
-} from "../lib/home-scene"
-
+import { createHomeVisitClock } from "../lib/home-scene"
 import {
   createSpectralTracerController,
   type SpectralTracerFrame,
 } from "./field/SpectralTracerLayer"
-import {
-  sampleSpectralFamily,
-  spectralParameterAt,
-  SPECTRAL_PLAYBACK_RATE,
-} from "./field/spectralField"
+import { SPECTRAL_PLAYBACK_RATE } from "./field/spectralField"
 
 declare global {
   interface Window {
@@ -27,78 +15,60 @@ declare global {
   }
 }
 
+// Fixed light palette: preserve the site's original six-mode spectral curves
+// without changing their colours with the clock or painting a wallpaper.
+const FIELD_COLOURS = [
+  [31, 101, 179],
+  [99, 75, 171],
+  [206, 74, 131],
+] as const satisfies NonNullable<SpectralTracerFrame["colours"]>
+
 export default function HomeSpectralCanvas({
   host,
-  side,
 }: {
   host: RefObject<HTMLElement | null>
-  side: "music" | "papers" | null
 }) {
   const canvas = useRef<HTMLCanvasElement>(null)
-  const { isDark } = useTheme()
   const { performanceMode } = useFieldMode()
-  const options = useEffectEvent(() => ({ isDark, performanceMode, side }))
+  const options = useEffectEvent(() => ({ performanceMode }))
 
   useEffect(() => {
-    const surface = canvas.current,
-      stage = host.current
-    const ctx = surface?.getContext("2d", { alpha: false })
+    const surface = canvas.current
+    const stage = host.current
+    const ctx = surface?.getContext("2d", { alpha: true })
     if (!surface || !stage || !ctx) return
+
     const clock =
       window.__homeVisitClock ?? createHomeVisitClock(performance.now(), !document.hidden)
     const reduced = matchMedia("(prefers-reduced-motion: reduce)")
-    const ink = document.createElement("canvas"),
-      inkCtx = ink.getContext("2d")!
-    const art = document.createElement("canvas"),
-      artCtx = art.getContext("2d", { alpha: false })!
-    const picture = document.createElement("canvas"),
-      pictureCtx = picture.getContext("2d")!
-    const columns = 12,
-      rows = 9
     const back = document.createElement("canvas")
     const front = document.createElement("canvas")
     const tracers = createSpectralTracerController(back, front)
     if (!tracers) return
-    const image = new Image()
-    const { props } = getImageProps({
-      src: "/background.png",
-      alt: "",
-      width: 1672,
-      height: 941,
-      sizes: "max(100vw, 177.7vh)",
-      quality: 75,
-    })
-    image.decoding = "async"
-    image.sizes = props.sizes ?? ""
-    image.srcset = props.srcSet ?? ""
-    image.src = props.src
-    image.onerror = () => {
-      surface.dataset.homeArtwork = "error"
-    }
-    let frame = 0,
-      timer: ReturnType<typeof setTimeout> | undefined
-    let previous = 0,
-      width = 0,
-      height = 0,
-      ratio = 0,
-      pictureBlend = -1
-    let blend = Number(options().isDark),
-      pan = 0.5,
-      stopped = false,
-      degraded = false
-    let windowStart = performance.now(),
-      windowFrames = 0,
-      slowWindows = 0
-    let totalCost = 0,
-      draws = 0,
-      maximumCost = 0
+
+    let frame = 0
+    let previous = 0
+    let width = 0
+    let height = 0
+    let ratio = 0
+    let stopped = false
+    let degraded = false
+    let windowStart = performance.now()
+    let windowFrames = 0
+    let slowWindows = 0
+    let totalCost = 0
+    let draws = 0
+    let maximumCost = 0
+
+    // SplashScreen checks this attribute before revealing the homepage.
+    // There is no longer any background image to download or decode.
+    surface.dataset.homeArtwork = "ready"
 
     const render = (now: number) => {
       frame = 0
       if (stopped || document.hidden) return
-      // The opening owns the main thread until its final frame. A hidden
-      // full-screen spectral renderer must not compete with it for frames.
       if (document.documentElement.dataset.startupPhase !== "ready") return
+
       const settings = options()
       const interval = reduced.matches
         ? 1000
@@ -111,7 +81,7 @@ export default function HomeSpectralCanvas({
         frame = requestAnimationFrame(render)
         return
       }
-      const dt = previous ? now - previous : interval
+
       previous = now
       if (!reduced.matches && ++windowFrames && now - windowStart >= 2000) {
         const fps = (windowFrames * 1000) / (now - windowStart)
@@ -121,6 +91,7 @@ export default function HomeSpectralCanvas({
         windowStart = now
         windowFrames = 0
       }
+
       const began = performance.now()
       const nextRatio = Math.min(
         devicePixelRatio || 1,
@@ -130,177 +101,41 @@ export default function HomeSpectralCanvas({
         width = innerWidth
         height = innerHeight
         ratio = nextRatio
-        for (const layer of [surface, ink, art]) {
-          layer.width = Math.round(width * ratio)
-          layer.height = Math.round(height * ratio)
-        }
-        for (const context of [ctx, inkCtx, artCtx]) context.setTransform(ratio, 0, 0, ratio, 0, 0)
+        surface.width = Math.round(width * ratio)
+        surface.height = Math.round(height * ratio)
         tracers.resize(width, height, ratio)
       }
-      const elapsed = clock.read(now) / 1000,
-        cycle = homeCycleAt(elapsed)
-      const disruption = reduced.matches ? 0 : cycle.disruption
-      const reset =
-        Math.min(1, cycle.seconds / 4) *
-        (cycle.seconds < 265 ? 1 : Math.max(0, 1 - (cycle.seconds - 265) / 25))
-      const rect = homeImageRect(width, height)
-      const targetPan = settings.side === "music" ? 0 : settings.side === "papers" ? 1 : 0.5
-      pan += (targetPan - pan) * (reduced.matches ? 1 : 0.16)
-      if (Math.abs(targetPan - pan) < 0.001) pan = targetPan
-      rect.x = (width - rect.width) * pan
-      blend += (Number(settings.isDark) - blend) * (reduced.matches ? 1 : 1 - Math.exp(-dt / 200))
-      if (Math.abs(blend - Number(settings.isDark)) < 0.001) blend = Number(settings.isDark)
-      const ground = `rgb(${242 - 226 * blend},${245 - 224 * blend},${250 - 215 * blend})`
-      if (image.complete && image.naturalWidth) {
-        const level = Math.round(blend * 60) / 60
-        if (pictureBlend !== level) {
-          picture.width = HOME_IMAGE_SIZE.width
-          picture.height = HOME_IMAGE_SIZE.height
-          // Only day/night lighting grades the original. Visit pigment never
-          // enters this cache: visit colour stays on the original spectral layer.
-          pictureCtx.filter = `brightness(${1 - level * 0.56}) saturate(${1 - level * 0.18})`
-          pictureCtx.drawImage(image, 0, 0, picture.width, picture.height)
-          pictureCtx.filter = "none"
-          if (level) {
-            pictureCtx.globalCompositeOperation = "color"
-            pictureCtx.globalAlpha = level * 0.45
-            pictureCtx.fillStyle = "#101523"
-            pictureCtx.fillRect(0, 0, picture.width, picture.height)
-          }
-          pictureCtx.globalAlpha = 1
-          pictureCtx.globalCompositeOperation = "source-over"
-          pictureBlend = level
-        }
-      }
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
 
-      if (!reduced.matches) {
-        // Keep the original six-mode spectral field and visit-time pigments.
-        // The renderer now accumulates legible paths of moving particles rather
-        // than recomputing thousands of short hair-like streamlines per frame.
-        const light = [
-          [74, 130, 192],
-          [128, 96, 200],
-          [206, 74, 131],
-        ]
-        const dark = [
-          [30, 61, 120],
-          [80, 52, 142],
-          [149, 42, 92],
-        ]
-        const night = [
-          [128, 185, 232],
-          [187, 160, 238],
-          [241, 143, 184],
-        ]
-        const pigment = (i: number): readonly [number, number, number] => {
-          const channel = (c: number) => {
-            const v = light[i][c]
-            const day = v + (dark[i][c] - v) * cycle.depth
-            return day + (night[i][c] * (1 - cycle.depth * 0.28) - day) * blend
-          }
-          return [channel(0), channel(1), channel(2)]
-        }
-        const colours: SpectralTracerFrame["colours"] = [pigment(0), pigment(1), pigment(2)]
-        tracers.render({
-          alpha: (2.8 - blend * 1.4) * reset,
-          theme: blend,
-          time: cycle.seconds * SPECTRAL_PLAYBACK_RATE,
-          backgroundCount: degraded ? 1800 : 3200,
-          foregroundCount: degraded ? 64 : 120,
-          trailSamples: 8,
-          modeCount: 6,
-          width,
-          height,
-          obstacles: [],
-          colours,
-        })
-        inkCtx.clearRect(0, 0, width, height)
-        inkCtx.drawImage(back, 0, 0, width, height)
-        inkCtx.drawImage(front, 0, 0, width, height)
-        // Keep visit pigment around the central artwork; edge controls and
-        // navigation retain a quiet surround throughout the visit cycle.
-        inkCtx.globalCompositeOperation = "destination-in"
-        const focus = inkCtx.createRadialGradient(
-          width / 2,
-          height * 0.55,
-          0,
-          width / 2,
-          height * 0.55,
-          width * 0.52,
-        )
-        focus.addColorStop(0, "#fff")
-        focus.addColorStop(0.52, "#fff")
-        focus.addColorStop(1, "#ffffff00")
-        inkCtx.fillStyle = focus
-        inkCtx.fillRect(0, 0, width, height)
-        inkCtx.globalCompositeOperation = "source-over"
-      }
-      artCtx.fillStyle = ground
-      artCtx.fillRect(0, 0, width, height)
-      if (picture.width) artCtx.drawImage(picture, rect.x, rect.y, rect.width, rect.height)
-      if (!reduced.matches) artCtx.drawImage(ink, 0, 0, width, height)
-      ctx.fillStyle = ground
-      ctx.fillRect(0, 0, width, height)
-      if (disruption < 0.001) ctx.drawImage(art, 0, 0, width, height)
-      else {
-        // The source being torn apart already contains the deposited colour.
-        // Original spectral displacement drives the fragment shifts;
-        // rotation and loss of the intact underlay destroy the whole scene.
-        ctx.globalAlpha = disruption * 0.85
-        ctx.drawImage(ink, 0, 0, width, height)
-        ctx.globalAlpha = 1 - disruption * 0.96
-        ctx.drawImage(art, 0, 0, width, height)
-        ctx.globalAlpha = 1
-        const w = width / columns,
-          h = height / rows
-        for (let row = 0; row < rows; row++)
-          for (let col = 0; col < columns; col++) {
-            const fracture = disruption
-            const v = sampleSpectralFamily(
-              spectralParameterAt(row * columns + col),
-              cycle.seconds * SPECTRAL_PLAYBACK_RATE,
-            )
-            const phase = row * 0.8 + col * 1.3
-            const x = (col + 0.5) * w,
-              y = (row + 0.5) * h
-            ctx.save()
-            ctx.translate(
-              x + fracture * (v.x * 180 + Math.sin(phase) * 100),
-              y + fracture * (v.y * 160 + Math.cos(phase) * 90),
-            )
-            ctx.rotate(Math.sin(phase) * fracture * 0.32)
-            ctx.scale(1 - fracture * 0.28, 1 - fracture * 0.28)
-            ctx.drawImage(
-              art,
-              col * w * ratio,
-              row * h * ratio,
-              w * ratio,
-              h * ratio,
-              -w / 2,
-              -h / 2,
-              w + 0.6,
-              h + 0.6,
-            )
-            ctx.restore()
-          }
-      }
-      stage.style.setProperty("--home-break", String(disruption))
-      stage.style.setProperty("--home-chroma", String(disruption))
-      stage.style.setProperty(
-        "--home-sun-x",
-        `${Math.max(56, Math.min(width - 56, rect.x + 1390 * rect.scale))}px`,
-      )
-      stage.style.setProperty("--home-sun-y", `${Math.max(128, rect.y + 145 * rect.scale)}px`)
-      stage.dataset.homePhase = cycle.phase
+      const elapsed = clock.read(now) / 1000
+      tracers.render({
+        alpha: 2.8,
+        theme: 0,
+        time: elapsed * SPECTRAL_PLAYBACK_RATE,
+        backgroundCount: degraded ? 1800 : 3200,
+        foregroundCount: degraded ? 64 : 120,
+        trailSamples: 8,
+        modeCount: 6,
+        width,
+        height,
+        obstacles: [],
+        colours: FIELD_COLOURS,
+      })
+
+      // A transparent composition keeps the site surface and examples visible.
+      ctx.clearRect(0, 0, width, height)
+      ctx.drawImage(back, 0, 0, width, height)
+      ctx.drawImage(front, 0, 0, width, height)
+
+      stage.dataset.homePhase = "field"
       stage.dataset.homeElapsed = elapsed.toFixed(2)
       stage.dataset.homeQuality = reduced.matches
         ? "static"
         : degraded
           ? "adaptive-low"
           : settings.performanceMode
-      stage.dataset.homeImageRect = JSON.stringify(rect)
       stage.dataset.homeBufferBytes = String(
-        [surface, ink, art, picture, back, front].reduce((n, c) => n + c.width * c.height, 0) * 4,
+        [surface, back, front].reduce((n, c) => n + c.width * c.height, 0) * 4,
       )
       const cost = performance.now() - began
       totalCost += cost
@@ -310,12 +145,13 @@ export default function HomeSpectralCanvas({
         stage.dataset.homeDrawMs = (totalCost / draws).toFixed(2)
         stage.dataset.homeMaxDrawMs = maximumCost.toFixed(2)
       }
-      if (reduced.matches) timer = setTimeout(() => render(performance.now()), 1000)
-      else frame = requestAnimationFrame(render)
+
+      // Reduced motion shows a single still set of original spectral curves.
+      if (!reduced.matches) frame = requestAnimationFrame(render)
     }
+
     const redraw = () => {
       cancelAnimationFrame(frame)
-      clearTimeout(timer)
       previous = 0
       if (!document.hidden) render(performance.now())
     }
@@ -325,38 +161,34 @@ export default function HomeSpectralCanvas({
       windowFrames = 0
       redraw()
     }
+
     window.__homeVisitClock?.stop()
     document.addEventListener("visibilitychange", visibility)
     window.addEventListener("home-scene-settings", redraw)
     window.addEventListener("resize", redraw)
     window.addEventListener("site-startup-phase", redraw)
     reduced.addEventListener("change", redraw)
-    image.onload = () => {
-      surface.dataset.homeArtwork = "ready"
-      pictureBlend = -1
-      redraw()
-    }
     frame = requestAnimationFrame(render)
+
     return () => {
       stopped = true
       cancelAnimationFrame(frame)
-      clearTimeout(timer)
       document.removeEventListener("visibilitychange", visibility)
       window.removeEventListener("home-scene-settings", redraw)
       window.removeEventListener("resize", redraw)
       window.removeEventListener("site-startup-phase", redraw)
       reduced.removeEventListener("change", redraw)
-      image.onload = null
-      image.onerror = null
       tracers.destroy()
-      for (const layer of [surface, ink, art, picture, back, front]) {
+      for (const layer of [surface, back, front]) {
         layer.width = 0
         layer.height = 0
       }
     }
   }, [host])
+
   useEffect(() => {
     window.dispatchEvent(new Event("home-scene-settings"))
-  }, [isDark, performanceMode, side])
-  return <canvas ref={canvas} aria-hidden="true" data-home-canvas data-home-artwork="loading" />
+  }, [performanceMode])
+
+  return <canvas ref={canvas} aria-hidden="true" data-home-canvas data-home-artwork="ready" />
 }
