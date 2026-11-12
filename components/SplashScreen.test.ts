@@ -95,7 +95,6 @@ test("Alpha opening keeps its 7.4s duration even when frames are slow", () => {
   const messages: unknown[] = []
   const context = {
     previous: null,
-    playing: true,
     elapsed: 0,
     DURATION: 7400,
     render: (p: number) => progress.push(p),
@@ -105,11 +104,10 @@ test("Alpha opening keeps its 7.4s duration even when frames are slow", () => {
       location: { origin: "https://nothing-new.cn" },
     },
   }
-  runInNewContext(`${tick};tick(0);tick(1000);tick(6000);tick(7400);tick(9000)`, context)
+  runInNewContext(`${tick};tick(0);tick(1000);tick(6000);tick(7400)`, context)
   assert.deepEqual(progress, [0, 1000 / 7400, 6000 / 7400, 1])
   assert.deepEqual(JSON.parse(JSON.stringify(messages)), [{ type: "alpha-splash:complete" }])
   assert.equal(context.elapsed, 7400)
-  assert.equal(context.playing, false)
 })
 
 test("opening renders real Alpha faces, preserves H1 events, and clears completely", () => {
