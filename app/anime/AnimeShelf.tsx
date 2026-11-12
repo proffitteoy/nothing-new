@@ -139,11 +139,11 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
 
       <header
         data-field-obstacle
-        className="relative mt-3 overflow-hidden rounded-[1.75rem] border border-white/55 bg-white/45 px-4 py-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6"
+        className="relative mt-3 overflow-hidden rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--site-surface)] px-4 py-4 shadow-xl sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6"
       >
         <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-rose-300/20 blur-3xl dark:bg-rose-500/10" />
         <div className="relative flex items-center justify-between gap-4 sm:justify-start">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/65 text-blue-600 shadow-sm dark:border-white/10 dark:bg-slate-950/35 dark:text-blue-300">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--site-line)] bg-[var(--site-recess)] text-blue-600 shadow-sm dark:text-blue-300">
             <Clapperboard className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
@@ -238,7 +238,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                       className={
                         "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-lg font-black shadow-sm " +
                         (group.score === null
-                          ? "border-slate-200/70 bg-white/55 text-slate-500 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-300"
+                          ? "border-[var(--site-line)] bg-[var(--site-surface)] text-slate-500 dark:text-slate-300"
                           : "border-rose-200/70 bg-rose-50/75 text-rose-700 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-200")
                       }
                     >
@@ -350,7 +350,7 @@ function AnimeGrid({
               {showRating && (
                 <span
                   className={
-                    "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm backdrop-blur-md sm:right-2 sm:top-2 sm:text-[9px] " +
+                    "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm sm:right-2 sm:top-2 sm:text-[9px] " +
                     (anime.score === undefined
                       ? "border-white/40 bg-slate-900/55 text-white"
                       : "border-rose-200/70 bg-rose-700/95 text-white")
@@ -374,7 +374,7 @@ function EmptyShelf({ message }: { message: string }) {
   return (
     <div
       data-field-obstacle
-      className="rounded-[1.75rem] border border-dashed border-white/60 bg-white/35 px-6 py-14 text-center shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/35"
+      className="rounded-[1.75rem] border border-dashed border-[var(--site-line)] bg-[var(--site-surface)] px-6 py-14 text-center shadow-lg"
     >
       <Clapperboard className="mx-auto h-8 w-8 text-blue-400" aria-hidden="true" />
       <p className="mt-4 text-sm font-black text-slate-700 dark:text-slate-200">{message}</p>
@@ -399,7 +399,7 @@ function LoadMoreControl({
         data-field-obstacle
         type="button"
         onClick={onLoadMore}
-        className="relative inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/55 px-5 py-3 text-xs font-black text-slate-700 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:text-blue-300"
+        className="relative inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-surface)] px-5 py-3 text-xs font-black text-slate-700 shadow-lg transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
       >
         <ChevronDown className="h-4 w-4 animate-bounce" aria-hidden="true" />
         继续展开 · 还有 {remaining} 部
@@ -422,7 +422,7 @@ function ShelfState({
       <BackButton />
       <div
         data-field-obstacle
-        className="mt-8 rounded-[1.75rem] border border-white/55 bg-white/45 px-6 py-16 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45"
+        className="mt-8 rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--site-surface)] px-6 py-16 text-center shadow-xl"
       >
         <Clapperboard className="mx-auto h-9 w-9 text-blue-400" aria-hidden="true" />
         <h1 className="mt-5 text-xl font-black text-slate-950 dark:text-white">{title}</h1>
@@ -431,7 +431,7 @@ function ShelfState({
           <button
             type="button"
             onClick={action}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-4 py-2.5 text-xs font-black text-slate-700 shadow-md transition hover:text-blue-600 dark:border-white/10 dark:bg-slate-950/35 dark:text-slate-200 dark:hover:text-blue-300"
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-recess)] px-4 py-2.5 text-xs font-black text-slate-700 shadow-md transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             重试
