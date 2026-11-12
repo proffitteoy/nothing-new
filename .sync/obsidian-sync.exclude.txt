@@ -21,3 +21,7 @@ misc/reverse/1000Click.md
 misc/reverse/666.md
 misc/reverse/走迷宫.md
 misc/reverse/Reversing-x64Elf-100.md
+第二章思路.md
+第三章思路.md
+第四五章与思路.md
+问题.md
