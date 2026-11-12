@@ -110,8 +110,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         noteStyle.remove()
       }
     }
-    // Warm resources alongside the intro, without parsing the room scene or
-    // rendering the hidden homepage. The final logo waits for this work.
+    // Warm resources alongside the intro without delaying the simplex-to-particle handoff.
     const critical = async () => {
       const started = performance.now()
       const images = Array.from(document.images).filter((img) => {
@@ -142,28 +141,16 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       !matchMedia("(prefers-reduced-motion: reduce)").matches &&
       !constrained
 
-    let logoFinished = false
-    let preloadFinished = false
-    let logoHoldTimer: number | undefined
+    let animationFinished = false
     let animationFallbackTimer: number | undefined
 
-    const checkReady = () => {
-      if (logoFinished && preloadFinished && !signal.aborted && !skipped.current) {
-        if (logoHoldTimer !== undefined) window.clearTimeout(logoHoldTimer)
-        reveal()
-      }
-    }
-
-    const finishLogo = () => {
-      if (logoFinished || signal.aborted || skipped.current) return
-      logoFinished = true
+    const finishAnimation = () => {
+      if (animationFinished || signal.aborted || skipped.current) return
+      animationFinished = true
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
-      // Keep the original final logo in view while entry resources finish.
-      changePhase("preparing")
-      logoHoldTimer = window.setTimeout(() => {
-        if (!signal.aborted && !skipped.current) reveal()
-      }, 10_000)
-      checkReady()
+      // The last simplex has vanished. Reveal the existing homepage particle
+      // canvas immediately; noncritical route prefetches can finish in parallel.
+      reveal()
     }
 
     const onAnimationMessage = (event: MessageEvent) => {
@@ -173,13 +160,13 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         event.data?.type !== "alpha-splash:complete"
       )
         return
-      finishLogo()
+      finishAnimation()
     }
 
     const onFrameLoaded = () => {
       // Fail open if the embedded animation cannot signal its completion.
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
-      animationFallbackTimer = window.setTimeout(finishLogo, 9500)
+      animationFallbackTimer = window.setTimeout(finishAnimation, 9500)
     }
 
     window.addEventListener("message", onAnimationMessage)
@@ -187,10 +174,6 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
 
     const preloads = Promise.allSettled([warm(), Promise.race([critical(), sleep(4000, signal)])])
       .catch(() => {})
-      .then(() => {
-        preloadFinished = true
-        checkReady()
-      })
 
     if (animateHome) {
       queueMicrotask(() => {
@@ -215,7 +198,6 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
 
     return () => {
       controller.abort()
-      if (logoHoldTimer !== undefined) window.clearTimeout(logoHoldTimer)
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
       window.removeEventListener("message", onAnimationMessage)
       window.removeEventListener("alpha-splash:frame-loaded", onFrameLoaded)
@@ -249,7 +231,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           className="fixed inset-x-0 bottom-8 z-[100001] flex items-center justify-center gap-4 text-xs text-slate-200"
         >
           {phase === "preparing" && showAnimation && (
-            <span role="status">图标已就绪，正在预加载页面…</span>
+            <span role="status">正在准备首页…</span>
           )}
           <button
             type="button"
