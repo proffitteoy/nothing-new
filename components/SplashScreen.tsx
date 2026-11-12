@@ -210,7 +210,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         <div
           data-startup-overlay
           data-startup-loading
-          className="fixed inset-0 z-[100000] overflow-hidden bg-[#07121e]"
+          className="fixed inset-0 z-[100000] overflow-hidden bg-[#050608]"
         >
           {showAnimation && (
             <iframe
