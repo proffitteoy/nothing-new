@@ -3,6 +3,7 @@ import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
 import { FieldModeProvider } from "../components/FieldModeProvider"
+import { ThemeProvider } from "../components/ThemeProvider"
 import { MusicProvider } from "../components/MusicProvider"
 import { siteConfig } from "../siteConfig"
 import BackgroundSlider from "../components/BackgroundSlider"
@@ -53,6 +54,23 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
+              try {
+                var themeNow = new Date();
+                var savedTheme = localStorage.getItem('blog-theme');
+                var overrideUntil = Number(localStorage.getItem('blog-theme-override-until'));
+                var scheduledDark = themeNow.getHours() >= 18 || themeNow.getHours() < 6;
+                var hasThemeOverride = (savedTheme === 'dark' || savedTheme === 'light') && overrideUntil > themeNow.getTime();
+                if (hasThemeOverride ? savedTheme === 'dark' : scheduledDark) {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `
           if (location.pathname === '/') {
             var mobileHome = !/bot|crawler|spider/i.test(navigator.userAgent) &&
               (/Android|iPhone|iPad|iPod|Mobile|Tablet|Silk|Kindle/i.test(navigator.userAgent) ||
@@ -85,36 +103,38 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
 
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-[var(--site-bg)] font-serif">
-        <FieldModeProvider>
-          <SplashScreen blogHref={blogHref} />
+        <ThemeProvider>
+          <FieldModeProvider>
+            <SplashScreen blogHref={blogHref} />
 
-          <MusicProvider>
-            <div
-              id="app-mount-root"
-              className="flex-1 flex flex-col transition-opacity duration-1000"
-            >
-              <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                {!siteConfig.useGradient && <BackgroundSlider />}
-              </div>
-
-              <Navbar blogHref={blogHref} />
-              <ScrollRootManager />
-
+            <MusicProvider>
               <div
-                id="app-scroll-root"
-                className="relative z-10 flex-1 flex flex-col"
-                data-scroll-root
-                data-site-ui
+                id="app-mount-root"
+                className="flex-1 flex flex-col transition-opacity duration-1000"
               >
-                {children}
-              </div>
+                <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                  {!siteConfig.useGradient && <BackgroundSlider />}
+                </div>
 
-              <div className="md:hidden block" data-site-ui>
-                <MobileBackButton />
+                <Navbar blogHref={blogHref} />
+                <ScrollRootManager />
+
+                <div
+                  id="app-scroll-root"
+                  className="relative z-10 flex-1 flex flex-col"
+                  data-scroll-root
+                  data-site-ui
+                >
+                  {children}
+                </div>
+
+                <div className="md:hidden block" data-site-ui>
+                  <MobileBackButton />
+                </div>
               </div>
-            </div>
-          </MusicProvider>
-        </FieldModeProvider>
+            </MusicProvider>
+          </FieldModeProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -15,12 +15,12 @@ declare global {
   }
 }
 
-// Fixed light palette: preserve the site's original six-mode spectral curves
+// Fixed high-contrast palette: preserve the site's original six-mode spectral curves
 // without changing their colours with the clock or painting a wallpaper.
 const FIELD_COLOURS = [
-  [31, 101, 179],
-  [99, 75, 171],
-  [206, 74, 131],
+  [96, 199, 255],
+  [185, 144, 255],
+  [255, 133, 195],
 ] as const satisfies NonNullable<SpectralTracerFrame["colours"]>
 
 export default function HomeSpectralCanvas({
