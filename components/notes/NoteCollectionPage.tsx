@@ -32,25 +32,25 @@ export default function NoteCollectionPage({
     <div className="relative min-h-screen pb-20">
       <PageTransition>
         <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-12 pt-24 sm:px-6 lg:px-10">
-          <header className="relative overflow-hidden rounded-[2rem] border border-white/55 bg-white/50 p-6 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.55)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/55 md:p-9">
+          <header className="relative overflow-hidden rounded-[2rem] border border-white/55 bg-white/50 p-6 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.55)] backdrop-blur-xl md:p-9">
             <div
               aria-hidden="true"
               className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl"
             />
             <div className="relative">
-              <p className="text-[10px] font-black tracking-[0.28em] text-sky-700 dark:text-sky-300">
+              <p className="text-[10px] font-black tracking-[0.28em] text-sky-700">
                 {section === "blog" ? "KNOWLEDGE NOTES" : "FIELD NOTES"}
               </p>
-              <h1 className="mt-3 text-4xl font-black tracking-[-0.05em] text-slate-950 dark:text-white md:text-5xl">
+              <h1 className="mt-3 text-4xl font-black tracking-[-0.05em] text-slate-950 md:text-5xl">
                 {title}
               </h1>
-              <p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
+              <p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-slate-600 sm:text-base">
                 {description}
               </p>
               {folderRoute && (
                 <Link
                   href={`/${section}`}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-sky-500/10 px-4 py-2 text-xs font-black text-sky-700 hover:bg-sky-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:text-sky-300"
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-sky-500/10 px-4 py-2 text-xs font-black text-sky-700 hover:bg-sky-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                 >
                   <FolderOpen className="h-4 w-4" aria-hidden="true" />
                   返回{sectionTitle}根目录
@@ -64,7 +64,7 @@ export default function NoteCollectionPage({
               <p className="text-[10px] font-black tracking-[0.24em] text-slate-400">
                 {notes.length.toString().padStart(2, "0")} NOTES
               </p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
                 {folderRoute ? "文件夹内容" : "全部笔记"}
               </h2>
             </div>
@@ -78,11 +78,11 @@ export default function NoteCollectionPage({
                   <li key={note.route}>
                     <Link
                       href={note.route}
-                      className="group flex h-full min-h-56 flex-col rounded-[1.75rem] border border-white/55 bg-white/50 p-5 shadow-[0_18px_55px_-38px_rgba(15,23,42,0.5)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/70 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 motion-reduce:transform-none dark:border-white/10 dark:bg-slate-900/50 sm:p-6"
+                      className="group flex h-full min-h-56 flex-col rounded-[1.75rem] border border-white/55 bg-white/50 p-5 shadow-[0_18px_55px_-38px_rgba(15,23,42,0.5)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/70 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 motion-reduce:transform-none sm:p-6"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <BookOpenText
-                          className="h-5 w-5 text-sky-600 dark:text-sky-300"
+                          className="h-5 w-5 text-sky-600"
                           aria-hidden="true"
                         />
                         {displayDate && (
@@ -91,11 +91,11 @@ export default function NoteCollectionPage({
                           </time>
                         )}
                       </div>
-                      <h3 className="mt-6 break-words text-xl font-black leading-snug tracking-tight text-slate-950 dark:text-white">
+                      <h3 className="mt-6 break-words text-xl font-black leading-snug tracking-tight text-slate-950">
                         {note.title}
                       </h3>
                       {note.description && (
-                        <p className="mt-3 line-clamp-3 text-sm font-medium leading-6 text-slate-600 dark:text-slate-300">
+                        <p className="mt-3 line-clamp-3 text-sm font-medium leading-6 text-slate-600">
                           {note.description}
                         </p>
                       )}
@@ -104,7 +104,7 @@ export default function NoteCollectionPage({
                           {note.tags.slice(0, 3).map((tag) => (
                             <li
                               key={tag}
-                              className="inline-flex items-center gap-0.5 rounded-full bg-slate-950/5 px-2.5 py-1 text-[10px] font-bold text-slate-500 dark:bg-white/5 dark:text-slate-400"
+                              className="inline-flex items-center gap-0.5 rounded-full bg-slate-950/5 px-2.5 py-1 text-[10px] font-bold text-slate-500"
                             >
                               <Hash className="h-2.5 w-2.5" aria-hidden="true" />
                               {tag}
@@ -122,7 +122,7 @@ export default function NoteCollectionPage({
               })}
             </ul>
           ) : (
-            <div className="mt-5 rounded-3xl border border-dashed border-slate-300/80 bg-white/35 p-10 text-center text-sm font-medium text-slate-500 backdrop-blur dark:border-white/10 dark:bg-slate-900/35">
+            <div className="mt-5 rounded-3xl border border-dashed border-slate-300/80 bg-white/35 p-10 text-center text-sm font-medium text-slate-500 backdrop-blur">
               这个文件夹暂时没有公开笔记。
             </div>
           )}

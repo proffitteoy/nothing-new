@@ -16,9 +16,7 @@ const publicQuartzRoot = path.join(process.cwd(), "public", "quartz-assets")
 
 function scopeSelector(selector: string): string {
   const trimmed = selector.trim()
-  const darkTheme = /saved-theme=["']?dark/.test(trimmed)
-  const lightTheme = /saved-theme=["']?light/.test(trimmed)
-  const themeRoot = trimmed.match(/^(?::root|html)(?:\[[^\]]*saved-theme[^\]]*\])?/)
+  const themeRoot = trimmed.match(/^(?::root|html)\b/)
 
   if (themeRoot) {
     const remainder = trimmed
@@ -26,7 +24,7 @@ function scopeSelector(selector: string): string {
       .trim()
       .replace(/^body\b/, "")
       .trim()
-    const scope = darkTheme ? ".dark .quartz-note" : ".quartz-note"
+    const scope = ".quartz-note"
     return remainder ? `${scope} ${remainder}` : scope
   }
 
@@ -35,7 +33,6 @@ function scopeSelector(selector: string): string {
     return trimmed.replace(/^(?:html|body)\b/, ".quartz-note")
   }
   if (trimmed.startsWith(".page")) return `.quartz-note${trimmed}`
-  if (lightTheme) return `.quartz-note ${trimmed}`
   return `.quartz-note ${trimmed}`
 }
 

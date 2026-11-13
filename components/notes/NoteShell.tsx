@@ -22,7 +22,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
   const manifest = await getNoteManifest()
 
   return (
-    <div className="note-native-shell relative isolate min-h-screen overflow-x-clip bg-transparent pb-20 text-[var(--site-ink)] dark:text-[var(--site-ink)]">
+    <div className="note-native-shell relative isolate min-h-screen overflow-x-clip bg-transparent pb-20 text-[var(--site-ink)]">
       <link rel="stylesheet" href="/quartz-assets/note.css" precedence="default" />
       <PageTransition>
         <main className="mx-auto grid w-full max-w-[94rem] grid-cols-1 gap-5 px-4 pt-24 sm:px-6 lg:grid-cols-[14rem_minmax(0,1fr)_12rem] lg:px-8 xl:grid-cols-[17rem_minmax(0,1fr)_15rem] xl:gap-6">
@@ -35,12 +35,12 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
           <section className="min-w-0 max-w-full overflow-hidden">
             <header
               data-field-obstacle
-              className="mb-5 rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-6 shadow-[0_20px_55px_-42px_rgba(23,50,79,0.65)] dark:border-[var(--site-line)] dark:bg-[var(--site-surface)] sm:p-8"
+              className="mb-5 rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-6 shadow-[0_20px_55px_-42px_rgba(23,50,79,0.65)] sm:p-8"
             >
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-[var(--site-muted)] dark:text-[var(--site-muted)]">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-[var(--site-muted)]">
                 <Link
                   href={sectionRoute}
-                  className="rounded-full bg-[var(--site-accent)]/10 px-3 py-1.5 text-[var(--site-accent)] hover:bg-[var(--site-accent)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] dark:bg-[var(--site-accent)]/10 dark:text-[var(--site-accent)] dark:hover:bg-[var(--site-accent)]/15 dark:focus-visible:ring-[var(--site-accent)]"
+                  className="rounded-full bg-[var(--site-accent)]/10 px-3 py-1.5 text-[var(--site-accent)] hover:bg-[var(--site-accent)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)]"
                 >
                   {sectionTitle}
                 </Link>
@@ -51,7 +51,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   </span>
                 )}
               </div>
-              <h1 className="mt-5 break-words font-serif text-3xl font-black leading-tight tracking-[-0.035em] text-[var(--site-ink)] dark:text-[var(--site-ink)] sm:text-4xl">
+              <h1 className="mt-5 break-words font-serif text-3xl font-black leading-tight tracking-[-0.035em] text-[var(--site-ink)] sm:text-4xl">
                 {note.title}
               </h1>
               {note.tags.length > 0 && (
@@ -59,7 +59,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   {note.tags.map((tag) => (
                     <li
                       key={tag}
-                      className="inline-flex items-center gap-1 rounded-full border border-violet-200/70 bg-violet-50/80 px-3 py-1.5 text-[11px] font-bold text-violet-800 dark:border-violet-300/20 dark:bg-violet-400/10 dark:text-violet-200"
+                      className="inline-flex items-center gap-1 rounded-full border border-violet-200/70 bg-violet-50/80 px-3 py-1.5 text-[11px] font-bold text-violet-800"
                     >
                       <Hash className="h-3 w-3" aria-hidden="true" />
                       {tag}
@@ -72,9 +72,9 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
             {note.toc.length > 0 && (
               <details
                 data-field-obstacle
-                className="mb-5 rounded-xl border border-[var(--site-line)] bg-[var(--site-surface)] p-4 text-sm shadow-sm lg:hidden dark:border-[var(--site-line)] dark:bg-[var(--site-surface)]"
+                className="mb-5 rounded-xl border border-[var(--site-line)] bg-[var(--site-surface)] p-4 text-sm shadow-sm lg:hidden"
               >
-                <summary className="cursor-pointer font-black text-[var(--site-ink)] dark:text-[var(--site-ink)]">
+                <summary className="cursor-pointer font-black text-[var(--site-ink)]">
                   本页目录
                 </summary>
                 <ol className="mt-3 space-y-2 pl-4">
@@ -84,7 +84,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                       style={{ paddingLeft: entry.depth * 12 }}
                     >
                       <a
-                        className="text-[var(--site-muted)] hover:text-[var(--site-accent)] dark:text-[var(--site-muted)] dark:hover:text-[var(--site-accent)]"
+                        className="text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                         href={`#${entry.slug}`}
                       >
                         {entry.text}
@@ -97,7 +97,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
 
             <div
               data-field-obstacle
-              className="quartz-note page min-h-0 min-w-0 !max-w-full overflow-hidden rounded-2xl border border-[var(--site-line)] !bg-[var(--site-surface)] p-5 shadow-[0_24px_62px_-44px_rgba(23,50,79,0.68)] dark:border-[var(--site-line)] dark:!bg-[var(--site-surface)] sm:p-8 md:p-10"
+              className="quartz-note page min-h-0 min-w-0 !max-w-full overflow-hidden rounded-2xl border border-[var(--site-line)] !bg-[var(--site-surface)] p-5 shadow-[0_24px_62px_-44px_rgba(23,50,79,0.68)] sm:p-8 md:p-10"
             >
               <article
                 id="main-content"
@@ -109,11 +109,11 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
             {note.backlinks.length > 0 && (
               <section
                 data-field-obstacle
-                className="mt-5 rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 lg:hidden dark:border-[var(--site-line)] dark:bg-[var(--site-surface)]"
+                className="mt-5 rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 lg:hidden"
               >
-                <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)] dark:text-[var(--site-ink)]">
+                <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)]">
                   <CornerUpLeft
-                    className="h-4 w-4 text-[var(--site-accent)] dark:text-[var(--site-accent)]"
+                    className="h-4 w-4 text-[var(--site-accent)]"
                     aria-hidden="true"
                   />
                   反向链接
@@ -122,7 +122,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   {note.backlinks.map((backlink) => (
                     <li key={backlink.route}>
                       <Link
-                        className="text-sm text-[var(--site-muted)] hover:text-[var(--site-accent)] dark:text-[var(--site-muted)] dark:hover:text-[var(--site-accent)]"
+                        className="text-sm text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                         href={backlink.route}
                       >
                         {backlink.title}
@@ -139,11 +139,11 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
               {note.toc.length > 0 && (
                 <nav
                   data-field-obstacle
-                  className="rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)] dark:border-[var(--site-line)] dark:bg-[var(--site-surface)]"
+                  className="rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)]"
                 >
-                  <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)] dark:text-[var(--site-ink)]">
+                  <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)]">
                     <Link2
-                      className="h-4 w-4 text-[var(--site-accent)] dark:text-[var(--site-accent)]"
+                      className="h-4 w-4 text-[var(--site-accent)]"
                       aria-hidden="true"
                     />
                     本页目录
@@ -155,7 +155,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                         style={{ paddingLeft: entry.depth * 10 }}
                       >
                         <a
-                          className="text-xs leading-5 text-[var(--site-muted)] hover:text-[var(--site-accent)] dark:text-[var(--site-muted)] dark:hover:text-[var(--site-accent)]"
+                      className="text-xs leading-5 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                           href={`#${entry.slug}`}
                         >
                           {entry.text}
@@ -168,11 +168,11 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
 
               <section
                 data-field-obstacle
-                className="rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)] dark:border-[var(--site-line)] dark:bg-[var(--site-surface)]"
+                className="rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)]"
               >
-                <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)] dark:text-[var(--site-ink)]">
+                <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)]">
                   <CornerUpLeft
-                    className="h-4 w-4 text-[var(--site-accent)] dark:text-[var(--site-accent)]"
+                    className="h-4 w-4 text-[var(--site-accent)]"
                     aria-hidden="true"
                   />
                   反向链接
@@ -182,7 +182,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                     {note.backlinks.map((backlink) => (
                       <li key={backlink.route}>
                         <Link
-                          className="text-xs leading-5 text-[var(--site-muted)] hover:text-[var(--site-accent)] dark:text-[var(--site-muted)] dark:hover:text-[var(--site-accent)]"
+                          className="text-xs leading-5 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                           href={backlink.route}
                         >
                           {backlink.title}
@@ -191,7 +191,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-3 text-xs leading-5 text-[var(--site-muted)] dark:text-[var(--site-muted)]">
+                  <p className="mt-3 text-xs leading-5 text-[var(--site-muted)]">
                     暂无其他笔记链接到这里。
                   </p>
                 )}

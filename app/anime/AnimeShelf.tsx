@@ -141,24 +141,24 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
         data-field-obstacle
         className="relative mt-3 overflow-hidden rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--site-surface)] px-4 py-4 shadow-xl sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6"
       >
-        <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-rose-300/20 blur-3xl dark:bg-rose-500/10" />
+        <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-rose-300/20 blur-3xl" />
         <div className="relative flex items-center justify-between gap-4 sm:justify-start">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--site-line)] bg-[var(--site-recess)] text-blue-600 shadow-sm dark:text-blue-300">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--site-line)] bg-[var(--site-recess)] text-blue-600 shadow-sm">
             <Clapperboard className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-[9px] font-black tracking-[0.24em] text-blue-600 dark:text-blue-300">
+            <p className="text-[9px] font-black tracking-[0.24em] text-blue-600">
               ANIME INDEX
             </p>
             <div className="mt-0.5 flex items-baseline gap-3">
-              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+              <h1 className="text-2xl font-black tracking-tight text-slate-950">
                 番剧
               </h1>
               <a
                 href={`https://bgm.tv/user/${encodeURIComponent(snapshot.username)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] font-black text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300"
+                className="text-[10px] font-black text-slate-500 transition hover:text-blue-600"
               >
                 @{snapshot.username}
               </a>
@@ -172,23 +172,23 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
         >
           <a
             href="#watching"
-            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-teal-200/70 bg-teal-50/65 px-3 py-2.5 text-teal-800 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-100/70 dark:border-teal-400/20 dark:bg-teal-500/10 dark:text-teal-200 dark:hover:bg-teal-500/15"
+            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-teal-200/70 bg-teal-50/65 px-3 py-2.5 text-teal-800 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-100/70"
           >
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">01</span>
             <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">正在看</span>
-            <span className="ml-auto rounded-full bg-teal-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
+            <span className="ml-auto rounded-full bg-teal-600/10 px-1.5 py-0.5 text-[9px] font-black">
               {watching.length}
             </span>
           </a>
           <a
             href="#watched"
-            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-violet-200/70 bg-violet-50/65 px-3 py-2.5 text-violet-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-100/70 dark:border-violet-300/20 dark:bg-violet-400/10 dark:text-violet-200 dark:hover:bg-violet-400/15"
+            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-violet-200/70 bg-violet-50/65 px-3 py-2.5 text-violet-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-100/70"
           >
             <span className="text-[9px] font-black tracking-[0.16em] opacity-55">02</span>
             <Star className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate text-xs font-black">看过</span>
-            <span className="ml-auto rounded-full bg-violet-600/10 px-1.5 py-0.5 text-[9px] font-black dark:bg-white/10">
+            <span className="ml-auto rounded-full bg-violet-600/10 px-1.5 py-0.5 text-[9px] font-black">
               {watched.length}
             </span>
           </a>
@@ -238,24 +238,24 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                       className={
                         "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-lg font-black shadow-sm " +
                         (group.score === null
-                          ? "border-[var(--site-line)] bg-[var(--site-surface)] text-slate-500 dark:text-slate-300"
-                          : "border-rose-200/70 bg-rose-50/75 text-rose-700 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-200")
+                          ? "border-[var(--site-line)] bg-[var(--site-surface)] text-slate-500"
+                          : "border-rose-200/70 bg-rose-50/75 text-rose-700")
                       }
                     >
                       {group.score ?? "—"}
                     </span>
                     <div>
-                      <p className="text-[9px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                      <p className="text-[9px] font-black tracking-[0.2em] text-slate-400">
                         MY SCORE
                       </p>
                       <h3
                         id={groupId}
-                        className="mt-0.5 text-lg font-black text-slate-900 dark:text-white"
+                        className="mt-0.5 text-lg font-black text-slate-900"
                       >
                         {group.score === null ? "未评分" : `${group.score} 分`}
                       </h3>
                     </div>
-                    <span className="h-px flex-1 bg-gradient-to-r from-slate-300/70 to-transparent dark:from-white/15" />
+                    <span className="h-px flex-1 bg-gradient-to-r from-slate-300/70 to-transparent" />
                   </div>
                   <AnimeGrid
                     items={group.items}
@@ -299,14 +299,14 @@ function SectionHeading({
   return (
     <div data-field-obstacle className="mb-5 flex items-end justify-between gap-5 px-1">
       <div>
-        <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.22em] text-blue-600 dark:text-blue-300">
+        <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.22em] text-blue-600">
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
           {eyebrow}
         </div>
-        <h2 id={id} className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
+        <h2 id={id} className="mt-2 text-2xl font-black text-slate-950">
           {title}
         </h2>
-        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400 sm:text-sm">
+        <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
           {description}
         </p>
       </div>
@@ -338,7 +338,7 @@ function AnimeGrid({
             rel="noopener noreferrer"
             className="group min-w-0"
           >
-            <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/55 bg-slate-200/70 shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl dark:border-white/10 dark:bg-slate-800/70 sm:rounded-2xl">
+            <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/55 bg-slate-200/70 shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl sm:rounded-2xl">
               <AnimeCoverImage
                 src={anime.cover}
                 alt={`${title}封面`}
@@ -360,7 +360,7 @@ function AnimeGrid({
                 </span>
               )}
             </span>
-            <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-300 sm:mt-2.5 sm:text-xs sm:leading-5">
+            <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-blue-600 sm:mt-2.5 sm:text-xs sm:leading-5">
               {title}
             </span>
           </a>
@@ -377,7 +377,7 @@ function EmptyShelf({ message }: { message: string }) {
       className="rounded-[1.75rem] border border-dashed border-[var(--site-line)] bg-[var(--site-surface)] px-6 py-14 text-center shadow-lg"
     >
       <Clapperboard className="mx-auto h-8 w-8 text-blue-400" aria-hidden="true" />
-      <p className="mt-4 text-sm font-black text-slate-700 dark:text-slate-200">{message}</p>
+      <p className="mt-4 text-sm font-black text-slate-700">{message}</p>
     </div>
   )
 }
@@ -394,12 +394,12 @@ function LoadMoreControl({
   if (remaining <= 0) return null
   return (
     <div ref={containerRef} className="relative mt-8 flex flex-col items-center pt-8">
-      <div className="pointer-events-none absolute inset-x-0 -top-20 h-28 bg-gradient-to-b from-transparent to-white/20 dark:to-slate-950/15" />
+      <div className="pointer-events-none absolute inset-x-0 -top-20 h-28 bg-gradient-to-b from-transparent to-white/20" />
       <button
         data-field-obstacle
         type="button"
         onClick={onLoadMore}
-        className="relative inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-surface)] px-5 py-3 text-xs font-black text-slate-700 shadow-lg transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+        className="relative inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-surface)] px-5 py-3 text-xs font-black text-slate-700 shadow-lg transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600"
       >
         <ChevronDown className="h-4 w-4 animate-bounce" aria-hidden="true" />
         继续展开 · 还有 {remaining} 部
@@ -425,13 +425,13 @@ function ShelfState({
         className="mt-8 rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--site-surface)] px-6 py-16 text-center shadow-xl"
       >
         <Clapperboard className="mx-auto h-9 w-9 text-blue-400" aria-hidden="true" />
-        <h1 className="mt-5 text-xl font-black text-slate-950 dark:text-white">{title}</h1>
-        <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">{description}</p>
+        <h1 className="mt-5 text-xl font-black text-slate-950">{title}</h1>
+        <p className="mt-2 text-sm font-medium text-slate-500">{description}</p>
         {action && (
           <button
             type="button"
             onClick={action}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-recess)] px-4 py-2.5 text-xs font-black text-slate-700 shadow-md transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-recess)] px-4 py-2.5 text-xs font-black text-slate-700 shadow-md transition hover:text-blue-600"
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             重试

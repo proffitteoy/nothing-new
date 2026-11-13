@@ -5,11 +5,6 @@
   flex-shrink: 0;
 }
 
-:global(.dark) .mark {
-  --euler-bridge-ink: var(--site-accent);
-  --euler-bridge-bronze: var(--site-mint);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .mark path {
     opacity: 1;

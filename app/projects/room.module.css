@@ -6,9 +6,6 @@
   pointer-events: none;
   background: var(--site-surface);
 }
-:global(.dark) .backdrop {
-  background: var(--site-surface);
-}
 .page {
   --ink: var(--site-ink);
   --muted: var(--site-muted);
@@ -24,15 +21,6 @@
   padding: 84px 0 0;
   color: var(--ink);
   font-family: var(--ui-font);
-}
-:global(.dark) .page {
-  --ink: var(--site-ink);
-  --muted: var(--site-muted);
-  --surface: var(--site-surface);
-  --line: var(--site-line);
-  --accent: var(--site-accent);
-  --wash: var(--site-wash);
-  --pink: var(--site-mint);
 }
 .stage {
   position: relative;
@@ -52,14 +40,6 @@
     90deg,
     rgba(246, 248, 252, 0.85),
     rgba(246, 248, 252, 0.22) 40%,
-    transparent 75%
-  );
-}
-:global(.dark) .stage::before {
-  background: linear-gradient(
-    90deg,
-    rgba(26, 34, 51, 0.85),
-    rgba(26, 34, 51, 0.25) 40%,
     transparent 75%
   );
 }

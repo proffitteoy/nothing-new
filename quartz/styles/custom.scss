@@ -66,11 +66,6 @@
   --blog-focus-ring: color-mix(in srgb, var(--secondary) 62%, white 38%);
 }
 
-:root[saved-theme="dark"] {
-  --blog-accent-soft: color-mix(in srgb, var(--secondary) 24%, transparent);
-  --blog-focus-ring: color-mix(in srgb, var(--secondary) 72%, #dbeafe 28%);
-}
-
 body {
   position: relative;
   isolation: isolate;

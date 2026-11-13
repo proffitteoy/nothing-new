@@ -16,14 +16,6 @@
   font-family: var(--paper-ui);
 }
 
-:global(.dark) .panel {
-  --paper-surface: var(--site-surface);
-  --paper-ink: var(--site-ink);
-  --paper-muted: var(--site-muted);
-  --paper-accent: var(--site-accent);
-  --paper-line: var(--site-line);
-}
-
 .cover {
   position: relative;
   display: block;
@@ -34,8 +26,7 @@
   color: #fff;
   cursor: pointer;
 }
-.compact,
-:global(.dark) .compact {
+.compact {
   --paper-accent: var(--scene-accent, var(--site-accent));
   --paper-ink: var(--scene-ink, var(--site-ink));
   --paper-line: var(--scene-line, var(--site-line));
@@ -141,9 +132,6 @@
   background: transparent;
   color: var(--paper-ink);
   color-scheme: light;
-}
-:global(.dark) .dialog {
-  color-scheme: dark;
 }
 .dialog::backdrop {
   background: rgb(12 18 30 / 48%);

@@ -8,14 +8,6 @@
   color: var(--ink);
   font-family: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
-:global(.dark) .board,
-:global(.dark) .preview {
-  --surface: var(--site-surface);
-  --ink: var(--site-ink);
-  --muted: var(--site-muted);
-  --accent: var(--site-accent);
-  --line: var(--site-line);
-}
 .board {
   min-height: 100vh;
   padding: 112px 32px 64px;
@@ -327,12 +319,6 @@
   background: rgb(255 255 255 / 60%);
   backdrop-filter: blur(20px) saturate(115%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 35%);
-}
-:global(.dark) .preview {
-  --muted: #d4deed;
-  --accent: var(--site-accent);
-  border-color: rgb(235 245 255 / 62%);
-  background: rgb(18 31 48 / 74%);
 }
 .friendRow :is(a, button):focus-visible {
   outline-offset: -3px;

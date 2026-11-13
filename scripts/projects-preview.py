@@ -60,7 +60,7 @@ def ready(page):
 
 
 def shot(page, name):
-    page.wait_for_timeout(1100)  # Include the completed reveal and shared theme transition.
+    page.wait_for_timeout(1100)  # Include the completed reveal.
     page.screenshot(path=str(args.output / f'{name}.png'), full_page=True)
 
 
@@ -119,11 +119,12 @@ with sync_playwright() as p:
         if args.case and args.case != f'{width}x{height}':
             continue
         for theme in ['light', 'dark']:
-            label = f'{width}x{height}-{theme}'
+            label = f'{width}x{height}-system-{theme}'
             music_requests_before = music_requests
             context = browser.new_context(viewport={'width': width, 'height': height},
-                is_mobile=touch, has_touch=touch, device_scale_factor=1,
+                is_mobile=touch, has_touch=touch, device_scale_factor=1, color_scheme=theme,
                 reduced_motion='reduce' if width == 320 else 'no-preference')
+            # Legacy saved preferences must not change the fixed site appearance.
             context.add_init_script(f"localStorage.setItem('blog-theme','{theme}');"
                 "localStorage.setItem('blog-theme-override-until',String(Date.now()+3600000))")
             # Only external music data is deterministic; run the real Provider and audio element.
@@ -134,8 +135,7 @@ with sync_playwright() as p:
             page.goto(args.url + '/projects', wait_until='domcontentloaded', timeout=60000)
             page.wait_for_load_state('networkidle')
             ready(page)
-            if theme == 'dark':
-                expect(page.locator('html')).to_have_class(re.compile(r'.*dark.*'))
+            expect(page.locator('html')).not_to_have_class(re.compile(r'.*\bdark\b.*'))
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), label
             assert page.locator('[data-room-hotspot]:visible').count() == 9, label
             canvas = page.locator('canvas[aria-hidden="true"]').last
@@ -158,10 +158,7 @@ with sync_playwright() as p:
             project_checks(page)
             page.wait_for_function("document.querySelector('audio') !== null")
             assert music_requests == music_requests_before + 1, 'First music entry must load once'
-            # Theme remains shared with the whole site and updates the baked room.
-            page.get_by_role('button', name='切换到日间' if theme == 'dark' else '切换到夜间').click()
-            expect(page.get_by_role('button', name='切换到夜间' if theme == 'dark' else '切换到日间')).to_be_visible()
-            page.get_by_role('button', name='切换到夜间' if theme == 'dark' else '切换到日间').click()
+            expect(page.get_by_role('button', name=re.compile('切换到日间|切换到夜间'))).to_have_count(0)
             if touch:
                 rotate = page.get_by_role('button', name=re.compile(r'^(旋转|结束旋转)$'))
                 rotate.click()

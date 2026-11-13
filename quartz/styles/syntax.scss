@@ -6,12 +6,3 @@ code[data-theme*=" "] {
 code[data-theme*=" "] span {
   color: var(--shiki-light);
 }
-
-:root[saved-theme="dark"] code[data-theme*=" "] {
-  color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
-}
-
-:root[saved-theme="dark"] code[data-theme*=" "] span {
-  color: var(--shiki-dark);
-}

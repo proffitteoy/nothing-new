@@ -27,18 +27,18 @@ function ExplorerFolder({ node, currentPath }: { node: NoteTreeNode; currentPath
         onToggle={(event) => setOpen(event.currentTarget.open)}
         className="group/folder"
       >
-        <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-semibold text-[var(--site-ink)] transition-colors hover:bg-[var(--site-accent)]/10 dark:text-[var(--site-ink)] dark:hover:bg-[var(--site-accent)]/10 [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-semibold text-[var(--site-ink)] transition-colors hover:bg-[var(--site-accent)]/10 [&::-webkit-details-marker]:hidden">
           <ChevronRight
             className="h-3.5 w-3.5 shrink-0 transition-transform group-open/folder:rotate-90"
             aria-hidden="true"
           />
           <Folder
-            className="h-3.5 w-3.5 shrink-0 text-[var(--site-muted)] dark:text-[var(--site-muted)]"
+            className="h-3.5 w-3.5 shrink-0 text-[var(--site-muted)]"
             aria-hidden="true"
           />
           <span className="truncate">{node.title}</span>
         </summary>
-        <ul className="ml-[0.9rem] border-l border-[var(--site-line)] pl-2 dark:border-[var(--site-line)]">
+        <ul className="ml-[0.9rem] border-l border-[var(--site-line)] pl-2">
           {open &&
             node.children?.map((child) => (
               <ExplorerNode
@@ -65,10 +65,10 @@ function ExplorerNode({ node, currentPath }: { node: NoteTreeNode; currentPath: 
         href={node.path}
         prefetch={false}
         aria-current={active ? "page" : undefined}
-        className={`flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[13px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] dark:focus-visible:ring-[var(--site-accent)] ${
+        className={`flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[13px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] ${
           active
-            ? "bg-[var(--site-accent)]/12 font-bold text-[var(--site-accent)] dark:bg-[var(--site-accent)]/15 dark:text-[var(--site-accent)]"
-            : "text-[var(--site-muted)] hover:bg-[var(--site-accent)]/8 hover:text-[var(--site-accent)] dark:text-[var(--site-muted)] dark:hover:bg-[var(--site-accent)]/10 dark:hover:text-[#dbe7f6]"
+            ? "bg-[var(--site-accent)]/12 font-bold text-[var(--site-accent)]"
+            : "text-[var(--site-muted)] hover:bg-[var(--site-accent)]/8 hover:text-[var(--site-accent)]"
         }`}
       >
         <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden="true" />
@@ -175,21 +175,21 @@ function ExplorerPanel({
     <div>
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold tracking-[0.22em] text-[var(--site-muted)] dark:text-[var(--site-muted)]">
+          <p className="text-[10px] font-bold tracking-[0.22em] text-[var(--site-muted)]">
             EXPLORE
           </p>
-          <h2 className="mt-1 font-serif text-base font-bold text-[var(--site-ink)] dark:text-[var(--site-ink)]">
+          <h2 className="mt-1 font-serif text-base font-bold text-[var(--site-ink)]">
             {sectionTitle}目录
           </h2>
         </div>
-        <span className="text-[11px] text-[var(--site-muted)] dark:text-[var(--site-muted)]">
+        <span className="text-[11px] text-[var(--site-muted)]">
           {records.length || ""}
         </span>
       </div>
 
       <label className="relative mt-4 block" htmlFor={`${idPrefix}-note-search`}>
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--site-muted)] dark:text-[var(--site-muted)]"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--site-muted)]"
           aria-hidden="true"
         />
         <span className="sr-only">搜索当前{sectionTitle}</span>
@@ -201,18 +201,18 @@ function ExplorerPanel({
           onChange={(event) => void handleQuery(event.target.value)}
           placeholder={`搜索${sectionTitle}`}
           autoComplete="off"
-          className="h-10 w-full rounded-lg border border-[var(--site-line)] bg-[var(--site-recess)] pl-9 pr-3 text-sm text-[var(--site-ink)] outline-none transition-colors placeholder:text-[var(--site-muted)] focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)]/20 dark:border-[var(--site-line)] dark:bg-[var(--site-recess)] dark:text-[var(--site-ink)] dark:placeholder:text-[var(--site-muted)] dark:focus:border-[var(--site-accent)] dark:focus:ring-[var(--site-accent)]/20"
+          className="h-10 w-full rounded-lg border border-[var(--site-line)] bg-[var(--site-recess)] pl-9 pr-3 text-sm text-[var(--site-ink)] outline-none transition-colors placeholder:text-[var(--site-muted)] focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)]/20"
         />
       </label>
 
       <div className="mt-3 max-h-[calc(100vh-15rem)] overflow-y-auto overscroll-contain pr-1 [scrollbar-color:#8f8578_transparent] [scrollbar-width:thin]">
         {loadError ? (
-          <p className="rounded-lg border border-[var(--site-line)] px-3 py-2 text-xs leading-5 text-[var(--site-muted)] dark:border-[var(--site-line)] dark:text-[var(--site-muted)]">
+          <p className="rounded-lg border border-[var(--site-line)] px-3 py-2 text-xs leading-5 text-[var(--site-muted)]">
             搜索暂时不可用，目录仍可正常浏览。
           </p>
         ) : query ? (
           loading ? (
-            <p className="px-2 py-2 text-xs text-[var(--site-muted)] dark:text-[var(--site-muted)]">
+            <p className="px-2 py-2 text-xs text-[var(--site-muted)]">
               正在载入索引…
             </p>
           ) : results.length > 0 ? (
@@ -221,11 +221,11 @@ function ExplorerPanel({
                 <li key={result.route}>
                   <Link
                     href={result.route}
-                    className="block rounded-lg border border-transparent px-2.5 py-2 text-sm text-[var(--site-ink)] transition-colors hover:border-[var(--site-line)] hover:bg-[var(--site-recess)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] dark:text-[var(--site-ink)] dark:hover:border-[var(--site-line)] dark:hover:bg-[var(--site-recess)] dark:focus-visible:ring-[var(--site-accent)]"
+                    className="block rounded-lg border border-transparent px-2.5 py-2 text-sm text-[var(--site-ink)] transition-colors hover:border-[var(--site-line)] hover:bg-[var(--site-recess)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)]"
                   >
                     <span className="block font-bold leading-5">{result.title}</span>
                     {result.tags.length > 0 && (
-                      <span className="mt-1 block truncate text-[11px] text-[var(--site-muted)] dark:text-[var(--site-muted)]">
+                      <span className="mt-1 block truncate text-[11px] text-[var(--site-muted)]">
                         {result.tags.join(" · ")}
                       </span>
                     )}
@@ -234,7 +234,7 @@ function ExplorerPanel({
               ))}
             </ul>
           ) : (
-            <p className="px-2 py-2 text-xs text-[var(--site-muted)] dark:text-[var(--site-muted)]">
+            <p className="px-2 py-2 text-xs text-[var(--site-muted)]">
               没有匹配的笔记。
             </p>
           )
@@ -269,7 +269,7 @@ export default function NoteExplorer({
       <aside className="hidden lg:block" aria-label="笔记探索栏">
         <div
           data-field-obstacle
-          className="sticky top-24 rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-4 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)] dark:border-[var(--site-line)] dark:bg-[var(--site-surface)]"
+          className="sticky top-24 rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-4 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)]"
         >
           <ExplorerPanel
             section={section}
@@ -283,12 +283,12 @@ export default function NoteExplorer({
       <details
         onToggle={(event) => setMobileOpen(event.currentTarget.open)}
         data-field-obstacle
-        className="rounded-xl border border-[var(--site-line)] bg-[var(--site-surface)] p-4 shadow-sm lg:hidden dark:border-[var(--site-line)] dark:bg-[var(--site-surface)]"
+        className="rounded-xl border border-[var(--site-line)] bg-[var(--site-surface)] p-4 shadow-sm lg:hidden"
       >
-        <summary className="cursor-pointer font-bold text-[var(--site-ink)] dark:text-[var(--site-ink)]">
+        <summary className="cursor-pointer font-bold text-[var(--site-ink)]">
           探索笔记
         </summary>
-        <div className="mt-4 border-t border-[var(--site-line)] pt-4 dark:border-[var(--site-line)]">
+        <div className="mt-4 border-t border-[var(--site-line)] pt-4">
           {mobileOpen && (
             <ExplorerPanel
               section={section}
