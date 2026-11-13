@@ -236,12 +236,14 @@ with sync_playwright() as p:
         context=context_for(browser,dpr=2)
         page=visit(context)
         page.wait_for_timeout(3000)
-        check('normal baseline',state(page))
+        assert state(page)['homeQuality'] in ['high', 'adaptive-low']
+        check('unified high-performance baseline',state(page))
         elapsed=float(state(page)['homeElapsed'])
-        page.evaluate("localStorage.setItem('blog-performance-mode','field');window.dispatchEvent(new Event('field-mode-change'))")
+        page.evaluate("localStorage.setItem('blog-performance-mode','normal');window.dispatchEvent(new Event('field-mode-change'))")
         page.wait_for_timeout(5000)
         assert float(state(page)['homeElapsed'])>elapsed
-        check('field mode preserves clock',state(page))
+        assert state(page)['homeQuality'] in ['high', 'adaptive-low']
+        check('legacy normal setting cannot lower the baseline or restart the clock',state(page))
         # Deterministically force sustained main-thread contention, exercising
         # the real RAF quality fallback without changing the visit clock.
         before=float(state(page)['homeElapsed'])
@@ -263,13 +265,12 @@ with sync_playwright() as p:
         for dark in [False,True]:
             context=context_for(browser,dark=dark)
             page=visit(context)
-            page.evaluate("localStorage.setItem('blog-performance-mode','field');window.dispatchEvent(new Event('field-mode-change'))")
             page.wait_for_timeout(1500)
             for target in [0,30,90,150,210,240,255,275,290,300,310]:
                 page.evaluate('(t)=>{window.__homeVisitClock.read=()=>t*1000}',target)
                 page.wait_for_timeout(250)
                 capture(page,f'{"night" if dark else "day"}-{target:03d}s')
-            check(f'{"night" if dark else "day"}: field mode fixed-clock samples',state(page))
+            check(f'{"night" if dark else "day"}: high-performance fixed-clock samples',state(page))
             context.close()
         context=context_for(browser,dark=True,reduced=True)
         page=visit(context)

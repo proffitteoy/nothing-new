@@ -1,5 +1,13 @@
 # 首页紧凑音乐控制与沉底歌词（#48 / PR #65）
 
+## 当前运行边界（2026-11-13）
+
+根 MusicProvider 继续持有唯一 audio，首页及项目页耳机面板共享播放。歌单在首次展开首页音乐（鼠标、键盘或点击）或打开项目页耳机面板时初始化；纯阅读、导航预取和关闭的侧栏不请求音乐元数据。首次打开显示加载状态，加载后关闭再打开及软导航继续复用歌单和同一个 audio。空歌单/失败可重试；没有新增空闲预热或后台轮询。
+
+`/api/music?ids=...` 每批接受 1–32 个非空输入项，ID 必须是无前导零、在 JavaScript 安全整数范围内的十进制正整数；缺失、非法或超量返回 400。按首次出现顺序去重后，每批最多并发四个详情/歌词请求，返回顺序不受完成顺序影响。32 项上限在去重前检查；空分隔项仍忽略。部分歌曲/歌词失败保持逐首回退。
+
+项目页 RoomScene 使用 memo 隔离播放进度更新，真实主题、交互和尺寸变化仍可绘制；不拆分根播放器。契约测试、修改前后绘制采样及验证限制见[架构审计第 12 节](codebase-architecture-audit-2026-11-12.md#12-第二批整改f03f04f07)。以下 PR 记录保留为历史交付背景。
+
 ## 设计依据与交付边界
 
 已核对[原始视觉稿](<./frontend refactoring.md>)第 5.1、5.2 与第九章。其右侧 5/12 杂志播放器、纸面歌词带及手机首页方向已被 [#51 新首页合同](https://github.com/proffitteoy/nothing-new/issues/51)、[更新后的 #48](https://github.com/proffitteoy/nothing-new/issues/48) 和 [PR #65 返工要求](https://github.com/proffitteoy/nothing-new/pull/65#issuecomment-6647530960)覆盖。[#48 最新主账号回复](https://github.com/proffitteoy/nothing-new/issues/48#issuecomment-6648892839)进一步取消所有独立音乐页入口；主线 PR #72 的删除结果保持不变。

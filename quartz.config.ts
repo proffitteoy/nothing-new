@@ -14,18 +14,9 @@ import { TableOfContents } from "./quartz/plugins/transformers/toc"
 
 const config: QuartzConfig = {
   configuration: {
-    pageTitle: "\u4e3a\u5b66\u65e5\u76ca\uff0c\u4e3a\u9053\u65e5\u635f",
-    pageTitleSuffix: "",
-    enableSPA: true,
-    enablePopovers: true,
-    analytics: null,
     locale: "zh-CN",
-    baseUrl: "nothing-new.cn",
     ignorePatterns: ["private", "templates", ".obsidian"],
-    defaultDateType: "modified",
     theme: {
-      fontOrigin: "local",
-      cdnCaching: true,
       typography: {
         title: "Playfair Display",
         header: "Noto Serif SC",
@@ -71,7 +62,7 @@ const config: QuartzConfig = {
         },
         keepBackground: false,
       }),
-      ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false }),
+      ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false, mermaid: false }),
       GitHubFlavoredMarkdown(),
       TableOfContents(),
       CrawlLinks({ markdownLinkResolution: "shortest" }),

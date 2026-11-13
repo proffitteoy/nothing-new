@@ -13,6 +13,7 @@ export type NoteReference = {
 }
 
 export type NoteFeatures = {
+  // These clients are currently disabled; Mermaid source and links remain static.
   mermaid: boolean
   popovers: boolean
 }

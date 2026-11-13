@@ -5,12 +5,6 @@ export const BuildArgv = {
     default: "content",
     describe: "directory containing public Markdown notes",
   },
-  output: {
-    string: true,
-    alias: ["o"],
-    default: ".quartz-cache/quartz-site",
-    describe: "temporary build output directory",
-  },
   verbose: {
     boolean: true,
     alias: ["v"],

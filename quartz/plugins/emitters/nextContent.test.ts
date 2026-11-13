@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
+import nextConfig from "../../../next.config"
 import {
   buildNextImageUrl,
   getLegacyBlogAliases,
@@ -75,8 +76,38 @@ describe("Next content artifact routes", () => {
       width: 1000,
       height: 600,
     })
-    assert.match(attributes.src, /w=1080&q=75$/)
+    assert.match(attributes.src, /w=1200&q=75$/)
     assert.match(attributes.srcSet ?? "", /w=640&q=75 640w/)
     assert.ok(attributes.sizes)
+  })
+
+  it("only generates Next-allowed src and srcset candidates across image size boundaries", () => {
+    const allowedWidths = new Set([
+      ...nextConfig.images!.deviceSizes!,
+      ...nextConfig.images!.imageSizes!,
+    ])
+    const src = "/quartz-assets/content/图片/表 一.png"
+
+    for (const width of [
+      128, 384, 385, 640, 641, 750, 828, 829, 1000, 1080, 1200, 1440, 1920, 2400,
+    ]) {
+      const attributes = getResponsiveImageAttributes(src, { width, height: 600 })
+      const candidates = (attributes.srcSet ?? "").split(", ").map((candidate) => {
+        const [url, descriptor] = candidate.split(" ")
+        const params = new URL(url, "https://notes.invalid").searchParams
+        assert.equal(descriptor, `${params.get("w")}w`)
+        return url
+      })
+      assert.ok(candidates.length > 0)
+      assert.equal(new Set(candidates).size, candidates.length)
+      assert.equal(attributes.src, candidates.at(-1))
+
+      for (const candidate of [attributes.src, ...candidates]) {
+        const params = new URL(candidate, "https://notes.invalid").searchParams
+        assert.ok(allowedWidths.has(Number(params.get("w"))), `${width}px image: ${candidate}`)
+        assert.ok(nextConfig.images!.qualities!.includes(Number(params.get("q"))))
+        assert.equal(params.get("url"), src, "Chinese and spaces must survive URL encoding")
+      }
+    }
   })
 })

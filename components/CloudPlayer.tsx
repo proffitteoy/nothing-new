@@ -1,6 +1,7 @@
 "use client"
 
 import { Music2, Pause, Play, RotateCcw, SkipBack, SkipForward } from "lucide-react"
+import { useEffect } from "react"
 import { useMusic } from "./MusicProvider"
 import { getSizedMusicCoverUrl, isNeteaseMusicCoverUrl } from "../lib/image-loading"
 import styles from "./HomeMusic.module.css"
@@ -35,7 +36,11 @@ export default function CloudPlayer({
     prevSong,
     handleSeek,
     retryMusic,
+    initializeMusic,
   } = useMusic()
+  useEffect(() => {
+    if (active) initializeMusic()
+  }, [active, initializeMusic])
   const loading = isLoading || musicStatus === "loading"
   const ready = !loading && musicStatus === "ready" && Boolean(currentSong)
   const title = currentSong?.title || currentSong?.name || "未知歌曲"

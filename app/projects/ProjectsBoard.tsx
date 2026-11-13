@@ -38,7 +38,15 @@ const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false })
 
 export default function ProjectsBoard() {
   const { isDark, toggleTheme } = useTheme()
-  const { currentSong, isPlaying, togglePlay, musicStatus } = useMusic()
+  const {
+    currentSong,
+    isPlaying,
+    togglePlay,
+    musicStatus,
+    musicError,
+    retryMusic,
+    initializeMusic,
+  } = useMusic()
   const reducedMotion = useReducedMotion()
   const router = useRouter()
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
@@ -97,10 +105,11 @@ export default function ProjectsBoard() {
       returnFocus.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null
       setMusicOpen(target === "headphones")
+      if (target === "headphones") initializeMusic()
       setSelected(projects.find((project) => project.id === target) ?? null)
       if (directory.current) directory.current.open = false
     },
-    [router],
+    [router, initializeMusic],
   )
   const ready = useCallback(() => setStatus("ready"), [])
   const failed = useCallback(() => setStatus("error"), [])
@@ -213,7 +222,9 @@ export default function ProjectsBoard() {
               ))}
               <div className={styles.directoryLife}>
                 <Link href="/blog">笔记</Link>
-                <Link href="/music">音乐</Link>
+                <button type="button" onClick={() => choose("headphones")}>
+                  音乐
+                </button>
                 <Link href="/anime">番剧</Link>
               </div>
             </div>
@@ -337,10 +348,14 @@ export default function ProjectsBoard() {
                 </div>
                 <h2 id="room-detail-title">桌边的音乐</h2>
                 <p className={styles.description}>
-                  {currentSong?.name || currentSong?.title || "挑一首歌，陪伴这一会儿。"}
+                  {musicStatus === "loading"
+                    ? "正在连接音乐云端"
+                    : musicStatus === "error"
+                      ? "音乐连接失败"
+                      : currentSong?.name || currentSong?.title || "暂无可播放音乐"}
                 </p>
                 <p className={styles.category}>
-                  {currentSong?.artist || currentSong?.author || "与全站播放器同步"}
+                  {currentSong?.artist || currentSong?.author || musicError || "与全站播放器同步"}
                 </p>
                 {musicStatus === "ready" && (
                   <button type="button" className={styles.primaryLink} onClick={togglePlay}>
@@ -348,10 +363,11 @@ export default function ProjectsBoard() {
                     {isPlaying ? "暂停播放" : "继续播放"}
                   </button>
                 )}
-                <Link href="/music" className={styles.textLink}>
-                  前往音乐页
-                  <ArrowUpRight size={15} />
-                </Link>
+                {(musicStatus === "error" || musicStatus === "empty") && (
+                  <button type="button" className={styles.primaryLink} onClick={retryMusic}>
+                    <RotateCcw size={17} /> 重试连接
+                  </button>
+                )}
               </>
             )}
           </aside>

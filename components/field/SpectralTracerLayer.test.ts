@@ -37,6 +37,7 @@ test("homepage long spectral curves render immediately, remain visible, and fade
   const savedPath = Object.getOwnPropertyDescriptor(globalThis, "Path2D")
   Object.defineProperty(globalThis, "Path2D", { configurable: true, value: TestPath })
   const paths = [0, 0]
+  const glowPaths = [0, 0]
   const widths: number[][] = [[], []]
   const colours: string[][] = [[], []]
   const composites: string[][] = [[], []]
@@ -54,7 +55,9 @@ test("homepage long spectral curves render immediately, remain visible, and fade
       fillRect() { composites[index].push(this.globalCompositeOperation) },
       stroke(path: TestPath) {
         if (!path.segments) return
-        paths[index] += path.segments
+        // The night glow re-strokes the same geometry. Count each pass separately.
+        if (this.globalCompositeOperation === "lighter") glowPaths[index] += path.segments
+        else paths[index] += path.segments
         widths[index].push(this.lineWidth)
         colours[index].push(this.strokeStyle)
       },
@@ -137,9 +140,11 @@ test("homepage long spectral curves render immediately, remain visible, and fade
       obstacles: [{ left: -1000, top: -1000, right: 2200, bottom: 1800 }],
     })
     paths.fill(0)
+    glowPaths.fill(0)
     ambientController.render({ ...ambientFrame, time: 0.13 })
     assert.ok(paths[0] > 0 && paths[0] <= 320, "background respawns cannot flash long paths")
     assert.ok(paths[1] > 0 && paths[1] <= 40, "foreground respawns cannot flash long paths")
+    assert.deepEqual(glowPaths, paths, "night glow must reuse the same short respawn geometry")
     ambientController.destroy()
   } finally {
     if (savedPath) Object.defineProperty(globalThis, "Path2D", savedPath)
@@ -159,7 +164,7 @@ test("home canvas still consumes the six-mode spectral render path, not a separa
   assert.match(tracer, /FIELD_KX|FIELD_KY/)
 })
 
-test("the about obstacle belongs to the article, not the page grid", () => {
+test("about keeps three independent semantic chapters after the article restructure", () => {
   const source = readFileSync(new URL("../AboutClient.tsx", import.meta.url), "utf8")
   const tree = ts.createSourceFile(
     "AboutClient.tsx",
@@ -168,22 +173,29 @@ test("the about obstacle belongs to the article, not the page grid", () => {
     true,
     ts.ScriptKind.TSX,
   )
-  const obstacles: ts.JsxElement[] = []
+  const chapters: string[] = []
   const visit = (node: ts.Node) => {
     if (
-      ts.isJsxElement(node) &&
-      node.openingElement.attributes.properties.some(
-        (attribute) =>
-          ts.isJsxAttribute(attribute) && attribute.name.getText(tree) === "data-field-obstacle",
-      )
+      ts.isJsxSelfClosingElement(node) &&
+      ["WebsiteSection", "EngineeringSection", "ResearchSection"].includes(node.tagName.getText(tree))
     )
-      obstacles.push(node)
+      chapters.push(node.tagName.getText(tree))
     ts.forEachChild(node, visit)
   }
   visit(tree)
-  assert.equal(obstacles.length, 1)
-  assert.equal(obstacles[0].openingElement.tagName.getText(tree), "article")
-  assert.match(obstacles[0].getText(tree), /dangerouslySetInnerHTML/)
+  assert.deepEqual(chapters, ["WebsiteSection", "EngineeringSection", "ResearchSection"])
+  assert.doesNotMatch(source, /dangerouslySetInnerHTML|SpectralFieldRuntime|FieldScene/)
+  for (const [component, id] of [
+    ["WebsiteSection", "website"],
+    ["EngineeringSection", "engineering"],
+    ["ResearchSection", "research"],
+  ]) {
+    const chapter = readFileSync(new URL(`../about/${component}.tsx`, import.meta.url), "utf8")
+    assert.match(chapter, new RegExp(`id="about-${id}"`))
+    assert.match(chapter, new RegExp(`data-about-section="${id}"`))
+    assert.match(chapter, /<section\s/)
+    assert.match(chapter, /dangerouslySetInnerHTML=\{\{ __html: html \}\}/)
+  }
 })
 
 test("friends protect readable panels without blocking the entire grid", () => {

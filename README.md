@@ -56,16 +56,16 @@
 - **桌面首页总装**：中心原图、边缘音乐／周报、移动根路径分流、谱场及五分钟周期的集成说明见[桌面首页总装与集中验证](docs/project/home-scene.md)；最终画面仍待人工验收。
 
 - **友链首页预览**：按需加载首页快照，支持键盘与移动端操作，见[友链说明](docs/project/friends-preview.md)。
-- **按入口启动**：首页刷新先播放原有开场，再进行有上限的资源准备；其他页面刷新跳过首页开场，直接准备内容并预热导航与小屋资源，不显示全局粒子。支持跳过与 hydration 失败兜底。实现、预算与验证边界见[全站启动与导航](docs/project/site-startup.md)。
-- **关于页个人档案**：保留 Markdown 与 GitHub 贡献记录，原画背景与局部半透明阅读层，见[关于页](docs/project/about-profile.md)。
+- **按入口启动**：桌面首页开场完成立即揭幕，资源预热并行继续；其他页面和减少动态效果入口跳过开场 iframe，使用有上限的准备阶段。支持跳过与 hydration 失败兜底。职责、独立超时预算与历史记录见[全站启动与导航](docs/project/site-startup.md)。
+- **关于页三个章节**：网站介绍、工程身份与研究身份独立维护 Markdown，共用章节索引和滚动定位，见[关于页结构](docs/project/about-restructure.md)。
 - **统一的页面外壳**：响应式导航、全站背景、日夜主题、动态场景和播放器状态在不同页面间保持一致。
 - **全站组件色卡**：蓝色主基调，搭配玫红、紫色和青绿；中性阅读面禁用米黄、奶油白和浅琥珀底色，素材保留原色，见[全站配色规范](docs/project/blue-theme.md)。
-- **日月与显示入口**：首页以可点击天体切换昼夜，全站紧凑入口保留主题与性能选择，见[设计与预览验收](docs/project/home-mode-panels.md)。
+- **主题与场景**：ThemeProvider 共享日夜状态，首页采用统一高性能及自适应降级；当前约定见[首页总装](docs/project/home-scene.md)，旧天体与显示开关记录见[历史设计](docs/project/home-mode-panels.md)。
 - **导航与侧栏**：首页采用无实色方框的文字导航及冷蓝灰半透明侧栏，周报移出后 120ms 收起；内页导航及手机圆盘见[导航视觉更新与验收](docs/project/navigation-renewal.md)。
 - **TDA 文献雷达**：首页侧栏只保留可点击封面，打开后按论文展开阅读；监控仓库的 Action 将完整周报推送至博客，无需每周重新部署。配置见 [TDA 论文周报](docs/project/tda-paper-monitor.md)。
 - **首页音乐返工**：旧音乐卡片已移除；紧凑控制与舞台歌词已在桌面首页接入。[接口、隔离预览与验证边界](docs/project/home-music-renewal.md)。
-- **音乐播放**：保留现有音频服务及根 Provider 的跨页状态，不提供内页悬浮播放器或独立音乐页。
-- **项目与兴趣归档**：项目页采用可环绕的窗边研究小屋，保留静态预览和可读目录；项目内容由本地数据维护，番剧页通过服务端 Bangumi API 获取收藏数据。
+- **音乐播放**：首次打开首页音乐或项目页耳机面板时加载歌单，加载后由根 Provider/audio 保留跨页状态；首次加载、空歌单及失败均有反馈，支持重试。
+- **项目与兴趣归档**：项目页采用可环绕的窗边研究小屋，保留静态预览和可读目录；项目内容由本地数据维护，番剧页读取服务端同步的不可变快照，并保留 API 回退。
 - **杂谈杂志排版**：不对称图版、完整封面标题和搜索导航，见[杂谈验收](docs/project/chatter-magazine.md)。
 - **双内容分区**：<code>content/math/</code> 生成笔记，<code>content/misc/</code> 生成普通杂谈卡片，其余公开顶层目录在杂谈页显示为带图片的项目文件夹封面。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理；页面布局由 Next.js 提供，仅保留笔记正文所需的 Quartz 样式。
@@ -77,7 +77,7 @@
 | 层级       | 技术                                               |
 | ---------- | -------------------------------------------------- |
 | Web        | Next.js 16、React 19、TypeScript、Tailwind CSS 4   |
-| 动效与场景 | Framer Motion、Three.js、React Three Fiber、PixiJS |
+| 动效与场景 | Framer Motion、Three.js、Canvas 2D                |
 | 内容处理   | Quartz、Markdown、KaTeX、Shiki、FlexSearch         |
 | 数据来源   | 本地 TypeScript 数据、Bangumi API、网易云音乐接口  |
 | 工程化     | ESLint、Prettier、Node.js Test Runner、Vercel      |
@@ -141,6 +141,8 @@ Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Tok
 - <code>content/</code>：笔记与杂谈源内容；<code>math/</code> 进入笔记，<code>misc/</code> 进入普通杂谈，其余公开顶层目录作为杂谈项目文件夹。
 - <code>app/about/about.md</code>：关于页正文。
 
+笔记当前支持 Markdown、公式、代码高亮、展开的 Obsidian Callout、普通内部链接、目录与搜索。Mermaid 围栏保留可读源码；`[!type]+/-` 仍识别为 Callout，但展开显示全文。当前不提供 Mermaid 图形渲染/扩展对话框或链接悬停预览；构建不生成相应失效交互。
+
 ### 搜索引擎索引
 
 站点正式地址为 <https://nothing-new.cn>。根布局的 <code>metadataBase</code> 将各页面的相对 canonical 解析为新域名下的绝对地址。
@@ -161,10 +163,12 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 
 以下目录由构建过程生成，不应手动编辑：
 
-- <code>.quartz-cache/quartz-site/</code>：Quartz 的临时输出目录。
+- <code>.quartz-cache/</code>：内容构建 CLI 的转译缓存；不提供独立 Quartz 站点。
 - <code>.quartz-cache/next/</code>：供 Next.js 读取的内容清单与文章产物。
 - <code>public/quartz-assets/</code>：搜索索引与公开附件。
 - <code>.next/</code>：Next.js 构建产物。
+
+内容 emitter 固定写入上述内容与公共资源目录。`notes:build` 不接受旧 `-o/--output` 参数；它不控制 Next 内容或公开附件的输出位置。
 
 ## 项目结构
 

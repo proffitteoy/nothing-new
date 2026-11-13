@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useEffectEvent, useRef, type RefObject } from "react"
-import { useFieldMode } from "./FieldModeProvider"
+import { useEffect, useRef, type RefObject } from "react"
 import { createHomeVisitClock } from "../lib/home-scene"
 import {
   createSpectralTracerController,
@@ -29,8 +28,6 @@ export default function HomeSpectralCanvas({
   host: RefObject<HTMLElement | null>
 }) {
   const canvas = useRef<HTMLCanvasElement>(null)
-  const { performanceMode } = useFieldMode()
-  const options = useEffectEvent(() => ({ performanceMode }))
 
   useEffect(() => {
     const surface = canvas.current
@@ -70,14 +67,8 @@ export default function HomeSpectralCanvas({
       if (stopped || document.hidden) return
       if (document.documentElement.dataset.startupPhase !== "ready") return
 
-      const settings = options()
-      const interval = reduced.matches
-        ? 1000
-        : degraded
-          ? 1000 / 18
-          : settings.performanceMode === "field"
-            ? 1000 / 45
-            : 1000 / 24
+      // One high-performance baseline, independent of legacy saved mode values.
+      const interval = reduced.matches ? 1000 : degraded ? 1000 / 18 : 1000 / 45
       if (previous && now - previous < interval) {
         frame = requestAnimationFrame(render)
         return
@@ -87,17 +78,14 @@ export default function HomeSpectralCanvas({
       if (!reduced.matches && ++windowFrames && now - windowStart >= 2000) {
         const fps = (windowFrames * 1000) / (now - windowStart)
         stage.dataset.homeFps = fps.toFixed(1)
-        slowWindows = fps < (settings.performanceMode === "field" ? 24 : 14) ? slowWindows + 1 : 0
+        slowWindows = fps < 24 ? slowWindows + 1 : 0
         if (slowWindows >= 2) degraded = true
         windowStart = now
         windowFrames = 0
       }
 
       const began = performance.now()
-      const nextRatio = Math.min(
-        devicePixelRatio || 1,
-        settings.performanceMode === "field" && !degraded ? 1.5 : 1,
-      )
+      const nextRatio = Math.min(devicePixelRatio || 1, degraded ? 1 : 1.5)
       if (width !== innerWidth || height !== innerHeight || ratio !== nextRatio) {
         width = innerWidth
         height = innerHeight
@@ -135,11 +123,7 @@ export default function HomeSpectralCanvas({
 
       stage.dataset.homePhase = "field"
       stage.dataset.homeElapsed = elapsed.toFixed(2)
-      stage.dataset.homeQuality = reduced.matches
-        ? "static"
-        : degraded
-          ? "adaptive-low"
-          : settings.performanceMode
+      stage.dataset.homeQuality = reduced.matches ? "static" : degraded ? "adaptive-low" : "high"
       stage.dataset.homeBufferBytes = String(
         [surface, back, front].reduce((n, c) => n + c.width * c.height, 0) * 4,
       )
@@ -170,7 +154,6 @@ export default function HomeSpectralCanvas({
 
     window.__homeVisitClock?.stop()
     document.addEventListener("visibilitychange", visibility)
-    window.addEventListener("home-scene-settings", redraw)
     window.addEventListener("resize", redraw)
     window.addEventListener("site-startup-phase", redraw)
     reduced.addEventListener("change", redraw)
@@ -180,7 +163,6 @@ export default function HomeSpectralCanvas({
       stopped = true
       cancelAnimationFrame(frame)
       document.removeEventListener("visibilitychange", visibility)
-      window.removeEventListener("home-scene-settings", redraw)
       window.removeEventListener("resize", redraw)
       window.removeEventListener("site-startup-phase", redraw)
       reduced.removeEventListener("change", redraw)
@@ -191,10 +173,6 @@ export default function HomeSpectralCanvas({
       }
     }
   }, [host])
-
-  useEffect(() => {
-    window.dispatchEvent(new Event("home-scene-settings"))
-  }, [performanceMode])
 
   return <canvas ref={canvas} aria-hidden="true" data-home-canvas data-home-artwork="ready" />
 }

@@ -1,4 +1,3 @@
-import { rm } from "node:fs/promises"
 import { styleText } from "node:util"
 
 import config from "../quartz.config"
@@ -22,9 +21,6 @@ async function buildNotes(argv: Argv) {
     incremental: false,
   }
   const perf = new PerfTimer()
-
-  await rm(argv.output, { recursive: true, force: true })
-  console.log(`Cleaned output directory \`${argv.output}\` in ${perf.timeSince()}`)
 
   perf.addEvent("glob")
   const allFiles = await glob("**/*.*", argv.directory, config.configuration.ignorePatterns)

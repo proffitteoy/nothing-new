@@ -1,6 +1,26 @@
 # 全站启动与导航
 
-## 当前开场（按 PR #74 恢复）
+## 现行启动协议（2026-11-13）
+
+桌面根路径使用现有 Alpha 开场，动画按真实经过时间推进至 7.4 秒终态。iframe 在几何清空后发出 `alpha-splash:complete`，SplashScreen 校验同源 origin 和 iframe 的 contentWindow，立即揭幕。没有最终 logo 停留阶段；导航预取、压缩模型下载、番剧 metadata 等可继续在后台完成。动画资源和时长未因本轮文档整理改写。
+
+| 所有者 | 职责与边界 |
+| ------ | ---------- |
+| layout 的 hydration 前脚本 | 设置 `startupEntry=home/page` 和初始 `startupPhase=loading/preparing`；22 秒全局 fail-open，补上 splash-seen、ready 和阶段事件。此预算用于脚本/iframe 加载失败，不是 logo hold。 |
+| SplashScreen | hydration 后的开场控制者；合法完成消息立即 ready；iframe load 后 9.5 秒仍未收到消息则 fail-open。跳过立即揭幕。卸载中止准备并移除监听/定时器。 |
+| 子页、减少动态/受限网络 | 不加载 Alpha iframe；进入 preparing，资源准备最多等待 2.5 秒后揭幕。可见入口图片/字体及场景就绪检查另有 4 秒预算，不使正常 Alpha 完成后停留。 |
+| HomeDeviceGate | 服务端识别之外的客户端根路径分流，以及 SPA 回首页的设备检查；移动访问进入笔记。桌面首页软导航回来不重播已完成的根布局开场。 |
+| HomeSpectralCanvas | 开场遮挡时不推进绘制；揭幕后使用首页可见时钟。隐藏标签页暂停 RAF，可见后继续；减少动态只呈现静态帧。 |
+
+`startupPhase` 的 loading/preparing/ready 描述启动阶段，`splash-seen` 控制全站可见性，`site-startup-phase` 通知监听者。各方职责保持分开；没有新增全局状态机或第二个 Canvas 时钟。预取发起不等于资源就绪，远端服务不是正常开场完成的硬前提。
+
+根 MusicProvider 仅持有音频；歌单在首次展开首页音乐或打开项目页耳机面板时请求。直接阅读、关闭的音乐侧栏和导航预取均不会主动请求音乐元数据。加载后软导航复用同一个 audio；首次打开期间显示加载状态，失败或空歌单可重试。
+
+以下均为历史设计、截图和点时测量；出现 logo hold、全局粒子、独立音乐页、旧性能模式或旧超时时，不应当作现行运行合同。最新验证见[架构审计](codebase-architecture-audit-2026-11-12.md)。
+
+## 历史恢复记录（PR #74）
+
+> 本节保留恢复过程的历史记录；旧版最终图标停留预算已失效，以文首现行协议为准。
 
 开场动画按用户指定恢复为 [PR #74](https://github.com/proffitteoy/nothing-new/pull/74) 的完整原实现（head `777b5a8`）：原点云、Alpha 过滤、局部网格、线束形变和最终 EulerBridgeMark 均使用该 PR 的资源。源码只保留真实时间计时修复及现有蓝色配色映射；反向还原这两处差异后，资源的 SHA-256 与原 PR 完全相同，并由回归测试固定。开场期间暂停被遮住的首页谱场；完成后由预加载状态决定是否停留最终图标，最多再停留 10 秒。
 
@@ -29,7 +49,7 @@
 ## 哪些资源提前准备
 
 - 共享导航清单的八个入口由 `router.prefetch()` 依次启动，手机无需先展开菜单。笔记直接预取服务端解析的默认文章，保留 `/blog` 原有跳转。Next 的 prefetch 没有完成 Promise，不把“已发起”当成“已就绪”。导航 Link 继续负责缓存失效后的预取。
-- 小屋 JS、3.18 MiB 压缩源资源、贴图解码、GLTF 解析和拾取 BVH 在开场准备。直接进入小屋时由当前场景加载，避免预热再解析一份模型。一次待用的 CPU 模型最多保留 60 秒，首次访问转移所有权；后续访问从源缓存创建新资源，失败清除缓存并允许重试。离开路由释放 GPU、纹理、几何和索引，不共享已释放的模型。
+- 小屋 JS 与 3.18 MiB 压缩源资源可在启动时预热；贴图解码、GLTF 解析和拾取 BVH 由挂载的 RoomScene 持有。2026-11-12 已删除无调用者的 CPU 预解析/60 秒待用缓存，后续访问仍从压缩资源缓存创建独立场景，失败可重试。离开路由释放 GPU、纹理、几何和索引，不共享已释放的模型。
 - 原 Octree 构建存在秒级同步任务，改为 three-mesh-bvh 的间接索引，并在模型组之间让出主线程。真实 GLB 的双面射线测试与原始三角形 raycast 对照，避免以性能换取拾取错误。
 - 音乐页代码提前导入，首次使用的两套着色器通过 `compileAsync()` 编译，后台暂停动画。无 WebGL 时保留播放器控制。是否能异步编译还取决于浏览器的 `KHR_parallel_shader_compile` 支持。
 - 番剧 metadata 在首页统计、开场与番剧页共用同一请求，保留 latest → immutable snapshot → API fallback 链路；成功结果保留 300 秒，失败不缓存，不中断其他消费者的请求。

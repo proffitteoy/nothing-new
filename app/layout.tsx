@@ -2,7 +2,6 @@ import "katex/dist/katex.min.css"
 import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
-import { FieldModeProvider } from "../components/FieldModeProvider"
 import { ThemeProvider } from "../components/ThemeProvider"
 import { MusicProvider } from "../components/MusicProvider"
 import { siteConfig } from "../siteConfig"
@@ -42,10 +41,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
-              // Decide before hydration so subpage refreshes never flash the avatar intro.
+              // Decide before hydration so subpage refreshes never show the home opening.
               document.documentElement.dataset.startupEntry = location.pathname === '/' ? 'home' : 'page';
               document.documentElement.dataset.startupPhase = location.pathname === '/' ? 'loading' : 'preparing';
-              // Fail open if hydration or the animation fails; allow 7.4s animation and at most 10s logo hold.
+              // Global 22s fail-open if hydration or iframe loading fails. Alpha completion reveals immediately.
               window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 22000);
             `,
           }}
@@ -104,36 +103,34 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-[var(--site-bg)] font-serif">
         <ThemeProvider>
-          <FieldModeProvider>
-            <SplashScreen blogHref={blogHref} />
+          <SplashScreen blogHref={blogHref} />
 
-            <MusicProvider>
-              <div
-                id="app-mount-root"
-                className="flex-1 flex flex-col transition-opacity duration-1000"
-              >
-                <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                  {!siteConfig.useGradient && <BackgroundSlider />}
-                </div>
-
-                <Navbar blogHref={blogHref} />
-                <ScrollRootManager />
-
-                <div
-                  id="app-scroll-root"
-                  className="relative z-10 flex-1 flex flex-col"
-                  data-scroll-root
-                  data-site-ui
-                >
-                  {children}
-                </div>
-
-                <div className="md:hidden block" data-site-ui>
-                  <MobileBackButton />
-                </div>
+          <MusicProvider>
+            <div
+              id="app-mount-root"
+              className="flex-1 flex flex-col transition-opacity duration-1000"
+            >
+              <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                {!siteConfig.useGradient && <BackgroundSlider />}
               </div>
-            </MusicProvider>
-          </FieldModeProvider>
+
+              <Navbar blogHref={blogHref} />
+              <ScrollRootManager />
+
+              <div
+                id="app-scroll-root"
+                className="relative z-10 flex-1 flex flex-col"
+                data-scroll-root
+                data-site-ui
+              >
+                {children}
+              </div>
+
+              <div className="md:hidden block" data-site-ui>
+                <MobileBackButton />
+              </div>
+            </div>
+          </MusicProvider>
         </ThemeProvider>
       </body>
     </html>
