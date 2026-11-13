@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-/* 1. 声明暗黑模式变体 */
-@custom-variant dark (&:where(.dark, .dark *));
-
 /* Blue leads navigation; rose, violet and mint give components distinct accents. */
 @theme {
   --color-blue-50: #f2f5ff;
@@ -62,22 +59,6 @@
   --site-wash: rgb(66 102 207 / 8%);
 }
 
-.dark {
-  color-scheme: dark;
-  --site-bg: #101523;
-  --site-surface: #1a2233;
-  --site-recess: #141b2a;
-  --site-ink: #e6eaf3;
-  --site-muted: #abb6cb;
-  --site-accent: #a4b8ff;
-  --site-detail: #f18fb8;
-  --site-violet: #bba0ee;
-  --site-mint: #70ccb6;
-  --site-line: #354056;
-  --site-glass: rgb(26 34 51 / 82%);
-  --site-wash: rgb(164 184 255 / 10%);
-}
-
 ::selection {
   color: var(--site-ink);
   background: color-mix(in srgb, var(--site-accent) 24%, var(--site-surface));
@@ -98,23 +79,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  .dark body {
-    color: var(--site-ink);
-    background: var(--site-bg);
-  }
-
   h1,
   h2,
   h3,
   h4 {
     font-weight: 900;
     letter-spacing: -0.02em;
-  }
-
-  .dark .prose {
-    --tw-prose-body: var(--color-slate-200);
-    --tw-prose-headings: var(--color-white);
-    --tw-prose-links: var(--color-blue-400);
   }
 
   .group:hover img {

@@ -11,11 +11,6 @@
   box-shadow: 0 12px 40px rgba(23, 50, 79, 0.13);
   font-family: var(--font-geist-sans, sans-serif);
 }
-:global(.dark) .player {
-  color: var(--scene-ink, var(--site-ink));
-  border-color: rgba(197, 225, 255, 0.26);
-  background: var(--scene-surface, var(--site-surface));
-}
 .player[hidden] {
   display: none;
 }
@@ -69,9 +64,6 @@
   font-size: 0.62rem;
   font-weight: 650;
   letter-spacing: 0.1em;
-}
-:global(.dark) .eyebrow {
-  color: var(--site-violet);
 }
 .title,
 .artist {

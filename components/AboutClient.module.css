@@ -325,11 +325,6 @@
 :global(body):has(.page) :global([data-site-ui]:has(> button[aria-controls="mobile-nav-wheel"])) {
   --journal-paper: var(--site-surface);
 }
-:global(.dark body):has(.page) :global(header:has(nav[aria-label="主导航"])),
-:global(.dark body):has(.page)
-  :global([data-site-ui]:has(> button[aria-controls="mobile-nav-wheel"])) {
-  --journal-paper: var(--site-surface);
-}
 :global(body):has(.page) :global(header:has(nav[aria-label="主导航"])) {
   background: transparent;
 }

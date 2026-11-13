@@ -1,21 +1,13 @@
 import { QuartzTransformerPlugin } from "../types"
 import rehypePrettyCode, { Options as CodeOptions, Theme as CodeTheme } from "rehype-pretty-code"
 
-interface Theme extends Record<string, CodeTheme> {
-  light: CodeTheme
-  dark: CodeTheme
-}
-
 interface Options {
-  theme?: Theme
+  theme?: CodeTheme
   keepBackground?: boolean
 }
 
 const defaultOptions: Options = {
-  theme: {
-    light: "github-light",
-    dark: "github-dark",
-  },
+  theme: "github-light",
   keepBackground: false,
 }
 

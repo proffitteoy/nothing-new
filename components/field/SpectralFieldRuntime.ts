@@ -143,7 +143,6 @@ export interface SpectralFieldRuntimeOptions {
 }
 
 export interface SpectralFieldRuntime {
-  setDark(isDark: boolean): void
   destroy(): void
 }
 
@@ -160,7 +159,6 @@ export function createSpectralFieldRuntime({
     const speciesContext = speciesCanvas.getContext("2d", { alpha: true })
     const interactionContext = interactionCanvas.getContext("2d", { alpha: true })
     if (!speciesContext || !interactionContext) return null
-    let dark = document.documentElement.classList.contains("dark")
     let destroyed = false
 
     const sakura = Array.from({ length: EFFECT_COUNTS.sakura }, (_, index) => ({
@@ -238,7 +236,8 @@ export function createSpectralFieldRuntime({
     let animationFrame = 0
     let lastFrame = 0
     let elapsedSeconds = 0
-    let themeBlend = dark ? 1 : 0
+    // This detached legacy effect uses the site's fixed light appearance.
+    const themeBlend = 0
     let qualityIndex = desktopQuery.matches ? 1 : FIELD_QUALITY.length - 1
     let obstacleSampleAt = 0
     let frameCount = 0
@@ -483,13 +482,6 @@ export function createSpectralFieldRuntime({
 
       const deltaSeconds = clamp(elapsedSinceLastFrame / 1000, 0, 0.1)
 
-      if (reducedMotionQuery.matches) {
-        themeBlend = dark ? 1 : 0
-      } else {
-        const themeTarget = dark ? 1 : 0
-        themeBlend += clamp(themeTarget - themeBlend, -deltaSeconds, deltaSeconds)
-      }
-
       // Preserve elapsed scene time across tab visibility pauses.
       elapsedSeconds += deltaSeconds
       const time = elapsedSeconds
@@ -512,7 +504,6 @@ export function createSpectralFieldRuntime({
       if (tracerController) {
         tracerController.render({
           alpha: reducedMotionQuery.matches ? 0 : 1,
-          theme: themeBlend,
           time: spectralTime,
           backgroundCount: quality.backgroundCount,
           foregroundCount: quality.foregroundCount,
@@ -610,28 +601,12 @@ export function createSpectralFieldRuntime({
     reducedMotionQuery.addEventListener("change", syncAnimation)
     syncAnimation()
 
-    const setDark = (isDark: boolean) => {
-      if (destroyed) return
-      dark = isDark
-      if (reducedMotionQuery.matches && document.visibilityState === "visible") {
-        renderFrame(performance.now(), true)
-      }
-    }
-    const themeObserver = new MutationObserver(() => {
-      setDark(document.documentElement.classList.contains("dark"))
-    })
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    })
-
     const destroy = () => {
       if (destroyed) return
       destroyed = true
       stopAnimation()
       tracerController?.destroy()
       obstacleObserver.disconnect()
-      themeObserver.disconnect()
       window.removeEventListener("resize", handleResize)
       window.removeEventListener("click", handleClick)
       document.removeEventListener("visibilitychange", syncAnimation)
@@ -643,5 +618,5 @@ export function createSpectralFieldRuntime({
       }
     }
 
-    return { setDark, destroy }
+    return { destroy }
 }

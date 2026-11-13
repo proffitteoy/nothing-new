@@ -10,7 +10,6 @@ import { lifeObjects, projects, roomTargets, type RoomTarget } from "./projects"
 import styles from "./room.module.css"
 
 type Props = {
-  isDark: boolean
   reduceMotion: boolean
   rotationEnabled: boolean
   paused: boolean
@@ -23,7 +22,6 @@ type Props = {
 
 type PreparedRoom = {
   model: THREE.Group
-  nightTexture: THREE.Texture
   trees: Map<THREE.Mesh, MeshBVH>
 }
 function disposeModel(root: THREE.Object3D, extraTextures: Iterable<THREE.Texture> = []) {
@@ -46,16 +44,9 @@ function disposeModel(root: THREE.Object3D, extraTextures: Iterable<THREE.Textur
   }
 }
 async function prepareRoom(): Promise<PreparedRoom> {
-  const [data, night] = await preloadRoomAssets()
+  const data = await preloadRoomAssets()
   const { scene: model } = await new GLTFLoader().parseAsync(data, "/projects-room/")
-  const textures: THREE.Texture[] = []
   try {
-    const bitmap = await createImageBitmap(night, { colorSpaceConversion: "none" })
-    const nightTexture = new THREE.Texture(bitmap)
-    textures.push(nightTexture)
-    nightTexture.flipY = false
-    nightTexture.colorSpace = THREE.SRGBColorSpace
-    nightTexture.needsUpdate = true
     const meshes: THREE.Mesh[] = []
     model.traverse((node) => {
       if (node instanceof THREE.Mesh) meshes.push(node)
@@ -65,9 +56,9 @@ async function prepareRoom(): Promise<PreparedRoom> {
       await new Promise((resolve) => setTimeout(resolve, 0))
       trees.set(mesh, new MeshBVH(mesh.geometry, { indirect: true }))
     }
-    return { model, nightTexture, trees }
+    return { model, trees }
   } catch (error) {
-    disposeModel(model, textures)
+    disposeModel(model)
     throw error
   }
 }
@@ -117,7 +108,7 @@ export default memo(function RoomScene(props: Props) {
     controls.rotateSpeed = 0.65
     controls.zoomSpeed = 0.65
     controls.target.set(0, 1.1, 0)
-    // Day/night diffuse lighting is baked in Cycles: shadow detail without per-frame lights.
+    // Window lighting is baked in Cycles: shadow detail without per-frame lights.
     const nodeGeometry = new THREE.SphereGeometry(0.004, 8, 6)
     const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0xafd9e9, toneMapped: false })
     const signalNodes = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, 7)
@@ -158,8 +149,6 @@ export default memo(function RoomScene(props: Props) {
     const localHit = new THREE.Vector3()
     const inverse = new THREE.Matrix4()
     const bakedTextures = new Set<THREE.Texture>()
-    let dayTexture: THREE.Texture | null = null
-    let nightTexture: THREE.Texture | null = null
     const targets = new Map<RoomTarget, THREE.Object3D>()
     const anchors = new Map<RoomTarget, THREE.Object3D>()
     const basePositions = new Map<THREE.Object3D, THREE.Vector3>()
@@ -373,13 +362,6 @@ export default memo(function RoomScene(props: Props) {
       controls.enabled = interactive
       controls.enableDamping = !latest.current.reduceMotion
       canvas!.style.touchAction = mobile && !latest.current.rotationEnabled ? "pan-y" : "none"
-      const texture = latest.current.isDark ? nightTexture : dayTexture
-      if (texture) {
-        for (const mesh of meshes) {
-          const material = mesh.material as THREE.MeshBasicMaterial
-          material.map = texture
-        }
-      }
       if (resetKey !== latest.current.resetKey) {
         resetKey = latest.current.resetKey
         resetCamera()
@@ -488,13 +470,11 @@ export default memo(function RoomScene(props: Props) {
     void prepareRoom()
       .then(async (room) => {
         if (disposed) {
-          disposeModel(room.model, [room.nightTexture])
+          disposeModel(room.model)
           room.trees.clear()
           return
         }
         model = room.model
-        nightTexture = room.nightTexture
-        bakedTextures.add(nightTexture)
         for (const [mesh, tree] of room.trees) hitTrees.set(mesh, tree)
         scene.add(model)
         model.updateMatrixWorld(true)
@@ -508,8 +488,7 @@ export default memo(function RoomScene(props: Props) {
             const mat = object.material as THREE.MeshBasicMaterial
             mat.side = THREE.DoubleSide
             mat.toneMapped = false
-            dayTexture = mat.map
-            if (dayTexture) bakedTextures.add(dayTexture)
+            if (mat.map) bakedTextures.add(mat.map)
             object.geometry.computeBoundingBox()
             occluders.set(object, object.geometry.boundingBox!.clone())
 

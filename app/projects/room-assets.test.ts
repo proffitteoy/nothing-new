@@ -7,9 +7,6 @@ import sharp from "sharp"
 import { projects, roomTargets } from "./projects"
 
 const bytes = readFileSync(new URL("../../public/projects-room/study.glb", import.meta.url))
-const nightBytes = readFileSync(
-  new URL("../../public/projects-room/study-night.jpg", import.meta.url),
-)
 const jsonLength = bytes.readUInt32LE(12)
 const gltf = JSON.parse(bytes.subarray(20, 20 + jsonLength).toString("utf8")) as {
   nodes: { name?: string; mesh?: number; translation?: number[] }[]
@@ -25,10 +22,9 @@ test("the shipped GLB is self-contained and within the agreed scene budget", () 
   assert.equal(bytes.readUInt32LE(4), 2)
   assert.equal(bytes.readUInt32LE(8), bytes.length)
   assert.ok(
-    bytes.length + nightBytes.length < 4 * 1024 * 1024,
-    "model + both light bakes must remain below 4 MiB",
+    bytes.length < 4 * 1024 * 1024,
+    "the self-contained model must remain below 4 MiB",
   )
-  assert.equal(nightBytes.readUInt16BE(0), 0xffd8, "night lightmap is a JPEG")
   assert.ok(
     gltf.materials.every((mat) => mat.extensions?.KHR_materials_unlit),
     "physically baked lighting must not be lit a second time at runtime",

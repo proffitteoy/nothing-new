@@ -15,9 +15,8 @@ test("room prewarm shares compressed assets across visits and retries a failed d
   fail = false
   const pending = preloadRoomAssets()
   assert.equal(preloadRoomAssets(), pending)
-  const [model, night] = await pending
+  const model = await pending
   assert.equal(model.byteLength, 3)
-  assert.equal(night.size, 3)
   assert.equal(await preloadRoomAssets(), await pending)
-  assert.equal(calls, 4, "only one pair of downloads per attempt")
+  assert.equal(calls, 2, "only the self-contained model downloads per attempt")
 })

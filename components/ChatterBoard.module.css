@@ -15,14 +15,6 @@
   color: var(--ink);
   font-family: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
-:global(.dark) .board {
-  --paper: var(--site-surface);
-  --ink: var(--site-ink);
-  --muted: var(--site-muted);
-  --accent: var(--site-accent);
-  --line: var(--site-line);
-}
-
 .masthead {
   display: flex;
   align-items: flex-end;

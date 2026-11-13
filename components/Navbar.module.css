@@ -12,15 +12,6 @@
   font-family: var(--journal-ui);
 }
 
-:global(.dark) .visualScope {
-  --journal-paper: var(--site-surface);
-  --journal-ink: var(--site-ink);
-  --journal-muted: var(--site-muted);
-  --journal-accent: var(--site-accent);
-  --journal-line: var(--site-line);
-  --journal-pink: var(--site-detail);
-}
-
 .visualScope a:focus-visible,
 .visualScope button:focus-visible {
   outline: 2px solid var(--journal-accent);

@@ -55,7 +55,6 @@ test("homepage long spectral curves render immediately, remain visible, and fade
       fillRect() { composites[index].push(this.globalCompositeOperation) },
       stroke(path: TestPath) {
         if (!path.segments) return
-        // The night glow re-strokes the same geometry. Count each pass separately.
         if (this.globalCompositeOperation === "lighter") glowPaths[index] += path.segments
         else paths[index] += path.segments
         widths[index].push(this.lineWidth)
@@ -70,7 +69,6 @@ test("homepage long spectral curves render immediately, remain visible, and fade
     controller.resize(1200, 800, 1)
     const frame: SpectralTracerFrame = {
       alpha: 2.8,
-      theme: 1,
       time: 0.1,
       backgroundCount: 3200,
       foregroundCount: 120,
@@ -144,7 +142,7 @@ test("homepage long spectral curves render immediately, remain visible, and fade
     ambientController.render({ ...ambientFrame, time: 0.13 })
     assert.ok(paths[0] > 0 && paths[0] <= 320, "background respawns cannot flash long paths")
     assert.ok(paths[1] > 0 && paths[1] <= 40, "foreground respawns cannot flash long paths")
-    assert.deepEqual(glowPaths, paths, "night glow must reuse the same short respawn geometry")
+    assert.deepEqual(glowPaths, [0, 0], "the shared palette draws each curve only once")
     ambientController.destroy()
   } finally {
     if (savedPath) Object.defineProperty(globalThis, "Path2D", savedPath)

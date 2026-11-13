@@ -33,16 +33,10 @@ const FIELD_PHASES = [0.31, 2.17, 4.02, 5.41, 1.24, 3.52] as const
 
 type TracerColor = readonly [number, number, number]
 
-const DAY_TRACER_COLORS = [
+const TRACER_COLORS = [
   [31, 101, 179],
   [45, 126, 190],
   [99, 75, 171],
-] as const satisfies readonly TracerColor[]
-
-const NIGHT_TRACER_COLORS = [
-  [78, 201, 250],
-  [99, 173, 254],
-  [177, 142, 254],
 ] as const satisfies readonly TracerColor[]
 
 export type TracerObstacle = {
@@ -54,7 +48,6 @@ export type TracerObstacle = {
 
 export type SpectralTracerFrame = {
   alpha: number
-  theme: number
   time: number
   backgroundCount: number
   foregroundCount: number
@@ -98,11 +91,6 @@ function clamp(value: number, min: number, max: number) {
 
 function fract(value: number) {
   return value - Math.floor(value)
-}
-
-function mixColor(a: TracerColor, b: TracerColor, amount: number) {
-  const channel = (index: number) => Math.round(a[index] + (b[index] - a[index]) * amount)
-  return "rgb(" + channel(0) + ", " + channel(1) + ", " + channel(2) + ")"
 }
 
 /**
@@ -401,23 +389,13 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
       path.lineTo(next.x, next.y)
     }
 
-    // Strong visible cores over the home's artwork. A fine luminous under-
-    // stroke at night adds depth without turning the curves into fuzzy hairs.
-    const theme = clamp(frame.theme, 0, 1)
+    // Strong visible cores over the home's artwork, using one shared palette.
     const gain = clamp(frame.alpha * 0.66, 0, 1)
     context.lineCap = "round"
     context.lineJoin = "round"
     for (let bucket = 0; bucket < 3; bucket++) {
-      const colour = frame.colours
-        ? mixColor(frame.colours[bucket], frame.colours[bucket], 0)
-        : mixColor(DAY_TRACER_COLORS[bucket], NIGHT_TRACER_COLORS[bucket], theme)
-      context.strokeStyle = colour
-      if (theme > 0.02) {
-        context.globalCompositeOperation = "lighter"
-        context.globalAlpha = gain * theme * 0.16
-        context.lineWidth = layer === 0 ? 5.6 : 6.4
-        context.stroke(paths[bucket])
-      }
+      const colour = (frame.colours ?? TRACER_COLORS)[bucket]
+      context.strokeStyle = `rgb(${colour.join(", ")})`
       context.globalCompositeOperation = "source-over"
       context.globalAlpha = gain * (layer === 0 ? 0.76 : 0.92)
       context.lineWidth = layer === 0 ? 1.95 : 2.45

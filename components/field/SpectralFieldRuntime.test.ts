@@ -15,9 +15,7 @@ test("spectral runtime is detached from routing and obsolete performance mode", 
   assert.match(runtimeSource, /now - obstacleSampleAt >= 100/)
   assert.match(runtimeSource, /getBoundingClientRect\(\)/)
   assert.match(runtimeSource, /resizeCanvases\(\)/)
-  assert.match(runtimeSource, /themeBlend \+=/)
   assert.match(runtimeSource, /obstacleObserver\.disconnect\(\)/)
-  assert.match(runtimeSource, /themeObserver\.disconnect\(\)/)
   assert.doesNotMatch(runtimeSource, /usePathname|useFieldMode|performanceMode|FieldModeProvider|["']\/music["']/)
   assert.doesNotMatch(layoutSource, /FieldScene|SpectralFieldRuntime/)
 })
@@ -95,11 +93,10 @@ test("disabled desktop runtime does not schedule RAF and releases all subscripti
     })
     assert.ok(runtime)
     assert.equal(animationFrames, 0, "desktop-only mode must not render on mobile")
-    assert.equal(observed, 2, "obstacle and theme mutation observers are tracked")
-    runtime.setDark(true)
+    assert.equal(observed, 1, "only the obstacle mutation observer is needed")
     runtime.destroy()
     runtime.destroy()
-    assert.equal(disconnected, 2)
+    assert.equal(disconnected, 1)
     assert.equal(subscriptions, unsubscriptions)
     assert.deepEqual(
       [speciesCanvas.width, backCanvas.width, frontCanvas.width, interactionCanvas.width],
