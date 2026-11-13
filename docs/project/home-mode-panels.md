@@ -1,5 +1,7 @@
 # 日月天体与显示入口（#49 / #70）
 
+> 历史设计记录：2026-11-12 已移除旧 SiteDisplayControls、FieldModeProvider 和性能模式持久化，首页统一高性能基线。下文的开关、组件和独立场景预览不代表当前可用接口。`celestial-preview.py` 已退役，旧选项以状态码 2 报停，不再生成或清理路由；整改见[调查文档](codebase-architecture-audit-2026-11-12.md)。
+
 按 #49 最新正文与 PR #62 的返工回复，旧两张模式面板已撤下。原 PR 保持 OPEN / DRAFT，待人工视觉验收。
 
 ## 实际设计依据
@@ -26,21 +28,9 @@
 
 ![夜间完整场景](../images/celestial/scene-night.jpg)
 
-使用 Node 22 / npm 10+，安装可选 Python Playwright（见导航验收说明）后：
+原始脚本曾生成 `app/celestial-study/page.tsx`，以生产天体组件运行隔离预览，并写入 `.sync/tmp-celestial/`。该组件现已退役，`--prepare-study`、`--clean-study` 和旧录制/检查选项均不可再执行原流程。入口只打印退役提示，不修改已有文件；原实现可从[调查基线源码](https://github.com/proffitteoy/nothing-new/blob/b4e7e79b64e749276b4aacff786fd788935106d8/scripts/celestial-preview.py)恢复查阅。
 
-```powershell
-npm.cmd ci
-python scripts/celestial-preview.py --prepare-study
-npm.cmd run dev -- --hostname 127.0.0.1 --port 3129
-```
-
-打开 <http://127.0.0.1:3129/celestial-study>。另一个终端执行：
-
-```powershell
-python scripts/celestial-preview.py --url http://127.0.0.1:3129
-```
-
-原始截图和报告写入忽略目录 `.sync/tmp-celestial/`。支持 `--browser Chromium路径`、`--checks-only`、`--record-only`。预览生成的 `app/celestial-study/page.tsx` 不提交、不部署；结束后执行 `python scripts/celestial-preview.py --clean-study` 删除。
+现行主题和小屋交互使用 `scripts/projects-preview.py` 检查真实 `/projects`；首页检查入口见 `scripts/home-scene-preview.py --help`。后者仍有历史天体/周期断言，需按当前行为选择并核对分支，不能直接把旧完整矩阵作为当前首页通过证据。当前没有独立天体 study 路由。
 
 ## 已验证与剩余边界
 

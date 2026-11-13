@@ -3,7 +3,6 @@ import type { FilePath, FullSlug } from "./path"
 
 export interface Argv {
   directory: string
-  output: string
   verbose: boolean
   concurrency?: number
 }

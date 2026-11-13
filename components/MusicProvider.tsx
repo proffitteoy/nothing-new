@@ -19,8 +19,7 @@ export type MusicSong = {
   url?: string;
   lrc?: string;
   lyric?: string;
-  lyrics?: LyricLine[] | string;
-  lrcUrl?: string | null;
+  lyrics?: LyricLine[];
   duration?: number;
   source?: string;
   error?: unknown;
@@ -39,12 +38,6 @@ type ApiSong = {
   duration?: number;
   source?: string;
   error?: unknown;
-};
-
-type LoadSongsOptions = {
-  stationName?: string;
-  stationDescription?: string;
-  autoPlay?: boolean;
 };
 
 function parseLrc(lrcText: string): LyricLine[] {
@@ -76,7 +69,7 @@ function parseLrc(lrcText: string): LyricLine[] {
   return result.sort((a, b) => a.time - b.time);
 }
 
-// 🌟 1. 扩充 Context 类型，加入 MusicPage 需要的所有属性
+// Shared controls for the homepage and project room.
 type PlayMode = 'loop' | 'single' | 'random';
 type MusicStatus = 'loading' | 'ready' | 'empty' | 'error';
 
@@ -92,8 +85,6 @@ interface MusicContextType {
   isLoading: boolean;
   musicStatus: MusicStatus;
   musicError: string;
-  stationName: string;
-  stationDescription: string;
   volume: number;
   isMuted: boolean;
   playMode: PlayMode;
@@ -103,12 +94,11 @@ interface MusicContextType {
   prevSong: () => void;
   handleSeek: (e: ChangeEvent<HTMLInputElement>) => void;
   seekToPercent: (newProgress: number) => void;
-  playSong: (index: number) => void;
   setVolume: (value: number) => void;
   toggleMute: () => void;
   togglePlayMode: () => void;
   retryMusic: () => void;
-  loadSongsByIds: (ids: Array<string | number>, options?: LoadSongsOptions) => Promise<void>;
+  initializeMusic: () => void;
 }
 
 const MusicContext = createContext<MusicContextType | null>(null);
@@ -123,7 +113,6 @@ function normalizeApiSong(song: ApiSong): MusicSong | null {
     album: song.album || '',
     cover: song.cover || song.pic || 'https://bu.dusays.com/2026/03/24/69c24230a5ff8.jpg',
     src: song.url,
-    lrcUrl: null,
     duration: song.duration,
     source: song.source,
     lyrics: song.lrc ? parseLrc(song.lrc) : [],
@@ -142,9 +131,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [musicStatus, setMusicStatus] = useState<MusicStatus>('loading');
   const [musicError, setMusicError] = useState('');
-  const [stationName, setStationName] = useState('默认云端频道');
-  const [stationDescription, setStationDescription] = useState('来自站点配置的云端歌单');
   const [retryKey, setRetryKey] = useState(0);
+  const [requested, setRequested] = useState(false);
+  const initializeMusic = useCallback(() => setRequested(true), []);
 
   // 🌟 2. 新增音量和播放模式状态
   const [volume, setVolumeState] = useState(1);
@@ -154,7 +143,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const currentSong = playlist[currentIndex];
 
-  const loadSongsByIds = useCallback(async (ids: Array<string | number>, options: LoadSongsOptions = {}) => {
+  const loadSongsByIds = useCallback(async (ids: Array<string | number>) => {
     const songIds = ids.map((id) => String(id).trim()).filter(Boolean);
 
     if (songIds.length === 0) {
@@ -200,10 +189,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setProgress(0);
       setCurrentTime(0);
       setDuration(0);
-      setStationName(options.stationName || 'Mineradio 调谐频道');
-      setStationDescription(options.stationDescription || `${mergedPlaylist.length} 首歌已经进入频道栈`);
       setMusicStatus('ready');
-      setIsPlaying(options.autoPlay ?? false);
+      setIsPlaying(false);
     } catch (error) {
       setPlaylist([]);
       setCurrentIndex(0);
@@ -217,6 +204,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!requested) return;
     let isMounted = true;
     const fetchMusicData = async () => {
       if (!siteConfig.cloudMusicIds?.length) {
@@ -235,11 +223,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setCurrentLyric("正在连接高可用神经云端...");
 
       try {
-        await loadSongsByIds(siteConfig.cloudMusicIds, {
-          stationName: '默认云端频道',
-          stationDescription: '来自站点配置的云端歌单',
-          autoPlay: false,
-        });
+        await loadSongsByIds(siteConfig.cloudMusicIds);
       } catch (error) {
         if (isMounted) {
           setPlaylist([]);
@@ -255,7 +239,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     fetchMusicData();
 
     return () => { isMounted = false; };
-  }, [loadSongsByIds, retryKey]);
+  }, [requested, loadSongsByIds, retryKey]);
 
   useEffect(() => {
     if (!currentSong) return;
@@ -271,21 +255,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       if (Array.isArray(currentSong.lyrics) && currentSong.lyrics.length > 0) {
         setLyrics(currentSong.lyrics);
         setCurrentLyric(currentSong.lyrics[0]?.text || "\u266a \u7eaf\u4eab\u97f3\u4e50 \u266a");
-      } else if (currentSong.lrcUrl) {
-        fetch(currentSong.lrcUrl)
-          .then(res => res.text())
-          .then(text => {
-            if (isMounted) {
-              const parsed = parseLrc(text);
-              setLyrics(parsed);
-              setPlaylist(prev => {
-                const newPlaylist = [...prev];
-                newPlaylist[currentIndex].lyrics = parsed;
-                return newPlaylist;
-              });
-            }
-          })
-          .catch(() => { if (isMounted) setCurrentLyric("\u266a \u7eaf\u4eab\u97f3\u4e50 \u266a"); });
       } else {
         setCurrentLyric("\u266a \u7eaf\u4eab\u97f3\u4e50 \u266a");
       }
@@ -334,13 +303,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     } else {
       setCurrentIndex((prev) => (prev - 1 + playlist.length) % playlist.length);
     }
-  };
-
-  // 🌟 6. 暴露直接播放指定歌曲的方法
-  const playSong = (index: number) => {
-    if (index < 0 || index >= playlist.length) return;
-    setCurrentIndex(index);
-    if (!isPlaying) setIsPlaying(true); // 保证切歌后自动播放
   };
 
   const handleTimeUpdate = () => {
@@ -400,10 +362,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   return (
     <MusicContext.Provider value={{
         playlist, currentIndex, currentSong, isPlaying, progress, currentTime, duration, currentLyric, isLoading,
-        musicStatus, musicError, stationName, stationDescription,
+        musicStatus, musicError,
         volume, isMuted, playMode, // 暴露新状态
         togglePlay, nextSong, prevSong, handleSeek, seekToPercent,
-        playSong, setVolume, toggleMute, togglePlayMode, retryMusic, loadSongsByIds // 暴露新方法
+        setVolume, toggleMute, togglePlayMode, retryMusic, initializeMusic
     }}>
       {children}
       {currentSong && (

@@ -29,7 +29,8 @@ import type { QuartzEmitterPlugin } from "../types"
 const artifactRoot = path.join(".quartz-cache", "next")
 const publicAssetRoot = path.join("public", "quartz-assets", "content")
 const assetExtension = /\.(?:avif|gif|ico|jpe?g|pdf|png|svg|webp|mp3|mp4|wav|woff2?|ttf)$/i
-const optimizedImageWidths = [384, 640, 750, 828, 1080, 1200, 1440, 1920]
+// Must remain a subset of next.config.ts images.deviceSizes + images.imageSizes.
+const optimizedImageWidths = [384, 640, 828, 1200, 1440, 1920]
 const noteImageSizes =
   "(max-width: 639px) calc(100vw - 3rem), (max-width: 1023px) calc(100vw - 6rem), 820px"
 
@@ -170,16 +171,8 @@ async function rewriteTree(
   const copy = structuredClone(tree)
   const assets = new Set<string>()
   const imageTasks: Promise<void>[] = []
-  let mermaid = false
-  let popovers = false
 
   visit(copy, "element", (node: Element) => {
-    const classNames = Array.isArray(node.properties.className)
-      ? node.properties.className.map(String)
-      : []
-
-    if (classNames.includes("mermaid")) mermaid = true
-
     if (node.tagName === "a" && typeof node.properties.href === "string") {
       const href = node.properties.href
       if (href.startsWith("#") || isExternalUrl(href)) return
@@ -199,7 +192,6 @@ async function rewriteTree(
           node.properties.href = `/${section}?tag=${encodeURIComponent(dataSlug.slice(5))}`
         } else {
           node.properties.href = `${getNoteRoute(dataSlug)}${anchor}`
-          popovers = true
         }
       }
     }
@@ -243,7 +235,7 @@ async function rewriteTree(
 
   await Promise.all(imageTasks)
 
-  return { tree: copy, assets: [...assets], mermaid, popovers }
+  return { tree: copy, assets: [...assets] }
 }
 
 function createReference(fileData: QuartzPluginData): NoteReference {
@@ -477,8 +469,9 @@ async function buildArtifact(
     text: fileData.text ?? "",
     assets: rewritten.assets,
     features: {
-      mermaid: rewritten.mermaid,
-      popovers: rewritten.popovers,
+      // Enabled Next client capabilities, not Markdown syntax detection.
+      mermaid: false,
+      popovers: false,
     },
   }
 }

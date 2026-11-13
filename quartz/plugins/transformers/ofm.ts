@@ -42,7 +42,8 @@ const defaultOptions: Options = {
   highlight: true,
   wikilinks: true,
   callouts: true,
-  mermaid: true,
+  // Next serves static Mermaid source; no diagram client is mounted.
+  mermaid: false,
   parseTags: true,
   parseArrows: true,
   parseBlockReferences: true,
@@ -214,7 +215,7 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
             replacements.push([
               wikilinkRegex,
               (value: string, ...capture: string[]) => {
-                let [rawFp, rawHeader, rawAlias] = capture
+                const [rawFp, rawHeader, rawAlias] = capture
                 const fp = rawFp?.trim() ?? ""
                 const anchor = rawHeader?.trim() ?? ""
                 const alias: string | undefined = rawAlias?.slice(1).trim()
@@ -425,10 +426,9 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
 
               const match = firstLine.match(calloutRegex)
               if (match && match.input) {
-                const [calloutDirective, typeString, calloutMetaData, collapseChar] = match
+                const [calloutDirective, typeString, calloutMetaData] = match
                 const calloutType = canonicalizeCallout(typeString.toLowerCase())
-                const collapse = collapseChar === "+" || collapseChar === "-"
-                const defaultState = collapseChar === "-" ? "collapsed" : "expanded"
+                // Fold markers are accepted, but content stays expanded without a client controller.
                 const titleContent = match.input.slice(calloutDirective.length).trim()
                 const useDefaultTitle = titleContent === "" && restOfTitle.length === 0
                 const titleNode: Paragraph = {
@@ -445,8 +445,6 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
                 }
                 const title = mdastToHtml(titleNode)
 
-                const toggleIcon = `<div class="fold-callout-icon"></div>`
-
                 const titleHtml: Html = {
                   type: "html",
                   value: `<div
@@ -454,7 +452,6 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
                 >
                   <div class="callout-icon"></div>
                   <div class="callout-title-inner">${title}</div>
-                  ${collapse ? toggleIcon : ""}
                 </div>`,
                 }
 
@@ -490,12 +487,6 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
                 node.children.splice(0, 1, ...blockquoteContent)
 
                 const classNames = ["callout", calloutType]
-                if (collapse) {
-                  classNames.push("is-collapsible")
-                }
-                if (defaultState === "collapsed") {
-                  classNames.push("is-collapsed")
-                }
 
                 // add properties to base blockquote
                 node.data = {
@@ -503,7 +494,6 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
                     ...(node.data?.hProperties ?? {}),
                     className: classNames.join(" "),
                     "data-callout": calloutType,
-                    "data-callout-fold": collapse,
                     "data-callout-metadata": calloutMetaData,
                   },
                 }

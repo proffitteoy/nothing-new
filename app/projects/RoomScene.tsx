@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { memo, useEffect, useRef } from "react"
 import * as THREE from "three"
 import { OrbitControls } from "three/addons/controls/OrbitControls.js"
 import { MeshBVH } from "three-mesh-bvh"
@@ -71,40 +71,9 @@ async function prepareRoom(): Promise<PreparedRoom> {
     throw error
   }
 }
-// One unmounted, CPU-only scene can wait for the first visit. Ownership transfers
-// exactly once; subsequent visits recreate resources from the compressed cache.
-let prepared: Promise<PreparedRoom> | null = null
-let expiry: ReturnType<typeof setTimeout> | undefined
-export function preloadRoomScene() {
-  if (!prepared) {
-    const task = prepareRoom()
-    prepared = task
-    void task
-      .then((room) => {
-        if (prepared !== task) return
-        expiry = setTimeout(() => {
-          if (prepared === task) {
-            prepared = null
-            disposeModel(room.model, [room.nightTexture])
-            room.trees.clear()
-          }
-        }, 60000)
-      })
-      .catch(() => {
-        if (prepared === task) prepared = null
-      })
-  }
-  return prepared
-}
-function takePreparedRoom() {
-  const task = prepared ?? prepareRoom()
-  prepared = null
-  clearTimeout(expiry)
-  return task
-}
-
 // This component owns all GPU resources. React owns the accessible text layer.
-export default function RoomScene(props: Props) {
+// Music progress rerenders ProjectsBoard; only scene prop changes cross this boundary.
+export default memo(function RoomScene(props: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const latest = useRef(props)
@@ -516,7 +485,7 @@ export default function RoomScene(props: Props) {
     observer.observe(host)
     resize()
 
-    void takePreparedRoom()
+    void prepareRoom()
       .then(async (room) => {
         if (disposed) {
           disposeModel(room.model, [room.nightTexture])
@@ -670,4 +639,4 @@ export default function RoomScene(props: Props) {
       </div>
     </div>
   )
-}
+})

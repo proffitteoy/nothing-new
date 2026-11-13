@@ -58,24 +58,6 @@ export const siteConfig = {
     "睡大觉中",
     "到底在干嘛？",
   ],
-  buildDate: "2025-11-27T08:26:25+08:00", // 稳定运行起算时间
-  footerBadges: [
-    {
-      name: "Next.js 16.2.1",
-      color: "text-sky-500",
-      svg: '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 5v10h-2V7h2z"/>',
-    },
-    {
-      name: "React 19.2.4",
-      color: "text-cyan-400",
-      svg: '<path d="M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zm0 7.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>',
-    },
-    {
-      name: "Tailwind CSS 4",
-      color: "text-teal-400",
-      svg: '<path d="M6 10c1.2-3.2 3.3-4.8 6.3-4.8 1.8 0 3.2.7 4.4 2.1.8.9 1.6 1.4 2.6 1.4 1.2 0 2.1-.6 2.7-1.8-1.2 3.2-3.3 4.8-6.3 4.8-1.8 0-3.2-.7-4.4-2.1-.8-.9-1.6-1.4-2.6-1.4-1.2 0-2.1.6-2.7 1.8zm-4 7.1c1.2-3.2 3.3-4.8 6.3-4.8 1.8 0 3.2.7 4.4 2.1.8.9 1.6 1.4 2.6 1.4 1.2 0 2.1-.6 2.7-1.8-1.2 3.2-3.3 4.8-6.3 4.8-1.8 0-3.2-.7-4.4-2.1-.8-.9-1.6-1.4-2.6-1.4-1.2 0-2.1.6-2.7 1.8z"/>',
-    },
-  ],
   friendLinkIssueUrl: "https://github.com/proffitteoy/nothing-new/issues/new",
   friendLinkApplyFormat:
     "名称：阿的宝藏之地\n简介：为学日益，为道日损\n链接：https://nothing-new.cn\n头像：https://nothing-new.cn/avatar",

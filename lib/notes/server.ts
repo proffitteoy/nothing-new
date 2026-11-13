@@ -37,10 +37,13 @@ export async function getNoteByRoute(route: string): Promise<NoteArtifact | null
   return artifactPath ? readArtifact(artifactPath) : null
 }
 
-export async function getSectionNotes(section: NoteSection): Promise<NoteArtifact[]> {
+export async function getSectionNotes(
+  section: NoteSection,
+  prefix = `/${section}/`,
+): Promise<NoteArtifact[]> {
   const manifest = await getNoteManifest()
-  const entries = Object.entries(manifest.artifacts).filter(([route]) =>
-    route.startsWith(`/${section}/`),
+  const entries = Object.entries(manifest.artifacts).filter(
+    ([route]) => route.startsWith(`/${section}/`) && route.startsWith(prefix),
   )
   const notes = await Promise.all(entries.map(([, artifactPath]) => readArtifact(artifactPath)))
   return notes.sort((left, right) => {
@@ -51,9 +54,8 @@ export async function getSectionNotes(section: NoteSection): Promise<NoteArtifac
 }
 
 export async function getFolderNotes(section: NoteSection, route: string): Promise<NoteArtifact[]> {
-  const notes = await getSectionNotes(section)
   const prefix = `${route.replace(/\/$/, "")}/`
-  return notes.filter((note) => note.route.startsWith(prefix) && note.route !== route)
+  return getSectionNotes(section, prefix)
 }
 
 export async function getStaticNoteParams(section: NoteSection) {
@@ -79,9 +81,9 @@ export async function getCanonicalRoute(route: string) {
 }
 
 export const getBlogEntryRoute = cache(async () => {
+  const preferred = await getNoteByRoute("/blog/math/Fubini-Tonelli定理")
+  if (preferred?.section === "blog") return encodeURI(preferred.route)
   const notes = await getSectionNotes("blog")
-  const first =
-    notes.find((note) => note.route === "/blog/math/Fubini-Tonelli定理") ??
-    notes.find((note) => note.text.trim().length >= 300)
+  const first = notes.find((note) => note.text.trim().length >= 300)
   return first ? encodeURI(first.route) : "/blog"
 })

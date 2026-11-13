@@ -186,7 +186,7 @@ export default function HomeScene({
                         <X size={16} aria-hidden />
                       </button>
                     </div>
-                    <CloudPlayer className={styles.music} />
+                    <CloudPlayer active={expanded} className={styles.music} />
                   </div>
                 </div>
               )}

@@ -27,7 +27,7 @@
 3. 在服务器创建仅管理员可读的 `.env`，配置 `BLOB_READ_WRITE_TOKEN`、`BANGUMI_USERNAME`、`BANGUMI_ACCESS_TOKEN`、`ANIME_SYNC_SECRET`、`PAPERS_SYNC_SECRET` 等需要的变量。**不要把令牌写入 Git、命令行或工单**。外部服务器不会自动获得 Vercel 的 OIDC；若私有 Blob 令牌无法跨平台工作，需要先完成存储迁移，不能带病切流。
 4. 运行 `docker compose -f compose.selfhost.yaml --env-file .env build`，再运行 `docker compose -f compose.selfhost.yaml --env-file .env up -d`。
 5. Compose 默认只监听 `127.0.0.1:3000`。在同机用 `curl -fI http://127.0.0.1:3000/` 检查，再通过 Nginx/Caddy 配置**独立预览域名**的 HTTPS 反向代理；尚不修改正式域名。
-6. 使用预览域名验收：`/`、`/blog`、多篇数学笔记、`/chatter`、`/projects`、`/music`、`/anime`、`/api/anime`、`/api/papers`、图片、字体及 `/sitemap.xml`；核查 404、动态接口、缓存、移动端和错误日志。
+6. 使用预览域名验收：`/`、`/blog`、多篇数学笔记、`/chatter`、`/projects`、`/anime`、`/api/anime`、`/api/papers`、图片、字体及 `/sitemap.xml`；音乐在首页和项目页耳机面板检查，并验证跨页继续播放。退役 `/music` 应返回 404；核查动态接口、缓存、移动端和错误日志。
 7. 在切换前先安排定时任务替代：Vercel `vercel.json` 中的每天 03:00 UTC `/api/anime/sync` 不会在自托管环境自动触发。必须由受控调度器使用 `CRON_SECRET` 的 Bearer 认证执行，并监控成功率。不可把 secret 放在公开 URL。
 8. 论文监控 Action 当前向 `https://nothing-new.cn/api/papers` 推送。新实例必须能通过 `PAPERS_SYNC_SECRET` 读取写入原有 Blob；切域名后进行一次 **sync-only** 推送验证。迁移前不要改变生产 Action 目标。
 9. Docker 镜像内会包含 `.quartz-cache/next` 与 `public/quartz-assets`，它们分别用于服务端读取笔记与静态附件。更换 Dockerfile 时不可漏掉。

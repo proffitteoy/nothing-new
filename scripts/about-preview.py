@@ -23,6 +23,7 @@ with sync_playwright() as p:
             has_touch=width < 768,
             reduced_motion="reduce",
         )
+        context.route("**/api/music?*", lambda route: route.fulfill(json=[]))
         page = context.new_page()
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
@@ -53,7 +54,7 @@ with sync_playwright() as p:
             buttons.nth(i).click()
             page.wait_for_function(
                 "(i) => document.querySelectorAll('nav[aria-label=\"关于页章节导航\"] button')[i].getAttribute('aria-current') === 'location'",
-                i,
+                arg=i,
             )
             assert article.locator("#" + section_id).is_visible()
         # Wheel/trackpad scrolling back to the first section must restore its active marker.

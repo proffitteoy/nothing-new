@@ -21,16 +21,20 @@ names = ['early-rumor-propagation-tda', 'topp', 'Iris-Terminal',
          'ai-data-competitions-ui', 'GUDHI/gudhi-devel', 'open-ani/animeko']
 errors = []
 results = []
+music_draw_samples = []
+music_requests = 0
 audio = io.BytesIO()
 with wave.open(audio, 'wb') as wav:
     wav.setnchannels(1)
     wav.setsampwidth(2)
     wav.setframerate(8000)
     wav.writeframes(b''.join(struct.pack('<h', int(800 * math.sin(i * math.tau * 220 / 8000)))
-                             for i in range(8000 * 12)))
+                             for i in range(8000 * 30)))
 
 
 def music_route(route):
+    global music_requests
+    music_requests += 1
     route.fulfill(json=[{'id': 'projects-check', 'name': '本地验收音轨', 'artist': 'Test fixture',
                          'url': args.url + '/projects-check.wav', 'lrc': '[00:00.00]本地验收'}])
 
@@ -93,6 +97,18 @@ def project_checks(page):
         expect(page.get_by_role('dialog').get_by_role('heading', name=name, exact=True)).to_be_visible()
         page.get_by_role('button', name='关闭详情').click()
         expect(page.locator('summary').filter(has_text='项目目录')).to_be_focused()
+    # The text directory uses the same music panel as the 3D headphones, including keyboard access.
+    page.locator('summary').filter(has_text='项目目录').click()
+    music = page.locator('details').get_by_role('button', name='音乐', exact=True)
+    music.focus()
+    page.keyboard.press('Enter')
+    dialog = page.get_by_role('dialog')
+    expect(dialog.get_by_role('heading', name='桌边的音乐', exact=True)).to_be_visible()
+    expect(dialog).to_be_focused()
+    expect(page.locator('a[href="/music"]')).to_have_count(0)
+    page.keyboard.press('Escape')
+    expect(dialog).to_have_count(0)
+    expect(page.locator('summary').filter(has_text='项目目录')).to_be_focused()
 
 
 with sync_playwright() as p:
@@ -104,6 +120,7 @@ with sync_playwright() as p:
             continue
         for theme in ['light', 'dark']:
             label = f'{width}x{height}-{theme}'
+            music_requests_before = music_requests
             context = browser.new_context(viewport={'width': width, 'height': height},
                 is_mobile=touch, has_touch=touch, device_scale_factor=1,
                 reduced_motion='reduce' if width == 320 else 'no-preference')
@@ -123,6 +140,13 @@ with sync_playwright() as p:
             assert page.locator('[data-room-hotspot]:visible').count() == 9, label
             canvas = page.locator('canvas[aria-hidden="true"]').last
             assert int(canvas.get_attribute('data-triangles')) > 50000
+            original_buffer_width = canvas.evaluate('el => el.width')
+            page.set_viewport_size({'width': width + 120, 'height': height})
+            page.wait_for_function("old => document.querySelector('canvas[data-triangles]').width !== old",
+                arg=original_buffer_width)
+            page.set_viewport_size({'width': width, 'height': height})
+            page.wait_for_function("old => document.querySelector('canvas[data-triangles]').width === old",
+                arg=original_buffer_width)
             shot(page, label)
             heading = page.get_by_role('heading', name='研究小屋', exact=True).bounding_box()
             banner = page.get_by_role('banner')
@@ -130,7 +154,10 @@ with sync_playwright() as p:
                 nav = banner.bounding_box()
                 assert heading['y'] >= nav['y'] + nav['height'], label
             unobscured(page.get_by_role('button', name='回到桌前'))
+            assert music_requests == music_requests_before, 'The unopened room must not request music'
             project_checks(page)
+            page.wait_for_function("document.querySelector('audio') !== null")
+            assert music_requests == music_requests_before + 1, 'First music entry must load once'
             # Theme remains shared with the whole site and updates the baked room.
             page.get_by_role('button', name='切换到日间' if theme == 'dark' else '切换到夜间').click()
             expect(page.get_by_role('button', name='切换到夜间' if theme == 'dark' else '切换到日间')).to_be_visible()
@@ -165,6 +192,44 @@ with sync_playwright() as p:
             page.get_by_role('button', name='继续播放', exact=True).click()
             page.wait_for_function("document.querySelector('audio')?.currentTime > 0.1")
             expect(page.locator('audio')).to_have_count(1)
+            for sample_state in ['panel', 'idle']:
+                if sample_state == 'idle':
+                    page.keyboard.press('Escape')
+                page.mouse.move(0, 0)
+                page.wait_for_timeout(1500)  # Let hover/camera feedback settle before sampling.
+                sample = page.evaluate('''async () => {
+                    const canvas = document.querySelector('canvas[data-triangles]');
+                    const audio = document.querySelector('audio');
+                    let draws = 0, timeupdates = 0;
+                    const start = audio.currentTime;
+                    const tick = () => timeupdates++;
+                    const observer = new MutationObserver(records => draws += records.length);
+                    observer.observe(canvas, { attributes: true, attributeFilter: ['data-triangles'] });
+                    audio.addEventListener('timeupdate', tick);
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    observer.disconnect();
+                    audio.removeEventListener('timeupdate', tick);
+                    return { draws, timeupdates, seconds: audio.currentTime - start, paused: audio.paused };
+                }''')
+                assert not sample['paused'] and sample['timeupdates'] >= 2 and sample['seconds'] > 0, sample
+                assert sample['draws'] == 0, f'Music progress repainted the {sample_state} room: {sample}'
+                music_draw_samples.append({'case': label, 'state': sample_state, **sample})
+            # Soft navigation must preserve the root audio element and playback.
+            audio_element = page.locator('audio').element_handle()
+            playback_time = audio_element.evaluate('el => el.currentTime')
+            page.keyboard.press('Escape')
+            page.locator('summary').filter(has_text='项目目录').click()
+            page.locator('details').get_by_role('link', name='笔记', exact=True).click()
+            page.wait_for_url(re.compile(r'.*/blog(?:/.*)?$'))
+            page.wait_for_function('''({audio, time}) => audio.isConnected &&
+                document.querySelector('audio') === audio && !audio.paused && audio.currentTime > time''',
+                arg={'audio': audio_element, 'time': playback_time})
+            expect(page.locator('audio')).to_have_count(1)
+            page.go_back(wait_until='domcontentloaded')
+            ready(page)
+            assert audio_element.evaluate("el => el === document.querySelector('audio') && !el.paused")
+            assert music_requests == music_requests_before + 1, 'Soft navigation must reuse the playlist'
+            page.locator('[data-room-hotspot="headphones"]').click()
             page.get_by_role('button', name='暂停播放', exact=True).click()
             page.wait_for_function("document.querySelector('audio')?.paused === true")
             page.keyboard.press('Escape')
@@ -203,6 +268,7 @@ with sync_playwright() as p:
     context.close()
     browser.close()
 (args.output / 'report.json').write_text(json.dumps({'matrix': results, 'pageErrors': errors,
+    'musicDrawSamples': music_draw_samples,
     'music': 'Browser-only fixture; real Provider and HTMLAudioElement; external service not verified',
     'fallback': 'GLB request failure, context loss, retry passed'},ensure_ascii=False,indent=2),encoding='utf-8')
 assert not errors, errors

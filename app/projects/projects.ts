@@ -74,7 +74,7 @@ export type RoomTarget = ProjectId | "notes" | "anime" | "headphones"
 export const lifeObjects = [
   { id: "notes", label: "翻开笔记", description: "数学学习与持续记录", href: "/blog" },
   { id: "anime", label: "看看番剧", description: "研究之外的日常", href: "/anime" },
-  { id: "headphones", label: "桌边音乐", description: "继续此刻的歌", href: "/music" },
+  { id: "headphones", label: "桌边音乐", description: "继续此刻的歌" },
 ] as const
 
 export const roomTargets: readonly RoomTarget[] = [

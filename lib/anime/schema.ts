@@ -25,18 +25,8 @@ export type AnimeLatestPointer = {
   count: number
 }
 
-export type AnimeCollectionSlice = {
-  items: AnimeItem[]
-  total: number
-  nextOffset: number
-}
-
 export const ANIME_BATCH_SIZE = 30
 
 export function getAnimeTitle(item: AnimeItem) {
   return item.nameCn?.trim() || item.name
-}
-
-export function isAnimeStatus(value: string | null): value is AnimeStatus {
-  return value === "watching" || value === "watched"
 }

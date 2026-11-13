@@ -29,6 +29,24 @@ async function renderObsidianMarkdown(source: string) {
   )
 }
 
+describe("Next static content capabilities", () => {
+  test("keeps Mermaid source readable without expansion controls or dialogs", async () => {
+    const html = await renderObsidianMarkdown("```mermaid\ngraph TD; A-->B\n```")
+    assert.match(html, /graph TD; A(?:-->|--&#x3E;|--&gt;)B/)
+    assert.match(html, /<pre><code class="language-mermaid"/)
+    assert.doesNotMatch(html, /<button|<dialog|expand-button|data-clipboard/)
+  })
+  test("renders both folded callout markers as expanded, readable content", async () => {
+    for (const marker of ["+", "-"]) {
+      const html = await renderObsidianMarkdown(`> [!note]${marker} 标题\n> 正文\n>\n> 第二段`)
+      assert.match(html, /callout-title/)
+      assert.match(html, /正文/)
+      assert.match(html, /第二段/)
+      assert.doesNotMatch(html, /is-collapsed|is-collapsible|fold-callout-icon|data-callout-fold|<button/)
+    }
+  })
+})
+
 describe("Obsidian reading line breaks", () => {
   test("renders soft newlines, but keeps blank lines as paragraph boundaries", async () => {
     const html = await renderObsidianMarkdown("第一行\n第二行\n\n新段落\n\n\n末段")

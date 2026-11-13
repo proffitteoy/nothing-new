@@ -1,10 +1,6 @@
 import "server-only"
 
-import { fetchBlob, getBlobUrl, putBlob, readBlobJson, readBlobText } from "../blob"
-
-export function getAnimeBlobUrl(pathname: string) {
-  return getBlobUrl(pathname)
-}
+import { fetchBlob, putBlob, readBlobJson, readBlobText } from "../blob"
 
 export function getAnimePublicAssetPath(pathname: string) {
   const cleanPath = pathname.replace(/^\/+/, "").replace(/^anime\//, "")

@@ -36,7 +36,7 @@ Google 搜索出现验证页后，转用官方目录和作者链接。内置浏�
 
 ## 3. 本站实际内容与约束
 
-依据 [项目内容](../../app/projects/ProjectsBoard.tsx)、[路由](../../app/projects/page.tsx)、[布局](../../app/layout.tsx)、[性能模式](../../components/FieldModeProvider.tsx)、[主题](../../components/ThemeProvider.tsx) 与 [依赖清单](../../package.json)。
+依据 [项目内容](../../app/projects/ProjectsBoard.tsx)、[路由](../../app/projects/page.tsx)、[布局](../../app/layout.tsx)、[当时的性能模式](https://github.com/proffitteoy/nothing-new/blob/b4e7e79b64e749276b4aacff786fd788935106d8/components/FieldModeProvider.tsx)、[主题](../../components/ThemeProvider.tsx) 与 [依赖清单](../../package.json)。
 
 | 当前项目                    | 当前对外叙述                                             | 空间表达需要保留的信息                                |
 | --------------------------- | -------------------------------------------------------- | ----------------------------------------------------- |

@@ -110,6 +110,121 @@ test("Alpha opening keeps its 7.4s duration even when frames are slow", () => {
   assert.equal(context.elapsed, 7400)
 })
 
+test("startup accepts only its same-origin iframe and keeps skip and timeout fail-open", async () => {
+  const compiled = ts.transpileModule(splash, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      jsx: ts.JsxEmit.ReactJSX,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText
+  for (const mode of ["message", "timeout", "skip"] as const) {
+    const classes = new Set<string>()
+    const dataset: Record<string, string> = {}
+    const listeners = new Map<string, (event?: unknown) => void>()
+    const timers = new Map<number, { callback: () => void; delay: number }>()
+    const phases: string[] = []
+    const effects: (() => () => void)[] = []
+    const frameWindow = {}
+    let timerId = 0
+    const setTimer = (callback: () => void, delay: number) => {
+      timers.set(++timerId, { callback, delay })
+      return timerId
+    }
+    const exports: { default?: (props: { blogHref: string }) => unknown } = {}
+    const element = (type: unknown, props: Record<string, unknown>) => ({ type, props })
+    runInNewContext(compiled, {
+      exports,
+      AbortController,
+      Promise,
+      queueMicrotask: (fn: () => void) => fn(),
+      setTimeout: setTimer,
+      clearTimeout: (id: number) => timers.delete(id),
+      navigator: {},
+      matchMedia: (query: string) => ({ matches: query.includes("min-width") }),
+      performance: { now: () => 0, mark: (name: string) => phases.push(name) },
+      window: {
+        location: { pathname: "/", origin: "https://nothing-new.cn" },
+        setTimeout: setTimer,
+        clearTimeout: (id: number) => timers.delete(id),
+        addEventListener: (name: string, fn: (event?: unknown) => void) => listeners.set(name, fn),
+        removeEventListener: (name: string) => listeners.delete(name),
+        dispatchEvent() {},
+      },
+      document: {
+        documentElement: {
+          dataset,
+          classList: {
+            contains: (name: string) => classes.has(name),
+            add: (name: string) => classes.add(name),
+          },
+        },
+        images: [],
+        fonts: { ready: Promise.resolve() },
+        querySelector: (selector: string) =>
+          selector.includes("home-artwork") ? { dataset: { homeArtwork: "ready" } } : null,
+      },
+      Event,
+      require: (name: string) => {
+        if (name === "react/jsx-runtime")
+          return { jsx: element, jsxs: element, Fragment: "fragment" }
+        if (name === "react")
+          return {
+            useCallback: (fn: unknown) => fn,
+            useState: (value: unknown) => [value, () => {}],
+            useRef: (value: unknown) => ({
+              current: value === null ? { contentWindow: frameWindow } : value,
+            }),
+            useEffect: (fn: () => () => void) => effects.push(fn),
+          }
+        if (name === "next/navigation") return { useRouter: () => ({ prefetch() {} }) }
+        if (name === "next/image") return { getImageProps: () => ({ props: {} }) }
+        if (name.endsWith("Navbar")) return { navigationLinks: [] }
+        if (name.endsWith("home-scene")) return { isMobileHomeClient: () => false }
+        if (name.endsWith("anime/client")) return { loadAnimeSnapshot: async () => {} }
+        if (name.endsWith("room-preload")) return { preloadRoomAssets: async () => {} }
+        throw new Error(`Unexpected startup dependency: ${name}`)
+      },
+    })
+    const tree = exports.default!({ blogHref: "/blog/preferred" })
+    const cleanup = effects[0]()
+    const message = listeners.get("message")!
+    const valid = {
+      origin: "https://nothing-new.cn",
+      source: frameWindow,
+      data: { type: "alpha-splash:complete" },
+    }
+    message({ ...valid, origin: "https://other.invalid" })
+    message({ ...valid, source: {} })
+    assert.equal(classes.has("splash-seen"), false)
+    listeners.get("alpha-splash:frame-loaded")!()
+    const fallback = [...timers.values()].find((timer) => timer.delay === 9500)
+    assert.ok(fallback)
+    if (mode === "message") message(valid)
+    if (mode === "timeout") fallback.callback()
+    if (mode === "skip") {
+      const findButton = (node: unknown): { onClick: () => void } | undefined => {
+        if (!node || typeof node !== "object") return
+        const item = node as { type?: string; props?: { children?: unknown; onClick: () => void } }
+        if (item.type === "button") return item.props
+        const children = item.props?.children
+        for (const child of Array.isArray(children) ? children : [children]) {
+          const found = findButton(child)
+          if (found) return found
+        }
+      }
+      findButton(tree)!.onClick()
+    }
+    message(valid)
+    assert.equal(dataset.startupPhase, "ready", mode)
+    assert.equal(classes.has("splash-seen"), true)
+    assert.equal(phases.filter((phase) => phase === "site:ready").length, 1)
+    cleanup()
+    assert.equal(listeners.size, 0)
+    await Promise.resolve()
+  }
+})
+
 test("opening renders real Alpha faces, preserves H1 events, and clears completely", () => {
   const animation = readFileSync(
     new URL("../public/alpha-opening-v6.html", import.meta.url),

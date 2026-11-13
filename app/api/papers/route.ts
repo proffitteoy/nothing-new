@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto"
+import { createHash, timingSafeEqual } from "node:crypto"
 import { fetchBlob, putBlob } from "../../../lib/blob"
 import { compilePaperReports } from "../../../lib/papers"
 import seedReports from "../../../data/tda-reports.json"
@@ -7,6 +7,23 @@ export const runtime = "nodejs"
 export const maxDuration = 60
 const SNAPSHOT_PATH = "papers/reports.json"
 const MAX_BYTES = 2_000_000
+
+// One content version per process. Blob is still read on every GET, without a TTL.
+let compiledSnapshot: {
+  version: string
+  result: ReturnType<typeof compilePaperReports>
+} | null = null
+
+function compileSnapshot(source: unknown) {
+  const version = createHash("sha256").update(JSON.stringify(source)).digest("hex")
+  if (compiledSnapshot?.version === version) return compiledSnapshot.result
+  const entry = { version, result: compilePaperReports(source) }
+  compiledSnapshot = entry
+  void entry.result.catch(() => {
+    if (compiledSnapshot === entry) compiledSnapshot = null
+  })
+  return entry.result
+}
 
 export async function GET() {
   try {
@@ -21,7 +38,7 @@ export async function GET() {
       else if (response.status !== 404) throw new Error(`Blob returned ${response.status}`)
     }
     return Response.json(
-      { reports: await compilePaperReports(source) },
+      { reports: await compileSnapshot(source) },
       { headers: { "Cache-Control": "no-store" } },
     )
   } catch (error) {
@@ -66,7 +83,7 @@ export async function POST(request: Request) {
   let reportCount: number
   try {
     source = JSON.parse(Buffer.concat(chunks).toString("utf8"))
-    reportCount = (await compilePaperReports(source)).length
+    reportCount = (await compileSnapshot(source)).length
   } catch {
     return Response.json({ error: "Invalid paper reports" }, { status: 400 })
   }

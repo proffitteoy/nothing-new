@@ -66,13 +66,9 @@ async function transpileWorkerScript() {
     sourcesContent: false,
     plugins: [
       {
-        name: "css-and-scripts-as-text",
+        name: "css-as-text",
         setup(build) {
-          build.onLoad({ filter: /\.scss$/ }, (_) => ({
-            contents: "",
-            loader: "text",
-          }))
-          build.onLoad({ filter: /\.inline\.(ts|js)$/ }, (_) => ({
+          build.onLoad({ filter: /\.scss$/ }, () => ({
             contents: "",
             loader: "text",
           }))
@@ -171,7 +167,7 @@ export async function parseMarkdown(ctx: BuildCtx, fps: FilePath[]): Promise<Pro
       maxWorkers: concurrency,
       workerType: "thread",
     })
-    const errorHandler = (err: any) => {
+    const errorHandler = (err: unknown) => {
       console.error(err)
       process.exit(1)
     }
