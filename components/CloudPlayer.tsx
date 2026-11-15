@@ -11,16 +11,17 @@ const formatTime = (time: number) => {
   return `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, "0")}`
 }
 
-// #67 owns the slide-in shell and its focus/dismissal behavior.
-// Retain the original record artwork and frosted visual language in this content component.
+// Share the same controls and root audio between the bottom dock and isolated previews.
 export default function CloudPlayer({
   active = true,
   id,
   className = "",
+  dock = false,
 }: {
   active?: boolean
   id?: string
   className?: string
+  dock?: boolean
 }) {
   const {
     currentSong,
@@ -56,7 +57,7 @@ export default function CloudPlayer({
       aria-busy={loading}
       hidden={!active}
       inert={!active}
-      className={`${styles.player} ${className}`}
+      className={`${styles.player} ${dock ? styles.dock : ""} ${className}`}
     >
       {ready ? (
         <>
@@ -79,8 +80,12 @@ export default function CloudPlayer({
             </div>
             <div className={styles.songInfo}>
               <span className={styles.eyebrow}>云端音乐</span>
-              <h2 className={styles.title} title={title}>{title}</h2>
-              <p className={styles.artist} title={artist}>{artist}</p>
+              <h2 className={styles.title} title={title}>
+                {title}
+              </h2>
+              <p className={styles.artist} title={artist}>
+                {artist}
+              </p>
             </div>
           </div>
           <div className={styles.timeline}>
@@ -111,7 +116,11 @@ export default function CloudPlayer({
               onClick={togglePlay}
               className={`${styles.control} ${styles.primaryControl}`}
             >
-              {isPlaying ? <Pause size={20} aria-hidden="true" /> : <Play size={20} aria-hidden="true" />}
+              {isPlaying ? (
+                <Pause size={20} aria-hidden="true" />
+              ) : (
+                <Play size={20} aria-hidden="true" />
+              )}
             </button>
             <button type="button" aria-label="下一首" onClick={nextSong} className={styles.control}>
               <SkipForward size={18} aria-hidden="true" />
@@ -122,7 +131,11 @@ export default function CloudPlayer({
         <div className={styles.emptyState}>
           <span className={styles.eyebrow}>云端音乐</span>
           <p className={styles.status} role="status">
-            {loading ? "正在连接音乐云端" : musicStatus === "error" ? "音乐连接失败" : "暂无可播放音乐"}
+            {loading
+              ? "正在连接音乐云端"
+              : musicStatus === "error"
+                ? "音乐连接失败"
+                : "暂无可播放音乐"}
           </p>
           {!loading && (
             <>

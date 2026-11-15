@@ -4,7 +4,7 @@
 
 ## 目录说明
 
-- `home-scene-preview.py`：首页总装、边缘交互、谱场与移动分流验证；详见[首页总装](../docs/project/home-scene.md)。
+- `home-scene-preview.py`：首页总装、边缘交互、谱场与移动分流验证；当前双侧导航与底部音乐使用 `--mode navigation` 验收，`--mode preview` 截取真实首页。`--mode snapshots` 会更新 `public/page-previews/` 六张页面截图，本地番剧服务不可用时从正式站取景；其他证据默认写入忽略目录 `.sync/tmp-home-scene-evidence/`。详见[首页总装](../docs/project/home-scene.md)。
 - `celestial-preview.py`：已退役的 #49 入口，旧选项明确报停，不再生成或清理 Next 路由；历史来源与当前替代检查见[日月记录](../docs/project/home-mode-panels.md)。
 - `profile-preview.py`：#47 首页个人信息退场与联系操作测试，详见[个人区调整](../docs/project/profile-renewal.md)。
 - `home-music-preview.py`：#48 音乐控制与舞台歌词测试，详见[音乐](../docs/project/home-music-renewal.md)。
