@@ -6,6 +6,14 @@ import { ArrowLeft, ArrowUpRight, ChevronDown, X } from "lucide-react"
 import type { PaperReport } from "../lib/papers"
 import styles from "./PaperMonitor.module.css"
 
+export function SidebarPreview({ src, alt }: { src: string; alt: string }) {
+  return (
+    <span className={styles.summaryArt}>
+      <Image src={src} alt={alt} fill className="object-cover" sizes="296px" />
+    </span>
+  )
+}
+
 export default function PaperMonitor({
   initialReports,
   compact = false,
@@ -103,15 +111,7 @@ export default function PaperMonitor({
         onClick={() => setIssueOpen(true)}
       >
         {compact ? (
-          <span className={styles.summaryArt}>
-            <Image
-              src="/profile-studio.png"
-              alt="TDA 论文周报封面"
-              fill
-              className="object-cover"
-              sizes="(max-width: 1023px) 220px, 264px"
-            />
-          </span>
+          <SidebarPreview src="/profile-studio.png" alt="TDA 论文周报封面" />
         ) : (
           <>
             <Image

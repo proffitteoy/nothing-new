@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
       { pathname: "/about-cover.png", search: "" },
       { pathname: "/background.png", search: "" },
       { pathname: "/profile-studio.png", search: "" },
+      { pathname: "/page-previews/*.webp", search: "" },
       { pathname: "/chatter-covers/**", search: "" },
       { pathname: "/quartz-assets/content/**", search: "" },
       { pathname: "/anime/blob/covers/**", search: "" },
