@@ -225,16 +225,141 @@ test("startup accepts only its same-origin iframe and keeps skip and timeout fai
   }
 })
 
-test("opening renders real Alpha faces, preserves H1 events, and clears completely", () => {
-  const animation = readFileSync(
-    new URL("../public/alpha-opening-v6.html", import.meta.url),
-    "utf8",
+const animation = readFileSync(new URL("../public/alpha-opening-v6.html", import.meta.url), "utf8")
+type Point = [number, number]
+const vertices: Point[] = [...animation.matchAll(/<circle cx="([^"]+)" cy="([^"]+)"/g)].map(
+  (match) => [Number(match[1]), Number(match[2])],
+)
+const simplices = (kind: string) =>
+  [
+    ...animation.matchAll(
+      new RegExp(`<path class="${kind}" data-alpha="([^"]+)" d="([^"]+)"`, "g"),
+    ),
+  ].map((match) => ({
+    birth: Number(match[1]),
+    points: [...match[2].matchAll(/[ML]([\d.]+) ([\d.]+)/g)].map(
+      (xy): Point => [Number(xy[1]), Number(xy[2])],
+    ),
+  }))
+const alphaFaces = simplices("mesh-face")
+const alphaEdges = simplices("mesh-edge")
+const distanceSquared = (a: Point, b: Point) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
+const pointKey = (point: Point) => point.join(",")
+const edgeKey = (a: Point, b: Point) => [pointKey(a), pointKey(b)].sort().join(";")
+
+test("Alpha births match empty circumcircles and Gabriel or inherited edge radii", () => {
+  assert.equal(vertices.length, 1150)
+  assert.ok(alphaFaces.length > 2100)
+  const vertexKeys = new Set(vertices.map(pointKey))
+  const edgeBirths = new Map(
+    alphaEdges.map((edge) => [edgeKey(...(edge.points as [Point, Point])), edge.birth]),
   )
-  assert.match(animation, /class="mesh-face" data-alpha=/)
-  assert.match(animation, /class="transient" data-b="[0-9.]+" data-d=/)
-  assert.match(animation, /const triangles=source\.getAttribute\('d'\)\.match/)
-  assert.match(animation, /setOpacity\(face,\.92\*smooth/)
-  assert.match(animation, /setOpacity\(point,0\)/)
-  assert.match(animation, /if\(elapsed===DURATION\)/)
+  const cofaceBirths = new Map<string, number>()
+  for (const {
+    birth,
+    points: [a, b, c],
+  } of alphaFaces) {
+    for (const point of [a, b, c]) assert.ok(vertexKeys.has(pointKey(point)))
+    const ux = b[0] - a[0],
+      uy = b[1] - a[1]
+    const vx = c[0] - a[0],
+      vy = c[1] - a[1]
+    const determinant = 2 * (ux * vy - uy * vx)
+    const u2 = ux * ux + uy * uy,
+      v2 = vx * vx + vy * vy
+    const center: Point = [
+      a[0] + (u2 * vy - v2 * uy) / determinant,
+      a[1] + (ux * v2 - vx * u2) / determinant,
+    ]
+    const radiusSquared = distanceSquared(a, center)
+    assert.ok(Math.abs(Math.sqrt(radiusSquared) - birth) < 1e-6)
+    for (const point of vertices) assert.ok(distanceSquared(point, center) >= radiusSquared - 1e-7)
+    for (const [p, q] of [
+      [a, b],
+      [b, c],
+      [c, a],
+    ]) {
+      const key = edgeKey(p, q)
+      assert.ok(edgeBirths.has(key), "Every triangle includes its boundary edges")
+      assert.ok(edgeBirths.get(key)! <= birth + 1e-6, "Edges cannot enter after a coface")
+      cofaceBirths.set(key, Math.min(birth, cofaceBirths.get(key) ?? Infinity))
+    }
+  }
+  for (const {
+    birth,
+    points: [a, b],
+  } of alphaEdges) {
+    assert.ok(vertexKeys.has(pointKey(a)) && vertexKeys.has(pointKey(b)))
+    const midpoint: Point = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    const halfSquared = distanceSquared(a, b) / 4
+    const gabriel = vertices.every(
+      (point) => distanceSquared(point, midpoint) >= halfSquared - 1e-8,
+    )
+    const expected = gabriel ? Math.sqrt(halfSquared) : cofaceBirths.get(edgeKey(a, b))
+    assert.ok(expected !== undefined && Math.abs(birth - expected) < 1e-6)
+  }
+})
+
+test("Alpha grows through the second half, then the whole complex fades without reversing", () => {
+  const node = (birth = 0) => ({ dataset: { alpha: String(birth) }, style: { opacity: "0" } })
+  const faces = alphaFaces.map((face) => node(face.birth))
+  const edges = alphaEdges.map((edge) => node(edge.birth))
+  const points = vertices.map(() => node())
+  const geometry = node()
+  const window = {
+    __alphaSplash: undefined as unknown as {
+      seek(p: number): void
+      state: {
+        alpha: number
+        activeTriangles: number
+        visibleTriangles: number
+        visiblePoints: number
+      }
+    },
+  }
+  runInNewContext(animation.match(/<script>([\s\S]*?)<\/script>/)![1], {
+    document: {
+      querySelectorAll: (selector: string) =>
+        selector.includes("faces") ? faces : selector.includes("edges") ? edges : points,
+      getElementById: () => geometry,
+    },
+    window,
+    matchMedia: () => ({ matches: false }),
+    requestAnimationFrame() {},
+  })
+  let previousAlpha = 0
+  let previousCount = 0
+  for (let step = 0; step <= 100; step++) {
+    window.__alphaSplash.seek(step / 100)
+    const state = window.__alphaSplash.state
+    assert.ok(state.alpha >= previousAlpha, `Alpha went backwards at ${step}%`)
+    assert.ok(state.activeTriangles >= previousCount)
+    previousAlpha = state.alpha
+    previousCount = state.activeTriangles
+    if (step <= 91) assert.equal(geometry.style.opacity, "1")
+  }
+  assert.equal(previousAlpha, 40)
+  assert.equal(previousCount, alphaFaces.length)
+  assert.equal(geometry.style.opacity, "0")
+  assert.equal(window.__alphaSplash.state.visibleTriangles, 0)
+  assert.equal(window.__alphaSplash.state.visiblePoints, 0)
   assert.doesNotMatch(animation, /brand-group|brand-paths|organic-thread|EulerBridgeMark/)
+})
+
+test("completed Alpha mesh covers the guarded viewBox including all four borders", () => {
+  assert.match(animation, /viewBox="64 64 1472 772" preserveAspectRatio="xMidYMid slice"/)
+  const cross = (a: Point, b: Point, p: Point) =>
+    (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+  for (let x = 0; x <= 32; x++) {
+    for (let y = 0; y <= 24; y++) {
+      const p: Point = [64 + (1472 * x) / 32, 64 + (772 * y) / 24]
+      assert.ok(
+        alphaFaces.some(({ points: [a, b, c] }) => {
+          const signs = [cross(a, b, p), cross(b, c, p), cross(c, a, p)]
+          return signs.every((v) => v >= -1e-8) || signs.every((v) => v <= 1e-8)
+        }),
+        `Uncovered viewport sample at ${p}`,
+      )
+    }
+  }
 })
