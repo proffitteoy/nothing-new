@@ -52,7 +52,9 @@ export default function PaperMonitor({
         if (!response.ok) throw new Error("Report fetch failed")
         const data = (await response.json()) as { reports: PaperReport[] }
         if (!data.reports?.length) throw new Error("Empty reports")
-        if (issueDialog.current?.open) {
+        setStatus("")
+        // Refresh an open contents list; only an active article must stay unchanged.
+        if (paperDialog.current?.open) {
           pendingReports.current = data.reports
         } else {
           setReports(data.reports)
@@ -97,6 +99,18 @@ export default function PaperMonitor({
       setReports(pendingReports.current)
       setDate(pendingReports.current[0].date)
       pendingReports.current = null
+    }
+  }
+
+  function closePaper() {
+    setSelected(null)
+    const nextReports = pendingReports.current
+    if (nextReports) {
+      pendingReports.current = null
+      setReports(nextReports)
+      setDate((current) =>
+        nextReports.some((item) => item.date === current) ? current : nextReports[0].date,
+      )
     }
   }
 
@@ -273,27 +287,22 @@ export default function PaperMonitor({
         id="tda-paper-dialog"
         className={`${styles.dialog} ${styles.paperDialog}`}
         aria-labelledby="tda-paper-title"
-        onClose={() => setSelected(null)}
+        onClose={closePaper}
         onClick={(event) => {
-          if (event.target === event.currentTarget) setSelected(null)
+          if (event.target === event.currentTarget) closePaper()
         }}
       >
         {paper && (
           <div className={styles.window}>
             <header className={styles.windowHeader}>
-              <button
-                type="button"
-                className={styles.backButton}
-                onClick={() => setSelected(null)}
-                autoFocus
-              >
+              <button type="button" className={styles.backButton} onClick={closePaper} autoFocus>
                 <ArrowLeft size={16} aria-hidden /> 返回本期论文
               </button>
               <button
                 type="button"
                 className={styles.iconButton}
                 aria-label="关闭论文"
-                onClick={() => setSelected(null)}
+                onClick={closePaper}
               >
                 <X size={20} aria-hidden />
               </button>
