@@ -17,6 +17,7 @@ parser.add_argument("--url", default="http://127.0.0.1:3110")
 parser.add_argument("--stage", choices=["before", "after"], required=True)
 parser.add_argument("--browser", help="Optional Chromium executable")
 parser.add_argument("--check-only", action="store_true")
+parser.add_argument("--check-updates", action="store_true", help="Check delayed updates in the desktop sidebar")
 parser.add_argument("--compare", action="store_true", help="Build two compact review sheets from both stages")
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[1]
@@ -212,6 +213,82 @@ def check(browser):
     assert not observed_errors, observed_errors
 
 
+def check_updates(browser):
+    response = browser.new_context()
+    reports = response.request.get(args.url + "/api/papers").json()["reports"]
+    response.close()
+    # Extra dates are response fixtures, never additions to the seed/source reports.
+    snapshot = [dict(reports[0], date="2099-01-12"), dict(reports[0], date="2099-01-05"), *reports]
+    expected_dates = [report["date"] for report in snapshot]
+
+    def open_pending():
+        context = browser.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+        pending = []
+        context.route("**/api/papers", lambda route: pending.append(route))
+        page = context.new_page()
+        page.goto(args.url, wait_until="networkidle")
+        trigger = page.locator('[data-edge-trigger="papers"]')
+        trigger.click()
+        page.get_by_role("button", name="打开 TDA 论文周报", exact=True).click()
+        issue = page.locator("#tda-issue-dialog")
+        issue.wait_for(state="visible")
+        assert pending, "Sidebar did not check for updates"
+        return context, page, issue, pending
+
+    context, page, issue, pending = open_pending()
+    assert issue.get_by_role("combobox").locator("option").count() == len(reports)
+    with page.expect_response("**/api/papers"):
+        pending.pop(0).fulfill(json={"reports": snapshot})
+    page.wait_for_function("count => document.querySelector('#tda-issue-dialog select').options.length === count", arg=len(snapshot))
+    assert issue.get_by_role("combobox").input_value() == snapshot[0]["date"]
+    assert issue.get_by_role("combobox").locator("option").evaluate_all("els => els.map(el => el.value)") == expected_dates
+    for report in snapshot:
+        issue.get_by_role("combobox").select_option(report["date"])
+        assert issue.locator('button[aria-controls="tda-paper-dialog"]').count() == len(report["papers"])
+    context.close()
+    print("PASS delayed response with contents open: all dates appear without closing; latest selected", flush=True)
+
+    for close in ["return", "Escape", "backdrop"]:
+        context, page, issue, pending = open_pending()
+        issue.locator('button[aria-controls="tda-paper-dialog"]').first.click()
+        reader = page.locator("#tda-paper-dialog")
+        reader.wait_for(state="visible")
+        article = reader.locator("article").inner_html()
+        original_date = issue.get_by_role("combobox").input_value()
+        with page.expect_response("**/api/papers"):
+            pending.pop(0).fulfill(json={"reports": snapshot})
+        page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+        assert reader.locator("article").inner_html() == article, "Update interrupted an article"
+        if close == "return":
+            reader.get_by_role("button", name="返回本期论文").click()
+        elif close == "Escape":
+            page.keyboard.press("Escape")
+        else:
+            page.mouse.click(2, 2)
+        reader.wait_for(state="hidden")
+        page.wait_for_function("count => document.querySelector('#tda-issue-dialog select').options.length === count", arg=len(snapshot))
+        assert issue.is_visible()
+        assert issue.get_by_role("combobox").input_value() == original_date
+        assert issue.get_by_role("combobox").locator("option").evaluate_all("els => els.map(el => el.value)") == expected_dates
+        context.close()
+        print(f"PASS delayed response while reading / {close}: article unchanged; return applies dates and preserves issue", flush=True)
+
+    context, page, issue, pending = open_pending()
+    pending.pop(0).fulfill(status=503, body="Unavailable")
+    page.wait_for_function("document.querySelector('#tda-issue-dialog [role=status]').textContent.includes('暂时无法检查更新')")
+    issue.get_by_role("button", name="关闭周报").click()
+    page.mouse.move(720, 450)
+    page.wait_for_function("document.querySelector('[data-home-edge=papers]').dataset.open === 'false'")
+    page.locator('[data-edge-trigger="papers"]').click()
+    page.get_by_role("button", name="打开 TDA 论文周报", exact=True).click()
+    assert pending
+    pending.pop(0).fulfill(json={"reports": snapshot})
+    page.wait_for_function("count => document.querySelector('#tda-issue-dialog select').options.length === count", arg=len(snapshot))
+    assert "暂时无法检查更新" not in issue.get_by_role("status").inner_text()
+    context.close()
+    print("PASS failed check followed by successful retry: saved reports recover and error status clears", flush=True)
+
+
 def same_html(locator, html):
     return locator.evaluate("""(el, html) => {
         const expected = document.createElement('div'); expected.innerHTML = html;
@@ -260,9 +337,11 @@ def compare():
 with sync_playwright() as p:
     if not args.compare:
         browser = p.chromium.launch(headless=True, executable_path=args.browser)
-        if not args.check_only:
+        if args.check_updates:
+            check_updates(browser)
+        elif not args.check_only:
             capture(browser)
-        if args.stage == "after":
+        if args.stage == "after" and not args.check_updates:
             check(browser)
         browser.close()
     if args.compare:
