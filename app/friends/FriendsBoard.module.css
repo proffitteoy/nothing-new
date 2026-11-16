@@ -468,6 +468,45 @@
   color: var(--accent);
   font-size: 11px;
 }
+@media (min-width: 768px) {
+  .intro > div {
+    padding: 12px 16px;
+    border-radius: 6px;
+    background: var(--surface);
+  }
+  .friendRow,
+  .application,
+  .preview {
+    background: var(--surface);
+  }
+  .friendRow:hover,
+  .friendRow:focus-within,
+  .friendRow:has(.preview) {
+    background: var(--surface);
+  }
+  .description,
+  .textLink,
+  .applyLink,
+  .formatHeading,
+  .formatHeading button,
+  .format textarea,
+  .previewFooter a {
+    font-size: 14px;
+  }
+  .eyebrow,
+  .sectionHeading h2 span,
+  .copyStatus,
+  .previewHeader > span:nth-child(2),
+  .previewFooter span {
+    font-size: 13px;
+  }
+  .previewToggle {
+    color: var(--ink);
+  }
+  .copyStatus:empty {
+    margin: 0;
+  }
+}
 @media (max-width: 1099px) {
   .list {
     grid-template-columns: repeat(2, minmax(0, 1fr));

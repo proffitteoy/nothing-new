@@ -239,7 +239,7 @@ export default function FriendsBoard() {
         </div>
         <header className={styles.intro} data-field-obstacle>
           <div>
-            <p className={styles.eyebrow}>FRIENDS / 友链</p>
+            <p className={styles.eyebrow}>友链</p>
             <h1>云端引力</h1>
             <p className={styles.subtitle}>那些散落在赛博宇宙各处的有趣灵魂与神经节点。</p>
           </div>
@@ -252,9 +252,6 @@ export default function FriendsBoard() {
             <h2 id="friends-directory-title">
               友链名录 <span>{friendsData.length}</span>
             </h2>
-            <p>
-              悬停或点击 <Eye size={14} aria-hidden="true" /> 预览对方首页
-            </p>
           </div>
           <ol className={styles.list}>
             {friendsData.map((friend) => {
@@ -372,7 +369,6 @@ export default function FriendsBoard() {
           data-field-obstacle
         >
           <div className={styles.applicationNote}>
-            <p className={styles.eyebrow}>EXCHANGE / 建立连接</p>
             <h2 id="friend-application-title">交换友链</h2>
             <p>
               欢迎交换友链。复制下方本站信息，
@@ -402,7 +398,7 @@ export default function FriendsBoard() {
                   ? "已复制"
                   : copyStatus === "copying"
                     ? "复制中…"
-                    : "复制申请格式"}
+                    : "复制本站名片"}
               </button>
             </div>
             <textarea
@@ -418,8 +414,8 @@ export default function FriendsBoard() {
               {copyStatus === "error"
                 ? "未能复制，已选中名片内容，请手动复制。"
                 : copyStatus === "copied"
-                  ? "名片已复制，可以前往 GitHub 提交申请。"
-                  : "复制本站信息，申请仍通过 GitHub Issue 提交。"}
+                  ? "本站名片已复制。"
+                  : ""}
             </p>
           </div>
         </section>
