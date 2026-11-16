@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import WebsiteSection from "./about/WebsiteSection"
 import EngineeringSection from "./about/EngineeringSection"
 import ResearchSection from "./about/ResearchSection"
@@ -96,11 +97,21 @@ export default function AboutClient({
                 </button>
               ))}
             </div>
+            <div className={styles.indexCover}>
+              <Image
+                src={coverImage}
+                alt="网站介绍封面"
+                fill
+                priority
+                sizes="(max-width: 767px) 0px, 220px"
+                className={styles.indexCoverImage}
+              />
+            </div>
           </nav>
         </aside>
 
         <div className={styles.sections}>
-          <WebsiteSection html={websiteHtml} coverImage={coverImage} />
+          <WebsiteSection html={websiteHtml} />
           <EngineeringSection html={engineeringHtml} />
           <ResearchSection html={researchHtml} />
         </div>
