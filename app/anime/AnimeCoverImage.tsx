@@ -24,8 +24,8 @@ export default function AnimeCoverImage({
 
   if (!src || failed) {
     return (
-      <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-200/80 via-white/60 to-rose-200/80 px-2 text-center text-[8px] font-black tracking-[0.14em] text-blue-700 sm:text-[9px]">
-        NO COVER
+      <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-200/80 via-white/60 to-rose-200/80 px-2 text-center text-[8px] font-black tracking-[0.14em] text-blue-700 sm:text-[9px] md:bg-[var(--site-recess)] md:bg-none md:text-xs">
+        暂无封面
       </span>
     )
   }

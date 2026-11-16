@@ -9,7 +9,6 @@ export default function ResearchSection({ html }: { html: string }) {
       aria-labelledby="about-research-title"
     >
       <header className={styles.sectionHeader}>
-        <span className={styles.eyebrow}>03 / RESEARCH</span>
         <h2 id="about-research-title" className={styles.sectionTitle}>研究身份</h2>
         <p className={styles.sectionSubtitle}>拓扑数据分析、同调理论与双曲几何</p>
       </header>

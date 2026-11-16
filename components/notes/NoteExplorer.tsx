@@ -65,7 +65,7 @@ function ExplorerNode({ node, currentPath }: { node: NoteTreeNode; currentPath: 
         href={node.path}
         prefetch={false}
         aria-current={active ? "page" : undefined}
-        className={`flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[13px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] ${
+        className={`flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[13px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] md:text-sm md:leading-6 ${
           active
             ? "bg-[var(--site-accent)]/12 font-bold text-[var(--site-accent)]"
             : "text-[var(--site-muted)] hover:bg-[var(--site-accent)]/8 hover:text-[var(--site-accent)]"
@@ -175,14 +175,11 @@ function ExplorerPanel({
     <div>
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold tracking-[0.22em] text-[var(--site-muted)]">
-            EXPLORE
-          </p>
           <h2 className="mt-1 font-serif text-base font-bold text-[var(--site-ink)]">
             {sectionTitle}目录
           </h2>
         </div>
-        <span className="text-[11px] text-[var(--site-muted)]">
+        <span className="text-[11px] text-[var(--site-muted)] md:text-xs">
           {records.length || ""}
         </span>
       </div>
@@ -205,7 +202,7 @@ function ExplorerPanel({
         />
       </label>
 
-      <div className="mt-3 max-h-[calc(100vh-15rem)] overflow-y-auto overscroll-contain pr-1 [scrollbar-color:#8f8578_transparent] [scrollbar-width:thin]">
+      <div className="mt-3 max-h-[calc(100vh-15rem)] overflow-y-auto overscroll-contain pr-1 [scrollbar-color:var(--site-muted)_transparent] [scrollbar-width:thin]">
         {loadError ? (
           <p className="rounded-lg border border-[var(--site-line)] px-3 py-2 text-xs leading-5 text-[var(--site-muted)]">
             搜索暂时不可用，目录仍可正常浏览。
@@ -213,7 +210,7 @@ function ExplorerPanel({
         ) : query ? (
           loading ? (
             <p className="px-2 py-2 text-xs text-[var(--site-muted)]">
-              正在载入索引…
+              正在搜索…
             </p>
           ) : results.length > 0 ? (
             <ul className="space-y-1" aria-label={`${sectionTitle}搜索结果`}>
@@ -225,7 +222,7 @@ function ExplorerPanel({
                   >
                     <span className="block font-bold leading-5">{result.title}</span>
                     {result.tags.length > 0 && (
-                      <span className="mt-1 block truncate text-[11px] text-[var(--site-muted)]">
+                      <span className="mt-1 block truncate text-[11px] text-[var(--site-muted)] md:text-xs">
                         {result.tags.join(" · ")}
                       </span>
                     )}

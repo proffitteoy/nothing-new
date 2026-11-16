@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 828, 1200, 1440, 1920],
     imageSizes: [64, 128, 256, 384],
     localPatterns: [
+      { pathname: "/_next/static/media/**", search: "" },
       { pathname: "/avatar", search: "" },
       { pathname: "/avatar.jpg", search: "" },
       { pathname: "/about-cover.png", search: "" },

@@ -31,7 +31,6 @@ export default function CloudPlayer({
     duration,
     isLoading,
     musicStatus,
-    musicError,
     togglePlay,
     nextSong,
     prevSong,
@@ -132,16 +131,15 @@ export default function CloudPlayer({
           <span className={styles.eyebrow}>云端音乐</span>
           <p className={styles.status} role="status">
             {loading
-              ? "正在连接音乐云端"
+              ? "正在加载音乐…"
               : musicStatus === "error"
-                ? "音乐连接失败"
+                ? "音乐暂时无法加载"
                 : "暂无可播放音乐"}
           </p>
           {!loading && (
             <>
-              <p className={styles.artist}>{musicError || "请检查播放列表或网络连接"}</p>
               <button type="button" onClick={retryMusic} className={styles.retry}>
-                <RotateCcw size={16} aria-hidden="true" /> 重试连接
+                <RotateCcw size={16} aria-hidden="true" /> 重试
               </button>
             </>
           )}

@@ -74,7 +74,6 @@ export default function AnimeShelf() {
     return error ? (
       <ShelfState
         title="番剧数据暂时不可用"
-        description="快照与实时中转都未能返回数据。"
         action={() => {
           setError(false)
           setSnapshot(null)
@@ -82,7 +81,7 @@ export default function AnimeShelf() {
         }}
       />
     ) : (
-      <ShelfState title="正在读取番剧快照" description="先加载 metadata，封面会按视口渐进加载。" />
+      <ShelfState title="正在加载番剧…" />
     )
   }
 
@@ -147,18 +146,13 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
             <Clapperboard className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-[9px] font-black tracking-[0.24em] text-blue-600">
-              ANIME INDEX
-            </p>
             <div className="mt-0.5 flex items-baseline gap-3">
-              <h1 className="text-2xl font-black tracking-tight text-slate-950">
-                番剧
-              </h1>
+              <h1 className="text-2xl font-black tracking-tight text-slate-950">番剧</h1>
               <a
                 href={`https://bgm.tv/user/${encodeURIComponent(snapshot.username)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] font-black text-slate-500 transition hover:text-blue-600"
+                className="text-[10px] font-medium text-[var(--site-muted)] transition hover:text-blue-600 md:text-[13px]"
               >
                 @{snapshot.username}
               </a>
@@ -174,10 +168,9 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
             href="#watching"
             className="group flex min-w-0 items-center gap-2 rounded-2xl border border-teal-200/70 bg-teal-50/65 px-3 py-2.5 text-teal-800 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-100/70"
           >
-            <span className="text-[9px] font-black tracking-[0.16em] opacity-55">01</span>
             <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
-            <span className="truncate text-xs font-black">正在看</span>
-            <span className="ml-auto rounded-full bg-teal-600/10 px-1.5 py-0.5 text-[9px] font-black">
+            <span className="truncate text-xs font-black md:text-sm">正在看</span>
+            <span className="ml-auto rounded-full bg-teal-600/10 px-1.5 py-0.5 text-[9px] font-black md:text-xs">
               {watching.length}
             </span>
           </a>
@@ -185,10 +178,9 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
             href="#watched"
             className="group flex min-w-0 items-center gap-2 rounded-2xl border border-violet-200/70 bg-violet-50/65 px-3 py-2.5 text-violet-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-100/70"
           >
-            <span className="text-[9px] font-black tracking-[0.16em] opacity-55">02</span>
             <Star className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
-            <span className="truncate text-xs font-black">看过</span>
-            <span className="ml-auto rounded-full bg-violet-600/10 px-1.5 py-0.5 text-[9px] font-black">
+            <span className="truncate text-xs font-black md:text-sm">看过</span>
+            <span className="ml-auto rounded-full bg-violet-600/10 px-1.5 py-0.5 text-[9px] font-black md:text-xs">
               {watched.length}
             </span>
           </a>
@@ -198,7 +190,6 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
       <section id="watching" aria-labelledby="watching-title" className="mt-10 scroll-mt-24">
         <SectionHeading
           id="watching-title"
-          eyebrow="NOW SHOWING"
           title="正在看"
           description="故事还在继续，下一集仍亮着灯。"
           icon="play"
@@ -222,7 +213,6 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
       <section id="watched" aria-labelledby="watched-title" className="mt-16 scroll-mt-24">
         <SectionHeading
           id="watched-title"
-          eyebrow="RATED ARCHIVE"
           title="看过"
           description="按我的 Bangumi 评分，从高到低归档。"
           icon="star"
@@ -233,7 +223,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
               const groupId = group.score === null ? "anime-unrated" : `anime-rating-${group.score}`
               return (
                 <section key={groupId} aria-labelledby={groupId}>
-                  <div className="mb-4 flex items-center gap-3">
+                  <div className="mb-4 flex items-center gap-3 md:w-fit md:rounded-lg md:bg-[var(--site-surface)] md:py-2 md:pr-4">
                     <span
                       className={
                         "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-lg font-black shadow-sm " +
@@ -245,13 +235,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
                       {group.score ?? "—"}
                     </span>
                     <div>
-                      <p className="text-[9px] font-black tracking-[0.2em] text-slate-400">
-                        MY SCORE
-                      </p>
-                      <h3
-                        id={groupId}
-                        className="mt-0.5 text-lg font-black text-slate-900"
-                      >
+                      <h3 id={groupId} className="mt-0.5 text-lg font-black text-slate-900">
                         {group.score === null ? "未评分" : `${group.score} 分`}
                       </h3>
                     </div>
@@ -284,29 +268,27 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
 
 function SectionHeading({
   id,
-  eyebrow,
   title,
   description,
   icon,
 }: {
   id: string
-  eyebrow: string
   title: string
   description: string
   icon: "play" | "star"
 }) {
   const Icon = icon === "play" ? Sparkles : Star
   return (
-    <div data-field-obstacle className="mb-5 flex items-end justify-between gap-5 px-1">
+    <div
+      data-field-obstacle
+      className="mb-5 flex items-end justify-between gap-5 px-1 md:w-fit md:rounded-lg md:bg-[var(--site-surface)] md:px-4 md:py-3"
+    >
       <div>
-        <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.22em] text-blue-600">
-          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-          {eyebrow}
-        </div>
-        <h2 id={id} className="mt-2 text-2xl font-black text-slate-950">
+        <h2 id={id} className="flex items-center gap-2 text-2xl font-black text-[var(--site-ink)]">
+          <Icon className="h-5 w-5 text-[var(--site-accent)]" aria-hidden="true" />
           {title}
         </h2>
-        <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+        <p className="mt-1 text-xs font-medium text-[var(--site-muted)] sm:text-sm">
           {description}
         </p>
       </div>
@@ -350,9 +332,9 @@ function AnimeGrid({
               {showRating && (
                 <span
                   className={
-                    "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm sm:right-2 sm:top-2 sm:text-[9px] " +
+                    "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm sm:right-2 sm:top-2 sm:text-[9px] md:text-xs " +
                     (anime.score === undefined
-                      ? "border-white/40 bg-slate-900/55 text-white"
+                      ? "border-white/40 bg-slate-900/55 text-white md:bg-[var(--site-ink)]"
                       : "border-rose-200/70 bg-rose-700/95 text-white")
                   }
                 >
@@ -360,7 +342,10 @@ function AnimeGrid({
                 </span>
               )}
             </span>
-            <span className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-blue-600 sm:mt-2.5 sm:text-xs sm:leading-5">
+            <span
+              title={title}
+              className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-blue-600 sm:mt-2.5 sm:text-xs sm:leading-5 md:line-clamp-3 md:rounded-md md:bg-[var(--site-surface)] md:px-2 md:py-2 md:text-sm md:font-semibold md:leading-6"
+            >
               {title}
             </span>
           </a>
@@ -414,7 +399,7 @@ function ShelfState({
   action,
 }: {
   title: string
-  description: string
+  description?: string
   action?: () => void
 }) {
   return (
@@ -426,7 +411,9 @@ function ShelfState({
       >
         <Clapperboard className="mx-auto h-9 w-9 text-blue-400" aria-hidden="true" />
         <h1 className="mt-5 text-xl font-black text-slate-950">{title}</h1>
-        <p className="mt-2 text-sm font-medium text-slate-500">{description}</p>
+        {description && (
+          <p className="mt-2 text-sm font-medium text-[var(--site-muted)]">{description}</p>
+        )}
         {action && (
           <button
             type="button"

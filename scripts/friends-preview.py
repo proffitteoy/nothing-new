@@ -113,7 +113,7 @@ def screenshot(page, name):
 
 
 def check_copy(page):
-    button = page.get_by_role("button", name="复制申请格式", exact=True)
+    button = page.get_by_role("button", name="复制本站名片", exact=True)
     button.click()
     page.get_by_role("button", name="已复制", exact=True).wait_for()
     assert page.evaluate("navigator.clipboard.readText()").replace("\r\n", "\n") == expected["format"]
@@ -129,7 +129,7 @@ def check_copy(page):
     page.get_by_role("button", name="已复制", exact=True).wait_for()
     for clipboard in ["{writeText: () => Promise.reject(new Error('denied'))}", "undefined"]:
         page.evaluate("Object.defineProperty(navigator, 'clipboard', {configurable: true, value: " + clipboard + "})")
-        page.get_by_role("button", name="已复制" if "reject" in clipboard else "复制申请格式", exact=True).click()
+        page.get_by_role("button", name="已复制" if "reject" in clipboard else "复制本站名片", exact=True).click()
         page.get_by_role("status").filter(has_text="请手动复制").wait_for()
         assert page.locator("#friend-apply-format").evaluate("el => el === document.activeElement && el.selectionStart === 0 && el.selectionEnd === el.value.length")
     page.evaluate("Object.defineProperty(navigator, 'clipboard', {configurable: true, value: window.originalClipboard})")

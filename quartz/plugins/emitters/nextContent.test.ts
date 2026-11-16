@@ -1,10 +1,17 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
+import type { Root } from "hast"
+import { unified } from "unified"
+import remarkParse from "remark-parse"
+import remarkMath from "remark-math"
+import remarkRehype from "remark-rehype"
+import rehypeKatex from "rehype-katex"
 
 import nextConfig from "../../../next.config"
 import {
   buildNextImageUrl,
   getLegacyBlogAliases,
+  getDescriptionHtml,
   getNoteRoute,
   getNoteSection,
   getResponsiveImageAttributes,
@@ -109,5 +116,91 @@ describe("Next content artifact routes", () => {
         assert.equal(params.get("url"), src, "Chinese and spaces must survive URL encoding")
       }
     }
+  })
+})
+
+describe("Rendered collection excerpts", () => {
+  async function rendered(markdown: string) {
+    const processor = unified().use(remarkParse).use(remarkMath).use(remarkRehype).use(rehypeKatex)
+    return (await processor.run(processor.parse(markdown))) as Root
+  }
+
+  it("keeps the first paragraph's original words and formatting", async () => {
+    const tree = await rendered("# 标题\n\n第一段 **原文**。\n\n第二段不作为摘要。")
+    assert.equal(getDescriptionHtml(tree), "<p>第一段 <strong>原文</strong>。</p>")
+  })
+
+  it("keeps an adjacent display formula complete without mutating article HTML", async () => {
+    const tree = await rendered(
+      "定义为\n\n$$\n\\Lambda(\\theta)=-\\int_0^\\theta\\log|2\\sin t|\\,dt\n$$\n\n后续正文。",
+    )
+    const original = structuredClone(tree)
+    const html = getDescriptionHtml(tree)!
+    assert.match(html, /定义为/)
+    assert.match(html, /katex-display/)
+    assert.match(html, /\\Lambda\(\\theta\)=-\\int_0\^\\theta/)
+    assert.ok(!html.includes("后续正文"))
+    assert.deepEqual(tree, original)
+  })
+
+  it("preserves inline math and link text without nesting links inside cards", async () => {
+    const html = getDescriptionHtml(
+      await rendered("令 $x^2$ 为 [原文链接](https://example.com)。"),
+    )!
+    assert.match(html, /class="katex"/)
+    assert.match(html, /原文链接/)
+    assert.doesNotMatch(html, /<a[ >]/)
+  })
+
+  it("leaves an explicit author's description to the existing plain-text path", async () => {
+    const tree = await rendered("正文不取代作者摘要。")
+    assert.equal(getDescriptionHtml(tree, "作者自己的摘要 $x^2$"), undefined)
+  })
+
+  it("skips callout titles and removes duplicate IDs and interactive controls", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "element",
+          tagName: "blockquote",
+          properties: {},
+          children: [
+            {
+              type: "element",
+              tagName: "div",
+              properties: { className: ["callout-title"] },
+              children: [
+                {
+                  type: "element",
+                  tagName: "p",
+                  properties: {},
+                  children: [{ type: "text", value: "提示标题" }],
+                },
+              ],
+            },
+            {
+              type: "element",
+              tagName: "p",
+              properties: { id: "original", onClick: "alert(1)" },
+              children: [
+                { type: "text", value: "实际正文。" },
+                {
+                  type: "element",
+                  tagName: "button",
+                  properties: {},
+                  children: [{ type: "text", value: "操作" }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    assert.equal(getDescriptionHtml(tree), "<p>实际正文。</p>")
+  })
+
+  it("omits HTML for heading-only notes so legacy text remains the fallback", async () => {
+    assert.equal(getDescriptionHtml(await rendered("# 只有标题")), undefined)
   })
 })

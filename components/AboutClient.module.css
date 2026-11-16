@@ -316,17 +316,39 @@
   .prose { padding: 20px 16px; font-size: 16px; }
 }
 
+@media (min-width: 768px) {
+  .page {
+    --about-surface: var(--site-surface);
+  }
+  .indexNav {
+    margin-top: 52px;
+    padding: 20px 12px;
+    border-radius: 6px;
+    background: var(--about-surface);
+  }
+  .indexTitle,
+  .indexNumber {
+    font-size: 13px;
+  }
+  .sectionHeader {
+    width: fit-content;
+    max-width: 100%;
+    padding: 16px 24px;
+    border-radius: 6px;
+    background: var(--about-surface);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .indexButton { transition: none; }
 }
 
-/* Preserve the existing transparent inner-page header on /about only. */
+/* Keep shared navigation readable above the about backdrop. */
 :global(body):has(.page) :global(header:has(nav[aria-label="主导航"])),
 :global(body):has(.page) :global([data-site-ui]:has(> button[aria-controls="mobile-nav-wheel"])) {
   --journal-paper: var(--site-surface);
 }
 :global(body):has(.page) :global(header:has(nav[aria-label="主导航"])) {
-  background: transparent;
+  background: color-mix(in srgb, var(--journal-paper) 96%, transparent);
 }
 @media (min-width: 768px) {
   :global(body):has(.page) :global(#app-scroll-root) {

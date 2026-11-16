@@ -215,7 +215,7 @@ try:
         for state in ["loading", "empty", "error"]:
             context, page, transport = setup(browser, state=state)
             controls = player(page)
-            expect(controls).to_contain_text({"loading": "正在连接音乐云端", "empty": "暂无可播放音乐", "error": "音乐连接失败"}[state])
+            expect(controls).to_contain_text({"loading": "正在加载音乐…", "empty": "暂无可播放音乐", "error": "音乐暂时无法加载"}[state])
             assert controls.get_by_role("slider").count() == 0
             assert lyrics(page).count() == 0
             capture(page, state)
@@ -224,7 +224,7 @@ try:
                     expect(controls).to_contain_text("503")
                 transport["state"] = "ready"
                 count = transport["requests"]
-                controls.get_by_role("button", name="重试连接", exact=True).click()
+                controls.get_by_role("button", name="重试", exact=True).click()
                 expect(controls.get_by_role("slider", name="播放进度")).to_be_enabled()
                 assert transport["requests"] > count
             for pending in transport["pending"]:

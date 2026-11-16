@@ -32,6 +32,8 @@ export type NoteArtifact = {
   sourcePath: string
   title: string
   description: string
+  // Generated from rendered content only; explicit author descriptions stay plain text.
+  descriptionHtml?: string
   cover?: string
   coverDimensions?: ImageDimensions
   dates: {

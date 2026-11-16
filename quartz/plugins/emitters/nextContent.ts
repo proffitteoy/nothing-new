@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import type { Element, Root } from "hast"
 import { toHtml } from "hast-util-to-html"
+import { toString } from "hast-util-to-string"
 import sharp from "sharp"
 import { visit } from "unist-util-visit"
 
@@ -422,6 +423,70 @@ export const NextContentArtifacts: QuartzEmitterPlugin = () => ({
   },
 })
 
+// Use the rendered paragraph so math survives; never change the article tree or author summary.
+export function getDescriptionHtml(tree: Root, authorDescription?: unknown): string | undefined {
+  if (typeof authorDescription === "string" && authorDescription.trim()) return undefined
+
+  function firstParagraph(parent: Root | Element): Root["children"] | undefined {
+    for (const [index, node] of parent.children.entries()) {
+      if (node.type !== "element") continue
+      const classes = String(node.properties.className ?? "")
+      if (/^h[1-6]$/.test(node.tagName) || classes.includes("callout-title")) continue
+      if (node.tagName === "p" && toString(node).replaceAll("\u200b", "").trim()) {
+        const nodes: Root["children"] = [node]
+        const next = parent.children.slice(index + 1).find((child) => child.type === "element")
+        if (next?.type === "element") {
+          let displayMath = false
+          visit(next, "element", (child) => {
+            if (String(child.properties.className ?? "").includes("katex-display"))
+              displayMath = true
+          })
+          if (displayMath) nodes.push(next)
+        }
+        return nodes
+      }
+      if (["script", "style", "button", "textarea", "select", "iframe"].includes(node.tagName))
+        continue
+      const found = firstParagraph(node)
+      if (found) return found
+    }
+  }
+
+  const nodes = firstParagraph(tree)
+  if (!nodes) return undefined
+  const excerpt: Root = { type: "root", children: structuredClone(nodes) }
+  visit(excerpt, "element", (node, index, parent) => {
+    delete node.properties.id
+    for (const key of Object.keys(node.properties)) {
+      if (/^on/i.test(key)) delete node.properties[key]
+    }
+    if (!parent || index === undefined) return
+    if (
+      [
+        "script",
+        "style",
+        "button",
+        "input",
+        "iframe",
+        "textarea",
+        "select",
+        "form",
+        "img",
+        "video",
+        "audio",
+      ].includes(node.tagName)
+    ) {
+      parent.children.splice(index, 1)
+      return index
+    }
+    if (node.tagName === "a") {
+      parent.children.splice(index, 1, ...node.children)
+      return index
+    }
+  })
+  return toHtml(excerpt)
+}
+
 function collectFolders(route: string, folders: Set<string>) {
   const segments = route.split("/").filter(Boolean)
   for (let index = 1; index < segments.length - 1; index++) {
@@ -454,6 +519,7 @@ async function buildArtifact(
     sourcePath: fileData.relativePath!,
     title: fileData.frontmatter?.title ?? simplifySlug(fileData.slug!),
     description: fileData.description ?? "",
+    descriptionHtml: getDescriptionHtml(rewritten.tree, fileData.frontmatter?.description),
     cover,
     coverDimensions,
     dates: {

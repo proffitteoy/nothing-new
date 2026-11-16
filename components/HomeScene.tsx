@@ -21,21 +21,37 @@ import { ToastProvider } from "./ToastProvider"
 import HomeSpectralCanvas from "./HomeSpectralCanvas"
 import type { PaperReport } from "../lib/papers"
 import styles from "./HomeScene.module.css"
+import projectsPreview from "../public/page-previews/projects.webp"
+import animePreview from "../public/page-previews/anime.webp"
+import chatterPreview from "../public/page-previews/chatter.webp"
+import blogPreview from "../public/page-previews/blog.webp"
+import friendsPreview from "../public/page-previews/friends.webp"
+import aboutPreview from "../public/page-previews/about.webp"
 
 const navigationIcons = [Folder, Clapperboard, MessageCircle, NotebookPen, Link2, UserRound]
+// Static imports give regenerated screenshots content-based URLs instead of stale image caches.
+const pagePreviews = [
+  projectsPreview,
+  animePreview,
+  chatterPreview,
+  blogPreview,
+  friendsPreview,
+  aboutPreview,
+]
 const pageEntries = navigationLinks.map((link, index) => ({
   ...link,
   id: link.href.slice(1),
   icon: navigationIcons[index],
+  preview: pagePreviews[index],
 }))
 const rails = [
   { side: "left", entries: pageEntries.slice(0, 4) },
   {
     side: "right",
     entries: [
-      { id: "papers", name: "论文", href: null, icon: BookOpen },
+      { id: "papers", name: "论文", href: null, icon: BookOpen, preview: null },
       ...pageEntries.slice(4),
-      { id: "contact", name: "联系", href: null, icon: Mail },
+      { id: "contact", name: "联系", href: null, icon: Mail, preview: null },
     ],
   },
 ]
@@ -121,7 +137,7 @@ export default function HomeScene({
             aria-label={`首页${side === "left" ? "左" : "右"}侧导航`}
             data-home-rail={side}
           >
-            {entries.map(({ id, name, href, icon: Icon }) => {
+            {entries.map(({ id, name, href, icon: Icon, preview }) => {
               const expanded = open === id
               return (
                 <aside
@@ -201,19 +217,14 @@ export default function HomeScene({
                         keyboardSide.current = id
                     }}
                   >
-                    {href ? (
+                    {href && preview ? (
                       <Link
                         href={href === "/blog" ? blogHref : href}
                         prefetch={false}
                         className={styles.previewLink}
                         aria-label={`进入${name}`}
                       >
-                        {expanded && (
-                          <SidebarPreview
-                            src={`/page-previews/${id}.webp`}
-                            alt={`${name}页面预览`}
-                          />
-                        )}
+                        {expanded && <SidebarPreview src={preview} alt={`${name}页面预览`} />}
                       </Link>
                     ) : id === "papers" ? (
                       <PaperMonitor

@@ -234,6 +234,21 @@
     transform: rotate(360deg);
   }
 }
+@media (min-width: 768px) {
+  .artist {
+    color: var(--scene-muted, var(--site-muted));
+    font-size: 0.8125rem;
+    opacity: 1;
+  }
+  .seekRow {
+    font-size: 0.75rem;
+    opacity: 1;
+  }
+  .eyebrow,
+  .retry {
+    font-size: 0.875rem;
+  }
+}
 @media (max-width: 900px) {
   .dock {
     grid-template-columns: minmax(0, 1fr) auto;

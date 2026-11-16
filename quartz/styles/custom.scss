@@ -1,5 +1,39 @@
 @use "./base.scss";
 
+// Collection cards reuse the built article's KaTeX without truncating formula nodes.
+.note-card-excerpt {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+
+  > p {
+    margin-block: 0.5em;
+  }
+  > :first-child {
+    margin-top: 0;
+  }
+  > :last-child {
+    margin-bottom: 0;
+  }
+  &:not(:has(.katex-display)) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  .katex-display {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-block: 0.5em;
+    color: var(--site-ink);
+  }
+  .katex-display > .katex {
+    width: max-content;
+    min-width: 100%;
+  }
+}
+
 // NoteShell embeds the article directly, without the standalone Quartz grid.
 // Explicit block spacing/list markers also restore what Tailwind Preflight resets.
 .page > article.popover-hint {
