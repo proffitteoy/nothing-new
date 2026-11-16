@@ -1,3 +1,11 @@
+@media (min-width: 768px) {
+  .panel :is(.issueDate, .priority, .articleBar, .footer, .number, .coverMeta) {
+    font-size: 0.8125rem;
+  }
+  .panel :is(.listLabel, .issueSummary, .issue label) {
+    font-size: 0.875rem;
+  }
+}
 .panel {
   --paper-surface: var(--site-surface);
   --paper-ink: var(--site-ink);

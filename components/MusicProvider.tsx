@@ -192,6 +192,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setMusicStatus('ready');
       setIsPlaying(false);
     } catch (error) {
+      console.error('[MusicProvider] playlist load failed:', error instanceof Error ? error.message : 'unknown error');
       setPlaylist([]);
       setCurrentIndex(0);
       setIsPlaying(false);

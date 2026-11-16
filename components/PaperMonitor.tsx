@@ -1,12 +1,12 @@
 "use client"
 
-import Image from "next/image"
+import Image, { type ImageProps } from "next/image"
 import { useEffect, useRef, useState } from "react"
 import { ArrowLeft, ArrowUpRight, ChevronDown, X } from "lucide-react"
 import type { PaperReport } from "../lib/papers"
 import styles from "./PaperMonitor.module.css"
 
-export function SidebarPreview({ src, alt }: { src: string; alt: string }) {
+export function SidebarPreview({ src, alt }: { src: ImageProps["src"]; alt: string }) {
   return (
     <span className={styles.summaryArt}>
       <Image src={src} alt={alt} fill className="object-cover" sizes="296px" />
@@ -126,7 +126,6 @@ export default function PaperMonitor({
         )}
         {!compact && (
           <span className={styles.heading}>
-            <span className={styles.eyebrow}>PAPER NOTES / WEEKLY</span>
             <strong className={styles.title}>TDA 论文周报</strong>
             {!compact && <span className={styles.subtitle}>在新的论文里，寻找下一个问题。</span>}
             <span className={styles.coverMeta}>
@@ -169,7 +168,6 @@ export default function PaperMonitor({
         <div className={styles.window}>
           <header className={styles.windowHeader}>
             <div>
-              <p className={styles.windowEyebrow}>PAPER NOTES / WEEKLY</p>
               <h2 id="tda-issue-title">TDA 论文周报</h2>
             </div>
             <button
@@ -211,8 +209,7 @@ export default function PaperMonitor({
               </label>
             </div>
             <div className={styles.listLabel}>
-              <span>CONTENTS / 本期论文</span>
-              <span>点选一篇，展开阅读</span>
+              <span>本期论文</span>
             </div>
             <ol className={styles.papers}>
               {report?.papers.map((item, index) => (
