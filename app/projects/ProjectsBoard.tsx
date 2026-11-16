@@ -39,7 +39,6 @@ export default function ProjectsBoard() {
     isPlaying,
     togglePlay,
     musicStatus,
-    musicError,
     retryMusic,
     initializeMusic,
   } = useMusic()
@@ -128,7 +127,7 @@ export default function ProjectsBoard() {
       >
         <header className={styles.heading} data-field-obstacle>
           <p className={styles.eyebrow}>
-            <span /> 阿的工作台 <span className={styles.divider}>/</span> SELECTED WORK
+            <span /> 阿的工作台
           </p>
           <h1 id="study-title">研究小屋</h1>
           <p className={styles.subtitle}>研究、构建，也持续记录。</p>
@@ -249,20 +248,23 @@ export default function ProjectsBoard() {
           <button type="button" className={styles.staticButton} onClick={toggleStatic}>
             {staticView || status === "error" ? "进入 3D" : "静态浏览"}
           </button>
+          <details className={styles.help}>
+            <summary>操作说明</summary>
+            <p>拖动环绕 · 滚轮缩放 · 点击物件</p>
+          </details>
         </div>
-        <p className={styles.hint} role="status">
+        <p className={styles.hint} role={status === "loading" || status === "error" ? "status" : undefined}>
           {status === "loading" && !staticView ? (
             <>
               <LoaderCircle size={13} className={styles.spinner} />
-              正在走进工作间 · 项目目录已可浏览
+              正在加载小屋…
             </>
           ) : status === "error" ? (
             "小屋暂未加载，项目目录仍可浏览。"
           ) : staticView ? (
-            "静静看看，或从项目目录展开阅读。"
+            <span className={styles.mobileHint}>静静看看，或从项目目录展开阅读。</span>
           ) : (
             <>
-              <span className={styles.desktopHint}>拖动环绕 · 滚轮缩放 · 点击物件</span>
               <span className={styles.mobileHint}>
                 {rotationEnabled
                   ? "单指环绕 · 双指缩放 · 结束旋转后可滚动"
@@ -292,7 +294,7 @@ export default function ProjectsBoard() {
             {selected ? (
               <>
                 <p className={styles.eyebrow}>
-                  {selected.contribution ? "OPEN SOURCE / 协作" : "SELECTED WORK / 项目"}
+                  {selected.contribution ? "开源协作" : "项目"}
                 </p>
                 <div className={styles.detailIllustration} aria-hidden="true">
                   <svg className={styles.archiveMotif} viewBox="0 0 320 168" fill="none">
@@ -329,21 +331,21 @@ export default function ProjectsBoard() {
               </>
             ) : (
               <>
-                <p className={styles.eyebrow}>BETWEEN THE LINES / 日常</p>
+                <p className={styles.eyebrow}>日常</p>
                 <div className={styles.detailIllustration} aria-hidden="true">
                   <Headphones size={58} strokeWidth={1} />
                 </div>
                 <h2 id="room-detail-title">桌边的音乐</h2>
                 <p className={styles.description}>
                   {musicStatus === "loading"
-                    ? "正在连接音乐云端"
+                    ? "正在加载音乐…"
                     : musicStatus === "error"
-                      ? "音乐连接失败"
+                      ? "音乐暂时无法加载"
                       : currentSong?.name || currentSong?.title || "暂无可播放音乐"}
                 </p>
-                <p className={styles.category}>
-                  {currentSong?.artist || currentSong?.author || musicError || "与全站播放器同步"}
-                </p>
+                {musicStatus === "ready" && (currentSong?.artist || currentSong?.author) && (
+                  <p className={styles.category}>{currentSong?.artist || currentSong?.author}</p>
+                )}
                 {musicStatus === "ready" && (
                   <button type="button" className={styles.primaryLink} onClick={togglePlay}>
                     {isPlaying ? <Pause size={17} /> : <Play size={17} />}
@@ -352,7 +354,7 @@ export default function ProjectsBoard() {
                 )}
                 {(musicStatus === "error" || musicStatus === "empty") && (
                   <button type="button" className={styles.primaryLink} onClick={retryMusic}>
-                    <RotateCcw size={17} /> 重试连接
+                    <RotateCcw size={17} /> 重试
                   </button>
                 )}
               </>
