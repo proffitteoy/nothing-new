@@ -8,16 +8,19 @@
 
 首页取消顶栏与音乐侧栏，左侧依次为「项目、番剧、杂谈、笔记」，右侧依次为「论文、友链、关于、联系」，各四个入口。八个入口共用原论文侧栏的交互：鼠标停留 350ms 展开，离开按钮与内容联合区域 120ms 收起；点击固定，外部点击或 Escape 关闭，键盘聚焦展开，Escape 归还触发按钮焦点。同时只展开一个入口，透明空白不捕获指针。
 
-六个页面入口与论文封面复用 `PaperMonitor.tsx` 的 `SidebarPreview`，展开时才加载 `public/page-previews/` 内的真实页面静态截图，点击后通过 Next Link 进入对应页面。笔记仍使用服务端解析的实际文章入口。截图只作页面预览，内容更新后按下方命令重新生成，不嵌入后台页面或额外场景；本地番剧服务不可用时，读取正式站公开真实快照，仍用当前本地页面渲染，不从旧版线上页面取景，也不使用合成夹具生成公开预览。论文保留原封面及两层阅读窗口，原生 dialog 不放进 inert/aria-hidden 容器；联系复用现有 `ProfileActions`。
+六个页面入口与论文封面复用 `PaperMonitor.tsx` 的 `SidebarPreview`。2026-11-16 预加载修正：六张页面截图及论文封面在首页开场期间就挂载并以 `loading="eager"` 加载，关闭的侧栏仍保留图片；`SplashScreen` 等动态首页挂载后将隐藏预览图纳入原有解码准备，首次展开直接显示已加载的图片，不再在悬停时发起请求。点击后通过 Next Link 进入对应页面，笔记仍使用服务端解析的实际文章入口。截图只作页面预览，内容更新后按下方命令重新生成，不嵌入后台页面或额外场景；本地番剧服务不可用时，读取正式站公开真实快照，仍用当前本地页面渲染，不从旧版线上页面取景，也不使用合成夹具生成公开预览。论文保留原封面及两层阅读窗口，原生 dialog 不放进 inert/aria-hidden 容器；联系复用现有 `ProfileActions`。
 
 音乐播放、暂停、切歌、进度与曲目信息常驻下方，歌词位于控件上方。`CloudPlayer dock` 只改变布局，继续使用根 MusicProvider/audio；桌面首页挂载可见控件后初始化歌单，不自动播放。内页、移动设备分流、原画和谱场运行逻辑保持现有行为。
 
-导航截图通过 Next.js 静态导入生成带内容哈希的图片 URL，更新截图后需重新构建，避免长期图片缓存继续展示旧文案或旧配色。静态导入只把图片元信息放进模块，仍在入口展开时才请求图片；`next.config.ts` 仅增加对应静态媒体路径白名单。
+导航截图通过 Next.js 静态导入生成带内容哈希的图片 URL，更新截图后需重新构建，避免长期图片缓存继续展示旧文案或旧配色。预加载直接解码真实 DOM 图片，复用 Next Image 依据尺寸和 DPR 选择的资源；首页以外和移动根路径分流不挂载这些截图。开场完成立即揭幕、准备预算、跳过与超时兜底保持原约定。
+
+预加载修正已通过 123 项现有测试、修改文件 ESLint、Webpack 生产构建（247 页）与原五尺寸交互回归。新增 `--mode preload` 在全新浏览器上下文中延迟真实图片响应，验证普通开场、DPR 2 减少动态和省流量模式：关闭侧栏时七张图片均已请求，揭幕后全部加载完成，首次依次展开图片立即可见，悬停不新增图片请求；0 个未捕获页面异常。完整报告位于修正工作树的 `.sync/tmp-home-preview-preload/`。本地使用 Node 24.11.1，Node 22、Safari 与线上交互仍未实测。
 
 ```powershell
 # 本地 Next 预览运行后（需要 Python Playwright、Pillow 和 Chrome）：
 python scripts/home-scene-preview.py --url http://127.0.0.1:3170 --mode snapshots --output .sync/tmp-home-sidebar
 python scripts/home-scene-preview.py --url http://127.0.0.1:3170 --mode navigation --output .sync/tmp-home-sidebar
+python scripts/home-scene-preview.py --url http://127.0.0.1:3170 --mode preload --output .sync/tmp-home-sidebar
 ```
 
 `snapshots` 会更新六张公开页面截图；`navigation` 仅将截图和检查报告写到指定输出目录，覆盖五种桌面尺寸、八入口悬停/固定/焦点/关闭、底部音乐、论文两层阅读与跨页音频连续性。音乐仍使用本地音频夹具。以下旧顶栏、音乐侧栏和固定 56×132 热区的描述及旧矩阵属于历史记录，不作为当前布局要求。

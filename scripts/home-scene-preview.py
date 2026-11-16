@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--url', default='http://127.0.0.1:3161')
 parser.add_argument('--output', default='.sync/tmp-home-scene-evidence')
 parser.add_argument('--browser', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
-parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview'], default='navigation')
+parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload'], default='navigation')
 args = parser.parse_args()
 out = Path(args.output).resolve()
 out.mkdir(parents=True, exist_ok=True)
@@ -142,6 +142,61 @@ with sync_playwright() as p:
         check('real homepage preview', {'music': page.get_by_role('region', name='音乐控制').inner_text(), 'pageErrors': errors})
         assert not errors, errors
         context.close()
+    elif args.mode == 'preload':
+        for name, reduced, dpr, constrained in [('normal', False, 1, False), ('reduced-dpr2', True, 2, False), ('save-data', False, 1, True)]:
+            context = context_for(browser, reduced=reduced, dpr=dpr)
+            if constrained:
+                context.add_init_script("Object.defineProperty(navigator, 'connection', {value: Object.assign(new EventTarget(), {saveData: true, effectiveType: '2g'})})")
+            context.add_init_script("""window.addEventListener('site-startup-phase', () => {
+                if (document.documentElement.dataset.startupPhase === 'ready')
+                    window.__previewsAtReveal = [...document.querySelectorAll('[data-home-preview] img')]
+                        .map(img => ({src: img.currentSrc, complete: img.complete && img.naturalWidth > 0}));
+            })""")
+            pending, requests = [], []
+
+            def hold_preview(route):
+                source = parse_qs(urlparse(route.request.url).query).get('url', [''])[0]
+                preview = source.startswith('/_next/static/media/') and any(
+                    Path(source).name.startswith(entry + '.') for entry in ['projects', 'anime', 'chatter', 'blog', 'friends', 'about'])
+                if preview or source == '/profile-studio.png':
+                    requests.append(route.request.url)
+                    pending.append(route)
+                else:
+                    route.continue_()
+
+            context.route('**/_next/image?*', hold_preview)
+            page = context.new_page()
+            page.on('pageerror', lambda error: errors.append(str(error)))
+            response = page.goto(args.url, wait_until='domcontentloaded', timeout=120000)
+            assert response and response.ok
+            page.wait_for_function("document.querySelectorAll('[data-home-preview] img[loading=eager]').length === 7")
+            deadline = time.monotonic() + 5
+            while len(pending) < 7 and time.monotonic() < deadline:
+                page.wait_for_timeout(25)
+            assert len(pending) == 7, (name, requests)
+            assert page.locator('[data-edge-trigger][aria-expanded=true]').count() == 0
+            assert not page.evaluate("document.documentElement.classList.contains('splash-seen')"), name
+            # Simulate a delayed response while every sidebar remains closed.
+            page.wait_for_timeout(250)
+            for route in pending:
+                route.continue_()
+            page.wait_for_function("document.documentElement.classList.contains('splash-seen')")
+            ready = page.evaluate('window.__previewsAtReveal')
+            assert ready and len(ready) == 7 and all(image['complete'] for image in ready), (name, ready)
+            assert len(set(requests)) == 7
+            for entry in ['projects', 'anime', 'chatter', 'blog', 'papers', 'friends', 'about']:
+                trigger = page.locator(f'[data-edge-trigger={entry}]')
+                trigger.hover()
+                expect(trigger).to_have_attribute('aria-expanded', 'true')
+                image = page.locator(f'#home-{entry}-panel img')
+                expect(image).to_be_visible()
+                assert image.evaluate('img => img.complete && img.naturalWidth > 0')
+                page.mouse.move(720, 750)
+                expect(trigger).to_have_attribute('aria-expanded', 'false')
+            assert len(requests) == 7, (name, requests)
+            check(name + ': seven images requested before reveal, first open ready, no hover fetch', ready)
+            context.close()
+        assert not errors, errors
     elif args.mode == 'navigation':
         for width, height in [(1440, 900), (1280, 800), (1024, 768), (640, 720), (1024, 480)]:
             context = context_for(browser, width, height, reduced=width != 1440)
@@ -151,7 +206,8 @@ with sync_playwright() as p:
             assert left.all_text_contents() == ['项目', '番剧', '杂谈', '笔记']
             assert right.all_text_contents() == ['论文', '友链', '关于', '联系']
             assert page.locator('[data-edge-trigger=music]').count() == 0
-            assert page.locator('[data-home-preview]:not(#home-papers-panel):not(#home-contact-panel) img').count() == 0
+            assert page.locator('[data-home-preview]:not(#home-papers-panel):not(#home-contact-panel) img[loading=eager]').count() == 6
+            assert page.locator('[data-home-preview] img').evaluate_all('images => images.every(img => img.complete && img.naturalWidth > 0)')
             assert page.locator('audio').count() == 1
             assert page.locator('[data-home-canvas]').count() == 1
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')

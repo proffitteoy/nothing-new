@@ -13,6 +13,7 @@ export function SidebarPreview({ src, alt }: { src: ImageProps["src"]; alt: stri
         src={src}
         alt={alt}
         fill
+        loading="eager"
         className="object-cover"
         sizes="(max-width: 1023px) 220px, 264px"
       />

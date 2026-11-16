@@ -232,7 +232,7 @@ export default function HomeScene({
                         data-edge-summary
                         aria-label={`进入${name}`}
                       >
-                        {expanded && <SidebarPreview src={preview} alt={`${name}页面预览`} />}
+                        <SidebarPreview src={preview} alt={`${name}页面预览`} />
                       </Link>
                     ) : id === "papers" ? (
                       <PaperMonitor
