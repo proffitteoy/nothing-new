@@ -53,7 +53,6 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
     <main className={styles.board} aria-labelledby="chatter-title">
       <header data-field-obstacle className={styles.masthead}>
         <div>
-          <p className={styles.eyebrow}>FIELD NOTES</p>
           <div className={styles.headingRow}>
             <h1 id="chatter-title" className={styles.title}>
               杂谈
