@@ -113,14 +113,6 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     // Warm resources alongside the intro without delaying the simplex-to-particle handoff.
     const critical = async () => {
       const started = performance.now()
-      const images = Array.from(document.images).filter((img) => {
-        // Hidden sidebars can contain lazy covers whose decode never starts.
-        // Only visible entry artwork belongs in the startup readiness gate.
-        if (!img.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return false
-        const rect = img.getBoundingClientRect()
-        return img.loading !== "lazy" || (rect.top < innerHeight && rect.bottom > 0)
-      })
-      await Promise.allSettled([document.fonts.ready, ...images.map((img) => img.decode())])
       while (performance.now() - started < 4000) {
         const roomLoading =
           document.querySelector<HTMLElement>("[data-room-status]")?.dataset.roomStatus ===
@@ -131,6 +123,15 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         if (!roomLoading && !homeLoading) break
         await sleep(32, signal)
       }
+      // HomeScene is loaded dynamically. Wait for it before collecting the
+      // eagerly mounted previews, including covers inside closed sidebars.
+      const images = Array.from(document.images).filter((img) => {
+        if (homeEntry && img.closest("[data-home-preview]")) return true
+        if (!img.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return false
+        const rect = img.getBoundingClientRect()
+        return img.loading !== "lazy" || (rect.top < innerHeight && rect.bottom > 0)
+      })
+      await Promise.allSettled([document.fonts.ready, ...images.map((img) => img.decode())])
     }
 
     // Never load the large SVG scene on subpages, small screens or in reduced
@@ -172,8 +173,10 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
     window.addEventListener("message", onAnimationMessage)
     window.addEventListener("alpha-splash:frame-loaded", onFrameLoaded)
 
-    const preloads = Promise.allSettled([warm(), Promise.race([critical(), sleep(4000, signal)])])
-      .catch(() => {})
+    const preloads = Promise.allSettled([
+      warm(),
+      Promise.race([critical(), sleep(4000, signal)]),
+    ]).catch(() => {})
 
     if (animateHome) {
       queueMicrotask(() => {
@@ -230,9 +233,7 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
           data-startup-overlay
           className="fixed inset-x-0 bottom-8 z-[100001] flex items-center justify-center gap-4 text-xs text-slate-200"
         >
-          {phase === "preparing" && showAnimation && (
-            <span role="status">正在准备首页…</span>
-          )}
+          {phase === "preparing" && showAnimation && <span role="status">正在准备首页…</span>}
           <button
             type="button"
             onClick={() => {
