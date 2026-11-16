@@ -1,8 +1,9 @@
 """Unified homepage acceptance. Evidence goes to --output (ignored by Git by default).
 
 The default navigation mode checks the current sidebars and bottom music dock.
-The snapshots mode updates public/page-previews/ from real pages; it may read
-the production anime page when the local data service is unavailable.
+The snapshots mode updates public/page-previews/ from local pages. It may read
+the public production anime data when local data is unavailable, while keeping
+the current local renderer and styles. Synthetic fixtures are never published.
 
 Requires Python Playwright and Pillow. The music fixture is local test audio;
 it validates the real MusicProvider, not availability of an external music API.
@@ -15,6 +16,7 @@ from pathlib import Path
 import struct
 import time
 import wave
+from urllib.parse import urljoin, urlparse, parse_qs
 from playwright.sync_api import sync_playwright, expect
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -89,11 +91,31 @@ with sync_playwright() as p:
             except Exception:
                 pass  # A slow external image must not prevent the local page capture.
             if route == 'anime' and page.get_by_role('heading', name='番剧数据暂时不可用').count():
-                response = page.goto('https://nothing-new.cn/anime', wait_until='domcontentloaded', timeout=120000)
-                assert response and response.ok
-                page.wait_for_function("document.documentElement.classList.contains('splash-seen')")
-                page.wait_for_function("document.querySelector('main img, [data-anime-card] img, img[alt*=CLANNAD]') !== null", timeout=30000)
-                assert page.get_by_role('heading', name='番剧数据暂时不可用').count() == 0
+                # Read real public data, never an old production screenshot or a test fixture.
+                latest = context.request.get('https://nothing-new.cn/anime/latest.json')
+                assert latest.ok, 'Public anime pointer unavailable; do not publish a fixture preview'
+                pointer = latest.json()
+                snapshot_response = context.request.get(urljoin('https://nothing-new.cn', pointer['snapshot']))
+                assert snapshot_response.ok, 'Public anime snapshot unavailable'
+                snapshot = snapshot_response.json()
+                assert snapshot.get('version') == 1 and snapshot.get('items'), 'Invalid public anime snapshot'
+                context.route('**/anime/latest.json', lambda r: r.fulfill(json={
+                    **pointer, 'snapshot': '/__preview-real-anime.json'}))
+                context.route('**/__preview-real-anime.json', lambda r: r.fulfill(json=snapshot))
+
+                def public_anime_cover(r):
+                    parsed = urlparse(r.request.url)
+                    source = parse_qs(parsed.query).get('url', [''])[0]
+                    if not source.startswith('/anime/blob/covers/'):
+                        r.continue_()
+                        return
+                    cover = context.request.get('https://nothing-new.cn' + parsed.path + '?' + parsed.query)
+                    r.fulfill(response=cover)
+
+                context.route('**/_next/image?*', public_anime_cover)
+                page.reload(wait_until='domcontentloaded', timeout=120000)
+                page.get_by_role('heading', name='番剧', exact=True).wait_for(timeout=30000)
+                check('anime: public real data with local renderer', {'source': pointer['snapshot'], 'count': len(snapshot['items'])})
             try:
                 page.wait_for_function("""() => [...document.images].filter(img => {
                     const b = img.getBoundingClientRect();
@@ -127,7 +149,7 @@ with sync_playwright() as p:
             assert left.all_text_contents() == ['项目', '番剧', '杂谈', '笔记']
             assert right.all_text_contents() == ['论文', '友链', '关于', '联系']
             assert page.locator('[data-edge-trigger=music]').count() == 0
-            assert page.locator('img[src*="page-previews"]').count() == 0
+            assert page.locator('[data-home-preview]:not(#home-papers-panel):not(#home-contact-panel) img').count() == 0
             assert page.locator('audio').count() == 1
             assert page.locator('[data-home-canvas]').count() == 1
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')

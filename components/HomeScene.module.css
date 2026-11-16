@@ -182,3 +182,8 @@
 .scene :global(dialog) {
   color-scheme: dark;
 }
+@media (min-width: 768px) {
+  .tab {
+    font-size: 14px;
+  }
+}
