@@ -67,7 +67,7 @@
 }
 .edge[data-open="true"] {
   width: calc(var(--edge-width) + 56px);
-  height: max(var(--tab-height), calc(var(--edge-width) * 0.75));
+  height: var(--tab-height);
 }
 .right .edge {
   justify-self: end;
@@ -115,8 +115,11 @@
   top: 0;
   z-index: 1;
   width: var(--edge-width);
+  height: var(--tab-height);
   pointer-events: none;
 }
+/* Expanded previews must not grow over neighbouring rail entries. */
+.edge[data-open="true"] { z-index: 8; }
 .left .preview {
   left: 0;
 }
@@ -135,9 +138,9 @@
 .preview :global(dialog) {
   pointer-events: auto;
 }
-.previewLink {
+ .previewLink {
   display: block;
-  aspect-ratio: 4 / 3;
+  height: var(--tab-height);
   color: inherit;
   border-radius: 12px 0 0 12px;
 }
@@ -145,8 +148,22 @@
 .left .previewLink > span {
   border-radius: 0 12px 12px 0;
 }
+.previewLink > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  aspect-ratio: auto;
+  overflow: hidden;
+}
 .previewLink img {
+  object-fit: cover;
   object-position: top;
+}
+/* Paper/contact summaries share the same vertical boundary as their tab. */
+.preview :global([data-paper-summary]),
+.contactPanel {
+  max-height: var(--tab-height);
+  overflow: auto;
 }
 .contactPanel {
   padding: 16px;
