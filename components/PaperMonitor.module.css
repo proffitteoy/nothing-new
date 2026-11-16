@@ -50,10 +50,7 @@
   display: block;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: 12px;
-}
-.summaryArt img {
-  object-position: top;
+  border-radius: 12px 0 0 12px;
 }
 .summary:focus-visible {
   outline: 2px solid currentColor;
