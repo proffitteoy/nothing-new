@@ -33,7 +33,6 @@ export default async function NoteRoutePage({
       <NoteCollectionPage
         section={section}
         title={title}
-        description={`浏览“${title}”文件夹中的公开笔记。`}
         notes={notes}
         folderRoute={route}
       />

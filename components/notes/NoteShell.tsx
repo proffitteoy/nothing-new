@@ -37,7 +37,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
               data-field-obstacle
               className="mb-5 rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-6 shadow-[0_20px_55px_-42px_rgba(23,50,79,0.65)] sm:p-8"
             >
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-[var(--site-muted)]">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-[var(--site-muted)] md:text-[13px]">
                 <Link
                   href={sectionRoute}
                   className="rounded-full bg-[var(--site-accent)]/10 px-3 py-1.5 text-[var(--site-accent)] hover:bg-[var(--site-accent)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)]"
@@ -59,7 +59,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   {note.tags.map((tag) => (
                     <li
                       key={tag}
-                      className="inline-flex items-center gap-1 rounded-full border border-violet-200/70 bg-violet-50/80 px-3 py-1.5 text-[11px] font-bold text-violet-800"
+                      className="inline-flex items-center gap-1 rounded-full border border-violet-200/70 bg-violet-50/80 px-3 py-1.5 text-[11px] font-bold text-violet-800 md:text-xs"
                     >
                       <Hash className="h-3 w-3" aria-hidden="true" />
                       {tag}
@@ -112,10 +112,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                 className="mt-5 rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 lg:hidden"
               >
                 <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)]">
-                  <CornerUpLeft
-                    className="h-4 w-4 text-[var(--site-accent)]"
-                    aria-hidden="true"
-                  />
+                  <CornerUpLeft className="h-4 w-4 text-[var(--site-accent)]" aria-hidden="true" />
                   反向链接
                 </h2>
                 <ul className="mt-3 space-y-2">
@@ -142,10 +139,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   className="rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)]"
                 >
                   <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)]">
-                    <Link2
-                      className="h-4 w-4 text-[var(--site-accent)]"
-                      aria-hidden="true"
-                    />
+                    <Link2 className="h-4 w-4 text-[var(--site-accent)]" aria-hidden="true" />
                     本页目录
                   </h2>
                   <ol className="mt-4 max-h-[45vh] space-y-2 overflow-y-auto pr-1">
@@ -155,7 +149,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                         style={{ paddingLeft: entry.depth * 10 }}
                       >
                         <a
-                      className="text-xs leading-5 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
+                          className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                           href={`#${entry.slug}`}
                         >
                           {entry.text}
@@ -166,23 +160,23 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                 </nav>
               )}
 
-              <section
-                data-field-obstacle
-                className="rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)]"
-              >
-                <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)]">
-                  <CornerUpLeft
-                    className="h-4 w-4 text-[var(--site-accent)]"
-                    aria-hidden="true"
-                  />
-                  反向链接
-                </h2>
-                {note.backlinks.length > 0 ? (
+              {note.backlinks.length > 0 && (
+                <section
+                  data-field-obstacle
+                  className="rounded-2xl border border-[var(--site-line)] bg-[var(--site-surface)] p-5 shadow-[0_14px_38px_-28px_rgba(23,50,79,0.55)]"
+                >
+                  <h2 className="flex items-center gap-2 text-sm font-black text-[var(--site-ink)]">
+                    <CornerUpLeft
+                      className="h-4 w-4 text-[var(--site-accent)]"
+                      aria-hidden="true"
+                    />
+                    反向链接
+                  </h2>
                   <ul className="mt-4 space-y-2.5">
                     {note.backlinks.map((backlink) => (
                       <li key={backlink.route}>
                         <Link
-                          className="text-xs leading-5 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
+                          className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                           href={backlink.route}
                         >
                           {backlink.title}
@@ -190,12 +184,8 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                       </li>
                     ))}
                   </ul>
-                ) : (
-                  <p className="mt-3 text-xs leading-5 text-[var(--site-muted)]">
-                    暂无其他笔记链接到这里。
-                  </p>
-                )}
-              </section>
+                </section>
+              )}
             </div>
           </aside>
         </main>
