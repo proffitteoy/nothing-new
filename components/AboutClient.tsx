@@ -80,7 +80,7 @@ export default function AboutClient({
       <div className={styles.layout}>
         <aside className={styles.indexColumn}>
           <nav className={styles.indexNav} aria-label="关于页章节导航">
-            <p className={styles.indexTitle}>ABOUT / 目录</p>
+            <p className={styles.indexTitle}>目录</p>
             <div className={styles.indexLinks}>
               {sections.map((section) => (
                 <button
@@ -96,7 +96,6 @@ export default function AboutClient({
                 </button>
               ))}
             </div>
-            <p className={styles.indexHint}>点击章节，或继续向下阅读</p>
           </nav>
         </aside>
 

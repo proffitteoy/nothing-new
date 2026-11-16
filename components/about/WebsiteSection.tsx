@@ -17,7 +17,6 @@ export default function WebsiteSection({
       aria-labelledby="about-website-title"
     >
       <header className={styles.sectionHeader}>
-        <span className={styles.eyebrow}>01 / THE WEBSITE</span>
         <h1 id="about-title" className={styles.pageTitle}>关于</h1>
         <h2 id="about-website-title" className={styles.sectionTitle}>网站介绍</h2>
         <p className={styles.sectionSubtitle}>由 {siteConfig.authorName} 持续维护的个人空间</p>
