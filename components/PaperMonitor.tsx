@@ -9,7 +9,13 @@ import styles from "./PaperMonitor.module.css"
 export function SidebarPreview({ src, alt }: { src: ImageProps["src"]; alt: string }) {
   return (
     <span className={styles.summaryArt}>
-      <Image src={src} alt={alt} fill className="object-cover" sizes="296px" />
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className="object-cover"
+        sizes="(max-width: 1023px) 220px, 264px"
+      />
     </span>
   )
 }

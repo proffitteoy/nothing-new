@@ -87,7 +87,7 @@ export default function HomeScene({
     closeTimer.current = setTimeout(() => {
       if (pinned.current || document.querySelector("dialog[open]")) return
       const hovered = root.current?.querySelector(
-        `[data-edge-trigger="${id}"]:hover, [data-home-preview="${id}"]:hover`,
+        `[data-edge-trigger="${id}"]:hover, [data-home-preview="${id}"] [data-edge-summary]:hover, [data-home-preview="${id}"] [data-paper-summary]:hover`,
       )
       const focused = (document.activeElement as Element | null)?.closest(
         `[data-home-edge="${id}"]`,
@@ -100,7 +100,7 @@ export default function HomeScene({
   useEffect(() => {
     const outside = (event: PointerEvent) => {
       const target = event.target as Element
-      if (!target.closest("[data-home-edge], dialog, [data-home-music]")) {
+      if (!target.closest("[data-home-edge], dialog")) {
         clearTimeout(openTimer.current)
         clearTimeout(closeTimer.current)
         pinned.current = false
@@ -200,19 +200,26 @@ export default function HomeScene({
                   </button>
                   <div
                     id={`home-${id}-panel`}
-                    className={`${styles.preview} ${id === "contact" ? styles.contactPanel : ""}`}
+                    className={styles.preview}
                     data-home-preview={id}
                     data-open={expanded}
                     // Keep the native paper dialogs outside inert/aria-hidden trees.
                     inert={id !== "papers" && !expanded}
                     aria-hidden={id !== "papers" && !expanded ? true : undefined}
                     onPointerDownCapture={(event) => {
-                      if (!(event.target as Element).closest("dialog")) keyboardSide.current = null
+                      if (
+                        (event.target as Element).closest(
+                          "[data-edge-summary], [data-paper-summary]",
+                        )
+                      )
+                        keyboardSide.current = null
                     }}
                     onKeyDownCapture={(event) => {
                       if (
                         (event.key === "Enter" || event.key === " ") &&
-                        !(event.target as Element).closest("dialog")
+                        (event.target as Element).closest(
+                          "[data-edge-summary], [data-paper-summary]",
+                        )
                       )
                         keyboardSide.current = id
                     }}
@@ -222,6 +229,7 @@ export default function HomeScene({
                         href={href === "/blog" ? blogHref : href}
                         prefetch={false}
                         className={styles.previewLink}
+                        data-edge-summary
                         aria-label={`进入${name}`}
                       >
                         {expanded && <SidebarPreview src={preview} alt={`${name}页面预览`} />}
@@ -237,7 +245,9 @@ export default function HomeScene({
                         }}
                       />
                     ) : (
-                      <ProfileActions />
+                      <div className={styles.contactPanel} data-edge-summary>
+                        <ProfileActions />
+                      </div>
                     )}
                   </div>
                 </aside>

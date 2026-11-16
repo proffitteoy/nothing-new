@@ -134,8 +134,10 @@ with sync_playwright() as p:
         page.wait_for_timeout(3000)
         capture(page, 'home-preview')
         for entry in ['projects', 'papers', 'contact']:
-            page.locator(f'[data-edge-trigger={entry}]').hover()
+            trigger = page.locator(f'[data-edge-trigger={entry}]')
+            trigger.hover()
             page.wait_for_timeout(700)
+            expect(trigger).to_have_attribute('aria-expanded', 'true')
             capture(page, 'home-preview-' + entry)
         check('real homepage preview', {'music': page.get_by_role('region', name='音乐控制').inner_text(), 'pageErrors': errors})
         assert not errors, errors
@@ -157,9 +159,26 @@ with sync_playwright() as p:
                 bounds = [trigger.bounding_box() for trigger in rail.all()]
                 assert all(b and b['y'] >= 0 and b['y'] + b['height'] <= height and b['width'] >= 44 and b['height'] >= 44 for b in bounds)
                 assert all(a['y'] + a['height'] < b['y'] for a, b in zip(bounds, bounds[1:]))
-            for entry in ['projects', 'anime', 'chatter', 'blog', 'papers', 'friends', 'about', 'contact']:
+            # Moving directly between entries must retain the original hover behavior.
+            for entry in ['projects', 'papers', 'about']:
                 trigger = page.locator(f'[data-edge-trigger={entry}]')
                 trigger.hover()
+                expect(trigger).to_have_attribute('aria-expanded', 'true')
+                page.wait_for_timeout(200)
+                expect(trigger).to_have_attribute('aria-expanded', 'true')
+                assert page.locator('[data-edge-trigger][aria-expanded=true]').count() == 1
+                for other in page.locator('[data-edge-trigger][aria-expanded=false]').all():
+                    other_box = other.bounding_box()
+                    assert other_box['x'] >= -1 and other_box['x'] + other_box['width'] <= width + 1
+            page.mouse.move(width / 2, 20)
+            expect(trigger).to_have_attribute('aria-expanded', 'false')
+            for entry in ['projects', 'anime', 'chatter', 'blog', 'papers', 'friends', 'about', 'contact']:
+                trigger = page.locator(f'[data-edge-trigger={entry}]')
+                closed_tab = trigger.bounding_box()
+                trigger.hover()
+                if width == 1440:
+                    page.wait_for_timeout(150)
+                    expect(trigger).to_have_attribute('aria-expanded', 'false')
                 expect(trigger).to_have_attribute('aria-expanded', 'true')
                 assert page.locator('[data-edge-trigger][aria-expanded=true]').count() == 1
                 panel = page.locator(f'#home-{entry}-panel')
@@ -173,14 +192,34 @@ with sync_playwright() as p:
                 page.wait_for_timeout(200)
                 expect(trigger).to_have_attribute('aria-expanded', 'true')
                 b = panel.bounding_box()
-                assert b and b['x'] >= 0 and b['x'] + b['width'] <= width and b['y'] >= 0 and b['y'] + b['height'] <= height
+                assert b and b['x'] >= -1 and b['x'] + b['width'] <= width + 1 and b['y'] >= -1 and b['y'] + b['height'] <= height + 1, (entry, b)
                 tab = trigger.bounding_box()
-                assert abs(b['y'] + b['height'] / 2 - tab['y'] - tab['height'] / 2) < 1
+                expected_width = min(264, max(184, width * 0.183))
+                assert abs(b['width'] - expected_width) < 1
+                assert abs(b['y'] - tab['y']) < 1
+                if entry in ['projects', 'anime', 'chatter', 'blog']:
+                    assert abs(b['x']) < 1
+                    assert abs(tab['x'] - b['width']) < 1
+                else:
+                    assert abs(b['x'] + b['width'] - width) < 1
+                    assert abs(tab['x'] + tab['width'] - b['x']) < 1
+                assert abs(abs(tab['x'] - closed_tab['x']) - b['width']) < 1
                 if width == 1440:
                     capture(page, 'sidebar-' + entry)
+                # The unused strip beneath the moved tab must stay click-through.
+                if b['height'] > tab['height'] + 8:
+                    empty = {'x': tab['x'] + tab['width'] / 2, 'y': tab['y'] + tab['height'] + 4}
+                    assert page.evaluate("p => !document.elementFromPoint(p.x,p.y).closest('[data-home-edge]')", empty)
+                    page.mouse.move(empty['x'], empty['y'])
+                    expect(trigger).to_have_attribute('aria-expanded', 'false')
+                    trigger.hover()
+                    expect(trigger).to_have_attribute('aria-expanded', 'true')
                 page.mouse.move(width / 2, height - 150)
                 expect(trigger).to_have_attribute('aria-expanded', 'false')
-                # Clicking pins the same shared preview; clicking outside releases it.
+                assert abs(trigger.bounding_box()['x'] - closed_tab['x']) < 1
+                # Match the original paper flow: hover open, then click the moved tab to pin.
+                trigger.hover()
+                expect(trigger).to_have_attribute('aria-expanded', 'true')
                 trigger.click()
                 page.mouse.move(width / 2, height - 150)
                 page.wait_for_timeout(200)
@@ -200,6 +239,13 @@ with sync_playwright() as p:
                 page.keyboard.press('Tab')
             expect(page.locator('[data-edge-trigger=contact]')).to_have_attribute('aria-expanded', 'false')
             dock = page.locator('[data-home-music]')
+            paper_trigger = page.locator('[data-edge-trigger=papers]')
+            paper_trigger.hover()
+            expect(paper_trigger).to_have_attribute('aria-expanded', 'true')
+            paper_trigger.click()
+            page.mouse.move(width / 2, 20)
+            dock.locator('h2').click()
+            expect(page.locator('[data-edge-trigger=papers]')).to_have_attribute('aria-expanded', 'false')
             play = dock.get_by_role('button', name='播放', exact=True)
             expect(play).to_be_visible()
             b = dock.bounding_box()
@@ -210,9 +256,10 @@ with sync_playwright() as p:
             assert '场景测试曲 2' in dock.inner_text()
             dock.get_by_role('button', name='上一首', exact=True).click()
             seek = dock.get_by_role('slider', name='播放进度')
+            expect(seek).to_be_enabled()
             seek.focus()
             page.keyboard.press('ArrowRight')
-            assert float(seek.input_value()) > 0
+            expect(seek).not_to_have_value('0')
             expect(page.get_by_role('region', name='当前歌词')).to_be_visible()
             # Native two-level reading preserves focus and hover dismissal.
             trigger = page.locator('[data-edge-trigger=papers]')

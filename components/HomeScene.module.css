@@ -16,7 +16,9 @@
   --scene-muted: var(--site-muted);
   --scene-accent: var(--site-accent);
   --scene-line: var(--site-line);
-  --edge-width: min(296px, calc((100vw - 128px) / 2));
+  --edge-width: clamp(184px, 18.3vw, 264px);
+  --tab-height: clamp(64px, 16dvh, 132px);
+  --edge-gap: clamp(6px, 1.5dvh, 14px);
   --scene-surface: var(--site-glass);
   --home-break: 0;
   position: fixed;
@@ -43,10 +45,11 @@
 .rail {
   position: absolute;
   z-index: 6;
-  top: 46%;
-  translate: 0 -50%;
+  top: max(16px, calc((100dvh - var(--tab-height) * 4 - var(--edge-gap) * 3 - 112px) / 2));
   display: grid;
-  gap: clamp(6px, 1.5dvh, 14px);
+  grid-template-columns: 56px;
+  grid-auto-rows: var(--tab-height);
+  gap: var(--edge-gap);
   width: 56px;
   pointer-events: none;
 }
@@ -58,19 +61,28 @@
 }
 .edge {
   position: relative;
-  height: clamp(64px, 12dvh, 104px);
+  width: 56px;
+  height: var(--tab-height);
+  pointer-events: none;
 }
 .edge[data-open="true"] {
-  z-index: 1;
+  width: calc(var(--edge-width) + 56px);
+  height: max(var(--tab-height), calc(var(--edge-width) * 0.75));
+}
+.right .edge {
+  justify-self: end;
 }
 .tab {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  position: absolute;
+  top: 0;
+  z-index: 2;
   width: 56px;
-  height: 100%;
+  height: var(--tab-height);
   padding: 0;
   color: inherit;
   background: var(--scene-surface);
@@ -79,50 +91,44 @@
   cursor: pointer;
   font-size: 12px;
   pointer-events: auto;
-  transition:
-    color 180ms ease,
-    background-color 180ms ease;
 }
 .tab > span {
   writing-mode: vertical-rl;
   letter-spacing: 0.3em;
 }
 .left .tab {
-  border-radius: 0 16px 16px 0;
+  left: 0;
+  border-radius: 0 18px 18px 0;
 }
 .right .tab {
-  border-radius: 16px 0 0 16px;
+  right: 0;
+  border-radius: 18px 0 0 18px;
 }
-.tab:hover,
-.tab[aria-expanded="true"] {
-  color: var(--scene-accent);
-  background: rgb(25 40 62 / 96%);
+.left .edge[data-open="true"] .tab {
+  left: var(--edge-width);
+}
+.right .edge[data-open="true"] .tab {
+  right: var(--edge-width);
 }
 .preview {
   position: absolute;
-  top: 50%;
+  top: 0;
+  z-index: 1;
   width: var(--edge-width);
-  opacity: 0;
   pointer-events: none;
-  transform: translate(-12px, -50%);
-  transition:
-    transform 180ms ease,
-    opacity 120ms ease;
 }
 .left .preview {
-  left: 56px;
+  left: 0;
 }
 .right .preview {
-  right: 56px;
-  transform: translate(12px, -50%);
+  right: 0;
 }
 .preview[data-open="true"] {
-  opacity: 1;
   pointer-events: auto;
-  transform: translate(0, -50%);
 }
 /* Hide only the paper cover, keeping both native dialogs available in the top layer. */
-.preview[data-open="false"] :global([data-paper-summary]) {
+.preview[data-open="false"] :global([data-paper-summary]),
+.preview[data-open="false"] :global([data-edge-summary]) {
   visibility: hidden;
   pointer-events: none;
 }
@@ -133,7 +139,14 @@
   display: block;
   aspect-ratio: 4 / 3;
   color: inherit;
-  border-radius: 12px;
+  border-radius: 12px 0 0 12px;
+}
+.left .previewLink,
+.left .previewLink > span {
+  border-radius: 0 12px 12px 0;
+}
+.previewLink img {
+  object-position: top;
 }
 .contactPanel {
   padding: 16px;
