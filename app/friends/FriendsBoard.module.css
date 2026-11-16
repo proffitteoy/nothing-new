@@ -566,3 +566,19 @@
     animation: none;
   }
 }
+
+/* Four-across friend directory, with less surrounding UI and denser cards. */
+.board { padding-top: 112px; }
+.inner { max-width: 1460px; }
+.list { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.friendRow, .friend { min-height: 240px; }
+.friend { padding: 22px 14px; gap: 14px; }
+.friend h3 { font-size: 16px; }
+.avatar { width: 64px; height: 64px; }
+@media (max-width: 1099px) {
+  .list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .board { padding-top: 32px; }
+  .list { grid-template-columns: 1fr; }
+}

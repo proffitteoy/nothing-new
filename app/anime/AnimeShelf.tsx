@@ -1,8 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { ChevronDown, Clapperboard, Play, RotateCcw, Sparkles, Star } from "lucide-react"
-import BackButton from "../../components/BackButton"
+import { ChevronDown, Clapperboard, RotateCcw, Sparkles, Star } from "lucide-react"
 import {
   ANIME_BATCH_SIZE,
   getAnimeTitle,
@@ -133,65 +132,11 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
   }, [hashTarget])
 
   return (
-    <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
-      <BackButton />
-
-      <header
-        data-field-obstacle
-        className="relative mt-3 overflow-hidden rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--site-surface)] px-4 py-4 shadow-xl sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-6"
-      >
-        <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-rose-300/20 blur-3xl" />
-        <div className="relative flex items-center justify-between gap-4 sm:justify-start">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--site-line)] bg-[var(--site-recess)] text-blue-600 shadow-sm">
-            <Clapperboard className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <div>
-            <div className="mt-0.5 flex items-baseline gap-3">
-              <h1 className="text-2xl font-black tracking-tight text-slate-950">番剧</h1>
-              <a
-                href={`https://bgm.tv/user/${encodeURIComponent(snapshot.username)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] font-medium text-[var(--site-muted)] transition hover:text-blue-600 md:text-[13px]"
-              >
-                @{snapshot.username}
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <nav
-          aria-label="番剧分区"
-          className="relative mt-4 grid grid-cols-2 gap-2 sm:mt-0 sm:w-[22rem]"
-        >
-          <a
-            href="#watching"
-            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-teal-200/70 bg-teal-50/65 px-3 py-2.5 text-teal-800 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-100/70"
-          >
-            <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
-            <span className="truncate text-xs font-black md:text-sm">正在看</span>
-            <span className="ml-auto rounded-full bg-teal-600/10 px-1.5 py-0.5 text-[9px] font-black md:text-xs">
-              {watching.length}
-            </span>
-          </a>
-          <a
-            href="#watched"
-            className="group flex min-w-0 items-center gap-2 rounded-2xl border border-violet-200/70 bg-violet-50/65 px-3 py-2.5 text-violet-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-100/70"
-          >
-            <Star className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
-            <span className="truncate text-xs font-black md:text-sm">看过</span>
-            <span className="ml-auto rounded-full bg-violet-600/10 px-1.5 py-0.5 text-[9px] font-black md:text-xs">
-              {watched.length}
-            </span>
-          </a>
-        </nav>
-      </header>
-
-      <section id="watching" aria-labelledby="watching-title" className="mt-10 scroll-mt-24">
+    <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-20 pt-28 sm:px-6 lg:px-10">
+      <section id="watching" aria-labelledby="watching-title" className="scroll-mt-24">
         <SectionHeading
           id="watching-title"
           title="正在看"
-          description="故事还在继续，下一集仍亮着灯。"
           icon="play"
         />
         {visibleWatching.length > 0 ? (
@@ -210,11 +155,10 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
         />
       </section>
 
-      <section id="watched" aria-labelledby="watched-title" className="mt-16 scroll-mt-24">
+      <section id="watched" aria-labelledby="watched-title" className="mt-12 scroll-mt-24">
         <SectionHeading
           id="watched-title"
           title="看过"
-          description="按我的 Bangumi 评分，从高到低归档。"
           icon="star"
         />
         {watchedGroups.length > 0 ? (
@@ -269,28 +213,23 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
 function SectionHeading({
   id,
   title,
-  description,
   icon,
 }: {
   id: string
   title: string
-  description: string
   icon: "play" | "star"
 }) {
   const Icon = icon === "play" ? Sparkles : Star
   return (
     <div
       data-field-obstacle
-      className="mb-5 flex items-end justify-between gap-5 px-1 md:w-fit md:rounded-lg md:bg-[var(--site-surface)] md:px-4 md:py-3"
+      className="mb-5 flex items-end gap-3 px-1"
     >
       <div>
         <h2 id={id} className="flex items-center gap-2 text-2xl font-black text-[var(--site-ink)]">
           <Icon className="h-5 w-5 text-[var(--site-accent)]" aria-hidden="true" />
           {title}
         </h2>
-        <p className="mt-1 text-xs font-medium text-[var(--site-muted)] sm:text-sm">
-          {description}
-        </p>
       </div>
     </div>
   )
@@ -404,7 +343,6 @@ function ShelfState({
 }) {
   return (
     <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
-      <BackButton />
       <div
         data-field-obstacle
         className="mt-8 rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--site-surface)] px-6 py-16 text-center shadow-xl"

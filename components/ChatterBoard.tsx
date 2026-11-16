@@ -51,19 +51,8 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
 
   return (
     <main className={styles.board} aria-labelledby="chatter-title">
-      <header data-field-obstacle className={styles.masthead}>
-        <div>
-          <div className={styles.headingRow}>
-            <h1 id="chatter-title" className={styles.title}>
-              杂谈
-            </h1>
-            <p className={styles.subtitle}>
-              零散想法
-              <br />
-              与项目记录
-            </p>
-          </div>
-        </div>
+      <h1 id="chatter-title" className="sr-only">杂谈</h1>
+      <div data-field-obstacle className={styles.compactSearch}>
         <div className={styles.search} role="search" aria-label="杂谈搜索">
           <Search size={17} aria-hidden="true" />
           <label className="sr-only" htmlFor="chatter-search">
@@ -82,14 +71,6 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
             </button>
           )}
         </div>
-      </header>
-
-      <div data-field-obstacle className={styles.toolbar}>
-        <p className={styles.resultCount} role="status" aria-live="polite" aria-atomic="true">
-          {searchQuery.trim() ? "搜索结果" : "全部记录"}
-          <span>{filteredItems.length}</span>
-        </p>
-        <p className={styles.sortLabel}>按最后修改时间排列</p>
       </div>
 
       {filteredItems.length > 0 ? (

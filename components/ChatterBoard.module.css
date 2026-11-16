@@ -413,3 +413,25 @@
     transform: none !important;
   }
 }
+
+/* Content-first layout: no masthead, count bar or staggered columns. */
+.board { margin-top: 108px; max-width: 1360px; }
+.compactSearch {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+.compactSearch .search {
+  width: min(100%, 360px);
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.column:nth-child(2),
+.column:nth-child(3) { padding-top: 0; }
+@media (max-width: 639px) {
+  .board { margin-top: 28px; }
+  .compactSearch { margin-bottom: 18px; }
+  .compactSearch .search { width: 100%; }
+}

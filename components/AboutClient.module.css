@@ -105,6 +105,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+.indexCover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--about-surface);
+}
+.indexCoverImage { object-fit: cover; }
+
 .indexHint {
   max-width: 150px;
   margin: 0;
@@ -167,23 +177,13 @@
   font: 14px/1.8 var(--about-ui);
 }
 
-.introGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.78fr);
-  gap: 28px;
-  align-items: start;
+.introGrid { width: 100%; }
+.section:first-child {
+  min-height: 0;
+  padding-top: 48px;
 }
-
-.cover {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1672 / 941;
-  overflow: hidden;
-}
-
-.coverImage {
-  object-fit: cover;
-  object-position: center;
+.section:first-child .prose {
+  padding: clamp(24px, 3vw, 42px);
 }
 
 .prose {
@@ -261,8 +261,7 @@
 
 @media (max-width: 1050px) {
   .layout { grid-template-columns: 160px minmax(0, 1fr); gap: 32px; }
-  .introGrid { grid-template-columns: 1fr; }
-  .cover { max-width: 560px; }
+  .indexCover { aspect-ratio: 4 / 5; }
 }
 
 @media (max-width: 767px) {
@@ -279,7 +278,8 @@
   }
   .indexNav { position: static; padding: 0; gap: 0; }
   .indexTitle,
-  .indexHint { display: none; }
+  .indexHint,
+  .indexCover { display: none; }
   .indexLinks {
     flex-direction: row;
     gap: 8px;
@@ -311,8 +311,7 @@
   .sectionHeader { margin-bottom: 28px; }
   .pageTitle { font-size: 50px; }
   .sectionTitle { font-size: 32px; }
-  .introGrid { gap: 26px; }
-  .cover { aspect-ratio: 16 / 10; }
+  .section:first-child { padding-top: 24px; }
   .prose { padding: 20px 16px; font-size: 16px; }
 }
 

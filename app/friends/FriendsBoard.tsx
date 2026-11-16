@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowDown, ArrowUpRight, Check, Copy, Eye, RotateCw, X } from "lucide-react"
-import BackButton from "../../components/BackButton"
+import { ArrowUpRight, Check, Copy, Eye, RotateCw, X } from "lucide-react"
 import { friendsData, type Friend } from "../../data/friends"
 import { siteConfig } from "../../siteConfig"
 import styles from "./FriendsBoard.module.css"
@@ -234,25 +233,7 @@ export default function FriendsBoard() {
   return (
     <main className={styles.board}>
       <div className={styles.inner}>
-        <div className={styles.back}>
-          <BackButton />
-        </div>
-        <header className={styles.intro} data-field-obstacle>
-          <div>
-            <p className={styles.eyebrow}>友链</p>
-            <h1>云端引力</h1>
-            <p className={styles.subtitle}>那些散落在赛博宇宙各处的有趣灵魂与神经节点。</p>
-          </div>
-          <a href="#friend-application" className={styles.textLink}>
-            交换友链 <ArrowDown size={16} aria-hidden="true" />
-          </a>
-        </header>
-        <section aria-labelledby="friends-directory-title">
-          <div className={styles.sectionHeading}>
-            <h2 id="friends-directory-title">
-              友链名录 <span>{friendsData.length}</span>
-            </h2>
-          </div>
+        <section aria-label="友链名录">
           <ol className={styles.list}>
             {friendsData.map((friend) => {
               const avatarFallback = avatarFallbacks[friend.id]
