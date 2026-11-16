@@ -847,3 +847,44 @@
   stroke-width: 1;
   opacity: 0.7;
 }
+
+/* Immersive mode: the room itself is the page, not a framed dashboard. */
+.page {
+  padding: 0 !important;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+.stage {
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: none;
+}
+.stage::before { display: none; }
+.scene,
+.poster {
+  inset: 0;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.canvas,
+.poster {
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+.heading,
+.topActions,
+.caption,
+.toolbar,
+.hint {
+  display: none !important;
+}
+.panel {
+  top: clamp(24px, 8vh, 84px);
+  bottom: clamp(24px, 8vh, 84px);
+}
+@media (max-width: 767px) {
+  .page { padding: 0 !important; }
+  .stage { min-height: 100dvh !important; height: 100dvh !important; }
+  .panel { inset: 24px 16px; }
+}
