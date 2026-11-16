@@ -226,7 +226,11 @@ def check_updates(browser):
         pending = []
         context.route("**/api/papers", lambda route: pending.append(route))
         page = context.new_page()
-        page.goto(args.url, wait_until="networkidle")
+        page.goto(args.url, wait_until="domcontentloaded", timeout=60000)
+        try:
+            page.wait_for_load_state("networkidle", timeout=10000)
+        except PlaywrightTimeoutError:
+            pass  # Unrelated music/anime requests can outlive sidebar hydration.
         trigger = page.locator('[data-edge-trigger="papers"]')
         trigger.click()
         page.get_by_role("button", name="打开 TDA 论文周报", exact=True).click()
