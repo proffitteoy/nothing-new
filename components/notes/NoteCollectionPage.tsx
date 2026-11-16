@@ -30,6 +30,9 @@ export default function NoteCollectionPage({
 
   return (
     <div className="relative min-h-screen pb-20">
+      {/* React 19 deduplicates the generated Quartz stylesheet across readers and collections. */}
+      {/* eslint-disable-next-line @next/next/no-css-tags */}
+      <link rel="stylesheet" href="/quartz-assets/note.css" precedence="default" />
       <PageTransition>
         <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-12 pt-24 sm:px-6 lg:px-10">
           <header className="relative overflow-hidden rounded-[2rem] border border-[var(--site-line)] bg-white/50 p-6 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.55)] backdrop-blur-xl md:bg-[var(--site-surface)] md:p-9">
@@ -93,11 +96,16 @@ export default function NoteCollectionPage({
                       <h3 className="mt-6 break-words text-xl font-black leading-snug tracking-tight text-slate-950">
                         {note.title}
                       </h3>
-                      {note.description && (
+                      {note.descriptionHtml ? (
+                        <div
+                          className="note-card-excerpt mt-3 text-sm font-medium leading-6 text-[var(--site-muted)]"
+                          dangerouslySetInnerHTML={{ __html: note.descriptionHtml }}
+                        />
+                      ) : note.description ? (
                         <p className="mt-3 line-clamp-3 text-sm font-medium leading-6 text-[var(--site-muted)]">
                           {note.description}
                         </p>
-                      )}
+                      ) : null}
                       <div className="mt-auto flex items-end justify-between gap-4 pt-6">
                         <ul className="flex flex-wrap gap-1.5" aria-label={`${note.title} 标签`}>
                           {note.tags.slice(0, 3).map((tag) => (
