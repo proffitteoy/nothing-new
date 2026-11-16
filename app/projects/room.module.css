@@ -888,3 +888,15 @@
   .stage { min-height: 100dvh !important; height: 100dvh !important; }
   .panel { inset: 24px 16px; }
 }
+
+/* Restore the accessible directory only if WebGL fails. */
+.stage[data-room-status="error"] .toolbar {
+  display: flex !important;
+  z-index: 10;
+}
+.stage[data-room-status="error"] .directory {
+  display: block;
+}
+.stage[data-room-status="error"] .sceneTools,
+.stage[data-room-status="error"] .staticButton,
+.stage[data-room-status="error"] .help { display: none; }
