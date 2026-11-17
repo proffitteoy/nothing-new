@@ -1,21 +1,48 @@
 # 桌面首页总装（#51 / #67 / #68 / #69 / #71）
 
-## 日间静态审阅候选（2026-11-17）
+## 日间静态与谱场 A/B 审阅候选（2026-11-17）
 
-以 PR #101 的合并提交 `5ae7a12` 为基线，在独立工作树制作日间静态稿。保留正式首页布局和操作，通过验收脚本替换景观请求并注入冷灰候选材质；生产默认外观、组件接口与谱场数学未改。日间素材由同一授权摄影原稿重新绘景，来源、修改与完整内置 imagegen 提示词见 `public/home-window/NOTICE-day-study.txt`。
+以 PR #101 的合并提交 `5ae7a12` 为基线，在 `feat/day-window-study-20261117` 独立工作树制作日间静态稿和谱场对照。保留正式首页布局和操作，通过验收脚本替换景观请求并注入冷灰候选材质；生产默认外观、组件接口与谱场数学未改。日间素材由同一授权摄影原稿重新绘景，来源、修改与完整内置 imagegen 提示词见 `public/home-window/NOTICE-day-study.txt`。
 
 第一批已在真实生产构建上通过 1440×900、1920×1080、1366×768、1280×720、1280×800、1024×768、640×720、1024×480 的静态检查：八入口与唯一音频保留，中立视角、零 Canvas 缓冲、重复静帧一致。中心岸线为素材高度约 62.5%，候选 272,712 bytes。山脊、岸线和近岸坐标按新素材重新标注，仅存在验收工具，不覆盖夜景遮罩。
+
+![1440 日间静态候选](../images/home-window/day-static-1440.webp)
+
+[1920 日间静态候选](../images/home-window/day-static-1920.webp)。第二批在同一轨迹缓冲、时间与日景上比较 A `source-over`、B `multiply`，共同使用 RGB `(55,104,194)` / `(112,75,188)` / `(184,84,151)` 及背景／前景 0.24／0.42 不透明度。ambient 密度、速度、线宽、六模态与倍率 0.3 保持原控制器参数。先在不透明 Canvas 画日景再合成轨迹，使 multiply 真实作用于底图；新山脊裁切限制轨迹进入天空。A 的蓝紫粉区分较清楚，B 在天空中更深、更偏蓝，暂不替用户选定生产方案。
+
+| A · source-over | B · multiply |
+| --- | --- |
+| ![A 候选](../images/home-window/day-spectral-a-1440.webp) | ![B 候选](../images/home-window/day-spectral-b-1440.webp) |
+
+两份输出共用一组 tracer 缓冲，通过观察正式首页的帧计数推进，未增加 RAF。冻结只用于同时间截图；性能和四段 WebM 使用真实时钟。每个大尺寸的 A/B 玻璃区域录屏同时从两个 Canvas 采集，已由 Chromium 实际解码验证。实验额外维护两张 tracer 和两张输出 Canvas；下表已合计原首页隐藏渲染器的三张缓冲，不能当作最终单方案生产性能。
+
+| 尺寸 | 实测 FPS | 实验 CPU/帧（两输出） | 原首页 CPU/帧 | 七 Canvas RGBA 理论预算 |
+| --- | ---: | ---: | ---: | ---: |
+| 1440×900 | 45.04 | 0.329ms | 0.661ms | 23,109,616 bytes |
+| 1920×1080 | 45.04 | 0.564ms | 1.149ms | 39,704,480 bytes |
+| 1366×768 | 45.04 | 0.409ms | 0.751ms | 17,969,952 bytes |
+| 1280×720 | 45.13 | 0.417ms | 0.740ms | 15,476,928 bytes |
+
+Windows、Node 22.23.5、Chrome 157.0.8103.79、生产构建、DPR1；每尺寸约 8 秒连续样本，观测段均无 ≥50ms 长任务。CPU 为浏览器 dispatch 时间，不是 GPU 完成时间；单张日景解码理论预算另计 5,865,376 bytes，不含驱动和录屏编码开销。DPR2 验证绘图上限 1.5，改变尺寸保留原时间；后台暂停恢复使用合成 visibility，未冒充真实 OS 后台测试。
+
+静态、导航和 A/B 报告合计 41 条记录（含 3 条环境记录），0 pageerror。八尺寸导航、350ms/120ms、固定／外部关闭／Escape、论文两层阅读、联系和跨页唯一音频通过；另验证 reduced-motion 归零所有绘图缓冲、重复注入只保留一个实验、软导航释放、无 WebGL／无 Canvas／图片错误／音乐错误与重试及移动 UA 分流。文字按最暗候选表面计算：外廊标签 5.20:1、署名 5.08:1、歌手／时间 4.97:1、播放图标 5.83:1。126 项现有测试、类型检查和 247 页生产构建通过，ESLint 0 错误、3 条既有警告。
 
 ```powershell
 # 在本工作树使用 Node 22、Python Playwright/Pillow；先 npm run build -- --webpack。
 npm.cmd run start -- --hostname 127.0.0.1 --port 3188
+# 以下命令在另一个终端运行：
+# 本机可复用上轮的局部 Python 依赖；其他环境安装相应依赖。
+$env:PYTHONPATH=(Resolve-Path '../night-window-home/.sync/tmp-night-window/python').Path
 python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-static --output .sync/tmp-day-window/static
 python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode navigation --day-study --output .sync/tmp-day-window/navigation
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-spectral-ab --output .sync/tmp-day-window/ab
 # 单独运行，打开可操作的真实首页候选；关闭浏览器标签结束。
 python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-preview --output .sync/tmp-day-window/preview
+# 动态审阅可按 A / B 切换合成、0 查看无谱场基准；仅存在这个受控标签中。
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-preview --day-variant a --output .sync/tmp-day-window/preview
 ```
 
-浏览器原始证据位于忽略目录 `.sync/tmp-day-window/`。静态稿与后续谱场 A/B 均是待人工审阅的候选，不表示云层、水纹、环境光或完整日间动态场景已经实现，也未新增产品主题开关或三维特效。
+浏览器原始证据位于忽略目录 `.sync/tmp-day-window/`；`static/index.html` 和 `ab/index.html` 可直接打开审阅图片／录屏，后续命令会重建索引。少量真实截图已随文档保存。当前构图、颜色和强度均待人工审阅；云层、水纹、对应倒影、环境光动态联动与独立景深留待确认后整合。真实音乐服务、真机与 Safari 仍未验收。本轮未新增产品主题开关或三维特效，未推送、创建 PR 或部署。
 
 ## 当前观景窗首页（2026-11-17）
 

@@ -473,3 +473,15 @@ Windows、Node **22.23.5**、Chrome **157.0.8103.79**、生产构建，普通档
 ```text
 Edit this exact licensed Convict Lake photograph into a restrained realistic digital matte painting for a panoramic night window on a personal website. This image is the EDIT TARGET, not merely inspiration. Preserve the exact mountain profiles, valley, shoreline, viewpoint and water positions, all the geography of the source. Keep the same landscape framing and aspect ratio. Make it midnight, deep cold blue-black with muted gray-blue moonlit peaks, dark near banks, and a calm dark lake. Lower exposure considerably but retain readable mountain depth, a slightly luminous gray-blue horizon, restrained texture. Soften the photographic microdetail toward a carefully painted cinematic environment, still realistic. Quiet sky with very few dim stars; reduce bright clouds and their contrast. The primary eventual blue-violet mist will be animated by code later, so do not bake in auroras, colored light bands, particles or strong beams. No added moon, buildings, trees, people, boats, window frame, curtains, furnishings, text, watermark, UI, or borders. Keep full opaque image. Remove only the thin white photographic border edges. Preserve the original lake shore around two thirds of the image height. Output a wide production-quality matte painting preserving this source picture.
 ```
+
+## 12. 日间静态与谱场 A/B 审阅批次（2026-11-17）
+
+根据夜景视觉反馈，本轮先交付日间静态构图与独立谱场可见度对照。以已合并 PR #101 的 `5ae7a12` 建立 `feat/day-window-study-20261117` 工作树；原工作区分支、`next-env.d.ts` 和未跟踪原稿保留。
+
+- 静态候选沿用同一授权摄影原稿，经内置 imagegen 重新制作冷晨天空、雪山日照与青蓝湖面；生成 1672×941，顶部裁切 64px，最终 1672×877、272,712 bytes。保留窗户比例、导航及窗台播放器，室内改为明亮冷灰；人工重标 70 个山脊点、岸线和近岸包络。此批通过验收注入查看，正式首页仍保持原默认外观。
+- 原摄影 TheDailyNathan、校正 Hike395 及 CC BY-SA 3.0 保留。完整编辑提示词、来源和修改说明在 `public/home-window/NOTICE-day-study.txt`。日景是摄影基础上的 AI 辅助绘景，非实拍日景或精确地形复制；未拼入旅游网站图片。最终 WebP SHA-256：`366F6AA96BEF20F81C8ECFC1CF8779B0FB08F0E242E5F44C8907B7C8D0DA08B9`。
+- A/B 复用原六模态 ambient 控制器，共用同一对蓝紫粉轨迹缓冲。A 为 source-over，B 为 multiply；统一最终不透明度 0.24／0.42，在不透明日景上合成，仅天空可见。观察既有帧计数推进，没有新增 RAF 或数学模型，未修改正式组件接口。
+- 两个大尺寸各输出无谱场、A、B 同时刻截图，并同时录制两种玻璃区域的真实时钟短片；所有视频经浏览器解码。八尺寸静态与交互、四尺寸 A/B、失败回退、减少动态、释放和移动分流验证完成；总计 41 条浏览器记录，0 pageerror。四个约 8 秒观测段均约 45fps，无长任务；实验成本包含原首页隐藏渲染器和双输出，不能直接代表最终生产单方案。
+- 126 项现有测试、类型检查、247 页生产构建通过；lint 0 错误、3 条既有警告。完整图像、性能表、验证边界及本地预览命令见[首页说明](home-scene.md)；原始证据与 HTML 审阅索引在本工作树 `.sync/tmp-day-window/`。
+
+本轮结果供人工选择日景构图与 A/B 合成。云层、水纹、天空轨迹对应倒影、环境光联动和独立景深尚未整合，不作为完成项。本轮只提交本地两个批次，不推送、创建 PR、合并或部署。
