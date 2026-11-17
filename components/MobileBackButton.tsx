@@ -1,11 +1,15 @@
 // src/components/MobileBackButton.tsx
 "use client";
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 
 export default function MobileBackButton() {
   const router = useRouter();
+  const pathname = usePathname();
+
+  // The desktop home owns all eight entrances, including at narrow widths.
+  if (pathname === '/') return null;
 
   return (
     <button

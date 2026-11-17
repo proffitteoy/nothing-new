@@ -2,7 +2,7 @@
 
 import Image, { type ImageProps } from "next/image"
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, ArrowUpRight, ChevronDown, X } from "lucide-react"
+import { ArrowLeft, ArrowUpRight, BookOpen, ChevronDown, X } from "lucide-react"
 import type { PaperReport } from "../lib/papers"
 import styles from "./PaperMonitor.module.css"
 
@@ -26,17 +26,24 @@ export default function PaperMonitor({
   compact = false,
   active = true,
   onIssueClose,
+  homePanel = false,
+  triggerClassName,
 }: {
   initialReports: PaperReport[]
   compact?: boolean
   active?: boolean
   onIssueClose?: () => void
+  homePanel?: boolean
+  triggerClassName?: string
 }) {
   const [reports, setReports] = useState(initialReports)
   const [date, setDate] = useState(initialReports[0]?.date ?? "")
   const [selected, setSelected] = useState<number | null>(null)
   const [status, setStatus] = useState("")
   const [issueOpen, setIssueOpen] = useState(false)
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const summaryDialog = useRef<HTMLDialogElement>(null)
+  const homeTrigger = useRef<HTMLButtonElement>(null)
   const issueDialog = useRef<HTMLDialogElement>(null)
   const paperDialog = useRef<HTMLDialogElement>(null)
   const pendingReports = useRef<PaperReport[] | null>(null)
@@ -44,8 +51,10 @@ export default function PaperMonitor({
   const report = reports.find((item) => item.date === date) ?? reports[0]
   const paper = selected === null ? null : report?.papers[selected]
 
+  const refreshActive = homePanel ? summaryOpen || issueOpen : active
+
   useEffect(() => {
-    if (compact && !active) return
+    if (compact && !refreshActive) return
     const controller = new AbortController()
     fetch("/api/papers", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
@@ -65,7 +74,27 @@ export default function PaperMonitor({
         if (!controller.signal.aborted) setStatus("暂时无法检查更新，正在展示已保存的周报。")
       })
     return () => controller.abort()
-  }, [compact, active])
+  }, [compact, refreshActive])
+
+  useEffect(() => {
+    const dialog = summaryDialog.current
+    if (!summaryOpen) {
+      dialog?.close()
+      return
+    }
+    dialog?.showModal()
+    const roots = [document.body, document.getElementById("app-scroll-root")].filter(
+      (root): root is HTMLElement => root !== null,
+    )
+    const previous = roots.map((root) => root.style.overflowY)
+    roots.forEach((root) => {
+      root.style.overflowY = "hidden"
+    })
+    return () =>
+      roots.forEach((root, index) => {
+        root.style.overflowY = previous[index]
+      })
+  }, [summaryOpen])
 
   useEffect(() => {
     const dialog = issueDialog.current
@@ -122,16 +151,24 @@ export default function PaperMonitor({
     >
       <button
         type="button"
-        className={compact ? styles.summary : styles.cover}
-        data-paper-summary={compact ? "" : undefined}
+        ref={homePanel ? homeTrigger : undefined}
+        className={homePanel ? triggerClassName : compact ? styles.summary : styles.cover}
+        data-edge-trigger={homePanel ? "papers" : undefined}
+        data-paper-summary={compact && !homePanel ? "" : undefined}
         inert={compact && !active}
         tabIndex={compact && !active ? -1 : undefined}
-        aria-label="打开 TDA 论文周报"
+        aria-label={homePanel ? "论文" : "打开 TDA 论文周报"}
+        aria-expanded={homePanel ? summaryOpen : undefined}
         aria-haspopup="dialog"
-        aria-controls="tda-issue-dialog"
-        onClick={() => setIssueOpen(true)}
+        aria-controls={homePanel ? "tda-home-summary" : "tda-issue-dialog"}
+        onClick={() => (homePanel ? setSummaryOpen(true) : setIssueOpen(true))}
       >
-        {compact ? (
+        {homePanel ? (
+          <>
+            <BookOpen size={17} aria-hidden />
+            <span>论文</span>
+          </>
+        ) : compact ? (
           <SidebarPreview src="/profile-studio.png" alt="TDA 论文周报封面" />
         ) : (
           <>
@@ -145,7 +182,7 @@ export default function PaperMonitor({
             <span className={styles.shade} />
           </>
         )}
-        {!compact && (
+        {!compact && !homePanel && (
           <span className={styles.heading}>
             <strong className={styles.title}>TDA 论文周报</strong>
             {!compact && <span className={styles.subtitle}>在新的论文里，寻找下一个问题。</span>}
@@ -173,6 +210,54 @@ export default function PaperMonitor({
         )}
       </button>
 
+      {homePanel && (
+        <dialog
+          ref={summaryDialog}
+          id="tda-home-summary"
+          data-home-panel="papers"
+          aria-labelledby="tda-home-summary-title"
+          onClose={() => setSummaryOpen(false)}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setSummaryOpen(false)
+          }}
+        >
+          <header>
+            <h2 id="tda-home-summary-title">TDA 论文周报</h2>
+            <button
+              type="button"
+              aria-label="关闭论文面板"
+              onClick={() => setSummaryOpen(false)}
+              autoFocus
+            >
+              <X size={18} aria-hidden />
+            </button>
+          </header>
+          <div className={styles.homeSummaryBody}>
+            {latestReport ? (
+              <p>
+                <time dateTime={latestReport.date}>{latestReport.date.replaceAll("-", ".")}</time> ·{" "}
+                {latestReport.papers.length} 篇选读
+              </p>
+            ) : (
+              <p>周报待发布</p>
+            )}
+            <p role="status">{status || "每周追踪拓扑数据分析"}</p>
+            <button
+              type="button"
+              className={styles.homeRead}
+              disabled={!latestReport}
+              onClick={() => {
+                // Sibling dialogs: close the summary before opening the existing reader.
+                setSummaryOpen(false)
+                setIssueOpen(true)
+              }}
+            >
+              阅读周报 <ArrowUpRight size={16} aria-hidden />
+            </button>
+          </div>
+        </dialog>
+      )}
+
       <dialog
         ref={issueDialog}
         id="tda-issue-dialog"
@@ -181,6 +266,7 @@ export default function PaperMonitor({
         onClose={() => {
           closeIssue()
           onIssueClose?.()
+          if (homePanel) homeTrigger.current?.focus()
         }}
         onClick={(event) => {
           if (event.target === event.currentTarget) closeIssue()

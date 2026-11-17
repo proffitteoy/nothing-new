@@ -123,10 +123,9 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         if (!roomLoading && !homeLoading) break
         await sleep(32, signal)
       }
-      // HomeScene is loaded dynamically. Wait for it before collecting the
-      // eagerly mounted previews, including covers inside closed sidebars.
+      // HomeScene is loaded dynamically. Its single artwork reports readiness
+      // above; hidden panels must not add image decoding to the critical path.
       const images = Array.from(document.images).filter((img) => {
-        if (homeEntry && img.closest("[data-home-preview]")) return true
         if (!img.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return false
         const rect = img.getBoundingClientRect()
         return img.loading !== "lazy" || (rect.top < innerHeight && rect.bottom > 0)
@@ -149,8 +148,8 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       if (animationFinished || signal.aborted || skipped.current) return
       animationFinished = true
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
-      // The last simplex has vanished. Reveal the existing homepage particle
-      // canvas immediately; noncritical route prefetches can finish in parallel.
+      // The last simplex has vanished. Reveal the homepage immediately;
+      // noncritical route prefetches can finish in parallel.
       reveal()
     }
 

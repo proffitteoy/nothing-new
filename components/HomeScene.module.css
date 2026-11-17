@@ -142,7 +142,9 @@
 }
 .tab > span {
   writing-mode: vertical-rl;
-  letter-spacing: 0.25em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.15em;
 }
 .tab:hover,
 .tab:focus-visible,
@@ -260,32 +262,6 @@
 .panelBody {
   padding: 20px;
 }
-/* Temporary original controls, removed by the following navigation change. */
-.edge {
-  position: relative;
-}
-.preview {
-  position: absolute;
-  top: 0;
-  right: 56px;
-  width: 240px;
-}
-.left .preview {
-  right: auto;
-  left: 56px;
-}
-.preview[data-open="false"] :global([data-paper-summary]),
-.preview[data-open="false"] :global([data-edge-summary]) {
-  visibility: hidden;
-  pointer-events: none;
-}
-.previewLink {
-  display: block;
-}
-.contactPanel {
-  padding: 16px;
-  background: #fff;
-}
 @media (max-width: 900px) {
   .scene {
     --sill-height: 136px;
@@ -306,7 +282,8 @@
     --lintel: 18px;
   }
   .tab {
-    gap: 6px;
+    gap: 4px;
+    font-size: 13px;
   }
   .windowSill {
     padding-top: 24px;
