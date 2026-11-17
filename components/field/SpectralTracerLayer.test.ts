@@ -8,6 +8,65 @@ import {
   type SpectralTracerFrame,
 } from "./SpectralTracerLayer"
 import { SPECTRAL_LAMBDAS } from "./spectralField"
+import {
+  homeLandscapeRect,
+  interpolateSpectralScene,
+  sampleSpectralScene,
+  smoothHomePointer,
+} from "./homeSpectralScene"
+
+test("landscape samples use the exact six-mode direction and bounded angular curvature", () => {
+  const grid = sampleSpectralScene(1200, 700, 2.7)
+  for (let row = 0; row < grid.rows; row++) {
+    for (let column = 0; column < grid.columns; column++) {
+      const expected = spectralDirectionAt((column / 15) * 1200, (row / 8) * 700, 2.7, 1200, 700, 6)
+      const actual = interpolateSpectralScene(grid, column / 15, row / 8)
+      assert.ok(Math.abs(actual.x - expected.x) < 1e-6)
+      assert.ok(Math.abs(actual.y - expected.y) < 1e-6)
+      assert.ok(actual.light >= 0 && actual.light <= 1)
+    }
+  }
+  const values = grid.values
+  assert.equal(sampleSpectralScene(1200, 700, 2.8, 16, 9, values).values, values)
+  assert.notDeepEqual([...values], [...sampleSpectralScene(1200, 700, 2.7).values])
+})
+
+test("bilinear scene sampling interpolates all channels and clamps to the plate", () => {
+  const grid = {
+    width: 100,
+    height: 100,
+    time: 0,
+    columns: 2,
+    rows: 2,
+    values: new Float32Array([0, 0, 0, 1, 0, 0.5, 0, 1, 0.5, 1, 1, 1]),
+  }
+  assert.deepEqual(interpolateSpectralScene(grid, 0.5, 0.5), { x: 0.5, y: 0.5, light: 0.5 })
+  assert.deepEqual(interpolateSpectralScene(grid, -5, 5), { x: 0, y: 1, light: 0.5 })
+})
+
+test("camera damping is time based, returns home, and all plate edges have overscan", () => {
+  let sixty = 0,
+    oneTwenty = 0
+  for (let i = 0; i < 60; i++) sixty = smoothHomePointer(sixty, 1, 1 / 60)
+  for (let i = 0; i < 120; i++) oneTwenty = smoothHomePointer(oneTwenty, 1, 1 / 120)
+  assert.ok(Math.abs(sixty - oneTwenty) < 1e-12)
+  assert.ok(smoothHomePointer(sixty, 0, 0.05) < sixty)
+  assert.equal(smoothHomePointer(0.5, 1, -1), 0.5)
+  for (const [width, height] of [
+    [1440, 900],
+    [1920, 1080],
+    [1366, 768],
+    [1280, 720],
+    [640, 480],
+  ]) {
+    const rect = homeLandscapeRect(width, height)
+    for (const shift of [-16, 16]) {
+      assert.ok(rect.x + shift < 0 && rect.x + rect.width + shift > width)
+      assert.ok(rect.y + shift < 0 && rect.y + rect.height + shift > height)
+    }
+    assert.ok(Math.abs(rect.width / rect.height - 1536 / 868) < 1e-12)
+  }
+})
 
 test("the original eigenmode field remains the only source of tracer velocity", () => {
   const x = 321
@@ -16,10 +75,10 @@ test("the original eigenmode field remains the only source of tracer velocity", 
   const width = 1200
   const height = 800
   const aspect = width / height
-  const phase = (x / width * 2 - 1) * aspect + 2 * (y / height * 2 - 1) +
-    SPECTRAL_LAMBDAS[0] * time + 0.31
+  const phase =
+    ((x / width) * 2 - 1) * aspect + 2 * ((y / height) * 2 - 1) + SPECTRAL_LAMBDAS[0] * time + 0.31
   const cosine = Math.cos(phase)
-  const vx = 2 * cosine / aspect
+  const vx = (2 * cosine) / aspect
   const vy = -cosine
   const magnitude = Math.hypot(vx, vy)
   const actual = spectralDirectionAt(x, y, time, width, height, 1)
@@ -32,7 +91,9 @@ test("homepage long spectral curves render immediately, remain visible, and fade
   class TestPath {
     segments = 0
     moveTo() {}
-    lineTo() { this.segments++ }
+    lineTo() {
+      this.segments++
+    }
   }
   const savedPath = Object.getOwnPropertyDescriptor(globalThis, "Path2D")
   Object.defineProperty(globalThis, "Path2D", { configurable: true, value: TestPath })
@@ -41,27 +102,30 @@ test("homepage long spectral curves render immediately, remain visible, and fade
   const widths: number[][] = [[], []]
   const colours: string[][] = [[], []]
   const composites: string[][] = [[], []]
-  const canvas = (index: number) => ({
-    width: 0,
-    height: 0,
-    style: {},
-    getContext: () => ({
-      globalCompositeOperation: "source-over",
-      globalAlpha: 1,
-      lineWidth: 1,
-      strokeStyle: "",
-      setTransform() {},
-      clearRect() {},
-      fillRect() { composites[index].push(this.globalCompositeOperation) },
-      stroke(path: TestPath) {
-        if (!path.segments) return
-        if (this.globalCompositeOperation === "lighter") glowPaths[index] += path.segments
-        else paths[index] += path.segments
-        widths[index].push(this.lineWidth)
-        colours[index].push(this.strokeStyle)
-      },
-    }),
-  }) as unknown as HTMLCanvasElement
+  const canvas = (index: number) =>
+    ({
+      width: 0,
+      height: 0,
+      style: {},
+      getContext: () => ({
+        globalCompositeOperation: "source-over",
+        globalAlpha: 1,
+        lineWidth: 1,
+        strokeStyle: "",
+        setTransform() {},
+        clearRect() {},
+        fillRect() {
+          composites[index].push(this.globalCompositeOperation)
+        },
+        stroke(path: TestPath) {
+          if (!path.segments) return
+          if (this.globalCompositeOperation === "lighter") glowPaths[index] += path.segments
+          else paths[index] += path.segments
+          widths[index].push(this.lineWidth)
+          colours[index].push(this.strokeStyle)
+        },
+      }),
+    }) as unknown as HTMLCanvasElement
 
   try {
     const controller = createSpectralTracerController(canvas(0), canvas(1))
@@ -92,8 +156,14 @@ test("homepage long spectral curves render immediately, remain visible, and fade
 
     paths.fill(0)
     controller.render({ ...frame, time: 0.115 })
-    assert.ok(paths.every((count) => count > 0), "later frames add visible new path segments")
-    assert.deepEqual(composites.map((list) => list.includes("destination-out")), [true, true])
+    assert.ok(
+      paths.every((count) => count > 0),
+      "later frames add visible new path segments",
+    )
+    assert.deepEqual(
+      composites.map((list) => list.includes("destination-out")),
+      [true, true],
+    )
 
     paths.fill(0)
     controller.render({
@@ -101,7 +171,10 @@ test("homepage long spectral curves render immediately, remain visible, and fade
       time: 0.13,
       obstacles: [
         ...Array.from({ length: 16 }, () => ({
-          left: 5000, top: 5000, right: 5100, bottom: 5100,
+          left: 5000,
+          top: 5000,
+          right: 5100,
+          bottom: 5100,
         })),
         { left: -1000, top: -1000, right: 2200, bottom: 1800 },
       ],
@@ -110,7 +183,10 @@ test("homepage long spectral curves render immediately, remain visible, and fade
 
     paths.fill(0)
     controller.render({ ...frame, time: 0.16 })
-    assert.ok(paths.every((count) => count > 0), "removing the obstacle respawns curves")
+    assert.ok(
+      paths.every((count) => count > 0),
+      "removing the obstacle respawns curves",
+    )
 
     paths.fill(0)
     controller.render({ ...frame, time: 0, alpha: 0 })
@@ -175,7 +251,9 @@ test("about keeps three independent semantic chapters after the article restruct
   const visit = (node: ts.Node) => {
     if (
       ts.isJsxSelfClosingElement(node) &&
-      ["WebsiteSection", "EngineeringSection", "ResearchSection"].includes(node.tagName.getText(tree))
+      ["WebsiteSection", "EngineeringSection", "ResearchSection"].includes(
+        node.tagName.getText(tree),
+      )
     )
       chapters.push(node.tagName.getText(tree))
     ts.forEachChild(node, visit)
@@ -221,11 +299,12 @@ test("friends protect readable panels without blocking the entire grid", () => {
     ts.forEachChild(node, visit)
   }
   visit(tree)
-  assert.equal(obstacles.length, 3)
-  assert.match(obstacles[0].getText(tree), /云端引力/)
-  assert.equal(obstacles[1].openingElement.tagName.getText(tree), "a")
-  assert.match(obstacles[1].openingElement.getText(tree), /href=\{friend.url\}/)
-  assert.match(obstacles[2].getText(tree), /提交友链申请/)
+  // main's immersive layout removed the masthead; links and the application
+  // panel remain readable obstacles. Keep checking their actual semantics.
+  assert.equal(obstacles.length, 2)
+  assert.equal(obstacles[0].openingElement.tagName.getText(tree), "a")
+  assert.match(obstacles[0].openingElement.getText(tree), /href=\{friend.url\}/)
+  assert.match(obstacles[1].getText(tree), /提交友链申请/)
   for (const obstacle of obstacles) {
     assert.doesNotMatch(obstacle.openingElement.getText(tree), /grid-cols|max-w-5xl/)
   }

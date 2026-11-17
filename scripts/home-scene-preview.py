@@ -14,6 +14,7 @@ import json
 import math
 from pathlib import Path
 import struct
+import subprocess
 import time
 import wave
 from urllib.parse import urljoin, urlparse, parse_qs
@@ -23,7 +24,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--url', default='http://127.0.0.1:3161')
 parser.add_argument('--output', default='.sync/tmp-home-scene-evidence')
 parser.add_argument('--browser', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
-parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload'], default='navigation')
+parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'night-compare'], default='navigation')
 args = parser.parse_args()
 out = Path(args.output).resolve()
 out.mkdir(parents=True, exist_ok=True)
@@ -76,7 +77,200 @@ def move_out(page):
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, executable_path=args.browser, args=['--mute-audio'])
-    if args.mode == 'snapshots':
+    if args.mode == 'night-compare':
+        repo = Path(__file__).resolve().parents[1]
+        # Run this script with Node 22 first on PATH so the test-only bundle
+        # uses the same installed toolchain. It never enters public/ or app/.
+        bundle = out / 'three-spike.js'
+        subprocess.run(['node', str(repo / 'node_modules/esbuild/bin/esbuild'),
+            str(repo / 'scripts/home-window-three-spike.mjs'), '--bundle', '--format=iife',
+            '--outfile=' + str(bundle)], check=True, cwd=repo)
+        context = context_for(browser)
+        page = visit(context)
+        page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames) > 10")
+        b = page.locator('[data-home-viewport]').bounding_box()
+        page.evaluate("window.__realRead=window.__homeVisitClock.read;const t=window.__realRead(performance.now());window.__homeVisitClock.read=()=>t")
+        for renderer in ['css', 'three']:
+            if renderer == 'three':
+                page.add_script_tag(path=str(bundle))
+                check('three: fixed projector initialized', page.evaluate('window.startNightWindowComparison()'))
+            for name, x in [('center', .5), ('left', .2), ('right', .8)]:
+                page.mouse.move(b['x'] + b['width'] * x, b['y'] + b['height'] * .5)
+                page.wait_for_timeout(1400)
+                capture(page, renderer + '-' + name)
+        page.evaluate("window.__nightWindowComparison.destroy();window.__homeVisitClock.read=window.__realRead")
+        for renderer in ['css', 'three']:
+            if renderer == 'three':
+                page.evaluate('window.startNightWindowComparison()')
+            page.mouse.move(b['x'] + b['width'] / 2, b['y'] + b['height'] / 2)
+            page.wait_for_timeout(2000)
+            before = state(page)
+            started = time.monotonic()
+            if renderer == 'three':
+                page.evaluate('Object.assign(window.__nightWindowComparison.stats,{frames:0,totalMs:0,maxMs:0})')
+            for i in range(12):
+                page.mouse.move(b['x'] + b['width'] * (.3 if i % 2 else .7), b['y'] + b['height'] * .5)
+                page.wait_for_timeout(500)
+            elapsed = time.monotonic() - started
+            after = state(page)
+            frames = int(after['homeFrames']) - int(before['homeFrames'])
+            cost = (float(after['homeDrawTotalMs']) - float(before['homeDrawTotalMs'])) / max(1, frames)
+            detail = {'actualSeconds': elapsed, 'drawFps': frames / elapsed,
+                'fieldCpuMsPerFrame': cost, 'quality': after['homeQuality'],
+                'canvasBufferBytes': int(after['homeBufferBytes'])}
+            if renderer == 'three':
+                detail['webgl'] = page.evaluate('({...window.__nightWindowComparison.stats})')
+                detail['combinedCpuMsPerFrame'] = cost + detail['webgl']['totalMs'] / max(1, detail['webgl']['frames'])
+                page.evaluate('window.__nightWindowComparison.destroy()')
+            check(renderer + ': real-time pointer measurement (CPU dispatch, not GPU timing)', detail)
+        assert page.locator('[data-home-three-spike]').count() == 0
+        assert not errors, errors
+        context.close()
+    elif args.mode == 'night-window':
+        for width, height in [(1440,900), (1920,1080), (1366,768), (1280,720)]:
+            context = context_for(browser, width, height)
+            context.add_init_script("""window.__homeLongTasks=[];window.__homeBuffers=[];
+                new PerformanceObserver(list=>window.__homeLongTasks.push(...list.getEntries().map(e=>({start:e.startTime,duration:e.duration})))).observe({type:'longtask',buffered:true});
+                const getContext=HTMLCanvasElement.prototype.getContext;
+                HTMLCanvasElement.prototype.getContext=function(kind,...options){if(kind==='2d'&&!window.__homeBuffers.includes(this))window.__homeBuffers.push(this);return getContext.call(this,kind,...options)};""")
+            page = visit(context)
+            page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames) > 5")
+            opening = page.locator('[data-home-viewport]')
+            b = opening.bounding_box()
+            assert .74 < b['width'] / width < .85
+            canvas = page.locator('[data-home-canvas]').bounding_box()
+            assert abs(canvas['width'] - b['width']) < 1 and abs(canvas['height'] - b['height']) < 1
+            fixed = page.locator('[data-home-window]').bounding_box()
+            capture(page, f'{width}x{height}-first')
+            for name, x in [('left', .1), ('right', .9)]:
+                page.mouse.move(b['x'] + b['width'] * x, b['y'] + b['height'] * .45)
+                page.wait_for_timeout(1300)
+                look = opening.evaluate("e=>Number(e.style.getPropertyValue('--look-x'))")
+                assert look < -.5 if x < .5 else look > .5, look
+                assert page.locator('[data-home-window]').bounding_box() == fixed
+                capture(page, f'{width}x{height}-{name}')
+            page.mouse.move(width / 2, 10)
+            page.wait_for_timeout(2400)
+            assert abs(opening.evaluate("e=>Number(e.style.getPropertyValue('--look-x'))")) < .02
+            before = state(page)
+            started = time.monotonic()
+            page.wait_for_timeout(4000)
+            after = state(page)
+            duration = time.monotonic() - started
+            frames = int(after['homeFrames']) - int(before['homeFrames'])
+            sample_budget = .3 / (12 if after['homeQuality'] == 'high' else 6) + .001
+            assert 0 <= float(after['homeFieldTime']) - float(after['homeGridTime']) < sample_budget
+            check(f'{width}x{height}: scene, pointer and shared clock', {
+                'drawFps': frames / duration, 'state': after,
+                'longTasks': page.evaluate('window.__homeLongTasks'),
+                'heapBytes': page.evaluate('performance.memory?.usedJSHeapSize ?? null')})
+            if width == 1440:
+                # Headless Chromium visibility is not a real-device claim.
+                before_time = page.evaluate('window.__homeVisitClock.read(performance.now())')
+                before_frames = state(page)['homeFrames']
+                page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))")
+                page.wait_for_timeout(1500)
+                assert state(page)['homeFrames'] == before_frames
+                after_time = page.evaluate('window.__homeVisitClock.read(performance.now())')
+                assert abs(after_time - before_time) < 150
+                page.evaluate("delete document.hidden;document.dispatchEvent(new Event('visibilitychange'))")
+                page.wait_for_timeout(500)
+                assert int(state(page)['homeFrames']) > int(before_frames)
+                check('synthetic visibility: clock/RAF pause and resume', {'hiddenMs':1500, 'clockDeltaMs':after_time-before_time})
+                page.emulate_media(reduced_motion='reduce')
+                page.wait_for_timeout(300)
+                still_frames = state(page)['homeFrames']
+                page.mouse.move(b['x'] + 10, b['y'] + 10)
+                page.wait_for_timeout(500)
+                assert state(page)['homeFrames'] == still_frames
+                assert state(page)['homeQuality'] == 'static' and state(page)['homeBufferBytes'] == '0'
+                capture(page, 'reduced-motion')
+                page.emulate_media(reduced_motion='no-preference')
+                page.wait_for_timeout(500)
+                assert int(state(page)['homeFrames']) > int(still_frames)
+                buffers = page.evaluate('window.__homeBuffers.length')
+                assert buffers == 3, buffers
+                page.evaluate('window.__oldBuffers=window.__homeBuffers.slice()')
+                page.locator('[data-edge-trigger=about]').focus()
+                page.locator('#home-about-panel a').click()
+                page.wait_for_url('**/about')
+                assert page.locator('[data-home-canvas]').count() == 0
+                assert page.evaluate('window.__oldBuffers.every(c=>c.width===0&&c.height===0)')
+                page.goto(args.url, wait_until='domcontentloaded')
+                page.wait_for_selector('[data-home-canvas]')
+                page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>5")
+                assert page.locator('audio').count() == 1
+                check('unmount/remount: all three buffers released, one audio retained')
+            context.close()
+        for width, height in [(1440,900), (1920,1080)]:
+            context = context_for(browser, width, height, reduced=True)
+            page = visit(context)
+            assert state(page)['homeQuality'] == 'static'
+            capture(page, f'{width}x{height}-static-composition')
+            context.close()
+        context = context_for(browser, 1280, 720, dpr=2)
+        page = visit(context)
+        page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>5")
+        page.evaluate('window.__sameSurface=document.querySelector("[data-home-canvas]")')
+        before_time = float(state(page)['homeElapsed'])
+        page.set_viewport_size({'width':1440,'height':900})
+        page.wait_for_timeout(500)
+        assert float(state(page)['homeElapsed']) >= before_time
+        assert page.evaluate('window.__sameSurface===document.querySelector("[data-home-canvas]")')
+        assert page.evaluate('document.querySelector("[data-home-canvas]").width <= Math.ceil(document.querySelector("[data-home-viewport]").clientWidth*1.5)')
+        check('DPR2 and resize: capped resolution, same surface, continuous visit clock', state(page))
+        context.close()
+        context = browser.new_context(viewport={'width':390,'height':844}, is_mobile=True, has_touch=True,
+            user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1')
+        page = context.new_page()
+        page.goto(args.url, wait_until='domcontentloaded')
+        page.wait_for_url('**/blog/**')
+        assert page.locator('[data-home-scene]').count() == 0
+        check('mobile UA: existing blog redirect, no desktop scene')
+        context.close()
+        for failure in ['no-webgl', 'no-canvas', 'image-error', 'music-error']:
+            context = context_for(browser)
+            if failure in ['no-webgl', 'no-canvas']:
+                blocked = "kind==='2d'" if failure == 'no-canvas' else "kind==='webgl'||kind==='webgl2'||kind==='experimental-webgl'"
+                context.add_init_script("const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...rest){return (" + blocked + ")?null:original.call(this,kind,...rest)}")
+            if failure == 'image-error':
+                context.route('**/*convict-lake-night*', lambda r:r.abort())
+            if failure == 'music-error':
+                context.route('**/api/music?*', lambda r:r.fulfill(status=503,json={'error':'test failure'}))
+            page = context.new_page()
+            page.on('pageerror', lambda e:errors.append(str(e)))
+            page.goto(args.url, wait_until='domcontentloaded')
+            page.wait_for_function("document.documentElement.classList.contains('splash-seen')")
+            page.wait_for_selector('[data-home-scene]')
+            page.wait_for_function("['ready','error'].includes(document.querySelector('[data-home-artwork]').dataset.homeArtwork)")
+            assert page.locator('[data-edge-trigger]').count() == 8
+            assert page.locator('audio').count() == 1
+            page.locator('[data-edge-trigger=projects]').hover()
+            expect(page.locator('[data-edge-trigger=projects]')).to_have_attribute('aria-expanded','true')
+            if failure in ['no-canvas','image-error']:
+                page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeQuality==='static'")
+            if failure == 'music-error':
+                assert page.get_by_role('region',name='音乐控制').get_by_role('button').count() > 0
+            capture(page, failure)
+            check(failure + ': artwork/nav/music remain available', state(page))
+            context.close()
+        # Actual CPU pressure exercises the automatic quality governor; no
+        # production query switches or forced quality properties are used.
+        context = context_for(browser)
+        page = visit(context)
+        page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>5")
+        cdp = context.new_cdp_session(page)
+        cdp.send('Emulation.setCPUThrottlingRate', {'rate':16})
+        page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeQuality==='static'",timeout=30000)
+        cdp.send('Emulation.setCPUThrottlingRate', {'rate':1})
+        assert state(page)['homeBufferBytes'] == '0'
+        capture(page, 'cpu-static-fallback')
+        play = page.get_by_role('button',name='播放',exact=True)
+        play.click(); expect(page.get_by_role('button',name='暂停',exact=True)).to_be_visible()
+        check('CPU x16: graceful static fallback and working audio controls', state(page))
+        context.close()
+        assert not errors, errors
+    elif args.mode == 'snapshots':
         from PIL import Image
         snapshots = Path(__file__).resolve().parents[1] / 'public/page-previews'
         snapshots.mkdir(parents=True, exist_ok=True)
@@ -198,7 +392,7 @@ with sync_playwright() as p:
             context.close()
         assert not errors, errors
     elif args.mode == 'navigation':
-        for width, height in [(1440, 900), (1280, 800), (1024, 768), (640, 720), (1024, 480)]:
+        for width, height in [(1440, 900), (1920, 1080), (1366, 768), (1280, 720), (1280, 800), (1024, 768), (640, 720), (1024, 480)]:
             context = context_for(browser, width, height, reduced=width != 1440)
             page = visit(context)
             left = page.locator('[data-home-rail=left] [data-edge-trigger]')
@@ -259,7 +453,8 @@ with sync_playwright() as p:
                 else:
                     assert abs(b['x'] + b['width'] - width) < 1
                     assert abs(tab['x'] + tab['width'] - b['x']) < 1
-                assert abs(abs(tab['x'] - closed_tab['x']) - b['width']) < 1
+                closed_inset = (min(150, max(72, width * .09)) - 56) / 2
+                assert abs(abs(tab['x'] - closed_tab['x']) - (b['width'] - closed_inset)) < 1
                 if width == 1440:
                     capture(page, 'sidebar-' + entry)
                 # The unused strip beneath the moved tab must stay click-through.
