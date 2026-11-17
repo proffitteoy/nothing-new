@@ -1,0 +1,21 @@
+Convict Lake night window artwork
+
+Original photograph: "Convict Lake at night" by TheDailyNathan, 2011-10-09.
+Lens-distortion correction: Hike395, 2017-12-21.
+Source: https://commons.wikimedia.org/wiki/File:Convict_Lake_at_night_fixed.jpg
+Source revision: https://commons.wikimedia.org/w/index.php?title=File:Convict_Lake_at_night_fixed.jpg&oldid=1091227287
+License: Creative Commons Attribution-ShareAlike 3.0 Unported
+https://creativecommons.org/licenses/by-sa/3.0/
+
+Nothing New adaptation, 2026-11-17: AI-assisted midnight matte treatment of
+the source photograph, restrained clouds/stars and microdetail, 156px top
+crop, WebP encoding. Runtime masks separate depth planes; spectral mist
+and local water highlights are produced by the site's six-mode field.
+The image adaptation remains CC BY-SA 3.0. The site's source code has its
+own GPL-3.0-only license. No endorsement by the photographers is implied.
+
+Matte-edit prompt: preserve the source geography, mountain profiles,
+shoreline and viewpoint; use low-exposure blue-black midnight, readable
+gray-blue peaks, quiet clouds, few dim stars and calm dark water; soften
+photographic microdetail into realistic matte painting; no added objects,
+moon, aurora, particles, light bands, furnishings, UI, text or borders.

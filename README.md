@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="./docs/images/readme/home.jpg" alt="阿の宝藏之地首页" width="100%">
+  <img src="./docs/images/home-window/desktop-1440.webp" alt="阿の宝藏之地山湖观景窗首页" width="100%">
 </p>
 
 ## 关于这个站点
@@ -26,7 +26,7 @@
 
 | 页面 | 路径                                                      | 主要内容                                               |
 | ---- | --------------------------------------------------------- | ------------------------------------------------------ |
-| 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 桌面人物场景、左右各四入口与底部音乐；移动访问进入笔记 |
+| 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 桌面山湖观景窗、左右各四入口与窗台音乐；移动访问进入笔记 |
 | 项目 | [<code>/projects</code>](https://nothing-new.cn/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
 | 番剧 | [<code>/anime</code>](https://nothing-new.cn/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
 | 杂谈 | [<code>/chatter</code>](https://nothing-new.cn/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
@@ -53,7 +53,7 @@
 
 ## 核心实现
 
-- **桌面首页总装**：中心原图、双侧导航预览、底部音乐、移动根路径分流、谱场及五分钟周期的集成说明见[桌面首页总装与集中验证](docs/project/home-scene.md)；最终画面仍待人工验收。
+- **桌面观景窗首页**：授权山湖夜景、分层视差、同源六模态光雾与倒影、窗沿导航及窗台音乐，见[首页实现与集中验证](docs/project/home-scene.md)和[视觉与开发方案](docs/project/Nothing_New_观景窗首页_视觉与开发方案_2026-11-17.md)。移动设备仍进入笔记，其他页面外观不变。
 
 - **友链首页预览**：按需加载首页快照，支持键盘与移动端操作，见[友链说明](docs/project/friends-preview.md)。
 - **按入口启动**：桌面首页开场完成立即揭幕，资源预热并行继续；其他页面和减少动态效果入口跳过开场 iframe，使用有上限的准备阶段。支持跳过与 hydration 失败兜底。职责、独立超时预算与历史记录见[全站启动与导航](docs/project/site-startup.md)。

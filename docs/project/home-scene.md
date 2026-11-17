@@ -1,5 +1,30 @@
 # 桌面首页总装（#51 / #67 / #68 / #69 / #71）
 
+## 当前观景窗首页（2026-11-17）
+
+以 `main@c35fa13` 为基线，在独立工作树实现巨幅单片玻璃、冷暗室内窗框、山湖夜景、左右四项外廊导航和窗台音乐。完整设计、实际取舍及验收记录见[观景窗方案](Nothing_New_观景窗首页_视觉与开发方案_2026-11-17.md)。以下早期布局、人物原画、日夜、天体、分片和 300 秒故事描述仅为历史记录，不是现行功能。
+
+- `HomeSpectralCanvas` 接收宿主与玻璃开口两个 ref，按开口 `ResizeObserver` 计算三份有上限的 Canvas2D 缓冲。一个 RAF 负责原谱场、采样、指针平滑、光雾和局部水面反光；不挂载已退役的独立谱场 runtime。
+- 谱场继续使用原六模态、种子、相位、频率与播放倍率 `0.3`。16×9 / 12Hz 采样的方向和有限差分曲率用于显示层；网格之间采用双线性插值，雾与水面没有独立噪声或动画时钟。
+- 视差仅由玻璃内的鼠标输入驱动，离开回中；窗框和 DOM 栏位不随镜头移动。图层预留 24px overscan，最大近景平移 16px。导航仍保留 350ms/120ms、点击固定、Escape 还焦及论文两层阅读保护。
+- 默认目标 45fps / DPR≤1.5；连续两个 2 秒窗口低于 24fps 时降为 24fps / DPR≤1、8×5 / 6Hz；再次连续两个窗口低于 16fps 则静态回退。六模态数保持不变，质量降档只在本次挂载生效。
+- reduced-motion 使用静态绘景并释放三个绘图缓冲；隐藏页面停 RAF、暂停可见时钟。无 Canvas 或图片失败时保留静态图片／CSS 山湖回退、导航和播放器。静态图片的 ready/error 属性兼容 Splash，Alpha 完成消息和既有超时预算未改。
+- 音乐继续复用唯一根 audio。生产只保留 CSS 分层；Three 固定投影实现只存在于验收脚本，未进入首页 bundle，也未引入 R3F。
+- 景观资源为 54,268 bytes 的同源 WebP。摄影与改编台账见[第三方说明](third-party-notices.md)和 `public/home-window/NOTICE.txt`，窗台可访问公开署名链接。
+
+```powershell
+# 使用 Node 22；先构建并启动生产预览。
+npm.cmd run build -- --webpack
+npm.cmd run start -- --hostname 127.0.0.1 --port 3187
+python scripts/home-scene-preview.py --url http://127.0.0.1:3187 --mode night-window --output .sync/tmp-night-window/final-night
+python scripts/home-scene-preview.py --url http://127.0.0.1:3187 --mode navigation --output .sync/tmp-night-window/final-navigation
+python scripts/home-scene-preview.py --url http://127.0.0.1:3187 --mode night-compare --output .sync/tmp-night-window/final-comparison
+```
+
+`night-compare` 在临时目录用已有 esbuild 打包测试专用 Three harness，由浏览器注入；同一素材与固定谱场时间下截取居中／左移／右移，再恢复真实时钟测量帧率、CPU dispatch 和内存预算。CPU 绘制耗时不是 GPU 完成时间。音乐夹具与合成 visibility 测试均在报告中明确标记，不能代表外部音乐服务或真实设备后台行为。
+
+本机使用局部 Playwright 1.65.2，复用当前工作树时可先设置 `$env:PYTHONPATH=(Resolve-Path '.sync/tmp-night-window/python').Path`；其他环境需准备 Python Playwright/Pillow 和 Chrome。最终 Node 22.23.5 下 126 项测试、类型检查及 247 页生产构建通过；ESLint 0 错误、3 条既有警告。四目标尺寸约 45fps，八尺寸交互、失败重试、缓冲释放及真实主线程压力降级通过，三个浏览器报告共 28 组检查、0 pageerror。完整性能数值和证据边界见方案第 11 节。
+
 ## 当前导航与音乐布局（2026-11-15）
 
 2026-11-16 交互纠正：八个入口直接沿用改造前论文侧栏的展开方式：封面贴住所在屏幕边缘，标签展开后向内移动到封面旁，两者顶部对齐；收起后标签回到边缘。恢复原来的 184–264px 自适应封面宽度、350ms 展开和 120ms 收起，仅按钮及真实内容参与指针判定，标签下方的空白继续穿透；点击固定、外部点击关闭、键盘焦点及论文两层阅读保护沿用原行为。四项导航的排布和底部音乐保持本次需求，较矮窗口仅压缩导航排布所需的标签高度。2026-11-15 的固定标签、居中悬浮卡片和整块浮层热区已撤回，不作为复用实现。
