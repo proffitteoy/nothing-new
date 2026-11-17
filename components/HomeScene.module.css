@@ -1,5 +1,5 @@
 .scene {
-  /* Home-only midnight palette: inner pages keep the original site tokens. */
+  /* Home-only base tokens; approved daylight surfaces are defined below. */
   --site-bg: #050608;
   --site-surface: #121b2b;
   --site-recess: #0b1220;
@@ -430,4 +430,110 @@
   .tab {
     font-size: 14px;
   }
+}
+
+/* Approved daylight surfaces, now loaded by the real homepage. Geometry is unchanged. */
+
+.scene {
+  --site-bg: #d9e1e7;
+  --site-surface: #f0f4f7;
+  --site-recess: #dce5ec;
+  --site-ink: #243a4d;
+  --site-muted: #526b7e;
+  --site-accent: #225d94;
+  --site-detail: #a34479;
+  --site-violet: #6551a3;
+  --site-mint: #29796d;
+  --site-line: #a1b4c4;
+  --site-glass: rgb(235 242 247 / 96%);
+  --site-wash: rgb(34 93 148 / 10%);
+  color-scheme: light;
+  background: linear-gradient(
+    90deg,
+    #dce4ea,
+    #eaf0f4 8%,
+    #cbd6df 16%,
+    #cbd6df 84%,
+    #e3eaf0 92%,
+    #d6e0e7
+  );
+}
+.scene [data-home-window] {
+  background: linear-gradient(
+    90deg,
+    #aebfcd,
+    #e4edf3 3px,
+    #7f96a9 9px,
+    #a6b7c5 calc(100% - 8px),
+    #cfdde7 calc(100% - 3px),
+    #8199ac
+  );
+  border-top-color: #f6fafc;
+  box-shadow:
+    0 12px 38px #263c502e,
+    0 0 0 1px #95aabd,
+    inset 0 10px 12px #566e8140;
+}
+.scene [data-home-viewport] {
+  background: #91bbd4;
+  box-shadow:
+    0 0 0 1px #f1f7fb99,
+    0 0 18px #ffffff30;
+}
+
+.scene [data-home-artwork] {
+  opacity: 1 !important;
+  background: linear-gradient(#8cbde1, #d2e6ef 62%, #50849a 63%, #24546c);
+}
+.scene [data-home-artwork]::before {
+  background: #6b879c;
+}
+.scene [data-home-viewport] > :last-child {
+  background: linear-gradient(110deg, #ffffff08, transparent 38%, #ffffff08 47%, transparent 58%);
+  box-shadow:
+    inset 0 0 26px #2a486a30,
+    inset 1px 1px 2px #ffffffb3;
+}
+.scene [data-home-sill] {
+  background: linear-gradient(#eaf2f7, #b9cad8 3px, #b1c3d1 20px, #d0dce5 45%, #a9bdcd);
+  border-top-color: #ffffffb3;
+  border-bottom-color: #8da6ba;
+  box-shadow:
+    0 26px 35px #233e5429,
+    0 2px 0 #bccdda,
+    inset 0 12px 22px #ffffff33;
+}
+.scene [data-home-sill]::before {
+  background: linear-gradient(#7690a5, #dbe8f1);
+}
+.scene [data-edge-trigger] {
+  color: #3c566b;
+  text-shadow: none;
+}
+.scene [data-edge-trigger]:is(:hover, :focus-visible, [aria-expanded="true"]) {
+  color: #173c5a;
+  background: linear-gradient(90deg, transparent, #ffffff48, transparent);
+  text-shadow: none;
+}
+.scene [data-home-music] [aria-label="当前歌词"] p {
+  text-shadow:
+    0 1px 6px #f4f8fbc9,
+    0 0 16px #f4f8fba6;
+}
+.scene [data-home-music] h2 + p,
+.scene [data-home-music] :has(> input[aria-label="播放进度"]) {
+  opacity: 0.9;
+}
+.scene [data-home-sill] > a {
+  color: #2c465b;
+}
+.scene [data-home-sill] > a:hover {
+  color: #163e60;
+}
+.scene dialog {
+  color-scheme: light;
+}
+
+.scene .nightSky img {
+  filter: none;
 }

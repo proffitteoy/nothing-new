@@ -64,7 +64,7 @@ test("camera damping is time based, returns home, and all plate edges have overs
       assert.ok(rect.x + shift < 0 && rect.x + rect.width + shift > width)
       assert.ok(rect.y + shift < 0 && rect.y + rect.height + shift > height)
     }
-    assert.ok(Math.abs(rect.width / rect.height - 1536 / 868) < 1e-12)
+    assert.ok(Math.abs(rect.width / rect.height - 1672 / 877) < 1e-12)
   }
 })
 

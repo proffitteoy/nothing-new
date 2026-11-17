@@ -1,4 +1,4 @@
-Nothing New daylight observation-window study (local review candidate)
+Nothing New daylight observation-window artwork
 
 Original photograph: "Convict Lake at night" by TheDailyNathan, 2011-10-09.
 Lens-distortion correction: Hike395, 2017-12-21.
@@ -15,7 +15,7 @@ or a geometrically surveyed reproduction. The existing midnight adaptation
 was not brightened. No other photographs were composited into this asset.
 The two travel-site references informed lighting only and were not copied.
 Generated 1672 x 941, framed by a 64px top crop, encoded as 1672 x 877 WebP
-(quality 86, sharp 0.34.5); published candidate: convict-lake-day-study.webp.
+(quality 86, sharp 0.34.5); production asset: convict-lake-day-study.webp.
 The image adaptation remains CC BY-SA 3.0. The site's source code has its
 own GPL-3.0-only license. No endorsement by the photographers is implied.
 

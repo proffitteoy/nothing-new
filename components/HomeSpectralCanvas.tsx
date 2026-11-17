@@ -10,12 +10,13 @@ import {
 import { SPECTRAL_PLAYBACK_RATE } from "./field/spectralField"
 import {
   HOME_MOUNTAIN_PROFILE,
+  HOME_NEAR_SHORE,
   homeLandscapeRect,
   sampleSpectralScene,
   smoothHomePointer,
-  drawHomeSpectralLight,
+  createHomeSpectralLight,
 } from "./field/homeSpectralScene"
-import landscape from "../public/home-window/convict-lake-night.webp"
+import landscape from "../public/home-window/convict-lake-day-study.webp"
 import styles from "./HomeScene.module.css"
 
 declare global {
@@ -24,11 +25,11 @@ declare global {
   }
 }
 
-// Keep the original palette and equations; only the final light composition is softer.
+// The approved daylight compositor keeps the ambient field and its equations.
 const FIELD_COLOURS = [
-  [96, 199, 255],
-  [185, 144, 255],
-  [255, 133, 195],
+  [55, 104, 194],
+  [112, 75, 188],
+  [184, 84, 151],
 ] as const satisfies NonNullable<SpectralTracerFrame["colours"]>
 
 export default function HomeSpectralCanvas({
@@ -65,8 +66,13 @@ export default function HomeSpectralCanvas({
     const back = document.createElement("canvas")
     const front = document.createElement("canvas")
     const tracers = createSpectralTracerController(back, front)
-    if (!tracers) {
+    const light = createHomeSpectralLight()
+    if (!tracers || !light) {
+      tracers?.destroy()
+      light?.release()
+      for (const layer of [surface, back, front]) layer.width = layer.height = 0
       stage.setAttribute("data-home-quality", "static")
+      stage.setAttribute("data-home-buffer-bytes", "0")
       return
     }
 
@@ -124,9 +130,11 @@ export default function HomeSpectralCanvas({
         opening.dataset.homeRendering = "static"
         stage.dataset.homeQuality = "static"
         for (const layer of [surface, back, front]) layer.width = layer.height = 0
+        light.release()
         ratio = 0
         stage.dataset.homeBufferBytes = String(
-          [surface, back, front].reduce((n, c) => n + c.width * c.height * 4, 0),
+          [surface, back, front].reduce((n, c) => n + c.width * c.height * 4, 0) +
+            light.bufferBytes,
         )
         return
       }
@@ -207,7 +215,8 @@ export default function HomeSpectralCanvas({
         )
         sampledAt = elapsed
       }
-      drawHomeSpectralLight(ctx, back, front, grid, width, height, camera)
+      ctx.clearRect(0, 0, width, height)
+      light.render(ctx, back, front, grid, width, height, fieldTime, degraded, camera)
       opening.dataset.homeRendering = "dynamic"
 
       stage.dataset.homePhase = "field"
@@ -216,8 +225,10 @@ export default function HomeSpectralCanvas({
       stage.dataset.homeGridTime = grid.time.toFixed(4)
       stage.dataset.homeQuality = reduced.matches ? "static" : degraded ? "adaptive-low" : "high"
       stage.dataset.homeBufferBytes = String(
-        [surface, back, front].reduce((n, c) => n + c.width * c.height, 0) * 4,
+        [surface, back, front].reduce((n, c) => n + c.width * c.height, 0) * 4 + light.bufferBytes,
       )
+      stage.dataset.homeLightMax = light.stats.envelopeMax.toFixed(5)
+      stage.dataset.homeEffect = "spectral-mist"
       const cost = performance.now() - began
       totalCost += cost
       stage.dataset.homeDrawTotalMs = totalCost.toFixed(2)
@@ -281,6 +292,7 @@ export default function HomeSpectralCanvas({
       window.removeEventListener("site-startup-phase", redraw)
       reduced.removeEventListener("change", redraw)
       tracers.destroy()
+      light.release()
       for (const layer of [surface, back, front]) {
         layer.width = 0
         layer.height = 0
@@ -290,9 +302,16 @@ export default function HomeSpectralCanvas({
   }, [host, viewport])
 
   const mountainMask = `polygon(${HOME_MOUNTAIN_PROFILE.map(([x, y]) => `${x * 100}% ${y * 100}%`).join(",")},100% 100%,0% 100%)`
+  const shoreMask = `polygon(${HOME_NEAR_SHORE.map(([x, y]) => `${x * 100}% ${y * 100}%`).join(",")})`
   return (
     <>
-      <div ref={artwork} className={styles.poster} data-home-artwork="loading" aria-hidden="true">
+      <div
+        ref={artwork}
+        className={styles.poster}
+        data-home-artwork="loading"
+        data-home-artwork-kind="daylight"
+        aria-hidden="true"
+      >
         <Image
           src={landscape}
           alt=""
@@ -340,7 +359,7 @@ export default function HomeSpectralCanvas({
             }}
           />
         </div>
-        <div className={styles.shorePlane} data-home-plane="shore">
+        <div className={styles.shorePlane} style={{ clipPath: shoreMask }} data-home-plane="shore">
           <Image
             src={landscape}
             alt=""

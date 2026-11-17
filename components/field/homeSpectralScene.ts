@@ -1,4 +1,5 @@
 import { spectralDirectionAt } from "./SpectralTracerLayer"
+import { SPECTRAL_PLAYBACK_RATE } from "./spectralField"
 
 // Interleaved direction x/y and curvature. This is a sampled view of the
 // original six-mode field, never a second noise field or a new spectral model.
@@ -63,144 +64,367 @@ export function smoothHomePointer(current: number, target: number, seconds: numb
   return current + (target - current) * (1 - Math.exp(-2.2 * Math.min(Math.max(seconds, 0), 0.05)))
 }
 
+export const HOME_LANDSCAPE_WIDTH = 1672
+export const HOME_LANDSCAPE_HEIGHT = 877
 export function homeLandscapeRect(width: number, height: number) {
-  // 24px of overscan exceeds the maximum 16px camera displacement.
-  const scale = Math.max((width + 48) / 1536, (height + 48) / 868)
+  const scale = Math.max((width + 48) / HOME_LANDSCAPE_WIDTH, (height + 48) / HOME_LANDSCAPE_HEIGHT)
   return {
-    x: (width - 1536 * scale) / 2,
-    y: (height - 868 * scale) / 2,
-    width: 1536 * scale,
-    height: 868 * scale,
+    x: (width - HOME_LANDSCAPE_WIDTH * scale) / 2,
+    y: (height - HOME_LANDSCAPE_HEIGHT * scale) / 2,
+    width: HOME_LANDSCAPE_WIDTH * scale,
+    height: HOME_LANDSCAPE_HEIGHT * scale,
   }
 }
-
-// Audited against the licensed matte plate, after its 156px top crop.
-// Used by both the DOM mountain mask and the canvas sky clip.
+// The approved daylight plate; shared by production DOM, optical clipping and review.
 export const HOME_MOUNTAIN_PROFILE = [
-  [0, 0.44],
-  [0.065, 0.444],
-  [0.101, 0.472],
-  [0.139, 0.484],
-  [0.171, 0.442],
-  [0.194, 0.428],
-  [0.215, 0.415],
-  [0.235, 0.404],
-  [0.25, 0.395],
-  [0.268, 0.392],
-  [0.282, 0.405],
-  [0.31, 0.405],
-  [0.333, 0.44],
-  [0.35, 0.446],
-  [0.372, 0.474],
-  [0.404, 0.49],
-  [0.437, 0.514],
-  [0.469, 0.55],
-  [0.491, 0.566],
-  [0.514, 0.557],
-  [0.53, 0.545],
-  [0.553, 0.529],
-  [0.579, 0.517],
-  [0.595, 0.51],
-  [0.613, 0.485],
-  [0.638, 0.476],
-  [0.663, 0.45],
-  [0.697, 0.434],
-  [0.719, 0.427],
-  [0.746, 0.433],
-  [0.774, 0.437],
-  [0.793, 0.446],
-  [0.814, 0.44],
-  [0.834, 0.409],
-  [0.856, 0.389],
-  [0.872, 0.383],
-  [0.886, 0.391],
-  [0.906, 0.4],
-  [0.93, 0.381],
-  [0.948, 0.365],
-  [0.967, 0.343],
-  [0.986, 0.328],
-  [1, 0.317],
-].map(([x, y]) => [x, (y * 1024 - 156) / 868] as const)
+  [0, 50],
+  [27, 46],
+  [52, 102],
+  [56, 142],
+  [78, 182],
+  [80, 222],
+  [105, 242],
+  [111, 286],
+  [150, 300],
+  [196, 324],
+  [226, 304],
+  [253, 285],
+  [282, 274],
+  [310, 265],
+  [342, 246],
+  [370, 242],
+  [398, 228],
+  [421, 232],
+  [442, 239],
+  [456, 258],
+  [487, 250],
+  [513, 260],
+  [538, 277],
+  [560, 290],
+  [579, 288],
+  [604, 312],
+  [631, 322],
+  [660, 340],
+  [681, 362],
+  [707, 382],
+  [729, 400],
+  [750, 398],
+  [778, 423],
+  [806, 411],
+  [825, 401],
+  [846, 402],
+  [869, 397],
+  [894, 384],
+  [917, 382],
+  [947, 368],
+  [970, 361],
+  [994, 372],
+  [1015, 364],
+  [1041, 346],
+  [1068, 336],
+  [1091, 314],
+  [1115, 306],
+  [1142, 305],
+  [1162, 295],
+  [1185, 279],
+  [1206, 283],
+  [1229, 280],
+  [1252, 285],
+  [1277, 286],
+  [1302, 297],
+  [1335, 302],
+  [1358, 304],
+  [1386, 302],
+  [1414, 308],
+  [1441, 302],
+  [1464, 273],
+  [1487, 260],
+  [1511, 245],
+  [1535, 237],
+  [1562, 245],
+  [1582, 259],
+  [1603, 231],
+  [1626, 218],
+  [1650, 194],
+  [1672, 174],
+].map(([x, y]) => [x / HOME_LANDSCAPE_WIDTH, (y - 4) / HOME_LANDSCAPE_HEIGHT] as const)
+export const HOME_SHORELINE = [
+  [0, 579],
+  [103, 558],
+  [252, 552],
+  [459, 549],
+  [802, 548],
+  [1118, 545],
+  [1414, 546],
+  [1672, 544],
+].map(([x, y]) => [x / HOME_LANDSCAPE_WIDTH, y / HOME_LANDSCAPE_HEIGHT] as const)
+export const HOME_NEAR_SHORE = [
+  [0, 681],
+  [25, 679],
+  [63, 696],
+  [83, 726],
+  [112, 755],
+  [106, 799],
+  [90, 844],
+  [100, 877],
+  [0, 877],
+].map(([x, y]) => [x / HOME_LANDSCAPE_WIDTH, y / HOME_LANDSCAPE_HEIGHT] as const)
 
-export function drawHomeSpectralLight(
-  ctx: CanvasRenderingContext2D,
-  back: HTMLCanvasElement,
-  front: HTMLCanvasElement,
-  grid: ReturnType<typeof sampleSpectralScene>,
-  width: number,
-  height: number,
-  camera: { x: number; y: number },
-) {
-  const rect = homeLandscapeRect(width, height)
-  const shoreline = rect.y + rect.height * 0.623 + camera.y * 6
-  ctx.clearRect(0, 0, width, height)
-  ctx.save()
-  ctx.beginPath()
-  ctx.moveTo(-48, -48)
-  ctx.lineTo(width + 48, -48)
-  for (let i = HOME_MOUNTAIN_PROFILE.length - 1; i >= 0; i--) {
-    const [x, y] = HOME_MOUNTAIN_PROFILE[i]
-    ctx.lineTo(rect.x + x * rect.width + camera.x * 10, rect.y + y * rect.height + camera.y * 6)
+// Optical buffers only: the caller owns the tracer controller, time, RAF and output.
+// The previously approved review compositor is used by the real homepage too.
+export function createHomeSpectralLight() {
+  const probe = document.createElement("canvas"),
+    fog = document.createElement("canvas"),
+    mask = document.createElement("canvas")
+  const radiance = document.createElement("canvas"),
+    core = document.createElement("canvas")
+  const resources = [probe, fog, mask, radiance, core]
+  const probeCtx = probe.getContext("2d", { willReadFrequently: true }),
+    fogCtx = fog.getContext("2d"),
+    maskCtx = mask.getContext("2d")
+  const lightCtx = radiance.getContext("2d"),
+    coreCtx = core.getContext("2d")
+  if (!probeCtx || !fogCtx || !maskCtx || !lightCtx || !coreCtx) {
+    resources.forEach((c) => {
+      c.width = c.height = 0
+    })
+    return null
   }
-  ctx.closePath()
-  ctx.clip()
-  ctx.globalCompositeOperation = "screen"
-  ctx.globalAlpha = 0.022
-  ctx.drawImage(back, 0, 0, width, height)
-  ctx.globalAlpha = 0.035
-  ctx.drawImage(front, 0, 0, width, height)
-  for (let column = 2; column <= 13; column += 2) {
-    const sample = interpolateSpectralScene(grid, column / 15, 0.36)
-    const x = (column / 15) * width + sample.x * 22 + camera.x * 4
-    const y = height * 0.36 + sample.y * 28
-    const radius = width * 0.17
-    const glow = ctx.createRadialGradient(x, y, 0, x, y, radius)
-    const tint = column % 4 ? "96,199,255" : "185,144,255"
-    glow.addColorStop(0, `rgba(${tint},${0.025 + sample.light * 0.08})`)
-    glow.addColorStop(1, `rgba(${tint},0)`)
-    ctx.globalAlpha = 1
-    ctx.fillStyle = glow
-    ctx.save()
-    ctx.translate(0, y * 0.45)
-    ctx.scale(1, 0.55)
-    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2)
-    ctx.restore()
+  let width = 0,
+    height = 0,
+    lightScale = 0.5,
+    rect = homeLandscapeRect(1, 1),
+    sky = new Path2D(),
+    lake = new Path2D()
+  let maskX = NaN,
+    maskY = NaN,
+    sampledAt = -Infinity,
+    previousLightTime: number | null = null
+  let target = new Float32Array(0),
+    envelope = new Float32Array(0)
+  let fogPixels = fogCtx.createImageData(1, 1),
+    maskPixels = maskCtx.createImageData(1, 1)
+  const stats = { densityMax: 0, envelopeMin: 0, envelopeMax: 0, coreFraction: 0, gridTime: 0 }
+  const clamp = (v: number) => Math.max(0, Math.min(1, v))
+  const smooth = (a: number, b: number, v: number) => {
+    const t = clamp((v - a) / (b - a))
+    return t * t * (3 - 2 * t)
   }
-  ctx.restore()
-  // Reflect the same curve buffer, with local displacements from the same
-  // sampled direction/curvature. No independent wave or aurora clock.
-  ctx.save()
-  ctx.beginPath()
-  ctx.rect(0, shoreline, width, Math.max(0, height - shoreline))
-  ctx.clip()
-  ctx.globalCompositeOperation = "screen"
-  const depth = Math.max(1, height - shoreline)
-  const ratio = back.width / width
-  for (let row = 0; row < depth; row += grid.columns === 16 ? 5 : 9) {
-    const sample = interpolateSpectralScene(grid, 0.5, (shoreline + row) / height)
-    const fade = Math.pow(1 - row / depth, 2)
-    const sourceY = Math.max(0, shoreline - row * 1.5)
-    const reflectionWidth = width * (0.48 + (row / depth) * 0.12)
-    ctx.globalAlpha = 0.035 * fade
-    ctx.drawImage(
-      back,
-      width * 0.26 * ratio,
-      sourceY * ratio,
-      reflectionWidth * ratio,
-      3 * ratio,
-      width * 0.26 + sample.x * (1 + (row / depth) * 6),
-      shoreline + row,
-      reflectionWidth,
-      3,
-    )
-    const x = width * 0.48 + sample.x * width * 0.035
-    const glow = ctx.createLinearGradient(x - width * 0.18, 0, x + width * 0.18, 0)
-    glow.addColorStop(0, "rgba(96,199,255,0)")
-    glow.addColorStop(0.5, `rgba(122,158,211,${(0.045 + sample.light * 0.12) * fade})`)
-    glow.addColorStop(1, "rgba(185,144,255,0)")
-    ctx.globalAlpha = 1
-    ctx.fillStyle = glow
-    ctx.fillRect(x - width * 0.18, shoreline + row, width * 0.36, 1)
+  const resize = (w: number, h: number, low: boolean) => {
+    const cols = low ? 40 : 64,
+      rows = low ? 24 : 40
+    if (width === w && height === h && probe.width === cols) return
+    width = w
+    height = h
+    rect = homeLandscapeRect(width, height)
+    for (const c of [probe, fog, mask]) {
+      c.width = cols
+      c.height = rows
+    }
+    lightScale = Math.min(0.5, 768 / width)
+    for (const c of [radiance, core]) {
+      c.width = Math.round(width * lightScale)
+      c.height = Math.round(height * lightScale)
+    }
+    fogPixels = fogCtx.createImageData(cols, rows)
+    maskPixels = maskCtx.createImageData(cols, rows)
+    target = new Float32Array(cols * rows)
+    envelope = new Float32Array(cols * rows)
+    sampledAt = -Infinity
+    previousLightTime = null
+    maskX = maskY = NaN
   }
-  ctx.restore()
+  const updateMasks = (camera: { x: number; y: number }) => {
+    if (maskX === camera.x && maskY === camera.y) return
+    maskX = camera.x
+    maskY = camera.y
+    sky = new Path2D()
+    sky.moveTo(-48, -48)
+    sky.lineTo(width + 48, -48)
+    for (const [x, y] of [...HOME_MOUNTAIN_PROFILE].reverse())
+      sky.lineTo(rect.x + x * rect.width + maskX * 10, rect.y + y * rect.height + maskY * 6)
+    sky.closePath()
+    lake = new Path2D()
+    HOME_SHORELINE.forEach(([x, y], i) => {
+      const px = rect.x + x * rect.width + maskX * 10,
+        py = rect.y + y * rect.height + maskY * 6
+      if (i) lake.lineTo(px, py)
+      else lake.moveTo(px, py)
+    })
+    lake.lineTo(width + 48, height + 48)
+    lake.lineTo(-48, height + 48)
+    lake.closePath()
+    HOME_NEAR_SHORE.forEach(([x, y], i) => {
+      const px = rect.x + x * rect.width + maskX * 16,
+        py = rect.y + y * rect.height + maskY * 10
+      if (i) lake.lineTo(px, py)
+      else lake.moveTo(px, py)
+    })
+    lake.closePath()
+  }
+  const updateLight = (
+    back: HTMLCanvasElement,
+    front: HTMLCanvasElement,
+    grid: ReturnType<typeof sampleSpectralScene>,
+    time: number,
+  ) => {
+    if (grid.time !== sampledAt) {
+      sampledAt = grid.time
+      stats.gridTime = grid.time
+      probeCtx.clearRect(0, 0, probe.width, probe.height)
+      probeCtx.drawImage(back, 0, 0, probe.width, probe.height)
+      probeCtx.drawImage(front, 0, 0, probe.width, probe.height)
+      const density = probeCtx.getImageData(0, 0, probe.width, probe.height).data
+      stats.densityMax = 0
+      for (let y = 0; y < fog.height; y++)
+        for (let x = 0; x < fog.width; x++) {
+          const index = y * fog.width + x,
+            offset = index * 4
+          const field = interpolateSpectralScene(grid, x / (fog.width - 1), y / (fog.height - 1))
+          // A two-cell displacement reads the actual common direction field.
+          // Density is accumulated trail coverage; curvature is angular change.
+          // Neither is the (unit) direction vector's length or a new noise field.
+          const sx = Math.max(0, Math.min(probe.width - 1, Math.round(x - field.x * 1.5)))
+          const sy = Math.max(0, Math.min(probe.height - 1, Math.round(y - field.y * 1.5)))
+          const coverage = density[(sy * probe.width + sx) * 4 + 3] / 255
+          const localDensity = clamp(coverage / 0.055)
+          stats.densityMax = Math.max(stats.densityMax, localDensity)
+          // Display transfer only: small angular changes remain legible in
+          // daylight without modifying any eigenmode or tracer integration.
+          const bend = clamp(Math.sqrt(field.light) * 4)
+          target[index] = smooth(0.2, 0.7, localDensity) * (0.45 + 0.55 * bend)
+          const violet = 0.2 + 0.8 * bend
+          const rose = 0.12 * smooth(0.72, 1, field.light) * localDensity
+          fogPixels.data[offset] = Math.round(96 + 89 * violet + 70 * rose)
+          fogPixels.data[offset + 1] = Math.round(199 - 55 * violet - 66 * rose)
+          fogPixels.data[offset + 2] = 255
+        }
+    }
+    const dt =
+      previousLightTime === null
+        ? 1
+        : Math.max(0, (time - previousLightTime) / SPECTRAL_PLAYBACK_RATE)
+    previousLightTime = time
+    const blend = 1 - Math.exp(-Math.min(dt, 1) / 0.45)
+    let coreCells = 0
+    stats.envelopeMin = 1
+    stats.envelopeMax = 0
+    for (let i = 0; i < target.length; i++) {
+      envelope[i] += (target[i] - envelope[i]) * blend
+      const light = clamp(envelope[i])
+      fogPixels.data[i * 4 + 3] = Math.round(light * 255)
+      const visibleCore = smooth(0.5, 0.75, light)
+      if (visibleCore > 0.1) coreCells++
+      maskPixels.data[i * 4] = maskPixels.data[i * 4 + 1] = maskPixels.data[i * 4 + 2] = 255
+      maskPixels.data[i * 4 + 3] = Math.round(visibleCore * 255)
+      stats.envelopeMin = Math.min(stats.envelopeMin, light)
+      stats.envelopeMax = Math.max(stats.envelopeMax, light)
+    }
+    stats.coreFraction = coreCells / target.length
+    fogCtx.putImageData(fogPixels, 0, 0)
+    maskCtx.putImageData(maskPixels, 0, 0)
+    lightCtx.setTransform(lightScale, 0, 0, lightScale, 0, 0)
+    lightCtx.clearRect(0, 0, width, height)
+    lightCtx.save()
+    lightCtx.clip(sky)
+    // Two diffusion scales turn deposited trajectories into a continuous
+    // light volume. Peak regions reveal foreground arcs and a faint trace of
+    // the same background paths; the rest never becomes a line drawing.
+    lightCtx.globalAlpha = 0.6
+    lightCtx.filter = `blur(${42 * lightScale}px)`
+    lightCtx.drawImage(fog, 0, 0, width, height)
+    lightCtx.globalAlpha = 0.72
+    lightCtx.filter = `blur(${16 * lightScale}px)`
+    lightCtx.drawImage(fog, 0, 0, width, height)
+    lightCtx.filter = "none"
+    coreCtx.setTransform(lightScale, 0, 0, lightScale, 0, 0)
+    coreCtx.globalCompositeOperation = "source-over"
+    coreCtx.clearRect(0, 0, width, height)
+    coreCtx.globalAlpha = 0.18
+    coreCtx.drawImage(back, 0, 0, width, height)
+    coreCtx.globalAlpha = 1
+    coreCtx.drawImage(front, 0, 0, width, height)
+    coreCtx.globalCompositeOperation = "destination-in"
+    coreCtx.drawImage(mask, 0, 0, width, height)
+    lightCtx.globalAlpha = 0.4
+    lightCtx.drawImage(core, 0, 0, width, height)
+    lightCtx.restore()
+  }
+
+  const shoreAt = (x: number) => {
+    const u = clamp((x - rect.x - maskX * 10) / rect.width)
+    let i = 1
+    while (i < HOME_SHORELINE.length - 1 && HOME_SHORELINE[i][0] < u) i++
+    const a = HOME_SHORELINE[i - 1],
+      b = HOME_SHORELINE[i]
+    return rect.y + (a[1] + ((b[1] - a[1]) * (u - a[0])) / (b[0] - a[0])) * rect.height + maskY * 6
+  }
+  return {
+    stats,
+    get bufferBytes() {
+      return resources.reduce((n, c) => n + c.width * c.height * 4, 0)
+    },
+    render(
+      ctx: CanvasRenderingContext2D,
+      back: HTMLCanvasElement,
+      front: HTMLCanvasElement,
+      grid: ReturnType<typeof sampleSpectralScene>,
+      w: number,
+      h: number,
+      time: number,
+      low: boolean,
+      camera: { x: number; y: number },
+    ) {
+      resize(w, h, low)
+      updateMasks(camera)
+      updateLight(back, front, grid, time)
+      ctx.save()
+      ctx.globalAlpha = 1
+      ctx.globalCompositeOperation = "source-over"
+      ctx.filter = "none"
+      ctx.save()
+      ctx.clip(sky)
+      ctx.drawImage(radiance, 0, 0, width, height)
+      ctx.restore()
+      ctx.save()
+      ctx.clip(lake, "evenodd")
+      for (let x = 0; x < width; x += 14) {
+        const shoreline = shoreAt(x + 7),
+          flow = interpolateSpectralScene(grid, (x + 7) / width, shoreline / height)
+        ctx.save()
+        ctx.globalAlpha = 0.28 + 0.12 * flow.light
+        ctx.translate(flow.x * 1.8, shoreline * 1.65 + flow.y * 0.5)
+        ctx.scale(1, -0.65)
+        ctx.drawImage(
+          radiance,
+          x * lightScale,
+          0,
+          16 * lightScale,
+          radiance.height,
+          x,
+          0,
+          16,
+          height,
+        )
+        ctx.restore()
+      }
+      ctx.restore()
+      ctx.restore()
+    },
+    release() {
+      resources.forEach((c) => {
+        c.width = c.height = 0
+      })
+      width = height = 0
+      sampledAt = -Infinity
+      previousLightTime = null
+      target = new Float32Array(0)
+      envelope = new Float32Array(0)
+      fogPixels = fogCtx.createImageData(1, 1)
+      maskPixels = maskCtx.createImageData(1, 1)
+      sky = new Path2D()
+      lake = new Path2D()
+      maskX = maskY = NaN
+    },
+  }
 }

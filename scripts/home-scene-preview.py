@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--url', default='http://127.0.0.1:3161')
 parser.add_argument('--output', default='.sync/tmp-home-scene-evidence')
 parser.add_argument('--browser', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
-parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview'], default='navigation')
+parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'production-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview'], default='navigation')
 parser.add_argument('--day-study', action='store_true', help='Apply the corrected daylight field to the real navigation acceptance (reduced motion at the existing reduced sizes); never changes production code.')
 parser.add_argument('--day-variant', choices=['static', 'corrected', 'before', 'a', 'b'], default='corrected', help='day-preview only: corrected (default), static or before; R/O/0 keys in the review tab. a/b are compatibility aliases, not design candidates.')
 args = parser.parse_args()
@@ -131,7 +131,7 @@ def day_review():
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=args.mode != 'day-preview', executable_path=args.browser, args=['--mute-audio'])
-    if args.mode in ['night-window', 'night-compare', 'navigation', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview']:
+    if args.mode in ['night-window', 'production-window', 'night-compare', 'navigation', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview']:
         check('environment', {'browser':browser.version, 'url':args.url,
             'music':'local WAV fixture; external music service not asserted',
             'visibility':'synthetic document.hidden event where explicitly labelled'})
@@ -395,7 +395,7 @@ with sync_playwright() as p:
         assert page.locator('[data-home-three-spike]').count() == 0
         assert not errors, errors
         context.close()
-    elif args.mode == 'night-window':
+    elif args.mode in ['night-window', 'production-window']:
         for width, height in [(1440,900), (1920,1080), (1366,768), (1280,720)]:
             context = context_for(browser, width, height)
             context.add_init_script("""window.__homeLongTasks=[];window.__homeBuffers=[];
@@ -404,6 +404,18 @@ with sync_playwright() as p:
                 HTMLCanvasElement.prototype.getContext=function(kind,...options){if(kind==='2d'&&!window.__homeBuffers.includes(this))window.__homeBuffers.push(this);return getContext.call(this,kind,...options)};""")
             page = visit(context)
             page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames) > 5")
+            if args.mode == 'production-window':
+                # Exercise the shipped / route. No image response substitution,
+                # injected stylesheet, injected script or review runtime.
+                assert page.evaluate('window.__dayWindowStudy===undefined&&window.startDaySpectralComparison===undefined')
+                assert page.locator('[data-day-canvas]').count() == 0
+                source = page.locator('[data-home-artwork] img')
+                assert 'convict-lake-day-study' in source.get_attribute('src')
+                assert source.evaluate('img=>img.naturalWidth===1672&&img.naturalHeight===877')
+                assert page.locator('[data-home-scene]').evaluate('e=>getComputedStyle(e).getPropertyValue("--site-bg").trim()') == '#d9e1e7'
+                assert state(page)['homeEffect'] == 'spectral-mist'
+                assert 0 < float(state(page)['homeLightMax']) <= 1
+                check(f'{width}x{height}: actual production / uses day artwork and mist without review injection')
             opening = page.locator('[data-home-viewport]')
             b = opening.bounding_box()
             assert .74 < b['width'] / width < .85
@@ -458,7 +470,7 @@ with sync_playwright() as p:
                 page.wait_for_timeout(500)
                 assert int(state(page)['homeFrames']) > int(still_frames)
                 buffers = page.evaluate('window.__homeBuffers.length')
-                assert buffers == 3, buffers
+                assert buffers == 8, buffers
                 page.evaluate('window.__oldBuffers=window.__homeBuffers.slice();window.__retainedAudio=document.querySelector("audio")')
                 page.locator('[data-edge-trigger=about]').focus()
                 page.locator('#home-about-panel a').click()
@@ -470,13 +482,22 @@ with sync_playwright() as p:
                 page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>5")
                 assert page.locator('audio').count() == 1
                 assert page.evaluate('window.__retainedAudio===document.querySelector("audio")')
-                check('unmount/remount: all three buffers released, one audio retained')
+                check('unmount/remount: all eight production buffers released, one audio retained')
             context.close()
         for width, height in [(1440,900), (1920,1080)]:
             context = context_for(browser, width, height, reduced=True)
             page = visit(context)
             assert state(page)['homeQuality'] == 'static'
             capture(page, f'{width}x{height}-static-composition')
+            if args.mode == 'production-window':
+                from PIL import Image, ImageChops
+                reference = repo / '.sync/tmp-day-window/static' / f'day-static-{width}x{height}.png'
+                if reference.exists():
+                    delta=ImageChops.difference(Image.open(out / f'{width}x{height}-static-composition.png').convert('RGB'),Image.open(reference).convert('RGB'))
+                    max_delta=max(channel[1] for channel in delta.getextrema())
+                    # Canvas compositing may change text AA by one RGB level.
+                    assert max_delta <= 1, (max_delta,delta.getbbox())
+                    check(f'{width}x{height}: real static page matches approved picture and room',{'maxRgbDelta':max_delta})
             context.close()
         context = context_for(browser, 1280, 720, dpr=2)
         page = visit(context)
@@ -504,7 +525,7 @@ with sync_playwright() as p:
                 blocked = "kind==='2d'" if failure == 'no-canvas' else "kind==='webgl'||kind==='webgl2'||kind==='experimental-webgl'"
                 context.add_init_script("const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...rest){return (" + blocked + ")?null:original.call(this,kind,...rest)}")
             if failure == 'image-error':
-                context.route('**/*convict-lake-night*', lambda r:r.abort())
+                context.route('**/*convict-lake-*', lambda r:r.abort())
             if failure == 'music-error':
                 context.route('**/api/music?*', lambda r:r.fulfill(status=503,json={'error':'test failure'}))
             page = context.new_page()
