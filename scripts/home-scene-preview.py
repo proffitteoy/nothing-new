@@ -77,6 +77,10 @@ def move_out(page):
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, executable_path=args.browser, args=['--mute-audio'])
+    if args.mode in ['night-window', 'night-compare', 'navigation']:
+        check('environment', {'browser':browser.version, 'url':args.url,
+            'music':'local WAV fixture; external music service not asserted',
+            'visibility':'synthetic document.hidden event where explicitly labelled'})
     if args.mode == 'night-compare':
         repo = Path(__file__).resolve().parents[1]
         # Run this script with Node 22 first on PATH so the test-only bundle
@@ -190,16 +194,17 @@ with sync_playwright() as p:
                 assert int(state(page)['homeFrames']) > int(still_frames)
                 buffers = page.evaluate('window.__homeBuffers.length')
                 assert buffers == 3, buffers
-                page.evaluate('window.__oldBuffers=window.__homeBuffers.slice()')
+                page.evaluate('window.__oldBuffers=window.__homeBuffers.slice();window.__retainedAudio=document.querySelector("audio")')
                 page.locator('[data-edge-trigger=about]').focus()
                 page.locator('#home-about-panel a').click()
                 page.wait_for_url('**/about')
                 assert page.locator('[data-home-canvas]').count() == 0
                 assert page.evaluate('window.__oldBuffers.every(c=>c.width===0&&c.height===0)')
-                page.goto(args.url, wait_until='domcontentloaded')
+                page.go_back(wait_until='domcontentloaded')
                 page.wait_for_selector('[data-home-canvas]')
                 page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>5")
                 assert page.locator('audio').count() == 1
+                assert page.evaluate('window.__retainedAudio===document.querySelector("audio")')
                 check('unmount/remount: all three buffers released, one audio retained')
             context.close()
         for width, height in [(1440,900), (1920,1080)]:
@@ -244,7 +249,7 @@ with sync_playwright() as p:
             page.wait_for_selector('[data-home-scene]')
             page.wait_for_function("['ready','error'].includes(document.querySelector('[data-home-artwork]').dataset.homeArtwork)")
             assert page.locator('[data-edge-trigger]').count() == 8
-            assert page.locator('audio').count() == 1
+            assert page.locator('audio').count() == (0 if failure == 'music-error' else 1)
             page.locator('[data-edge-trigger=projects]').hover()
             expect(page.locator('[data-edge-trigger=projects]')).to_have_attribute('aria-expanded','true')
             if failure in ['no-canvas','image-error']:
@@ -253,6 +258,14 @@ with sync_playwright() as p:
                 assert page.get_by_role('region',name='音乐控制').get_by_role('button').count() > 0
             capture(page, failure)
             check(failure + ': artwork/nav/music remain available', state(page))
+            if failure == 'music-error':
+                context.unroute('**/api/music?*')
+                fixture(context)
+                page.get_by_role('region',name='音乐控制').get_by_role('button').first.click()
+                expect(page.get_by_role('heading',name='场景测试曲 1')).to_be_visible()
+                assert page.locator('audio').count() == 1
+                capture(page, 'music-retry')
+                check('music retry: fixture restored, exactly one root audio')
             context.close()
         # Actual CPU pressure exercises the automatic quality governor; no
         # production query switches or forced quality properties are used.
@@ -261,13 +274,17 @@ with sync_playwright() as p:
         page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>5")
         cdp = context.new_cdp_session(page)
         cdp.send('Emulation.setCPUThrottlingRate', {'rate':16})
+        page.evaluate("""window.__homeStressOn=true;function stress(){const end=performance.now()+90;
+            while(performance.now()<end){}if(window.__homeStressOn)window.__homeStressFrame=requestAnimationFrame(stress)}
+            window.__homeStressFrame=requestAnimationFrame(stress)""")
         page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeQuality==='static'",timeout=30000)
+        page.evaluate('window.__homeStressOn=false;cancelAnimationFrame(window.__homeStressFrame)')
         cdp.send('Emulation.setCPUThrottlingRate', {'rate':1})
         assert state(page)['homeBufferBytes'] == '0'
         capture(page, 'cpu-static-fallback')
         play = page.get_by_role('button',name='播放',exact=True)
         play.click(); expect(page.get_by_role('button',name='暂停',exact=True)).to_be_visible()
-        check('CPU x16: graceful static fallback and working audio controls', state(page))
+        check('CPU x16 plus 90ms main-thread contention: static fallback and working audio controls', state(page))
         context.close()
         assert not errors, errors
     elif args.mode == 'snapshots':
