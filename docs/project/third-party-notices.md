@@ -12,7 +12,7 @@ title: 第三方代码与授权说明
 - 授权：[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)，图片及其衍生作品单独沿用此许可。
 - 使用位置：`public/home-window/convict-lake-night.webp`；首页窗台的「景观来源」链接提供公开署名及许可。
 - 修改：以原摄影为编辑目标，使用内置 imagegen 制作克制的午夜数字绘景，保留山体、湖岸和观察位置；随后裁去顶部 156px 并编码 WebP。没有混入其他摄影或网站截图。
-- 完整台账及编辑提示词：`public/home-window/NOTICE.txt`。官方 3840px 源图和未压缩编辑结果保存在工作树忽略目录 `.sync/tmp-night-window/`，不随首屏下载。
+- 公开署名台账与提示词摘要：`public/home-window/NOTICE.txt`；完整编辑提示词见[观景窗方案第 11 节](Nothing_New_观景窗首页_视觉与开发方案_2026-11-17.md)。官方 3840px 源图和未压缩编辑结果保存在工作树忽略目录 `.sync/tmp-night-window/`，不随首屏下载。
 - Late Shift 等未明确授权的参考代码没有复制到本项目。
 
 ## Quartz
