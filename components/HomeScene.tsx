@@ -65,6 +65,7 @@ export default function HomeScene({
 }) {
   const [open, setOpen] = useState<string | null>(null)
   const root = useRef<HTMLElement>(null)
+  const viewport = useRef<HTMLDivElement>(null)
   const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const pinned = useRef(false)
@@ -121,7 +122,7 @@ export default function HomeScene({
         ref={root}
         className={styles.scene}
         data-home-scene
-        aria-label="首页谱场曲线"
+        aria-label="Nothing New 山湖观景窗"
         onKeyDown={(event) => {
           if (event.key === "Escape" && !(event.target as Element).closest("dialog")) {
             close(true)
@@ -129,7 +130,12 @@ export default function HomeScene({
         }}
       >
         <h1 className="sr-only">阿の宝藏之地 · Nothing New</h1>
-        <HomeSpectralCanvas host={root} />
+        <div className={styles.windowShell} data-home-window>
+          <div ref={viewport} className={styles.windowViewport} data-home-viewport>
+            <HomeSpectralCanvas host={root} viewport={viewport} />
+            <div className={styles.glass} aria-hidden="true" />
+          </div>
+        </div>
         {rails.map(({ side, entries }) => (
           <nav
             key={side}
@@ -255,9 +261,20 @@ export default function HomeScene({
             })}
           </nav>
         ))}
-        <div className={styles.musicDock} data-home-music>
-          <LyricBar className={styles.lyrics} />
-          <CloudPlayer dock />
+        <div className={styles.windowSill} data-home-sill>
+          <div className={styles.musicDock} data-home-music>
+            <LyricBar className={styles.lyrics} />
+            <CloudPlayer dock className={styles.sillPlayer} />
+          </div>
+          <a
+            className={styles.artCredit}
+            href="/home-window/NOTICE.txt"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="景观来源与许可：TheDailyNathan、Hike395，CC BY-SA 3.0，已改编"
+          >
+            景观来源
+          </a>
         </div>
       </main>
     </ToastProvider>
