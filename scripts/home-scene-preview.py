@@ -24,12 +24,20 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--url', default='http://127.0.0.1:3161')
 parser.add_argument('--output', default='.sync/tmp-home-scene-evidence')
 parser.add_argument('--browser', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
-parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'night-compare'], default='navigation')
+parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'night-compare', 'day-static', 'day-preview'], default='navigation')
+parser.add_argument('--day-study', action='store_true', help='Apply the daylight static candidate to the real navigation acceptance; never changes production code.')
 args = parser.parse_args()
 out = Path(args.output).resolve()
 out.mkdir(parents=True, exist_ok=True)
 results = []
 errors = []
+repo = Path(__file__).resolve().parents[1]
+day_bundle = out / 'day-study.js'
+day_enabled = args.day_study or args.mode.startswith('day-')
+if day_enabled:
+    subprocess.run(['node', str(repo / 'node_modules/esbuild/bin/esbuild'),
+        str(repo / 'scripts/home-window-day-study.mjs'), '--bundle', '--format=iife',
+        '--outfile=' + str(day_bundle)], check=True, cwd=repo)
 
 def check(name, detail=True):
     results.append({'check': name, 'detail': detail})
@@ -47,12 +55,20 @@ def fixture(context):
     context.route('**/api/music?*', lambda r: r.fulfill(json=songs))
     context.route('**/__scene-test.wav', lambda r: r.fulfill(body=audio.getvalue(), content_type='audio/wav'))
 
+def day_fixture(context):
+    # Keep the real Image load/error and Splash handshake: substitute bytes at
+    # the network boundary rather than forcing a DOM readiness attribute.
+    context.route('**/*convict-lake-night*', lambda r: r.fulfill(
+        path=str(repo / 'public/home-window/convict-lake-day-study.webp'), content_type='image/webp'))
+
 def context_for(browser, width=1440, height=900, dark=False, reduced=False, video=False, dpr=1, **kwargs):
     context = browser.new_context(viewport={'width': width, 'height': height}, device_scale_factor=dpr,
-        reduced_motion='reduce' if reduced else 'no-preference', timezone_id='Asia/Shanghai',
+        reduced_motion='reduce' if reduced or day_enabled else 'no-preference', timezone_id='Asia/Shanghai',
         **({'record_video_dir': str(out / 'video'), 'record_video_size': {'width': width, 'height': height}} if video else {}), **kwargs)
     context.add_init_script(f"localStorage.setItem('blog-theme','{'dark' if dark else 'light'}');localStorage.setItem('blog-theme-override-until',String(Date.now()+86400000))")
     fixture(context)
+    if day_enabled:
+        day_fixture(context)
     return context
 
 def visit(context):
@@ -63,6 +79,9 @@ def visit(context):
     page.wait_for_function("document.documentElement.classList.contains('splash-seen')")
     page.wait_for_selector('[data-home-scene]')
     page.wait_for_selector('[data-home-artwork=ready]', timeout=60000)
+    if day_enabled:
+        page.add_script_tag(path=str(day_bundle))
+        page.evaluate('window.startDayWindowStudy()')
     return page
 
 def state(page):
@@ -76,12 +95,49 @@ def move_out(page):
     page.wait_for_timeout(650)
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True, executable_path=args.browser, args=['--mute-audio'])
-    if args.mode in ['night-window', 'night-compare', 'navigation']:
+    browser = p.chromium.launch(headless=args.mode != 'day-preview', executable_path=args.browser, args=['--mute-audio'])
+    if args.mode in ['night-window', 'night-compare', 'navigation', 'day-static', 'day-preview']:
         check('environment', {'browser':browser.version, 'url':args.url,
             'music':'local WAV fixture; external music service not asserted',
             'visibility':'synthetic document.hidden event where explicitly labelled'})
-    if args.mode == 'night-compare':
+    if args.mode == 'day-preview':
+        context = context_for(browser)
+        page = visit(context)
+        print('Daylight static study in a real homepage tab. Close the tab/window to end preview.', flush=True)
+        try:
+            page.wait_for_event('close', timeout=0)
+        except Exception:
+            if browser.is_connected():
+                raise
+    elif args.mode == 'day-static':
+        from PIL import Image, ImageChops
+        plate = repo / 'public/home-window/convict-lake-day-study.webp'
+        assert plate.stat().st_size <= 700_000
+        for width, height in [(1440,900), (1920,1080), (1366,768), (1280,720),
+                (1280,800), (1024,768), (640,720), (1024,480)]:
+            context = context_for(browser, width, height)
+            page = visit(context)
+            assert state(page)['homeQuality'] == 'static'
+            assert state(page)['homeBufferBytes'] == '0'
+            assert page.locator('[data-edge-trigger]').count() == 8
+            assert page.locator('audio').count() == 1
+            b = page.locator('[data-home-viewport]').bounding_box()
+            assert .72 < b['width'] / width < .85
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            metadata = page.evaluate('window.__dayWindowStudy.metadata')
+            assert metadata['sourceReady'], metadata
+            assert .62 < metadata['shoreline'][3][1] < .63
+            capture(page, f'day-static-{width}x{height}')
+            page.wait_for_timeout(250)
+            capture(page, 'static-repeat')
+            assert ImageChops.difference(Image.open(out / f'day-static-{width}x{height}.png'),
+                Image.open(out / 'static-repeat.png')).getbbox() is None
+            check(f'{width}x{height}: static daylight composition, neutral camera, zero canvas buffers',
+                {'opening':b, 'plateBytes':plate.stat().st_size, 'plate':metadata['plate'],
+                 'centerShoreline':metadata['shoreline'][4], 'ridgePoints':len(metadata['ridge'])})
+            context.close()
+        assert not errors, errors
+    elif args.mode == 'night-compare':
         repo = Path(__file__).resolve().parents[1]
         # Run this script with Node 22 first on PATH so the test-only bundle
         # uses the same installed toolchain. It never enters public/ or app/.

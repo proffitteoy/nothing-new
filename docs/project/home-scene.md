@@ -1,5 +1,22 @@
 # 桌面首页总装（#51 / #67 / #68 / #69 / #71）
 
+## 日间静态审阅候选（2026-11-17）
+
+以 PR #101 的合并提交 `5ae7a12` 为基线，在独立工作树制作日间静态稿。保留正式首页布局和操作，通过验收脚本替换景观请求并注入冷灰候选材质；生产默认外观、组件接口与谱场数学未改。日间素材由同一授权摄影原稿重新绘景，来源、修改与完整内置 imagegen 提示词见 `public/home-window/NOTICE-day-study.txt`。
+
+第一批已在真实生产构建上通过 1440×900、1920×1080、1366×768、1280×720、1280×800、1024×768、640×720、1024×480 的静态检查：八入口与唯一音频保留，中立视角、零 Canvas 缓冲、重复静帧一致。中心岸线为素材高度约 62.5%，候选 272,712 bytes。山脊、岸线和近岸坐标按新素材重新标注，仅存在验收工具，不覆盖夜景遮罩。
+
+```powershell
+# 在本工作树使用 Node 22、Python Playwright/Pillow；先 npm run build -- --webpack。
+npm.cmd run start -- --hostname 127.0.0.1 --port 3188
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-static --output .sync/tmp-day-window/static
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode navigation --day-study --output .sync/tmp-day-window/navigation
+# 单独运行，打开可操作的真实首页候选；关闭浏览器标签结束。
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-preview --output .sync/tmp-day-window/preview
+```
+
+浏览器原始证据位于忽略目录 `.sync/tmp-day-window/`。静态稿与后续谱场 A/B 均是待人工审阅的候选，不表示云层、水纹、环境光或完整日间动态场景已经实现，也未新增产品主题开关或三维特效。
+
 ## 当前观景窗首页（2026-11-17）
 
 以 `main@c35fa13` 为基线，在独立工作树实现巨幅单片玻璃、冷暗室内窗框、山湖夜景、左右四项外廊导航和窗台音乐。完整设计、实际取舍及验收记录见[观景窗方案](Nothing_New_观景窗首页_视觉与开发方案_2026-11-17.md)。以下早期布局、人物原画、日夜、天体、分片和 300 秒故事描述仅为历史记录，不是现行功能。

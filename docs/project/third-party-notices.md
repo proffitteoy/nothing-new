@@ -15,6 +15,13 @@ title: 第三方代码与授权说明
 - 公开署名台账与提示词摘要：`public/home-window/NOTICE.txt`；完整编辑提示词见[观景窗方案第 11 节](Nothing_New_观景窗首页_视觉与开发方案_2026-11-17.md)。官方 3840px 源图和未压缩编辑结果保存在工作树忽略目录 `.sync/tmp-night-window/`，不随首屏下载。
 - Late Shift 等未明确授权的参考代码没有复制到本项目。
 
+## 日间观景窗审阅候选（2026-11-17）
+
+- 使用同一份 TheDailyNathan / Hike395 授权摄影原稿，经内置 imagegen 重新制作冷晨天空、山体日照与湖面倒影；不以午夜成品提亮，也未拼入旅游网站摄影。
+- 候选为 `public/home-window/convict-lake-day-study.webp`，1672×877，272,712 bytes；衍生图片继续采用 CC BY-SA 3.0。它是 AI 辅助绘景，不声称为实拍日景或精确地形测绘。
+- 完整来源、修改过程与实际提示词见 `public/home-window/NOTICE-day-study.txt`；未压缩生成图保存在忽略目录 `.sync/tmp-day-window/day-source.png`。
+- 目前仅由验收工具替换真实首页的图片响应和注入冷灰样式，正式首页尚未引用候选。人工视觉审阅通过后再决定动态场景整合。
+
 ## Quartz
 
 - 来源：`jackyzha0/quartz`
