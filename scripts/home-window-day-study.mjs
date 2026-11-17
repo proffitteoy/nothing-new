@@ -3,6 +3,11 @@
 // The photograph is substituted at the request boundary, preserving the actual
 // Image loading/error handlers and Splash readiness contract.
 import { createSpectralTracerController } from "../components/field/SpectralTracerLayer"
+import {
+  sampleSpectralScene,
+  interpolateSpectralScene,
+} from "../components/field/homeSpectralScene"
+import { SPECTRAL_PLAYBACK_RATE } from "../components/field/spectralField"
 const DAY_WIDTH = 1672
 const DAY_HEIGHT = 877
 
@@ -201,7 +206,7 @@ window.startDayWindowStudy = async () => {
 
 // Both outputs read the SAME two tracer buffers on the host's existing frame.
 // There is no additional RAF, eigenmode clock, noise source or production API.
-window.startDaySpectralComparison = async (variant = "a") => {
+window.startDaySpectralComparison = async (variant = "corrected") => {
   await window.startDayWindowStudy()
   const study = window.__dayWindowStudy
   if (!study) return null
@@ -226,7 +231,7 @@ window.startDaySpectralComparison = async (variant = "a") => {
   }
   const back = document.createElement("canvas")
   const front = document.createElement("canvas")
-  const outputs = ["a", "b"].map((name) => {
+  const outputs = ["before", "corrected"].map((name) => {
     const canvas = document.createElement("canvas")
     canvas.dataset.dayCanvas = name
     canvas.setAttribute("aria-hidden", "true")
@@ -234,32 +239,57 @@ window.startDaySpectralComparison = async (variant = "a") => {
     opening.insertBefore(canvas, opening.lastElementChild)
     return { name, canvas, ctx: canvas.getContext("2d", { alpha: false }) }
   })
+  // Small CPU readback only: never read/migrate the live tracer contexts.
+  const probe = document.createElement("canvas")
+  const probeCtx = probe.getContext("2d", { willReadFrequently: true })
+  const fog = document.createElement("canvas")
+  const fogCtx = fog.getContext("2d")
+  const mask = document.createElement("canvas")
+  const maskCtx = mask.getContext("2d")
+  const radiance = document.createElement("canvas")
+  const lightCtx = radiance.getContext("2d")
+  const core = document.createElement("canvas")
+  const coreCtx = core.getContext("2d")
   const reduced = matchMedia("(prefers-reduced-motion: reduce)")
   let tracers = null
   let width = 0,
     height = 0,
     ratio = 0,
     rect,
-    sky
+    sky,
+    lake,
+    lightScale,
+    grid,
+    fogPixels,
+    maskPixels,
+    target,
+    envelope
+  let sampledAt = -Infinity,
+    previousLightTime = null
   let frozen = false,
     destroyed = false,
-    selected = variant
+    selected = { a: "corrected", b: "before" }[variant] || variant
   let recordings = []
   const stats = {
     frames: 0,
     totalMs: 0,
     maxMs: 0,
-    aMs: 0,
-    bMs: 0,
+    beforeMs: 0,
+    correctedMs: 0,
     fieldTime: 0,
     bufferBytes: 0,
     hostBufferBytes: 0,
     decodedPlateBytes: DAY_WIDTH * DAY_HEIGHT * 4,
+    densityMax: 0,
+    envelopeMin: 0,
+    envelopeMax: 0,
+    coreFraction: 0,
+    gridTime: 0,
   }
-  const resources = [back, front, ...outputs.map((o) => o.canvas)]
+  const resources = [back, front, ...outputs.map((o) => o.canvas), probe, fog, mask, radiance, core]
   const syncVisibility = () => {
     for (const o of outputs) o.canvas.hidden = reduced.matches || !tracers || o.name !== selected
-    stage.dataset.homeDayStudy = reduced.matches ? "static" : selected
+    stage.dataset.homeDayStudy = reduced.matches || !tracers ? "static" : selected
   }
   const release = () => {
     for (const r of recordings) {
@@ -272,18 +302,29 @@ window.startDaySpectralComparison = async (variant = "a") => {
     for (const c of resources) c.width = c.height = 0
     stats.bufferBytes = 0
     width = height = ratio = 0
+    grid = fogPixels = maskPixels = target = envelope = undefined
+    sampledAt = -Infinity
+    previousLightTime = null
     syncVisibility()
   }
   const resize = () => {
-    if (destroyed || reduced.matches || !outputs.every((o) => o.ctx)) {
-      if (!outputs.every((o) => o.ctx)) metadata.fallback = "canvas-unavailable"
+    const contextsReady =
+      outputs.every((o) => o.ctx) && probeCtx && fogCtx && maskCtx && lightCtx && coreCtx
+    if (destroyed || reduced.matches || stage.dataset.homeQuality === "static" || !contextsReady) {
+      if (!contextsReady) metadata.fallback = "canvas-unavailable"
       release()
       return false
     }
     const w = opening.clientWidth,
       h = opening.clientHeight
     const dpr = Math.min(devicePixelRatio || 1, stage.dataset.homeQuality === "high" ? 1.5 : 1)
-    if (width === w && height === h && ratio === dpr) return true
+    if (
+      width === w &&
+      height === h &&
+      ratio === dpr &&
+      probe.width === (stage.dataset.homeQuality === "high" ? 64 : 40)
+    )
+      return true
     width = w
     height = h
     ratio = dpr
@@ -311,12 +352,151 @@ window.startDaySpectralComparison = async (variant = "a") => {
     for (const [x, y] of [...metadata.ridge].reverse())
       sky.lineTo(rect.x + x * rect.width, rect.y + y * rect.height)
     sky.closePath()
+    lake = new Path2D()
+    metadata.shoreline.forEach(([x, y], i) => {
+      const px = rect.x + x * rect.width,
+        py = rect.y + y * rect.height
+      if (i) lake.lineTo(px, py)
+      else lake.moveTo(px, py)
+    })
+    lake.lineTo(width + 48, height + 48)
+    lake.lineTo(-48, height + 48)
+    lake.closePath()
+    // Even-odd clipping excludes the already accepted near-shore rocks.
+    metadata.nearShore.forEach(([x, y], i) => {
+      const px = rect.x + x * rect.width,
+        py = rect.y + y * rect.height
+      if (i) lake.lineTo(px, py)
+      else lake.moveTo(px, py)
+    })
+    lake.closePath()
+    for (const c of [probe, fog, mask]) {
+      c.width = stage.dataset.homeQuality === "high" ? 64 : 40
+      c.height = stage.dataset.homeQuality === "high" ? 40 : 24
+    }
+    lightScale = Math.min(0.5, 768 / width)
+    for (const c of [radiance, core]) {
+      c.width = Math.round(width * lightScale)
+      c.height = Math.round(height * lightScale)
+    }
+    fogPixels = fogCtx.createImageData(fog.width, fog.height)
+    maskPixels = maskCtx.createImageData(mask.width, mask.height)
+    target = new Float32Array(fog.width * fog.height)
+    envelope = new Float32Array(target.length)
+    sampledAt = -Infinity
+    previousLightTime = null
     stats.bufferBytes = resources.reduce((n, c) => n + c.width * c.height * 4, 0)
     delete metadata.fallback
     syncVisibility()
     return true
   }
-  const compose = (output, showField = true) => {
+  const clamp = (value) => Math.max(0, Math.min(1, value))
+  const smooth = (a, b, value) => {
+    const t = clamp((value - a) / (b - a))
+    return t * t * (3 - 2 * t)
+  }
+  const updateLight = (time, low) => {
+    if (!grid || time - sampledAt >= SPECTRAL_PLAYBACK_RATE / (low ? 6 : 12)) {
+      const columns = low ? 8 : 16,
+        rows = low ? 5 : 9
+      grid = sampleSpectralScene(
+        width,
+        height,
+        time,
+        columns,
+        rows,
+        grid?.values.length === columns * rows * 3 ? grid.values : undefined,
+      )
+      sampledAt = time
+      stats.gridTime = time
+      probeCtx.clearRect(0, 0, probe.width, probe.height)
+      probeCtx.drawImage(back, 0, 0, probe.width, probe.height)
+      probeCtx.drawImage(front, 0, 0, probe.width, probe.height)
+      const density = probeCtx.getImageData(0, 0, probe.width, probe.height).data
+      stats.densityMax = 0
+      for (let y = 0; y < fog.height; y++)
+        for (let x = 0; x < fog.width; x++) {
+          const index = y * fog.width + x,
+            offset = index * 4
+          const field = interpolateSpectralScene(grid, x / (fog.width - 1), y / (fog.height - 1))
+          // A two-cell displacement reads the actual common direction field.
+          // Density is accumulated trail coverage; curvature is angular change.
+          // Neither is the (unit) direction vector's length or a new noise field.
+          const sx = Math.max(0, Math.min(probe.width - 1, Math.round(x - field.x * 1.5)))
+          const sy = Math.max(0, Math.min(probe.height - 1, Math.round(y - field.y * 1.5)))
+          const coverage = density[(sy * probe.width + sx) * 4 + 3] / 255
+          const localDensity = clamp(coverage / 0.055)
+          stats.densityMax = Math.max(stats.densityMax, localDensity)
+          // Display transfer only: small angular changes remain legible in
+          // daylight without modifying any eigenmode or tracer integration.
+          const bend = clamp(Math.sqrt(field.light) * 4)
+          target[index] = smooth(0.2, 0.7, localDensity) * (0.45 + 0.55 * bend)
+          const violet = 0.2 + 0.8 * bend
+          const rose = 0.12 * smooth(0.72, 1, field.light) * localDensity
+          fogPixels.data[offset] = Math.round(96 + 89 * violet + 70 * rose)
+          fogPixels.data[offset + 1] = Math.round(199 - 55 * violet - 66 * rose)
+          fogPixels.data[offset + 2] = 255
+        }
+    }
+    const dt =
+      previousLightTime === null
+        ? 1
+        : Math.max(0, (time - previousLightTime) / SPECTRAL_PLAYBACK_RATE)
+    previousLightTime = time
+    const blend = 1 - Math.exp(-Math.min(dt, 1) / 0.45)
+    let coreCells = 0
+    stats.envelopeMin = 1
+    stats.envelopeMax = 0
+    for (let i = 0; i < target.length; i++) {
+      envelope[i] += (target[i] - envelope[i]) * blend
+      const light = clamp(envelope[i])
+      fogPixels.data[i * 4 + 3] = Math.round(light * 255)
+      const visibleCore = smooth(0.5, 0.75, light)
+      if (visibleCore > 0.1) coreCells++
+      maskPixels.data[i * 4] = maskPixels.data[i * 4 + 1] = maskPixels.data[i * 4 + 2] = 255
+      maskPixels.data[i * 4 + 3] = Math.round(visibleCore * 255)
+      stats.envelopeMin = Math.min(stats.envelopeMin, light)
+      stats.envelopeMax = Math.max(stats.envelopeMax, light)
+    }
+    stats.coreFraction = coreCells / target.length
+    fogCtx.putImageData(fogPixels, 0, 0)
+    maskCtx.putImageData(maskPixels, 0, 0)
+    lightCtx.setTransform(lightScale, 0, 0, lightScale, 0, 0)
+    lightCtx.clearRect(0, 0, width, height)
+    lightCtx.save()
+    lightCtx.clip(sky)
+    // Two diffusion scales turn deposited trajectories into a continuous
+    // light volume. Peak regions reveal foreground arcs and a faint trace of
+    // the same background paths; the rest never becomes a line drawing.
+    lightCtx.globalAlpha = 0.6
+    lightCtx.filter = `blur(${42 * lightScale}px)`
+    lightCtx.drawImage(fog, 0, 0, width, height)
+    lightCtx.globalAlpha = 0.72
+    lightCtx.filter = `blur(${16 * lightScale}px)`
+    lightCtx.drawImage(fog, 0, 0, width, height)
+    lightCtx.filter = "none"
+    coreCtx.setTransform(lightScale, 0, 0, lightScale, 0, 0)
+    coreCtx.globalCompositeOperation = "source-over"
+    coreCtx.clearRect(0, 0, width, height)
+    coreCtx.globalAlpha = 0.18
+    coreCtx.drawImage(back, 0, 0, width, height)
+    coreCtx.globalAlpha = 1
+    coreCtx.drawImage(front, 0, 0, width, height)
+    coreCtx.globalCompositeOperation = "destination-in"
+    coreCtx.drawImage(mask, 0, 0, width, height)
+    lightCtx.globalAlpha = 0.4
+    lightCtx.drawImage(core, 0, 0, width, height)
+    lightCtx.restore()
+  }
+  const shoreAt = (x) => {
+    const u = clamp((x - rect.x) / rect.width)
+    let i = 1
+    while (i < metadata.shoreline.length - 1 && metadata.shoreline[i][0] < u) i++
+    const a = metadata.shoreline[i - 1],
+      b = metadata.shoreline[i]
+    return rect.y + (a[1] + ((b[1] - a[1]) * (u - a[0])) / (b[0] - a[0])) * rect.height
+  }
+  const compose = (output) => {
     const { ctx } = output
     const began = performance.now()
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
@@ -325,14 +505,44 @@ window.startDaySpectralComparison = async (variant = "a") => {
     // Opaque destination: multiply really interacts with the daylight image,
     // rather than multiplying against an empty transparent intermediate.
     ctx.drawImage(source, rect.x, rect.y, rect.width, rect.height)
-    if (showField) {
+    if (output.name === "before") {
       ctx.save()
       ctx.clip(sky)
-      ctx.globalCompositeOperation = output.name === "a" ? "source-over" : "multiply"
       ctx.globalAlpha = metadata.spectral.backgroundAlpha
       ctx.drawImage(back, 0, 0, width, height)
       ctx.globalAlpha = metadata.spectral.foregroundAlpha
       ctx.drawImage(front, 0, 0, width, height)
+      ctx.restore()
+    } else {
+      ctx.save()
+      ctx.clip(sky)
+      ctx.drawImage(radiance, 0, 0, width, height)
+      ctx.restore()
+      ctx.save()
+      ctx.clip(lake, "evenodd")
+      // Radiance is already diffuse. A separate filter on every water strip
+      // would create dozens of GPU blur passes per frame and stall readback.
+      ctx.filter = "none"
+      for (let x = 0; x < width; x += 14) {
+        const shoreline = shoreAt(x + 7)
+        const flow = interpolateSpectralScene(grid, (x + 7) / width, shoreline / height)
+        ctx.save()
+        ctx.globalAlpha = 0.28 + 0.12 * flow.light
+        ctx.translate(flow.x * 1.8, shoreline * 1.65 + flow.y * 0.5)
+        ctx.scale(1, -0.65)
+        ctx.drawImage(
+          radiance,
+          x * lightScale,
+          0,
+          16 * lightScale,
+          radiance.height,
+          x,
+          0,
+          16,
+          height,
+        )
+        ctx.restore()
+      }
       ctx.restore()
     }
     stats[output.name + "Ms"] += performance.now() - began
@@ -361,6 +571,7 @@ window.startDaySpectralComparison = async (variant = "a") => {
       obstacles: [],
       colours: metadata.spectral.colours,
     })
+    updateLight(time, low)
     // Alternate order to avoid giving one mode a systematic warm-cache advantage.
     for (const output of stats.frames % 2 ? [...outputs].reverse() : outputs) compose(output)
     for (const r of recordings) r.stream.getVideoTracks()[0]?.requestFrame()
@@ -372,7 +583,10 @@ window.startDaySpectralComparison = async (variant = "a") => {
     stats.hostBufferBytes = Number(stage.dataset.homeBufferBytes || 0)
   }
   const observer = new MutationObserver(draw)
-  observer.observe(stage, { attributes: true, attributeFilter: ["data-home-frames"] })
+  observer.observe(stage, {
+    attributes: true,
+    attributeFilter: ["data-home-frames", "data-home-quality"],
+  })
   const resizer = new ResizeObserver(() => {
     if (!frozen && resize()) draw()
   })
@@ -391,14 +605,17 @@ window.startDaySpectralComparison = async (variant = "a") => {
       event.altKey
     )
       return
-    if (["a", "b", "0"].includes(event.key.toLowerCase()))
-      study.setVariant(event.key === "0" ? "none" : event.key.toLowerCase())
+    if (["r", "o", "0"].includes(event.key.toLowerCase()))
+      study.setVariant(
+        event.key === "0" ? "none" : event.key.toLowerCase() === "r" ? "corrected" : "before",
+      )
   }
   document.addEventListener("keydown", onKey)
   Object.assign(study, {
     stats,
     setVariant(name) {
-      if (!["a", "b", "none"].includes(name)) throw new Error("Unknown study variant")
+      name = { a: "corrected", b: "before" }[name] || name
+      if (!["before", "corrected", "none"].includes(name)) throw new Error("Unknown study variant")
       selected = name
       syncVisibility()
       return { variant: name, fieldTime: stats.fieldTime, frames: stats.frames }
@@ -429,9 +646,13 @@ window.startDaySpectralComparison = async (variant = "a") => {
       const a = pixels(outputs[0].canvas)
       const b = pixels(outputs[1].canvas)
       let changedSky = 0,
+        changedLake = 0,
         changedProtected = 0
-      // A and B may differ only in the sky. Leave an 8px safety band at the
-      // anti-aliased silhouette; lower mountain/lake samples must be identical.
+      const allowed = (px, py) =>
+        outputs[0].ctx.isPointInPath(sky, px, py) ||
+        outputs[0].ctx.isPointInPath(lake, px, py, "evenodd")
+      // Only sky and lake may change; the mountain and near-shore plate remain
+      // anchors. Leave 3 CSS px at anti-aliased boundaries for this diagnostic.
       for (let y = 0; y < a.height; y += 3)
         for (let x = 0; x < a.width; x += 3) {
           const i = (y * a.width + x) * 4
@@ -441,8 +662,16 @@ window.startDaySpectralComparison = async (variant = "a") => {
             a.data[i + 2] === b.data[i + 2]
           )
             continue
-          if (outputs[0].ctx.isPointInPath(sky, x, y)) changedSky++
-          else if (!outputs[0].ctx.isPointInPath(sky, x, y - 8 * ratio)) changedProtected++
+          const px = x + 0.5,
+            py = y + 0.5
+          if (outputs[0].ctx.isPointInPath(sky, px, py)) changedSky++
+          else if (outputs[0].ctx.isPointInPath(lake, px, py, "evenodd")) changedLake++
+          else if (
+            ![-3, 0, 3].some((dx) =>
+              [-3, 0, 3].some((dy) => allowed(px + dx * ratio, py + dy * ratio)),
+            )
+          )
+            changedProtected++
         }
       const hash = (canvas) => {
         const bytes = pixels(canvas).data
@@ -456,6 +685,7 @@ window.startDaySpectralComparison = async (variant = "a") => {
         backHash: hash(back),
         frontHash: hash(front),
         changedSky,
+        changedLake,
         changedProtected,
       }
     },

@@ -1,6 +1,45 @@
 # 桌面首页总装（#51 / #67 / #68 / #69 / #71）
 
+## 谱场纠偏：光雾、微光与同源倒影（2026-11-17）
+
+本轮以 `7c7ad63` 为基线，仅修正本地审阅版的谱场表现。按最初观景窗原稿第 4.3、5.2 节，撤下整片天空描线的 A/B 候选，改为有宽度与层次的蓝紫光雾、少量局部可辨弧线及对应湖面反光。日间图片、室内配色、玻璃、窗框、导航、播放器和构图全部冻结；原 `DAY_CSS`、地形坐标及 tracer 帧参数已逐项与基线比较，正式应用代码与素材未改。
+
+![1440 谱场光雾修正版](../images/home-window/day-spectral-corrected-1440.webp)
+
+[1920 修正版](../images/home-window/day-spectral-corrected-1920.webp)。改前与改后在同一时刻读取同一对轨迹缓冲，`before` 仅复现已否决的细线效果；默认预览为 `corrected`。不再推荐旧 source-over／multiply A/B。
+
+显示层从真实轨迹缓冲缩小读取 64×40 的 alpha 覆盖密度；方向／有限差分曲率复用原 16×9、目标 12Hz 采样，低档为 8×5、6Hz。局部密度沿同一方向场偏移 1.5 个采样格，归一化为 `d=clamp(alpha/0.055)`；亮度目标为 `smoothstep(0.2,0.7,d) * (0.45+0.55*clamp(4*sqrt(curvature)))`，以 0.45 秒指数平滑保持有界连续。该包络是显示用密度／角变化，不是谱场能量，也不是单位方向向量的模长。
+
+光雾采用 42px／16px 两级局部扩散；清晰弧线仅在包络高值区出现。湖面镜像同一份光雾／微光缓冲，按原日景岸线裁切并避开近岸石块，局部偏移也读取同一方向／曲率网格；没有独立水波、极光路径或随机噪声。共享已有帧调度，无新增 RAF；六模态、频率、相位、种子、积分、ambient 密度／速度及倍率 0.3 不变。
+
+四尺寸同时间像素检查均为：玻璃外改前／改后差异 **0 像素**，无谱场截图与原静态基准最大 RGB 差异 **0**，山体和近岸内部差异 **0**（边界诊断预留 3 CSS px 抗锯齿带）。四帧包络均在 [0,1]，高值弧线遮罩约占采样格 3.1%–10.0%，不等同于改变粒子数量。
+
+| 尺寸 | 真实 FPS | 修正实验 CPU/帧 | 隐藏原首页 CPU/帧 | 全部 Canvas RGBA 理论预算 |
+| --- | ---: | ---: | ---: | ---: |
+| 1440×900 | 45.00 | 2.667ms | 0.728ms | 24,792,864 bytes |
+| 1920×1080 | 44.91 | 4.712ms | 0.878ms | 42,377,120 bytes |
+| 1366×768 | 45.00 | 2.504ms | 0.733ms | 19,284,864 bytes |
+| 1280×720 | 44.91 | 2.447ms | 0.684ms | 16,615,496 bytes |
+
+上述为 Node 22.23.5、Chrome 157.0.8103.79、DPR1，每尺寸约 8 秒真实时钟观测；包含改前／改后双输出、隐藏的正式首页渲染器，大尺寸还同时编码两段视频，不代表未来生产单输出的最终成本。1440 观测段有一次 60ms 长任务，其余三段无 ≥50ms 长任务；CPU 是 dispatch 耗时，不是 GPU 完成时间。预算合计三张原缓冲、四张对照缓冲及五张有尺寸上限的密度／光雾缓冲；底图解码理论另计 5,865,376 bytes，不等同驱动总显存。
+
+后台合成 visibility 暂停／恢复、reduced-motion、重复注入、软导航释放、DPR2 尺寸变化及 Canvas／WebGL／图片／音乐失败与重试已验证。导航和音乐回归在修正版实际运行时检查时间连续性，减少动态尺寸保持静态。126 项数学等既有测试、类型检查通过；ESLint 0 错误、3 条既有警告。浏览器沿用原 Node 22 的 247 页生产构建；本轮修正仅进入验收 bundle。
+
+```powershell
+# 本工作树，Node 22；本机复用已安装的局部 Python 依赖。
+$env:PYTHONPATH=(Resolve-Path '../night-window-home/.sync/tmp-night-window/python').Path
+# 生产预览已监听 3188；若尚未启动，另开终端运行 npm run start -- --hostname 127.0.0.1 --port 3188。
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-preview --output .sync/tmp-spectral-correction/preview
+# 受控标签的 R / O / 0 分别显示修正版、改前及无谱场基准，不是产品开关。
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-spectral --output .sync/tmp-spectral-correction
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode navigation --day-study --output .sync/tmp-spectral-correction/navigation
+```
+
+`.sync/tmp-spectral-correction/index.html` 可直接审阅同时间截图与四段同步录屏；`scope-proof.json` 保存冻结范围证明，JSON 报告及原始 PNG 一同保留。CPU 压力回退后确认全部缓冲归零，静态尺寸变化不重新分配缓冲，播放仍可用。旧 `day-spectral-ab` 仅作为验收命令兼容别名。窗框环境光、完整云层／湖面材质与独立景深不在本次修正范围；真机、Safari 与真实 OS 后台行为仍未验收。通过 PR 审阅，未合并或部署。
+
 ## 日间静态与谱场 A/B 审阅候选（2026-11-17）
+
+**以下谱场 A/B 已被否决，仅作历史记录。** 日景、室内与界面已确认保留，后续只修正谱场；当前实现和命令以上节为准。
 
 以 PR #101 的合并提交 `5ae7a12` 为基线，在 `feat/day-window-study-20261117` 独立工作树制作日间静态稿和谱场对照。保留正式首页布局和操作，通过验收脚本替换景观请求并注入冷灰候选材质；生产默认外观、组件接口与谱场数学未改。日间素材由同一授权摄影原稿重新绘景，来源、修改与完整内置 imagegen 提示词见 `public/home-window/NOTICE-day-study.txt`。
 
@@ -42,7 +81,7 @@ python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-prev
 python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-preview --day-variant a --output .sync/tmp-day-window/preview
 ```
 
-浏览器原始证据位于忽略目录 `.sync/tmp-day-window/`；`static/index.html` 和 `ab/index.html` 可直接打开审阅图片／录屏，后续命令会重建索引。少量真实截图已随文档保存。当前构图、颜色和强度均待人工审阅；云层、水纹、对应倒影、环境光动态联动与独立景深留待确认后整合。真实音乐服务、真机与 Safari 仍未验收。本轮未新增产品主题开关或三维特效，未推送、创建 PR 或部署。
+上一批原始证据位于忽略目录 `.sync/tmp-day-window/`。静态构图保留，谱场 A/B 已撤下，修正版见上节；窗框环境光和独立景深继续留在本轮范围之外。真实音乐服务、真机与 Safari 仍未验收。未新增产品主题开关或三维特效，未推送、创建 PR 或部署。
 
 ## 当前观景窗首页（2026-11-17）
 

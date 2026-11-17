@@ -5,7 +5,7 @@ The snapshots mode updates public/page-previews/ from local pages. It may read
 the public production anime data when local data is unavailable, while keeping
 the current local renderer and styles. Synthetic fixtures are never published.
 
-day-static / day-spectral-ab inject a local review candidate into that real
+day-static / day-spectral inject a local review candidate into that real
 homepage and write a standalone image/video index.html. day-preview opens an
 interactive review tab. These tools never change the production default.
 
@@ -30,9 +30,9 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--url', default='http://127.0.0.1:3161')
 parser.add_argument('--output', default='.sync/tmp-home-scene-evidence')
 parser.add_argument('--browser', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
-parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'night-compare', 'day-static', 'day-spectral-ab', 'day-preview'], default='navigation')
-parser.add_argument('--day-study', action='store_true', help='Apply the daylight static candidate to the real navigation acceptance; never changes production code.')
-parser.add_argument('--day-variant', choices=['static', 'a', 'b'], default='static', help='day-preview only: static or live A/B (A/B/0 keys in the injected review tab).')
+parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview'], default='navigation')
+parser.add_argument('--day-study', action='store_true', help='Apply the corrected daylight field to the real navigation acceptance (reduced motion at the existing reduced sizes); never changes production code.')
+parser.add_argument('--day-variant', choices=['static', 'corrected', 'before', 'a', 'b'], default='corrected', help='day-preview only: corrected (default), static or before; R/O/0 keys in the review tab. a/b are compatibility aliases, not design candidates.')
 args = parser.parse_args()
 if args.day_study and args.mode != 'navigation':
     parser.error('--day-study is only supported by navigation; day-* modes enable the candidate themselves.')
@@ -43,7 +43,7 @@ errors = []
 repo = Path(__file__).resolve().parents[1]
 day_bundle = out / 'day-study.js'
 day_enabled = args.day_study or args.mode.startswith('day-')
-day_animated = args.mode == 'day-spectral-ab' or (args.mode == 'day-preview' and args.day_variant != 'static')
+day_animated = args.day_study or args.mode in ['day-spectral', 'day-spectral-ab'] or (args.mode == 'day-preview' and args.day_variant != 'static')
 if day_enabled:
     subprocess.run(['node', str(repo / 'node_modules/esbuild/bin/esbuild'),
         str(repo / 'scripts/home-window-day-study.mjs'), '--bundle', '--format=iife',
@@ -93,7 +93,8 @@ def visit(context, allow_artwork_error=False):
         if day_animated:
             page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeQuality==='static'||Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>3")
         page.add_script_tag(path=str(day_bundle))
-        page.evaluate('window.startDaySpectralComparison("' + ('b' if args.day_variant == 'b' else 'a') + '")' if day_animated else 'window.startDayWindowStudy()')
+        variant = 'before' if args.day_variant in ['b','before'] else 'corrected'
+        page.evaluate(f'window.startDaySpectralComparison("{variant}")' if day_animated else 'window.startDayWindowStudy()')
     return page
 
 def state(page):
@@ -124,20 +125,20 @@ def day_review():
         h1{font-size:26px} main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr));gap:24px}
         figure{margin:0}img,video{display:block;width:100%;box-shadow:0 8px 24px #243a4d25}figcaption{padding:8px 0}a{color:#225d94}
         </style><h1>日间观景窗 · 本地审阅候选</h1>
-        <p>无谱场基准：none；A：source-over；B：multiply。两版使用相同配色、不透明度和轨迹缓冲。点击图片查看原尺寸。</p>
-        <p>待人工确认；尚未替换正式首页。音乐使用本地夹具；云层、水面与环境光动态联动后续再做。</p>
+        <p>none：冻结的静态基准；before：已撤下的细线版；corrected：谱场光雾、局部弧线及同源湖面反射。改前／改后共享轨迹缓冲与时刻。点击图片查看原尺寸。</p>
+        <p>仅修正谱场。日景、室内与全部界面保留；尚未替换正式首页。音乐使用本地夹具。</p>
         <main>''' + '\n'.join(cards) + '</main></html>', encoding='utf-8')
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=args.mode != 'day-preview', executable_path=args.browser, args=['--mute-audio'])
-    if args.mode in ['night-window', 'night-compare', 'navigation', 'day-static', 'day-spectral-ab', 'day-preview']:
+    if args.mode in ['night-window', 'night-compare', 'navigation', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview']:
         check('environment', {'browser':browser.version, 'url':args.url,
             'music':'local WAV fixture; external music service not asserted',
             'visibility':'synthetic document.hidden event where explicitly labelled'})
     if args.mode == 'day-preview':
         context = context_for(browser)
         page = visit(context)
-        print('Daylight study in a real homepage tab. ' + ('Live review keys: A / B / 0 (no-field baseline). ' if day_animated else 'Static candidate; motion stopped. ') + 'Close the tab/window to end preview.', flush=True)
+        print('Daylight study in a real homepage tab. ' + ('Review keys: R corrected / O before / 0 no-field baseline. ' if day_animated else 'Static candidate; motion stopped. ') + 'Close the tab/window to end preview.', flush=True)
         try:
             page.wait_for_event('close', timeout=0)
         except Exception:
@@ -171,7 +172,8 @@ with sync_playwright() as p:
                  'centerShoreline':metadata['shoreline'][4], 'ridgePoints':len(metadata['ridge'])})
             context.close()
         assert not errors, errors
-    elif args.mode == 'day-spectral-ab':
+    elif args.mode in ['day-spectral', 'day-spectral-ab']:
+        from PIL import Image, ImageChops, ImageDraw
         for width, height in [(1440,900), (1920,1080), (1366,768), (1280,720)]:
             context = context_for(browser, width, height)
             context.add_init_script("""window.__dayLongTasks=[];
@@ -180,35 +182,57 @@ with sync_playwright() as p:
             page.wait_for_function('window.__dayWindowStudy.stats.frames>60')
             fixed = page.evaluate('window.__dayWindowStudy.freeze()')
             before = page.evaluate('window.__dayWindowStudy.inspect()')
-            assert before['changedSky'] > 100 and before['changedProtected'] == 0, before
-            for variant in ['none', 'a', 'b']:
+            assert before['changedSky'] > 100 and before['changedLake'] > 10 and before['changedProtected'] == 0, before
+            assert 0 <= fixed['envelopeMin'] <= fixed['envelopeMax'] <= 1
+            assert 0 < fixed['densityMax'] <= 1 and fixed['coreFraction'] < .2, fixed
+            assert 0 <= fixed['fieldTime'] - fixed['gridTime'] < .3/12+.001
+            for variant in ['none', 'before', 'corrected']:
                 selected = page.evaluate('(v)=>window.__dayWindowStudy.setVariant(v)', variant)
                 assert selected['fieldTime'] == fixed['fieldTime'] and selected['frames'] == fixed['frames']
                 capture(page, f'{width}x{height}-{variant}')
+            # The accepted photograph, frame, room, rails and sill stay pixel
+            # identical. Only pixels inside the existing glass opening may move.
+            opening = page.locator('[data-home-viewport]').bounding_box()
+            baseline = Image.open(out / f'{width}x{height}-none.png').convert('RGB')
+            diff = ImageChops.difference(Image.open(out / f'{width}x{height}-before.png').convert('RGB'),
+                Image.open(out / f'{width}x{height}-corrected.png').convert('RGB'))
+            ImageDraw.Draw(diff).rectangle((math.floor(opening['x']),math.floor(opening['y']),
+                math.ceil(opening['x']+opening['width']),math.ceil(opening['y']+opening['height'])),fill=0)
+            assert diff.getbbox() is None, diff.getbbox()
+            reference = repo / '.sync/tmp-day-window/static' / f'day-static-{width}x{height}.png'
+            baseline_delta = None
+            if reference.exists():
+                baseline_delta = max(channel[1] for channel in ImageChops.difference(baseline,Image.open(reference).convert('RGB')).getextrema())
+                # Chromium can change text antialiasing by one RGB level when
+                # GPU canvas layers are allocated; no CSS or plate changes.
+                assert baseline_delta <= 1, baseline_delta
             inspected_after = page.evaluate('window.__dayWindowStudy.inspect()')
             assert inspected_after == before, {'before':before,'after':inspected_after}
-            check(f'{width}x{height}: identical buffers/time for baseline/A/B, mountain and lake protected', before)
+            check(f'{width}x{height}: same buffers/time, frozen room/plate, only sky and local lake change', {**before,
+                'envelopeMin':fixed['envelopeMin'],'envelopeMax':fixed['envelopeMax'],
+                'coreFraction':fixed['coreFraction'],'densityMax':fixed['densityMax'],
+                'outsideChangedPixels':0,'staticBaselineMaxRgbDelta':baseline_delta})
             # Restart the test-only controller after frozen stills; measurements
             # and paired recordings use uninterrupted real host frames thereafter.
-            page.evaluate('window.startDaySpectralComparison("a")')
+            page.evaluate('window.startDaySpectralComparison("corrected")')
             page.wait_for_function('window.__dayWindowStudy.stats.frames>20')
             if width in [1440,1920]:
                 check(f'{width}x{height}: paired recording start', page.evaluate('window.__dayWindowStudy.startRecording()'))
-            before = page.evaluate('({...window.__dayWindowStudy.stats, now:performance.now()})')
-            host_before = state(page)
+            before = page.evaluate('({...window.__dayWindowStudy.stats, host:{...document.querySelector("[data-home-scene]").dataset}, now:performance.now()})')
+            host_before = before['host']
             started = time.monotonic()
             page.wait_for_timeout(8000)
             seconds = time.monotonic() - started
-            after = page.evaluate('({...window.__dayWindowStudy.stats, now:performance.now()})')
-            host_after = state(page)
+            after = page.evaluate('({...window.__dayWindowStudy.stats, host:{...document.querySelector("[data-home-scene]").dataset}, now:performance.now()})')
+            host_after = after['host']
             frames = after['frames'] - before['frames']
             assert frames > seconds * 20 and host_after['homeQuality'] == 'high', (frames, seconds, host_after)
             assert abs(frames - (int(host_after['homeFrames']) - int(host_before['homeFrames']))) <= 2
             check(f'{width}x{height}: real-time paired experiment, includes hidden production renderer', {
                 'actualSeconds':seconds, 'fps':frames/seconds,
                 'studyCpuMsPerFrame':(after['totalMs']-before['totalMs'])/frames,
-                'aCompositeCpuMs':(after['aMs']-before['aMs'])/frames,
-                'bCompositeCpuMs':(after['bMs']-before['bMs'])/frames,
+                'beforeCompositeCpuMs':(after['beforeMs']-before['beforeMs'])/frames,
+                'correctedCompositeCpuMs':(after['correctedMs']-before['correctedMs'])/frames,
                 'hostCpuMsPerFrame':(float(host_after['homeDrawTotalMs'])-float(host_before['homeDrawTotalMs']))/frames,
                 'combinedCanvasBytes':after['bufferBytes']+after['hostBufferBytes'],
                 'decodedPlateBytes':after['decodedPlateBytes'],
@@ -232,9 +256,13 @@ with sync_playwright() as p:
                 check(f'{width}x{height}: simultaneous A/B glass recordings saved',
                     [{'variant':r['name'],'bytes':r['bytes']} for r in recordings])
             if width == 1440:
-                frames_before = page.evaluate('window.__dayWindowStudy.stats.frames')
-                clock_before = page.evaluate('window.__homeVisitClock.read(performance.now())')
-                page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))")
+                paused = page.evaluate("""(()=>{
+                    Object.defineProperty(document,'hidden',{configurable:true,value:true});
+                    document.dispatchEvent(new Event('visibilitychange'));
+                    return {frames:window.__dayWindowStudy.stats.frames,clock:window.__homeVisitClock.read(performance.now())};
+                })()""")
+                frames_before = paused['frames']
+                clock_before = paused['clock']
                 page.wait_for_timeout(1200)
                 assert page.evaluate('window.__dayWindowStudy.stats.frames') == frames_before
                 assert abs(page.evaluate('window.__homeVisitClock.read(performance.now())')-clock_before) < 150
@@ -253,7 +281,7 @@ with sync_playwright() as p:
                 page.emulate_media(reduced_motion='no-preference')
                 page.wait_for_function(f'window.__dayWindowStudy.stats.frames>{frames_before}')
                 # Repeat injection must dispose the prior controller and observer.
-                page.evaluate('window.__retainedDay=window.__dayWindowStudy;window.startDaySpectralComparison("b")')
+                page.evaluate('window.__retainedDay=window.__dayWindowStudy;window.startDaySpectralComparison("corrected")')
                 page.wait_for_timeout(500)
                 assert page.evaluate('window.__retainedDay.stats.bufferBytes') == 0
                 assert page.locator('[data-day-canvas]').count() == 2
@@ -649,6 +677,9 @@ with sync_playwright() as p:
         for width, height in [(1440, 900), (1920, 1080), (1366, 768), (1280, 720), (1280, 800), (1024, 768), (640, 720), (1024, 480)]:
             context = context_for(browser, width, height, reduced=width != 1440)
             page = visit(context)
+            if day_enabled and width == 1440:
+                page.evaluate('window.__navigationStudy=window.__dayWindowStudy')
+                navigation_field_time = page.evaluate('window.__dayWindowStudy.stats.fieldTime')
             left = page.locator('[data-home-rail=left] [data-edge-trigger]')
             right = page.locator('[data-home-rail=right] [data-edge-trigger]')
             assert left.all_text_contents() == ['项目', '番剧', '杂谈', '笔记']
@@ -790,6 +821,9 @@ with sync_playwright() as p:
             page.mouse.click(width / 2, 20)
             capture(page, f'home-sidebar-{width}x{height}')
             # Verify a preview uses soft navigation and keeps the root audio playing.
+            if day_enabled and width == 1440:
+                assert page.evaluate('window.__dayWindowStudy===window.__navigationStudy')
+                assert page.evaluate('window.__dayWindowStudy.stats.fieldTime') > navigation_field_time
             page.locator('[data-edge-trigger=friends]').hover()
             before = page.locator('audio').evaluate('e => ({time:e.currentTime, src:e.currentSrc})')
             page.get_by_role('link', name='进入友链', exact=True).click()
