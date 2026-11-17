@@ -80,7 +80,7 @@ export default function HomeSpectralCanvas({
     let stopped = false
     let degraded = false
     let staticFallback = false
-    let windowStart = performance.now()
+    let windowStart = 0
     let windowFrames = 0
     let slowWindows = 0
     let totalCost = 0
@@ -143,6 +143,7 @@ export default function HomeSpectralCanvas({
       // Preserve the fractional frame budget on 60/120Hz displays instead
       // of accidentally turning a 45fps target into a 30fps cap.
       nextDraw = Math.max(nextDraw + interval, now - interval)
+      if (!windowStart) windowStart = now
       if (!reduced.matches && ++windowFrames && now - windowStart >= 2000) {
         const fps = (windowFrames * 1000) / (now - windowStart)
         stage.dataset.homeFps = fps.toFixed(1)
@@ -236,13 +237,12 @@ export default function HomeSpectralCanvas({
       cancelAnimationFrame(frame)
       previous = 0
       nextDraw = 0
+      windowStart = windowFrames = slowWindows = 0
       if (!document.hidden) render(performance.now())
     }
     const visibility = () => {
       clock.visibility(performance.now(), !document.hidden)
       bounds = opening.getBoundingClientRect()
-      windowStart = performance.now()
-      windowFrames = 0
       redraw()
     }
 
