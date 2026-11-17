@@ -537,3 +537,23 @@
 .scene .nightSky img {
   filter: none;
 }
+
+/* P0: the single photograph is the complete static landscape. */
+.poster img {
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.poster::before {
+  content: none;
+}
+.artworkError {
+  display: none;
+}
+.poster[data-home-artwork="error"] .artworkError {
+  position: absolute;
+  inset: 45% 24px auto;
+  display: block;
+  color: #243a4d;
+  text-align: center;
+}
