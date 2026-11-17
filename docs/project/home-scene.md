@@ -1,5 +1,88 @@
 # 桌面首页总装（#51 / #67 / #68 / #69 / #71）
 
+## 谱场纠偏：光雾、微光与同源倒影（2026-11-17）
+
+本轮以 `7c7ad63` 为基线，仅修正本地审阅版的谱场表现。按最初观景窗原稿第 4.3、5.2 节，撤下整片天空描线的 A/B 候选，改为有宽度与层次的蓝紫光雾、少量局部可辨弧线及对应湖面反光。日间图片、室内配色、玻璃、窗框、导航、播放器和构图全部冻结；原 `DAY_CSS`、地形坐标及 tracer 帧参数已逐项与基线比较，正式应用代码与素材未改。
+
+![1440 谱场光雾修正版](../images/home-window/day-spectral-corrected-1440.webp)
+
+[1920 修正版](../images/home-window/day-spectral-corrected-1920.webp)。改前与改后在同一时刻读取同一对轨迹缓冲，`before` 仅复现已否决的细线效果；默认预览为 `corrected`。不再推荐旧 source-over／multiply A/B。
+
+显示层从真实轨迹缓冲缩小读取 64×40 的 alpha 覆盖密度；方向／有限差分曲率复用原 16×9、目标 12Hz 采样，低档为 8×5、6Hz。局部密度沿同一方向场偏移 1.5 个采样格，归一化为 `d=clamp(alpha/0.055)`；亮度目标为 `smoothstep(0.2,0.7,d) * (0.45+0.55*clamp(4*sqrt(curvature)))`，以 0.45 秒指数平滑保持有界连续。该包络是显示用密度／角变化，不是谱场能量，也不是单位方向向量的模长。
+
+光雾采用 42px／16px 两级局部扩散；清晰弧线仅在包络高值区出现。湖面镜像同一份光雾／微光缓冲，按原日景岸线裁切并避开近岸石块，局部偏移也读取同一方向／曲率网格；没有独立水波、极光路径或随机噪声。共享已有帧调度，无新增 RAF；六模态、频率、相位、种子、积分、ambient 密度／速度及倍率 0.3 不变。
+
+四尺寸同时间像素检查均为：玻璃外改前／改后差异 **0 像素**，无谱场截图与原静态基准最大 RGB 差异 **0**，山体和近岸内部差异 **0**（边界诊断预留 3 CSS px 抗锯齿带）。四帧包络均在 [0,1]，高值弧线遮罩约占采样格 3.1%–10.0%，不等同于改变粒子数量。
+
+| 尺寸 | 真实 FPS | 修正实验 CPU/帧 | 隐藏原首页 CPU/帧 | 全部 Canvas RGBA 理论预算 |
+| --- | ---: | ---: | ---: | ---: |
+| 1440×900 | 45.00 | 2.667ms | 0.728ms | 24,792,864 bytes |
+| 1920×1080 | 44.91 | 4.712ms | 0.878ms | 42,377,120 bytes |
+| 1366×768 | 45.00 | 2.504ms | 0.733ms | 19,284,864 bytes |
+| 1280×720 | 44.91 | 2.447ms | 0.684ms | 16,615,496 bytes |
+
+上述为 Node 22.23.5、Chrome 157.0.8103.79、DPR1，每尺寸约 8 秒真实时钟观测；包含改前／改后双输出、隐藏的正式首页渲染器，大尺寸还同时编码两段视频，不代表未来生产单输出的最终成本。1440 观测段有一次 60ms 长任务，其余三段无 ≥50ms 长任务；CPU 是 dispatch 耗时，不是 GPU 完成时间。预算合计三张原缓冲、四张对照缓冲及五张有尺寸上限的密度／光雾缓冲；底图解码理论另计 5,865,376 bytes，不等同驱动总显存。
+
+后台合成 visibility 暂停／恢复、reduced-motion、重复注入、软导航释放、DPR2 尺寸变化及 Canvas／WebGL／图片／音乐失败与重试已验证。导航和音乐回归在修正版实际运行时检查时间连续性，减少动态尺寸保持静态。126 项数学等既有测试、类型检查通过；ESLint 0 错误、3 条既有警告。浏览器沿用原 Node 22 的 247 页生产构建；本轮修正仅进入验收 bundle。
+
+```powershell
+# 本工作树，Node 22；本机复用已安装的局部 Python 依赖。
+$env:PYTHONPATH=(Resolve-Path '../night-window-home/.sync/tmp-night-window/python').Path
+# 生产预览已监听 3188；若尚未启动，另开终端运行 npm run start -- --hostname 127.0.0.1 --port 3188。
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-preview --output .sync/tmp-spectral-correction/preview
+# 受控标签的 R / O / 0 分别显示修正版、改前及无谱场基准，不是产品开关。
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-spectral --output .sync/tmp-spectral-correction
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode navigation --day-study --output .sync/tmp-spectral-correction/navigation
+```
+
+`.sync/tmp-spectral-correction/index.html` 可直接审阅同时间截图与四段同步录屏；`scope-proof.json` 保存冻结范围证明，JSON 报告及原始 PNG 一同保留。CPU 压力回退后确认全部缓冲归零，静态尺寸变化不重新分配缓冲，播放仍可用。旧 `day-spectral-ab` 仅作为验收命令兼容别名。窗框环境光、完整云层／湖面材质与独立景深不在本次修正范围；真机、Safari 与真实 OS 后台行为仍未验收。通过 PR 审阅，未合并或部署。
+
+## 日间静态与谱场 A/B 审阅候选（2026-11-17）
+
+**以下谱场 A/B 已被否决，仅作历史记录。** 日景、室内与界面已确认保留，后续只修正谱场；当前实现和命令以上节为准。
+
+以 PR #101 的合并提交 `5ae7a12` 为基线，在 `feat/day-window-study-20261117` 独立工作树制作日间静态稿和谱场对照。保留正式首页布局和操作，通过验收脚本替换景观请求并注入冷灰候选材质；生产默认外观、组件接口与谱场数学未改。日间素材由同一授权摄影原稿重新绘景，来源、修改与完整内置 imagegen 提示词见 `public/home-window/NOTICE-day-study.txt`。
+
+第一批已在真实生产构建上通过 1440×900、1920×1080、1366×768、1280×720、1280×800、1024×768、640×720、1024×480 的静态检查：八入口与唯一音频保留，中立视角、零 Canvas 缓冲、重复静帧一致。中心岸线为素材高度约 62.5%，候选 272,712 bytes。山脊、岸线和近岸坐标按新素材重新标注，仅存在验收工具，不覆盖夜景遮罩。
+
+![1440 日间静态候选](../images/home-window/day-static-1440.webp)
+
+[1920 日间静态候选](../images/home-window/day-static-1920.webp)。第二批在同一轨迹缓冲、时间与日景上比较 A `source-over`、B `multiply`，共同使用 RGB `(55,104,194)` / `(112,75,188)` / `(184,84,151)` 及背景／前景 0.24／0.42 不透明度。ambient 密度、速度、线宽、六模态与倍率 0.3 保持原控制器参数。先在不透明 Canvas 画日景再合成轨迹，使 multiply 真实作用于底图；新山脊裁切限制轨迹进入天空。A 的蓝紫粉区分较清楚，B 在天空中更深、更偏蓝，暂不替用户选定生产方案。
+
+| A · source-over | B · multiply |
+| --- | --- |
+| ![A 候选](../images/home-window/day-spectral-a-1440.webp) | ![B 候选](../images/home-window/day-spectral-b-1440.webp) |
+
+两份输出共用一组 tracer 缓冲，通过观察正式首页的帧计数推进，未增加 RAF。冻结只用于同时间截图；性能和四段 WebM 使用真实时钟。每个大尺寸的 A/B 玻璃区域录屏同时从两个 Canvas 采集，已由 Chromium 实际解码验证。实验额外维护两张 tracer 和两张输出 Canvas；下表已合计原首页隐藏渲染器的三张缓冲，不能当作最终单方案生产性能。
+
+| 尺寸 | 实测 FPS | 实验 CPU/帧（两输出） | 原首页 CPU/帧 | 七 Canvas RGBA 理论预算 |
+| --- | ---: | ---: | ---: | ---: |
+| 1440×900 | 45.04 | 0.329ms | 0.661ms | 23,109,616 bytes |
+| 1920×1080 | 45.04 | 0.564ms | 1.149ms | 39,704,480 bytes |
+| 1366×768 | 45.04 | 0.409ms | 0.751ms | 17,969,952 bytes |
+| 1280×720 | 45.13 | 0.417ms | 0.740ms | 15,476,928 bytes |
+
+Windows、Node 22.23.5、Chrome 157.0.8103.79、生产构建、DPR1；每尺寸约 8 秒连续样本，观测段均无 ≥50ms 长任务。CPU 为浏览器 dispatch 时间，不是 GPU 完成时间；单张日景解码理论预算另计 5,865,376 bytes，不含驱动和录屏编码开销。DPR2 验证绘图上限 1.5，改变尺寸保留原时间；后台暂停恢复使用合成 visibility，未冒充真实 OS 后台测试。
+
+静态、导航和 A/B 报告合计 41 条记录（含 3 条环境记录），0 pageerror。八尺寸导航、350ms/120ms、固定／外部关闭／Escape、论文两层阅读、联系和跨页唯一音频通过；另验证 reduced-motion 归零所有绘图缓冲、重复注入只保留一个实验、软导航释放、无 WebGL／无 Canvas／图片错误／音乐错误与重试及移动 UA 分流。文字按最暗候选表面计算：外廊标签 5.20:1、署名 5.08:1、歌手／时间 4.97:1、播放图标 5.83:1。126 项现有测试、类型检查和 247 页生产构建通过，ESLint 0 错误、3 条既有警告。
+
+```powershell
+# 在本工作树使用 Node 22、Python Playwright/Pillow；先 npm run build -- --webpack。
+npm.cmd run start -- --hostname 127.0.0.1 --port 3188
+# 以下命令在另一个终端运行：
+# 本机可复用上轮的局部 Python 依赖；其他环境安装相应依赖。
+$env:PYTHONPATH=(Resolve-Path '../night-window-home/.sync/tmp-night-window/python').Path
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-static --output .sync/tmp-day-window/static
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode navigation --day-study --output .sync/tmp-day-window/navigation
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-spectral-ab --output .sync/tmp-day-window/ab
+# 单独运行，打开可操作的真实首页候选；关闭浏览器标签结束。
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-preview --output .sync/tmp-day-window/preview
+# 动态审阅可按 A / B 切换合成、0 查看无谱场基准；仅存在这个受控标签中。
+python scripts/home-scene-preview.py --url http://127.0.0.1:3188 --mode day-preview --day-variant a --output .sync/tmp-day-window/preview
+```
+
+上一批原始证据位于忽略目录 `.sync/tmp-day-window/`。静态构图保留，谱场 A/B 已撤下，修正版见上节；窗框环境光和独立景深继续留在本轮范围之外。真实音乐服务、真机与 Safari 仍未验收。未新增产品主题开关或三维特效，未推送、创建 PR 或部署。
+
 ## 当前观景窗首页（2026-11-17）
 
 以 `main@c35fa13` 为基线，在独立工作树实现巨幅单片玻璃、冷暗室内窗框、山湖夜景、左右四项外廊导航和窗台音乐。完整设计、实际取舍及验收记录见[观景窗方案](Nothing_New_观景窗首页_视觉与开发方案_2026-11-17.md)。以下早期布局、人物原画、日夜、天体、分片和 300 秒故事描述仅为历史记录，不是现行功能。
