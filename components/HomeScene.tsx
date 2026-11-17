@@ -268,7 +268,7 @@ export default function HomeScene({
           </div>
           <a
             className={styles.artCredit}
-            href="/home-window/NOTICE.txt"
+            href="/home-window/NOTICE-day-study.txt"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="景观来源与许可：TheDailyNathan、Hike395，CC BY-SA 3.0，已改编"
