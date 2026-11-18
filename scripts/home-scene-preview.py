@@ -1,7 +1,7 @@
 """Unified homepage acceptance. Evidence goes to --output (ignored by Git by default).
 
-The default static-window mode checks the v2 continuous landscape, direct links,
-click-only panels and root audio. Other modes below are historical experiments.
+The default coupled-window mode checks the live room, spectral water response,
+restored sidebar previews and pointer, plus the root audio. Earlier modes are historical.
 The snapshots mode updates public/page-previews/ from local pages. It may read
 the public production anime data when local data is unavailable, while keeping
 the current local renderer and styles. Synthetic fixtures are never published.
@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--url', default='http://127.0.0.1:3161')
 parser.add_argument('--output', default='.sync/tmp-home-scene-evidence')
 parser.add_argument('--browser', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
-parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'production-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview', 'static-window'], default='static-window')
+parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'production-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview', 'static-window', 'coupled-window'], default='coupled-window')
 parser.add_argument('--day-study', action='store_true', help='Apply the corrected daylight field to the real navigation acceptance (reduced motion at the existing reduced sizes); never changes production code.')
 parser.add_argument('--day-variant', choices=['static', 'corrected', 'before', 'a', 'b'], default='corrected', help='day-preview only: corrected (default), static or before; R/O/0 keys in the review tab. a/b are compatibility aliases, not design candidates.')
 args = parser.parse_args()
@@ -100,7 +100,7 @@ def visit(context, allow_artwork_error=False):
     assert response and response.ok
     page.wait_for_function("document.documentElement.classList.contains('splash-seen')")
     page.wait_for_selector('[data-home-scene]')
-    page.wait_for_selector('[data-home-artwork=ready], [data-home-artwork=error]' if allow_artwork_error else '[data-home-artwork=ready]', timeout=60000)
+    page.wait_for_selector('[data-home-artwork=ready], [data-home-artwork=error]' if allow_artwork_error else '[data-home-artwork=ready]', state='attached', timeout=60000)
     if day_enabled:
         if day_animated:
             page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeQuality==='static'||Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>3")
@@ -147,7 +147,102 @@ with sync_playwright() as p:
         check('environment', {'browser':browser.version, 'url':args.url,
             'music':'local WAV fixture; external music service not asserted',
             'visibility':'synthetic document.hidden event where explicitly labelled'})
-    if args.mode == 'static-window':
+    if args.mode == 'coupled-window':
+        from PIL import Image, ImageChops
+        reports=[{'date':'2026-11-18','introduction':'','conclusion':'','papers':[{'title':'Coupled-window test paper','priority':'精读','url':'https://example.org/paper','html':'<p>Local interaction fixture.</p>'}]}]
+        check('environment',{'browser':browser.version,'url':args.url,'music':'local WAV fixture','papers':'one local report fixture','landscape':'real licensed texture; live shader; no injected scene'})
+        for width,height in [(1440,900),(1920,1080),(1366,768),(1280,800),(1024,768),(640,720),(1024,480)]:
+            dynamic=width==1440
+            context=context_for(browser,width,height,reduced=not dynamic,video=dynamic)
+            context.route('**/api/papers',lambda r:r.fulfill(json={'reports':reports}))
+            page=visit(context)
+            if dynamic:
+                page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeEffect==='water-response'")
+            else:
+                assert state(page)['homeQuality']=='static'
+                assert page.locator('[data-home-canvas]').evaluate('(e)=>e.width===0&&e.height===0')
+            expect(page.get_by_role('button',name='播放',exact=True)).to_be_visible()
+            assert page.locator('audio').count()==1
+            assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+            for entry in ['projects','anime','chatter','blog','papers','friends','about','contact']:
+                trigger=page.locator(f'[data-edge-trigger={entry}]')
+                before=trigger.bounding_box()
+                trigger.hover();page.wait_for_timeout(450)
+                expect(trigger).to_have_attribute('aria-expanded','true')
+                after=trigger.bounding_box()
+                assert abs(before['x']-after['x'])<.1, 'labels must not jump into the adjacent preview'
+                assert page.locator('[data-edge-trigger]').evaluate_all('(es)=>es.every(e=>{const r=e.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest("[data-edge-trigger]")===e})'), entry
+                if entry in ['projects','papers']:
+                    capture(page,f'coupled-{entry}-{width}x{height}')
+                if entry=='contact':
+                    expect(page.get_by_role('button',name='复制邮箱')).to_be_visible()
+            page.mouse.click(width/2,height-5)
+            page.wait_for_timeout(200)
+            page.keyboard.press('Escape')
+            capture(page,f'coupled-room-{width}x{height}')
+            page.locator('[data-edge-trigger=papers]').hover();page.wait_for_timeout(500)
+            page.get_by_role('button',name='打开 TDA 论文周报',exact=True).click()
+            expect(page.locator('#tda-issue-dialog')).to_be_visible()
+            page.get_by_role('button',name='Coupled-window test paper',exact=False).click()
+            expect(page.locator('#tda-paper-dialog')).to_be_visible()
+            page.keyboard.press('Escape');page.keyboard.press('Escape');page.keyboard.press('Escape')
+            expect(page.locator('[data-edge-trigger=papers]')).to_be_focused()
+            if dynamic:
+                page.mouse.move(5,5);page.wait_for_timeout(1200)
+                surface=page.locator('[data-home-canvas]')
+                first=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
+                page.wait_for_timeout(1000)
+                second=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
+                difference=ImageChops.difference(first,second)
+                assert difference.getbbox() and max(high for low,high in difference.getextrema())>10
+                first.save(out/'coupled-water-a.png');second.save(out/'coupled-water-b.png')
+                difference.save(out/'coupled-water-difference.png')
+                page.locator('[data-home-scene]').evaluate('(e)=>e.dataset.homeWaterStrength="0"');page.wait_for_timeout(120)
+                zero=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
+                page.locator('[data-home-scene]').evaluate('(e)=>e.dataset.homeWaterStrength="2.8"');page.wait_for_timeout(120)
+                active=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
+                delta=ImageChops.difference(zero,active)
+                assert delta.crop((0,0,1440,455)).getbbox() is None
+                assert delta.crop((0,610,1440,900)).getbbox() is None
+                assert delta.getbbox() is not None
+                zero.save(out/'coupled-water-zero.png');active.save(out/'coupled-water-active.png')
+                page.mouse.move(1150,300);page.wait_for_timeout(800)
+                assert abs(float(state(page)['homeLook'].split(',')[0]))>1
+                capture(page,'coupled-pointer-right')
+                page.mouse.move(290,300);page.wait_for_timeout(800)
+                capture(page,'coupled-pointer-left')
+                frame_count=state(page)['homeFrames']
+                page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))")
+                page.wait_for_timeout(250)
+                assert state(page)['homeFrames']==frame_count
+                page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))")
+                page.get_by_role('button',name='播放',exact=True).click()
+                page.wait_for_function("document.querySelector('audio').currentTime>.1")
+                page.get_by_role('button',name='暂停',exact=True).click()
+                page.get_by_role('slider',name='播放进度').fill('50')
+                page.wait_for_function("document.querySelector('audio').currentTime>40")
+                page.get_by_role('button',name='下一首',exact=True).click()
+                expect(page.get_by_role('heading',name='场景测试曲 2')).to_be_visible()
+                page.evaluate("window.__oldAudio=document.querySelector('audio');window.__oldSurface=document.querySelector('[data-home-canvas]')")
+                page.locator('[data-edge-trigger=about]').hover();page.wait_for_timeout(450)
+                page.get_by_role('link',name='进入关于',exact=True).click()
+                page.wait_for_url('**/about')
+                assert page.evaluate("document.querySelector('audio')===window.__oldAudio&&window.__oldSurface.width===0&&window.__oldSurface.height===0")
+                check('observable water, zero-field/outside mask, camera, synthetic hidden pause, music seek and cross-route disposal',{'differenceBounds':difference.getbbox(),'zeroFieldBounds':delta.getbbox()})
+            check(f'{width}x{height}: all eight labels reachable, previews stable, reader/Escape and music usable')
+            context.close()
+            if dynamic:Path(page.video.path()).replace(out/'coupled-window.webm')
+        context=context_for(browser,reduced=False)
+        context.add_init_script("const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,...args){return t.startsWith('webgl')?null:original.call(this,t,...args)}")
+        page=visit(context)
+        assert state(page)['homeQuality']=='static'
+        assert page.locator('[data-home-canvas]').evaluate('(e)=>e.width===0&&e.height===0')
+        capture(page,'coupled-no-webgl')
+        check('no WebGL: complete room fallback and no animation buffer')
+        context.close()
+        assert not errors,errors
+        check('all coupled-window checks passed',{'pageErrors':errors})
+    elif args.mode == 'static-window':
         from PIL import Image, ImageChops
         reports = [{'date': date, 'introduction': '<p>本地周报交互夹具</p>', 'conclusion': '',
             'papers': [{'title': '拓扑数据分析测试论文 ' + date, 'priority': '精读',

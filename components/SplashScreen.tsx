@@ -123,9 +123,10 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         if (!roomLoading && !homeLoading) break
         await sleep(32, signal)
       }
-      // HomeScene is loaded dynamically. Its single artwork reports readiness
-      // above; hidden panels must not add image decoding to the critical path.
+      // HomeScene reports its room and exterior readiness above. Warm the
+      // restored sidebar screenshots while the opening plays.
       const images = Array.from(document.images).filter((img) => {
+        if (homeEntry && img.closest("[data-home-preview]")) return true
         if (!img.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return false
         const rect = img.getBoundingClientRect()
         return img.loading !== "lazy" || (rect.top < innerHeight && rect.bottom > 0)

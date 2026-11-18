@@ -116,3 +116,69 @@ vec2 viewportFieldPoint(vec2 parameter, float time) {
   return anchor * uResolution + sampleSpectralFamily(parameter, time) * uFieldScale;
 }
 `
+
+// Original spectrum, amplitudes and phases from the spectral tracer system.
+export const FIELD_KX = [1, 2, 3, 1, 4, 2] as const
+export const FIELD_KY = [2, -1, 1, -3, 2, 5] as const
+export const FIELD_AMPLITUDES = [1, 0.72, 0.5, 0.38, 0.26, 0.18] as const
+export const FIELD_PHASES = [0.31, 2.17, 4.02, 5.41, 1.24, 3.52] as const
+
+/**
+ * The original spectral flow: V = J grad(psi), where
+ * psi = sum a_k sin(k_x * nx * aspect + k_y * ny + lambda_k*t + phase_k).
+ * The common coordinate derivative cancels when calculating direction.
+ * In particular, the original eigenfrequencies remain the flow's driver.
+ */
+export function spectralDirectionAt(
+  x: number,
+  y: number,
+  time: number,
+  width: number,
+  height: number,
+  modeCount: number,
+) {
+  const safeHeight = Math.max(height, 1)
+  const aspect = Math.max(width, 1) / safeHeight
+  const nx = (x / Math.max(width, 1)) * 2 - 1
+  const ny = (y / safeHeight) * 2 - 1
+  let vx = 0
+  let vy = 0
+
+  for (let mode = 0; mode < Math.min(Math.max(0, modeCount), FIELD_KX.length); mode++) {
+    const phase =
+      FIELD_KX[mode] * nx * aspect +
+      FIELD_KY[mode] * ny +
+      SPECTRAL_LAMBDAS[mode] * time +
+      FIELD_PHASES[mode]
+    const term = FIELD_AMPLITUDES[mode] * Math.cos(phase)
+    vx += FIELD_KY[mode] * term
+    vy -= FIELD_KX[mode] * term
+  }
+
+  // Keep the original pixel-aspect correction from the old tracer field.
+  vx /= Math.max(aspect, 0.65)
+  const magnitude = Math.hypot(vx, vy)
+  if (magnitude < 1e-6) return { x: 0, y: 0 }
+  return { x: vx / magnitude, y: vy / magnitude }
+}
+
+// Same stream-function derivative as spectralDirectionAt. Generated constants
+// prevent the material renderer from acquiring a different spectrum or phase.
+export const SPECTRAL_DIRECTION_GLSL = `
+vec2 spectralWaterDirection(vec2 p, float time) {
+  const float aspect = 1672.0 / 877.0;
+  vec2 n = p * 2.0 - 1.0;
+  vec2 velocity = vec2(0.0);
+  ${FIELD_KX.map(
+    (kx, index) => `{
+    float term = ${FIELD_AMPLITUDES[index].toFixed(12)} * cos(
+      ${kx.toFixed(12)} * n.x * aspect + ${FIELD_KY[index].toFixed(12)} * n.y +
+      ${SPECTRAL_LAMBDAS[index].toFixed(12)} * time + ${FIELD_PHASES[index].toFixed(12)});
+    velocity += vec2(${FIELD_KY[index].toFixed(12)}, ${(-kx).toFixed(12)}) * term;
+  }`,
+  ).join("\n")}
+  velocity.x /= max(aspect, 0.65);
+  float magnitude = length(velocity);
+  return magnitude < 0.000001 ? vec2(0.0) : velocity / magnitude;
+}
+`

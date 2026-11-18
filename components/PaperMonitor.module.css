@@ -616,34 +616,3 @@
     transform: none;
   }
 }
-
-.homeSummaryBody {
-  padding: 20px;
-  font-size: 14px;
-  line-height: 1.7;
-}
-.homeSummaryBody p {
-  margin: 0 0 14px;
-}
-.homeSummaryBody [role="status"] {
-  color: var(--paper-muted);
-}
-.homeRead {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 8px 14px;
-  border: 1px solid var(--paper-line);
-  border-radius: 3px;
-  background: var(--paper-surface);
-  color: var(--paper-accent);
-  cursor: pointer;
-}
-.homeRead:hover {
-  background: var(--site-recess);
-}
-.homeRead:disabled {
-  color: var(--paper-muted);
-  cursor: default;
-}

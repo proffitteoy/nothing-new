@@ -55,3 +55,7 @@ npm run images:check
 - 常用 Windows 双击包装脚本保留在仓库根目录，减少路径和编码问题。
 - 脚本如果会写入 `content/`、`.sync/` 或 git 状态，文档里必须说明副作用。
 - Windows 批处理脚本应先 `cd /d "%~dp0"` 回到仓库根目录，避免从其他目录运行失败。
+
+## 首页动态回归
+
+生产预览运行后，用 `python scripts/home-scene-preview.py --mode coupled-window --url http://127.0.0.1:3196 --output .sync/tmp-coupled-window` 检查实际室内/湖水合成、零响应与前后帧、预览不遮入口、指针、论文阅读、唯一音乐和静态退化。默认模式为 `coupled-window`；旧静态/光雾模式仅为历史实验。依赖 Playwright、Pillow 和已安装 Chrome；输出目录会写截图、视频和 JSON，音乐/周报是本地夹具，不发布夹具，也不验证外部服务可用性。当前验证边界见 [首页说明](../docs/project/home-scene.md)。

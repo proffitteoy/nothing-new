@@ -1,7 +1,7 @@
 .scene {
-  --site-bg: #eef0ef;
+  --site-bg: #eaf0f5;
   --site-surface: #fff;
-  --site-recess: #f0f3f5;
+  --site-recess: #edf1f8;
   --site-ink: #29354b;
   --site-muted: #627087;
   --site-accent: #4266cf;
@@ -9,178 +9,226 @@
   --site-violet: #6551a3;
   --site-mint: #146d64;
   --site-line: #d8dfeb;
-  --site-glass: #fff;
-  --site-wash: #edf1f8;
+  --site-glass: rgb(245 249 252 / 94%);
   --scene-ink: var(--site-ink);
   --scene-muted: var(--site-muted);
   --scene-accent: var(--site-accent);
   --scene-line: var(--site-line);
-  --scene-surface: var(--site-surface);
-  --wood-face: #40352e;
-  --wood-head: #302822;
-  --wood-left: #4b3d33;
-  --wood-right: #625143;
-  --wood-sill: #655346;
-  --wall-space: clamp(80px, 8.5vw, 164px);
-  --room-top: clamp(28px, 4.5dvh, 64px);
-  --room-bottom: max(32px, 5dvh, env(safe-area-inset-bottom));
-  --reveal: clamp(22px, 2.4vw, 38px);
-  --lintel: clamp(22px, 3dvh, 34px);
-  --sill-height: 116px;
-  --tab-height: clamp(58px, 13dvh, 116px);
-  --edge-gap: clamp(6px, 1.5dvh, 14px);
+  --scene-surface: var(--site-glass);
+  --edge-width: clamp(184px, 18.3vw, 264px);
+  --tab-height: clamp(58px, 11dvh, 104px);
+  --edge-gap: clamp(6px, 1.2dvh, 12px);
   position: fixed;
   inset: 0;
-  overflow: hidden;
   isolation: isolate;
+  overflow: hidden;
   color: var(--site-ink);
+  background: #676a6a;
   color-scheme: light;
-  background: var(--site-bg);
   font-family: var(--font-geist-sans), "Source Han Sans SC", "Microsoft YaHei", sans-serif;
 }
 .scene :is(a, button, input, select):focus-visible {
   outline: 2px solid var(--site-accent);
   outline-offset: 4px;
 }
-.windowShell {
-  position: absolute;
-  inset: var(--room-top) var(--wall-space) calc(var(--sill-height) + var(--room-bottom));
-  padding: var(--lintel) var(--reveal) 0;
-  border: 9px solid var(--wood-face);
-  border-bottom: 0;
-  background: var(--wood-head);
-  box-shadow: 5px 8px 20px rgb(32 28 24 / 13%);
-}
-/* Solid planes share the same opening; only architectural surfaces are clipped. */
-.windowShell::before,
-.windowShell::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: var(--reveal);
-}
-.windowShell::before {
-  left: 0;
-  background: var(--wood-left);
-  clip-path: polygon(0 0, 100% var(--lintel), 100% 100%, 0 100%);
-}
-.windowShell::after {
-  right: 0;
-  background: var(--wood-right);
-  clip-path: polygon(0 var(--lintel), 100% 0, 100% 100%, 0 100%);
-}
-.windowViewport {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #b9d0dc;
-  border: 3px solid #29231f;
-  border-bottom: 0;
-}
-.poster {
+.poster,
+.sceneSurface {
   position: absolute;
   inset: 0;
-  background: #dce8ef;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
-.poster img {
+.poster {
+  z-index: 0;
+}
+.roomImage {
   object-fit: cover;
-  object-position: center;
+}
+.windowViewport {
+  position: absolute;
+  overflow: hidden;
+  left: var(--view-x, 13.3vw);
+  top: var(--view-y, 16.7dvh);
+  width: var(--view-width, 73.4vw);
+  height: var(--view-height, 53.4dvh);
+  background: #bad3e3;
+}
+.landscapeImage {
+  position: absolute;
+  left: var(--lake-x, -32px);
+  top: var(--lake-y, -32px);
+  width: var(--lake-width, calc(100% + 64px));
+  height: var(--lake-height, calc(100% + 64px));
+  max-width: none;
+}
+.sceneSurface {
+  z-index: 1;
+  opacity: 0;
+}
+.scene[data-home-rendering="dynamic"] .sceneSurface {
+  opacity: 1;
+}
+.scene[data-home-rendering="dynamic"] .poster {
+  opacity: 0;
 }
 .artworkError {
   display: none;
 }
 .poster[data-home-artwork="error"] .artworkError {
-  position: absolute;
-  inset: 45% 24px auto;
   display: block;
-  color: var(--site-ink);
+  position: absolute;
+  top: 40%;
+  left: 25%;
+  right: 25%;
   text-align: center;
-  font-size: 14px;
+  color: #172b43;
+  background: #f4f8fbe6;
+  padding: 12px;
 }
 .rail {
   position: absolute;
-  z-index: 3;
+  z-index: 6;
   top: max(
     12px,
     calc(
-      (
-          100dvh - var(--sill-height) - var(--room-bottom) - var(--tab-height) * 4 -
-            var(--edge-gap) * 3
-        ) /
-        2
+      var(--view-y, 16.7dvh) +
+        (var(--view-height, 53.4dvh) - var(--tab-height) * 4 - var(--edge-gap) * 3) / 2
     )
   );
   display: grid;
+  grid-template-columns: 56px;
   grid-auto-rows: var(--tab-height);
   gap: var(--edge-gap);
   width: 56px;
+  pointer-events: none;
 }
 .left {
-  left: calc((var(--wall-space) - 56px) / 2);
+  left: var(--left-rail, 0px);
 }
 .right {
-  right: calc((var(--wall-space) - 56px) / 2);
+  right: var(--right-rail, 0px);
+}
+.edge {
+  position: relative;
+  width: 56px;
+  height: var(--tab-height);
+  pointer-events: none;
+}
+.edge[data-open="true"] {
+  width: calc(var(--edge-width) + 56px);
+  z-index: 8;
+}
+.right .edge {
+  justify-self: end;
 }
 .tab {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: 12px;
+  position: absolute;
+  top: 0;
+  z-index: 2;
   width: 56px;
   height: var(--tab-height);
   padding: 0;
   border: 0;
-  border-radius: 2px;
+  color: #10283e;
   background: transparent;
-  color: #48515a;
-  text-decoration: none;
   cursor: pointer;
   font-size: 14px;
+  pointer-events: auto;
+  box-shadow: none;
 }
 .tab > span {
   writing-mode: vertical-rl;
   white-space: nowrap;
-  flex-shrink: 0;
   letter-spacing: 0.15em;
+  flex-shrink: 0;
+}
+.left .tab {
+  left: 0;
+  border-radius: 0;
+}
+.right .tab {
+  right: 0;
+  border-radius: 0;
+}
+.left .edge[data-open="true"] .tab {
+  left: 0;
+}
+.right .edge[data-open="true"] .tab {
+  right: 0;
 }
 .tab:hover,
 .tab:focus-visible,
 .tab[aria-expanded="true"] {
   color: #244e91;
-  background: #e2e6e7;
+  background: rgb(248 251 255 / 22%);
+}
+.preview {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  width: var(--edge-width);
+  pointer-events: none;
+}
+.left .preview {
+  left: 66px;
+}
+.right .preview {
+  right: 66px;
+}
+.preview[data-open="true"] {
+  pointer-events: auto;
+}
+.preview[data-open="false"] :global([data-paper-summary]),
+.preview[data-open="false"] :global([data-edge-summary]) {
+  visibility: hidden;
+  pointer-events: none;
+}
+.preview :global(dialog) {
+  pointer-events: auto;
+}
+.previewLink {
+  display: block;
+  aspect-ratio: 4/3;
+  color: inherit;
+  border-radius: 0;
+}
+.left .previewLink,
+.left .previewLink > span {
+  border-radius: 0;
+}
+.previewLink img {
+  object-position: top;
+}
+.contactPanel {
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--scene-surface);
+  font-size: 14px;
 }
 .windowSill {
   position: absolute;
-  z-index: 2;
-  left: calc(var(--wall-space) - 12px);
-  right: calc(var(--wall-space) - 12px);
-  bottom: var(--room-bottom);
-  height: var(--sill-height);
-  padding: 38px 20px 12px;
-  border-bottom: 12px solid var(--wood-face);
-  background: var(--wood-sill);
-  box-shadow: 3px 12px 18px rgb(32 28 24 / 12%);
-}
-.windowSill::before {
-  content: "";
-  position: absolute;
-  inset: -18px 0 auto;
-  height: 18px;
-  background: var(--wood-sill);
-  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 100%, 0 100%);
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
 }
 .musicDock {
-  --scene-ink: #f8f7f5;
-  --scene-muted: #e3ddd8;
-  --site-violet: #eee8ff;
-  --site-surface: #493e35;
-  --site-detail: #f1b7d0;
-  position: relative;
-  width: min(800px, 100%);
-  margin: 0 auto;
+  --scene-ink: #f9fcff;
+  --scene-muted: #e8eff6;
+  --site-violet: #d9e4ff;
+  --site-surface: #344557;
+  --site-detail: #edb2ce;
+  position: absolute;
+  left: 50%;
+  top: var(--music-y, 73.6dvh);
+  translate: -50% -50%;
+  width: min(760px, calc(100% - 180px));
+  pointer-events: auto;
 }
 .musicDock .sillPlayer {
   padding: 0;
@@ -190,103 +238,68 @@
   backdrop-filter: none;
   box-shadow: none;
 }
+.sillPlayer h2,
+.sillPlayer p {
+  text-shadow: 0 1px 3px #000c;
+}
 .lyrics {
   --music-lyric-inset: 0px;
-  --music-lyric-bottom: calc(100% + 1px);
-  color: var(--scene-ink) !important;
+  --music-lyric-bottom: calc(100% + 2px);
+  color: #f8fcff !important;
 }
 .lyrics p {
-  text-shadow: none;
+  text-shadow: 0 1px 4px #142437;
 }
 .artCredit {
   position: absolute;
-  right: 0;
-  bottom: -27px;
-  padding: 3px 0;
-  color: #596168;
+  right: 18px;
+  bottom: 12px;
+  color: #f1f6fc;
   font-size: 12px;
-  line-height: 1.4;
+  pointer-events: auto;
   text-decoration: none;
+  text-shadow: 0 1px 3px #172b43;
 }
 .artCredit:hover {
-  color: var(--site-accent);
   text-decoration: underline;
 }
-/* A functional panel belongs to the room and never moves the landscape. */
-.scene :global([data-home-panel]) {
-  position: fixed;
-  inset: var(--room-top) calc(var(--wall-space) + 18px) auto auto;
-  width: min(340px, calc(100vw - 100px));
-  max-width: none;
-  max-height: calc(100dvh - var(--room-top) - var(--sill-height) - var(--room-bottom) - 24px);
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  border: 1px solid var(--site-line);
-  border-radius: 3px;
-  background: var(--site-surface);
-  color: var(--site-ink);
-  box-shadow: 0 12px 32px rgb(22 29 39 / 18%);
+.scene :global(dialog) {
+  color-scheme: light;
 }
-.scene :global([data-home-panel])::backdrop {
-  background: rgb(22 29 39 / 14%);
-}
-.scene :global([data-home-panel]) header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--site-line);
-}
-.scene :global([data-home-panel]) h2 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-}
-.scene :global([data-home-panel]) header button {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 2px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-.scene :global([data-home-panel]) header button:hover {
-  background: var(--site-recess);
-}
-.panelBody {
-  padding: 20px;
+@media (max-aspect-ratio: 7/5) {
+  .roomImage {
+    object-fit: fill;
+  }
 }
 @media (max-width: 900px) {
   .scene {
-    --sill-height: 136px;
-    --wall-space: 76px;
-    --reveal: 20px;
+    --tab-height: clamp(56px, 10dvh, 80px);
+    --edge-gap: 6px;
   }
-  .windowSill {
-    padding: 34px 16px 10px;
+  .musicDock {
+    width: calc(100% - 156px);
+    top: calc(var(--music-y, 73.6dvh) + 14px);
+  }
+  .tab {
+    font-size: 13px;
+    gap: 8px;
   }
 }
 @media (max-height: 600px) {
   .scene {
-    --room-top: 18px;
-    --room-bottom: 28px;
-    --sill-height: 104px;
-    --tab-height: 56px;
-    --edge-gap: 6px;
-    --lintel: 18px;
+    --tab-height: 48px;
+    --edge-gap: 5px;
   }
   .tab {
-    gap: 4px;
     font-size: 13px;
+    gap: 3px;
   }
-  .windowSill {
-    padding-top: 24px;
+  .musicDock {
+    top: calc(var(--music-y, 73.6dvh) + 20px);
+  }
+  .lyrics {
+    --music-lyric-bottom: calc(100% + 0px);
+    font-size: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
