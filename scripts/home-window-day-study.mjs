@@ -1,3 +1,4 @@
+// Historical experiment, superseded by the v2 static window. Not an acceptance target.
 // Acceptance-only daylight study. Bundled into the ignored evidence directory,
 // injected into the real homepage by home-scene-preview.py; never imported by app/.
 // The photograph is substituted at the request boundary, preserving the actual
@@ -9,7 +10,7 @@ import {
   HOME_MOUNTAIN_PROFILE,
   HOME_SHORELINE,
   HOME_NEAR_SHORE,
-} from "../components/field/homeSpectralScene"
+} from "./home-window-legacy-scene"
 import { SPECTRAL_PLAYBACK_RATE } from "../components/field/spectralField"
 const DAY_WIDTH = 1672
 const DAY_HEIGHT = 877

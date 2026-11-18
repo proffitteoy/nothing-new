@@ -13,7 +13,7 @@ import {
   interpolateSpectralScene,
   sampleSpectralScene,
   smoothHomePointer,
-} from "./homeSpectralScene"
+} from "../../scripts/home-window-legacy-scene"
 
 test("landscape samples use the exact six-mode direction and bounded angular curvature", () => {
   const grid = sampleSpectralScene(1200, 700, 2.7)
@@ -87,7 +87,7 @@ test("the original eigenmode field remains the only source of tracer velocity", 
   assert.notDeepEqual(actual, spectralDirectionAt(x, y, time, width, height, 6))
 })
 
-test("homepage long spectral curves render immediately, remain visible, and fade over time", () => {
+test("shared tracer long spectral curves render immediately, remain visible, and fade over time", () => {
   class TestPath {
     segments = 0
     moveTo() {}
@@ -224,18 +224,6 @@ test("homepage long spectral curves render immediately, remain visible, and fade
     if (savedPath) Object.defineProperty(globalThis, "Path2D", savedPath)
     else Reflect.deleteProperty(globalThis, "Path2D")
   }
-})
-
-test("home canvas still consumes the six-mode spectral render path, not a separate noise field", () => {
-  const home = readFileSync(new URL("../HomeSpectralCanvas.tsx", import.meta.url), "utf8")
-  assert.match(home, /createSpectralTracerController\(back, front\)/)
-  assert.match(home, /modeCount: 6/)
-  assert.match(home, /SPECTRAL_PLAYBACK_RATE/)
-  assert.match(home, /motion: "ambient"/)
-  assert.match(home, /colours/)
-  const tracer = readFileSync(new URL("./SpectralTracerLayer.tsx", import.meta.url), "utf8")
-  assert.doesNotMatch(tracer, /createPerlinNoise|noise3\(/)
-  assert.match(tracer, /FIELD_KX|FIELD_KY/)
 })
 
 test("about keeps three independent semantic chapters after the article restructure", () => {

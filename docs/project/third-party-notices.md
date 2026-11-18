@@ -20,7 +20,13 @@ title: 第三方代码与授权说明
 - 使用同一份 TheDailyNathan / Hike395 授权摄影原稿，经内置 imagegen 重新制作冷晨天空、山体日照与湖面倒影；不以午夜成品提亮，也未拼入旅游网站摄影。
 - 候选为 `public/home-window/convict-lake-day-study.webp`，1672×877，272,712 bytes；衍生图片继续采用 CC BY-SA 3.0。它是 AI 辅助绘景，不声称为实拍日景或精确地形测绘。
 - 完整来源、修改过程与实际提示词见 `public/home-window/NOTICE-day-study.txt`；未压缩生成图保存在忽略目录 `.sync/tmp-day-window/day-source.png`。
-- 目前仅由验收工具替换真实首页的图片响应和注入冷灰样式，正式首页尚未引用候选。人工视觉审阅通过后再决定动态场景整合。
+- 当前正式首页源码已引用该日景，并以单一合成器实现局部水面响应。该分支的本地生产构建已验证，尚未部署或取得人工美术认可。
+
+## 室内透明前景（2026-11-18）
+
+- `public/home-window/observation-room.webp`：内置 imagegen 生成的完整室内前景，1586×992，1,064,508 bytes，窗洞保留 alpha；无损编码 WebP。
+- 以原授权日景确定光线/视口，另参考室内摄影与交互站的空间组织，不把网站截图作为运行时纹理或复制其代码。
+- 生成过程、参考角色和提示摘要见 `public/home-window/NOTICE-observation-room.txt`。该前景与湖景分别加载，此素材采用 CC BY-SA 3.0；站点代码继续 GPL-3.0-only。
 
 ## Quartz
 

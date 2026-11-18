@@ -1,7 +1,8 @@
 "use client"
 
 import type { RefObject } from "react"
-import { SPECTRAL_LAMBDAS, SPECTRAL_PLAYBACK_RATE } from "./spectralField"
+import { spectralDirectionAt, SPECTRAL_PLAYBACK_RATE } from "./spectralField"
+export { spectralDirectionAt } from "./spectralField"
 
 /*
  * Keep Nothing New's own six-mode spectral stream function and its curves.
@@ -24,12 +25,6 @@ const PREWARM_INTERVAL = 1 / 45
 const R2_G = 1.324717957244746
 const R2_A1 = 1 / R2_G
 const R2_A2 = 1 / (R2_G * R2_G)
-
-// Original spectrum, amplitudes and phases from the spectral tracer system.
-const FIELD_KX = [1, 2, 3, 1, 4, 2] as const
-const FIELD_KY = [2, -1, 1, -3, 2, 5] as const
-const FIELD_AMPLITUDES = [1, 0.72, 0.5, 0.38, 0.26, 0.18] as const
-const FIELD_PHASES = [0.31, 2.17, 4.02, 5.41, 1.24, 3.52] as const
 
 type TracerColor = readonly [number, number, number]
 
@@ -91,45 +86,6 @@ function clamp(value: number, min: number, max: number) {
 
 function fract(value: number) {
   return value - Math.floor(value)
-}
-
-/**
- * The original spectral flow: V = J grad(psi), where
- * psi = sum a_k sin(k_x * nx * aspect + k_y * ny + lambda_k*t + phase_k).
- * The common coordinate derivative cancels when calculating direction.
- * In particular, the original eigenfrequencies remain the flow's driver.
- */
-export function spectralDirectionAt(
-  x: number,
-  y: number,
-  time: number,
-  width: number,
-  height: number,
-  modeCount: number,
-) {
-  const safeHeight = Math.max(height, 1)
-  const aspect = Math.max(width, 1) / safeHeight
-  const nx = (x / Math.max(width, 1)) * 2 - 1
-  const ny = (y / safeHeight) * 2 - 1
-  let vx = 0
-  let vy = 0
-
-  for (let mode = 0; mode < Math.min(Math.max(0, modeCount), FIELD_KX.length); mode++) {
-    const phase =
-      FIELD_KX[mode] * nx * aspect +
-      FIELD_KY[mode] * ny +
-      SPECTRAL_LAMBDAS[mode] * time +
-      FIELD_PHASES[mode]
-    const term = FIELD_AMPLITUDES[mode] * Math.cos(phase)
-    vx += FIELD_KY[mode] * term
-    vy -= FIELD_KX[mode] * term
-  }
-
-  // Keep the original pixel-aspect correction from the old tracer field.
-  vx /= Math.max(aspect, 0.65)
-  const magnitude = Math.hypot(vx, vy)
-  if (magnitude < 1e-6) return { x: 0, y: 0 }
-  return { x: vx / magnitude, y: vy / magnitude }
 }
 
 function pointInObstacle(
@@ -194,12 +150,7 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
   let previousTime: number | null = null
   let destroyed = false
 
-  function spawn(
-    p: TracerParticle,
-    frame: SpectralTracerFrame,
-    length: number,
-    prewarm = true,
-  ) {
+  function spawn(p: TracerParticle, frame: SpectralTracerFrame, length: number, prewarm = true) {
     // R2 quasirandom positions avoid visual clumping and retain the site's
     // deterministic seed distribution. No per-frame full-screen reseeding.
     for (let attempt = 0; attempt < 36; attempt++) {
@@ -211,9 +162,8 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
       p.x = x
       p.y = y
       p.age = 0
-      p.lifetime = frame.motion === "ambient"
-        ? 11 + fract(sample * R2_A1) * 8
-        : 5 + fract(sample * R2_A1) * 6
+      p.lifetime =
+        frame.motion === "ambient" ? 11 + fract(sample * R2_A1) * 8 : 5 + fract(sample * R2_A1) * 6
       p.bucket = sample % 3
       p.head = 0
       p.length = 0
@@ -238,9 +188,13 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
           frame.modeCount,
         )
         if (
-          previous.x < 0 || previous.x > width || previous.y < 0 || previous.y > height ||
+          previous.x < 0 ||
+          previous.x > width ||
+          previous.y < 0 ||
+          previous.y > height ||
           pointInObstacle(previous.x, previous.y, frame.obstacles, clearance)
-        ) break
+        )
+          break
         backward.push(previous)
         cursorX = previous.x
         cursorY = previous.y
@@ -263,8 +217,10 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
     const physicalWidth = Math.max(1, Math.floor(targetWidth * targetRatio))
     const physicalHeight = Math.max(1, Math.floor(targetHeight * targetRatio))
     const changed =
-      width !== targetWidth || height !== targetHeight ||
-      canvas.width !== physicalWidth || canvas.height !== physicalHeight
+      width !== targetWidth ||
+      height !== targetHeight ||
+      canvas.width !== physicalWidth ||
+      canvas.height !== physicalHeight
     width = targetWidth
     height = targetHeight
     pixelRatio = targetRatio
@@ -287,8 +243,12 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
     const nominal = layer === 0 ? SPECTRAL_TRACER_BACKGROUND : SPECTRAL_TRACER_FOREGROUND
     const ambient = frame.motion === "ambient"
     const capacity = ambient
-      ? (layer === 0 ? 320 : 40)
-      : (layer === 0 ? BACKGROUND_RENDER_CAPACITY : FOREGROUND_RENDER_CAPACITY)
+      ? layer === 0
+        ? 320
+        : 40
+      : layer === 0
+        ? BACKGROUND_RENDER_CAPACITY
+        : FOREGROUND_RENDER_CAPACITY
     const count = clamp(Math.round((requested / nominal) * capacity), 0, capacity)
     const motionSpeed = baseSpeed * (ambient ? 0.58 : 1)
 
@@ -308,9 +268,10 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
       particles.length = 0
       previousTime = null
     }
-    const dt = previousTime === null
-      ? 0
-      : clamp((frame.time - previousTime) / SPECTRAL_PLAYBACK_RATE, 0, 0.06)
+    const dt =
+      previousTime === null
+        ? 0
+        : clamp((frame.time - previousTime) / SPECTRAL_PLAYBACK_RATE, 0, 0.06)
     previousTime = frame.time
     const trailLength = clamp(Math.round(frame.trailSamples * 12), 48, MAX_TRAIL_POINTS)
 
@@ -318,7 +279,7 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
       // Flow Fields accumulation: fade the transparent canvas, then add *only*
       // newly traveled segments. The spectral geometry stays from this site.
       context.globalCompositeOperation = "destination-out"
-      const persistence = ambient ? (layer === 0 ? 1.7 : 1.5) : (layer === 0 ? 2.6 : 2.1)
+      const persistence = ambient ? (layer === 0 ? 1.7 : 1.5) : layer === 0 ? 2.6 : 2.1
       context.globalAlpha = 1 - Math.exp(-dt / persistence)
       context.fillRect(0, 0, width, height)
     }
@@ -369,12 +330,27 @@ function createLayerRenderer(canvas: HTMLCanvasElement, layer: 0 | 1) {
       const previousX = particle.x
       const previousY = particle.y
       const next = traceStep(
-        previousX, previousY, frame.time, dt, motionSpeed, width, height, frame.modeCount,
+        previousX,
+        previousY,
+        frame.time,
+        dt,
+        motionSpeed,
+        width,
+        height,
+        frame.modeCount,
       )
       if (
-        next.x < 0 || next.x > width || next.y < 0 || next.y > height ||
+        next.x < 0 ||
+        next.x > width ||
+        next.y < 0 ||
+        next.y > height ||
         pointInObstacle(next.x, next.y, frame.obstacles, clearance) ||
-        pointInObstacle((next.x + previousX) / 2, (next.y + previousY) / 2, frame.obstacles, clearance)
+        pointInObstacle(
+          (next.x + previousX) / 2,
+          (next.y + previousY) / 2,
+          frame.obstacles,
+          clearance,
+        )
       ) {
         spawn(particle, frame, trailLength, !ambient)
         appendSeedCurve(particle)

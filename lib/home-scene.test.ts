@@ -93,3 +93,32 @@ test("root device redirect is temporary, uncacheable and never affects inner rou
     )
   }
 })
+
+test("room aperture and exterior share one measured projection with sufficient camera overscan", async () => {
+  const { homeWindowProjection, homeWindowLook, HOME_ROOM } = await import("./home-scene")
+  for (const [width, height] of [
+    [1440, 900],
+    [1920, 1080],
+    [1280, 800],
+    [1024, 768],
+    [640, 720],
+  ]) {
+    const { room, opening, lake } = homeWindowProjection(width, height)
+    if (width / height <= 1.4) {
+      assert.deepEqual(room, { x: 0, y: 0, width, height })
+      assert.ok(opening.x >= 56 && opening.x + opening.width <= width - 56)
+    } else {
+      assert.ok(Math.abs(room.width / room.height - HOME_ROOM.width / HOME_ROOM.height) < 1e-10)
+    }
+    assert.ok(Math.abs((opening.x - room.x) / room.width - 211 / 1586) < 1e-10)
+    assert.ok(Math.abs((opening.y - room.y) / room.height - 166 / 992) < 1e-10)
+    for (const x of [-1, 1])
+      for (const y of [-1, 1]) {
+        const look = homeWindowLook(x, y, opening.height)
+        assert.ok(lake.x - look.x < opening.x)
+        assert.ok(lake.x + lake.width - look.x > opening.x + opening.width)
+        assert.ok(lake.y - look.y < opening.y)
+        assert.ok(lake.y + lake.height - look.y > opening.y + opening.height)
+      }
+  }
+})

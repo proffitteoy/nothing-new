@@ -1,8 +1,9 @@
+// Historical experiment, superseded by the v2 static window. Not an acceptance target.
 // Browser-only comparison harness, bundled by the acceptance script. Never
 // imported by the site. Independently implemented fixed-projector mapping;
 // no unlicensed reference shaders or code are copied.
 import * as THREE from "three"
-import { HOME_MOUNTAIN_PROFILE, homeLandscapeRect } from "../components/field/homeSpectralScene"
+import { HOME_MOUNTAIN_PROFILE, homeLandscapeRect } from "./home-window-legacy-scene"
 
 window.startNightWindowComparison = async () => {
   const opening = document.querySelector("[data-home-viewport]")

@@ -65,7 +65,6 @@ export default function HomeScene({
 }) {
   const [open, setOpen] = useState<string | null>(null)
   const root = useRef<HTMLElement>(null)
-  const viewport = useRef<HTMLDivElement>(null)
   const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const pinned = useRef(false)
@@ -123,6 +122,7 @@ export default function HomeScene({
         className={styles.scene}
         data-home-scene
         aria-label="Nothing New 山湖观景窗"
+        data-home-quality="loading"
         onKeyDown={(event) => {
           if (event.key === "Escape" && !(event.target as Element).closest("dialog")) {
             close(true)
@@ -130,12 +130,7 @@ export default function HomeScene({
         }}
       >
         <h1 className="sr-only">阿の宝藏之地 · Nothing New</h1>
-        <div className={styles.windowShell} data-home-window>
-          <div ref={viewport} className={styles.windowViewport} data-home-viewport>
-            <HomeSpectralCanvas host={root} viewport={viewport} />
-            <div className={styles.glass} aria-hidden="true" />
-          </div>
-        </div>
+        <HomeSpectralCanvas />
         {rails.map(({ side, entries }) => (
           <nav
             key={side}

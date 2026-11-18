@@ -1,6 +1,7 @@
 """Unified homepage acceptance. Evidence goes to --output (ignored by Git by default).
 
-The default navigation mode checks the current sidebars and bottom music dock.
+The default coupled-window mode checks the live room, spectral water response,
+restored sidebar previews and pointer, plus the root audio. Earlier modes are historical.
 The snapshots mode updates public/page-previews/ from local pages. It may read
 the public production anime data when local data is unavailable, while keeping
 the current local renderer and styles. Synthetic fixtures are never published.
@@ -18,6 +19,7 @@ import html
 import io
 import json
 import math
+import re
 from pathlib import Path
 import struct
 import subprocess
@@ -30,7 +32,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--url', default='http://127.0.0.1:3161')
 parser.add_argument('--output', default='.sync/tmp-home-scene-evidence')
 parser.add_argument('--browser', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
-parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'production-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview'], default='navigation')
+parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'production-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview', 'static-window', 'coupled-window'], default='coupled-window')
 parser.add_argument('--day-study', action='store_true', help='Apply the corrected daylight field to the real navigation acceptance (reduced motion at the existing reduced sizes); never changes production code.')
 parser.add_argument('--day-variant', choices=['static', 'corrected', 'before', 'a', 'b'], default='corrected', help='day-preview only: corrected (default), static or before; R/O/0 keys in the review tab. a/b are compatibility aliases, not design candidates.')
 args = parser.parse_args()
@@ -63,7 +65,17 @@ def fixture(context):
     songs = [{'id': i, 'name': f'场景测试曲 {i}', 'artist': '本地音频夹具', 'url': args.url + '/__scene-test.wav',
               'cover': '/avatar.jpg', 'lrc': '[00:00.00]此刻，风从花间经过\n[00:05.00]把一首歌留在这里\n[00:30.00]轨迹仍在继续'} for i in [1,2]]
     context.route('**/api/music?*', lambda r: r.fulfill(json=songs))
-    context.route('**/__scene-test.wav', lambda r: r.fulfill(body=audio.getvalue(), content_type='audio/wav'))
+    def serve_audio(route):
+        data = audio.getvalue()
+        match = re.fullmatch(r'bytes=(\d+)-(\d*)', route.request.headers.get('range', ''))
+        if match:
+            start = int(match[1])
+            end = min(int(match[2]) if match[2] else len(data) - 1, len(data) - 1)
+            route.fulfill(status=206, body=data[start:end + 1], content_type='audio/wav',
+                headers={'Accept-Ranges':'bytes', 'Content-Range':f'bytes {start}-{end}/{len(data)}'})
+        else:
+            route.fulfill(body=data, content_type='audio/wav', headers={'Accept-Ranges':'bytes'})
+    context.route('**/__scene-test.wav', serve_audio)
 
 def day_fixture(context):
     # Keep the real Image load/error and Splash handshake: substitute bytes at
@@ -88,7 +100,7 @@ def visit(context, allow_artwork_error=False):
     assert response and response.ok
     page.wait_for_function("document.documentElement.classList.contains('splash-seen')")
     page.wait_for_selector('[data-home-scene]')
-    page.wait_for_selector('[data-home-artwork=ready], [data-home-artwork=error]' if allow_artwork_error else '[data-home-artwork=ready]', timeout=60000)
+    page.wait_for_selector('[data-home-artwork=ready], [data-home-artwork=error]' if allow_artwork_error else '[data-home-artwork=ready]', state='attached', timeout=60000)
     if day_enabled:
         if day_animated:
             page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeQuality==='static'||Number(document.querySelector('[data-home-scene]').dataset.homeFrames)>3")
@@ -135,7 +147,309 @@ with sync_playwright() as p:
         check('environment', {'browser':browser.version, 'url':args.url,
             'music':'local WAV fixture; external music service not asserted',
             'visibility':'synthetic document.hidden event where explicitly labelled'})
-    if args.mode == 'day-preview':
+    if args.mode == 'coupled-window':
+        from PIL import Image, ImageChops
+        reports=[{'date':'2026-11-18','introduction':'','conclusion':'','papers':[{'title':'Coupled-window test paper','priority':'精读','url':'https://example.org/paper','html':'<p>Local interaction fixture.</p>'}]}]
+        check('environment',{'browser':browser.version,'url':args.url,'music':'local WAV fixture','papers':'one local report fixture','landscape':'real licensed texture; live shader; no injected scene'})
+        for width,height in [(1440,900),(1920,1080),(1366,768),(1280,800),(1024,768),(640,720),(1024,480)]:
+            dynamic=width==1440
+            context=context_for(browser,width,height,reduced=not dynamic,video=dynamic)
+            context.route('**/api/papers',lambda r:r.fulfill(json={'reports':reports}))
+            page=visit(context)
+            if dynamic:
+                page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeEffect==='water-response'")
+            else:
+                assert state(page)['homeQuality']=='static'
+                assert page.locator('[data-home-canvas]').evaluate('(e)=>e.width===0&&e.height===0')
+            expect(page.get_by_role('button',name='播放',exact=True)).to_be_visible()
+            assert page.locator('audio').count()==1
+            assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+            for entry in ['projects','anime','chatter','blog','papers','friends','about','contact']:
+                trigger=page.locator(f'[data-edge-trigger={entry}]')
+                before=trigger.bounding_box()
+                trigger.hover();page.wait_for_timeout(450)
+                expect(trigger).to_have_attribute('aria-expanded','true')
+                after=trigger.bounding_box()
+                assert abs(before['x']-after['x'])<.1, 'labels must not jump into the adjacent preview'
+                assert page.locator('[data-edge-trigger]').evaluate_all('(es)=>es.every(e=>{const r=e.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest("[data-edge-trigger]")===e})'), entry
+                if entry in ['projects','papers']:
+                    capture(page,f'coupled-{entry}-{width}x{height}')
+                if entry=='contact':
+                    expect(page.get_by_role('button',name='复制邮箱')).to_be_visible()
+            page.mouse.click(width/2,height-5)
+            page.wait_for_timeout(200)
+            page.keyboard.press('Escape')
+            capture(page,f'coupled-room-{width}x{height}')
+            page.locator('[data-edge-trigger=papers]').hover();page.wait_for_timeout(500)
+            page.get_by_role('button',name='打开 TDA 论文周报',exact=True).click()
+            expect(page.locator('#tda-issue-dialog')).to_be_visible()
+            page.get_by_role('button',name='Coupled-window test paper',exact=False).click()
+            expect(page.locator('#tda-paper-dialog')).to_be_visible()
+            page.keyboard.press('Escape');page.keyboard.press('Escape');page.keyboard.press('Escape')
+            expect(page.locator('[data-edge-trigger=papers]')).to_be_focused()
+            if dynamic:
+                page.mouse.move(5,5);page.wait_for_timeout(1200)
+                surface=page.locator('[data-home-canvas]')
+                first=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
+                page.wait_for_timeout(1000)
+                second=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
+                difference=ImageChops.difference(first,second)
+                assert difference.getbbox() and max(high for low,high in difference.getextrema())>10
+                first.save(out/'coupled-water-a.png');second.save(out/'coupled-water-b.png')
+                difference.save(out/'coupled-water-difference.png')
+                page.locator('[data-home-scene]').evaluate('(e)=>e.dataset.homeWaterStrength="0"');page.wait_for_timeout(120)
+                zero=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
+                page.locator('[data-home-scene]').evaluate('(e)=>e.dataset.homeWaterStrength="2.8"');page.wait_for_timeout(120)
+                active=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
+                delta=ImageChops.difference(zero,active)
+                assert delta.crop((0,0,1440,455)).getbbox() is None
+                assert delta.crop((0,610,1440,900)).getbbox() is None
+                assert delta.getbbox() is not None
+                zero.save(out/'coupled-water-zero.png');active.save(out/'coupled-water-active.png')
+                page.mouse.move(1150,300);page.wait_for_timeout(800)
+                assert abs(float(state(page)['homeLook'].split(',')[0]))>1
+                capture(page,'coupled-pointer-right')
+                page.mouse.move(290,300);page.wait_for_timeout(800)
+                capture(page,'coupled-pointer-left')
+                frame_count=state(page)['homeFrames']
+                page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))")
+                page.wait_for_timeout(250)
+                assert state(page)['homeFrames']==frame_count
+                page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))")
+                page.get_by_role('button',name='播放',exact=True).click()
+                page.wait_for_function("document.querySelector('audio').currentTime>.1")
+                page.get_by_role('button',name='暂停',exact=True).click()
+                page.get_by_role('slider',name='播放进度').fill('50')
+                page.wait_for_function("document.querySelector('audio').currentTime>40")
+                page.get_by_role('button',name='下一首',exact=True).click()
+                expect(page.get_by_role('heading',name='场景测试曲 2')).to_be_visible()
+                page.evaluate("window.__oldAudio=document.querySelector('audio');window.__oldSurface=document.querySelector('[data-home-canvas]')")
+                page.locator('[data-edge-trigger=about]').hover();page.wait_for_timeout(450)
+                page.get_by_role('link',name='进入关于',exact=True).click()
+                page.wait_for_url('**/about')
+                assert page.evaluate("document.querySelector('audio')===window.__oldAudio&&window.__oldSurface.width===0&&window.__oldSurface.height===0")
+                check('observable water, zero-field/outside mask, camera, synthetic hidden pause, music seek and cross-route disposal',{'differenceBounds':difference.getbbox(),'zeroFieldBounds':delta.getbbox()})
+            check(f'{width}x{height}: all eight labels reachable, previews stable, reader/Escape and music usable')
+            context.close()
+            if dynamic:Path(page.video.path()).replace(out/'coupled-window.webm')
+        context=context_for(browser,reduced=False)
+        context.add_init_script("const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,...args){return t.startsWith('webgl')?null:original.call(this,t,...args)}")
+        page=visit(context)
+        assert state(page)['homeQuality']=='static'
+        assert page.locator('[data-home-canvas]').evaluate('(e)=>e.width===0&&e.height===0')
+        capture(page,'coupled-no-webgl')
+        check('no WebGL: complete room fallback and no animation buffer')
+        context.close()
+        assert not errors,errors
+        check('all coupled-window checks passed',{'pageErrors':errors})
+    elif args.mode == 'static-window':
+        from PIL import Image, ImageChops
+        reports = [{'date': date, 'introduction': '<p>本地周报交互夹具</p>', 'conclusion': '',
+            'papers': [{'title': '拓扑数据分析测试论文 ' + date, 'priority': '精读',
+                'url': 'https://example.org/paper', 'html': '<p>用于验证阅读、选期和焦点恢复。</p>'}]} for date in ['2026-11-17', '2026-11-10']]
+        def papers_fixture(context):
+            context.route('**/api/papers', lambda r: r.fulfill(json={'reports': reports}))
+        def scroll_state(page):
+            return page.evaluate("[document.body, document.getElementById('app-scroll-root')].filter(Boolean).map(e => e.style.overflowY)")
+        def panel_bounds(page):
+            box = page.locator('[data-home-panel][open]').bounding_box()
+            sill = page.locator('[data-home-sill]').bounding_box()
+            assert box and sill and box['y'] + box['height'] <= sill['y'] - 1, (box, sill)
+        check('environment', {'browser': browser.version, 'url': args.url,
+            'music': 'local WAV fixture', 'papers': 'synthetic two-issue API fixture',
+            'scene': 'unmodified licensed production image; no scene injection'})
+        sizes = [(1440,900),(1920,1080),(1366,768),(1280,800),(1024,768),(640,720),(1024,480)]
+        for width, height in sizes:
+            context = context_for(browser, width, height, reduced=width != 1440, video=width == 1440)
+            papers_fixture(context)
+            requests = []
+            context.on('request', lambda request: requests.append(request.url))
+            page = visit(context)
+            expect(page.get_by_role('button', name='播放', exact=True)).to_be_visible()
+            opening = page.locator('[data-home-viewport]')
+            assert opening.locator('img').count() == 1
+            assert page.locator('[data-home-scene] canvas, [data-home-plane], [data-home-preview]').count() == 0
+            assert state(page)['homeBufferBytes'] == '0'
+            assert page.locator('[data-home-rail=left] [data-edge-trigger]').count() == 4
+            assert page.locator('[data-home-rail=right] [data-edge-trigger]').count() == 4
+            assert page.locator('[data-home-rail] a').count() == 6
+            assert page.locator('button[title=返回上一页]').count() == 0
+            assert not page.evaluate("document.querySelector('audio').autoplay || !document.querySelector('audio').paused")
+            assert page.locator('audio').count() == 1
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            for entry in ['projects','anime','chatter','blog','friends','about']:
+                trigger = page.locator('[data-edge-trigger=' + entry + ']')
+                href = trigger.get_attribute('href')
+                assert href.startswith('/blog/') if entry == 'blog' else href == '/' + entry
+                trigger.hover()
+                page.wait_for_timeout(100)
+                assert page.locator('dialog[open]').count() == 0
+            assert not any('/page-previews/' in url or any('/' + n + '.' in url and '/_next/static/media/' in url for n in ['projects','anime','chatter','blog','friends','about']) for url in requests)
+            before = Image.open(io.BytesIO(opening.screenshot())).convert('RGB')
+            page.mouse.move(width/2, height/2)
+            page.wait_for_timeout(700)
+            after = Image.open(io.BytesIO(opening.screenshot())).convert('RGB')
+            difference = ImageChops.difference(before, after)
+            if difference.getbbox() is not None:
+                before.save(out/'continuity-before.png')
+                after.save(out/'continuity-after.png')
+                difference.save(out/'continuity-diff.png')
+                print('changed pixel bounds', difference.getbbox(), flush=True)
+            assert max(upper for lower, upper in difference.getextrema()) <= 1, 'landscape moved or changed beyond 1/255 GPU raster tolerance'
+            page.mouse.move(2, 2)
+            capture(page, f'window-{width}x{height}')
+            before.save(out / f'landscape-{width}x{height}.png')
+            if width in [1440,1920,1280,1024] and height != 480:
+                box = page.locator('[data-home-window]').bounding_box()
+                whole = Image.open(out / f'window-{width}x{height}.png')
+                x,y = int(box['x']),int(box['y'])
+                whole.crop((x-8,y-8,x+100,y+240)).save(out / f'window-edge-{width}.png')
+            initial_scroll = scroll_state(page)
+            papers = page.locator('[data-edge-trigger=papers]')
+            papers.hover()
+            page.wait_for_timeout(400)
+            assert page.locator('dialog[open]').count() == 0
+            papers.focus()
+            assert page.locator('dialog[open]').count() == 0
+            panel_started = time.perf_counter()
+            page.keyboard.press('Enter')
+            expect(page.locator('#tda-home-summary')).to_be_visible()
+            panel_wall_ms = round((time.perf_counter() - panel_started)*1000,2)
+            expect(page.get_by_role('button', name='阅读周报', exact=True)).to_be_enabled()
+            panel_bounds(page)
+            capture(page, f'papers-panel-{width}x{height}')
+            page.keyboard.press('Escape')
+            expect(papers).to_be_focused()
+            page.wait_for_function("expected => JSON.stringify([document.body, document.getElementById('app-scroll-root')].filter(Boolean).map(e => e.style.overflowY)) === JSON.stringify(expected)", arg=initial_scroll)
+            papers.click()
+            page.get_by_role('button', name='阅读周报', exact=True).click()
+            expect(page.locator('#tda-issue-dialog')).to_be_visible()
+            assert not page.locator('#tda-home-summary').is_visible()
+            page.get_by_label('选择周报日期').select_option('2026-11-10')
+            page.get_by_role('button', name='拓扑数据分析测试论文 2026-11-10', exact=False).click()
+            expect(page.locator('#tda-paper-dialog')).to_be_visible()
+            expect(page.get_by_role('link', name='阅读原文', exact=False)).to_have_attribute('href', 'https://example.org/paper')
+            page.keyboard.press('Escape')
+            expect(page.locator('#tda-paper-dialog')).not_to_be_visible()
+            expect(page.locator('#tda-issue-dialog')).to_be_visible()
+            page.keyboard.press('Escape')
+            expect(papers).to_be_focused()
+            page.wait_for_function("expected => JSON.stringify([document.body, document.getElementById('app-scroll-root')].filter(Boolean).map(e => e.style.overflowY)) === JSON.stringify(expected)", arg=initial_scroll)
+            contact = page.locator('[data-edge-trigger=contact]')
+            contact.click()
+            expect(page.locator('#home-contact-panel')).to_be_visible()
+            panel_bounds(page)
+            expect(page.get_by_role('button', name='复制邮箱')).to_be_visible()
+            if width == 1440:
+                context.grant_permissions(['clipboard-read', 'clipboard-write'])
+                page.get_by_role('button', name='复制邮箱').click()
+                expect(page.get_by_text('邮箱已复制到剪贴板', exact=False)).to_be_visible()
+                capture(page, 'contact-copy-feedback')
+                page.get_by_role('button', name='关闭联系').click()
+            else:
+                page.keyboard.press('Escape')
+            expect(contact).to_be_focused()
+            page.wait_for_function("expected => JSON.stringify([document.body, document.getElementById('app-scroll-root')].filter(Boolean).map(e => e.style.overflowY)) === JSON.stringify(expected)", arg=initial_scroll)
+            dock = page.locator('[data-home-music]').bounding_box()
+            assert dock['y'] >= 0 and dock['y'] + dock['height'] <= height
+            session = context.new_cdp_session(page)
+            session.send('Performance.enable')
+            first = {m['name']: m['value'] for m in session.send('Performance.getMetrics')['metrics']}
+            page.wait_for_timeout(2000)
+            last = {m['name']: m['value'] for m in session.send('Performance.getMetrics')['metrics']}
+            check(f'{width}x{height}: static idle resource sample (2s)', {'sceneCanvasBuffers':0, 'sceneRAF':0, 'sourceImageRgbaBytes':1672*877*4,
+                'scriptMs':round((last['ScriptDuration']-first['ScriptDuration'])*1000,2),
+                'mainThreadTaskMs':round((last['TaskDuration']-first['TaskDuration'])*1000,2),
+                'fps':'not applicable: static scene; measurements include UI and fixture audio'})
+            if width == 1440:
+                page.get_by_role('button', name='播放', exact=True).click()
+                page.wait_for_function("document.querySelector('audio').currentTime > 0.1")
+                page.get_by_role('button', name='暂停', exact=True).click()
+                page.get_by_role('slider', name='播放进度').fill('50')
+                page.wait_for_function("document.querySelector('audio').currentTime > 40")
+                page.get_by_role('button', name='下一首', exact=True).click()
+                expect(page.get_by_role('heading', name='场景测试曲 2')).to_be_visible()
+                page.get_by_role('button', name='上一首', exact=True).click()
+                page.evaluate("window.__originalAudio = document.querySelector('audio')")
+                page.locator('[data-edge-trigger=about]').click()
+                page.wait_for_url('**/about')
+                assert page.evaluate("document.querySelector('audio') === window.__originalAudio")
+                page.goto(args.url, wait_until='domcontentloaded')
+                page.wait_for_selector('[data-home-artwork=ready]')
+            check(f'{width}x{height}: static continuity, eight entries, no previews, panels, focus, reader, music geometry', {'keyboardToPanelWallMs':panel_wall_ms, 'latencyNote':'includes Playwright protocol overhead; not browser input timing'})
+            context.close()
+            if width == 1440 and page.video:
+                Path(page.video.path()).replace(out/'window-v2-interactions.webm')
+        # Click each real Link through Next navigation and verify its destination.
+        context = context_for(browser, reduced=True)
+        papers_fixture(context)
+        page = visit(context)
+        for entry in ['projects','anime','chatter','blog','friends','about']:
+            href = page.locator(f'[data-edge-trigger={entry}]').get_attribute('href')
+            page.locator(f'[data-edge-trigger={entry}]').focus()
+            page.keyboard.press('Enter')
+            page.wait_for_url(lambda url: urlparse(url).path.startswith('/blog/') if entry == 'blog' else urlparse(url).path == '/' + entry)
+            page.goto(args.url, wait_until='domcontentloaded')
+            page.wait_for_selector('[data-home-artwork=ready]')
+        check('six direct links: keyboard activation reaches real routes')
+        context.close()
+        for failure in ['no-canvas-webgl','image-error','music-error','papers-error']:
+            context = context_for(browser, reduced=True)
+            papers_fixture(context)
+            if failure == 'no-canvas-webgl':
+                context.add_init_script("HTMLCanvasElement.prototype.getContext = function(){ throw new Error('Canvas disabled for static acceptance') }")
+            if failure == 'image-error':
+                context.route('**/*convict-lake-day-study*', lambda r: r.abort())
+            if failure == 'music-error':
+                context.route('**/api/music?*', lambda r: r.fulfill(status=503,json={'error':'test failure'}))
+            if failure == 'papers-error':
+                context.route('**/api/papers', lambda r: r.fulfill(status=503,json={'error':'test failure'}))
+            page = visit(context, allow_artwork_error=failure == 'image-error')
+            assert page.locator('[data-home-scene] canvas').count() == 0
+            if failure == 'image-error':
+                expect(page.get_by_text('暂时无法加载窗外景观')).to_be_visible()
+            if failure == 'music-error':
+                expect(page.get_by_text('音乐暂时无法加载')).to_be_visible()
+                context.unroute('**/api/music?*')
+                fixture(context)
+                page.get_by_role('button', name='重试', exact=False).click()
+                expect(page.get_by_role('button',name='播放',exact=True)).to_be_visible()
+                assert page.locator('audio').count() == 1
+            if failure == 'papers-error':
+                page.locator('[data-edge-trigger=papers]').click()
+                expect(page.locator('#tda-home-summary').get_by_text('暂时无法检查更新',exact=False)).to_be_visible()
+                page.keyboard.press('Escape')
+                context.unroute('**/api/papers')
+                papers_fixture(context)
+                page.locator('[data-edge-trigger=papers]').click()
+                expect(page.get_by_role('button', name='阅读周报', exact=True)).to_be_enabled()
+                page.keyboard.press('Escape')
+            capture(page, failure)
+            check(failure + ': fallback/retry and navigation remain available')
+            context.close()
+        context = context_for(browser, width=1024, height=768, reduced=True, has_touch=True)
+        papers_fixture(context)
+        page = visit(context)
+        page.locator('[data-edge-trigger=contact]').tap()
+        expect(page.locator('#home-contact-panel')).to_be_visible()
+        page.get_by_role('button', name='关闭联系').tap()
+        expect(page.locator('[data-edge-trigger=contact]')).to_be_focused()
+        check('desktop touch: click-only contact panel and focus return')
+        context.close()
+        context = browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True,
+            user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1')
+        page = context.new_page()
+        page.goto(args.url,wait_until='domcontentloaded')
+        page.wait_for_url('**/blog/**')
+        assert page.locator('[data-home-scene]').count() == 0
+        expect(page.locator('button[title=返回上一页]')).to_be_visible()
+        check('mobile root: existing redirect to actual note and inner-page back control remain intact', page.url)
+        context.close()
+        assert not errors, errors
+        check('all checks passed', {'pageErrors':errors})
+        cards = '\n'.join('<figure><a href="'+f.name+'"><img src="'+f.name+'" loading="lazy"></a><figcaption>'+f.name+'</figcaption></figure>' for f in sorted(out.glob('window-*.png')))
+        (out/'index.html').write_text('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>静态窗洞审阅</title><style>body{margin:32px;background:#eef0ef;color:#29354b;font:16px/1.6 system-ui}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(480px,1fr));gap:24px}figure{margin:0}img{width:100%;display:block}</style><h1>深木窗洞 · 静态视觉候选</h1><p>本地生产构建；音乐与周报交互使用明确标记的夹具。自动化通过不代表人工视觉批准。点击查看原尺寸。</p><main>'+cards+'</main><p><a href="window-v2-interactions.webm">1440px 交互录屏</a></p></html>',encoding='utf8')
+    elif args.mode == 'day-preview':
         context = context_for(browser)
         page = visit(context)
         print('Daylight study in a real homepage tab. ' + ('Review keys: R corrected / O before / 0 no-field baseline. ' if day_animated else 'Static candidate; motion stopped. ') + 'Close the tab/window to end preview.', flush=True)

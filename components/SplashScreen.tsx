@@ -123,8 +123,8 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
         if (!roomLoading && !homeLoading) break
         await sleep(32, signal)
       }
-      // HomeScene is loaded dynamically. Wait for it before collecting the
-      // eagerly mounted previews, including covers inside closed sidebars.
+      // HomeScene reports its room and exterior readiness above. Warm the
+      // restored sidebar screenshots while the opening plays.
       const images = Array.from(document.images).filter((img) => {
         if (homeEntry && img.closest("[data-home-preview]")) return true
         if (!img.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return false
@@ -149,8 +149,8 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       if (animationFinished || signal.aborted || skipped.current) return
       animationFinished = true
       if (animationFallbackTimer !== undefined) window.clearTimeout(animationFallbackTimer)
-      // The last simplex has vanished. Reveal the existing homepage particle
-      // canvas immediately; noncritical route prefetches can finish in parallel.
+      // The last simplex has vanished. Reveal the homepage immediately;
+      // noncritical route prefetches can finish in parallel.
       reveal()
     }
 

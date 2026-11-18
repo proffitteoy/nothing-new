@@ -1,0 +1,29 @@
+Nothing New observation-room foreground, 2026-11-18
+
+Asset: observation-room.webp, 1586 x 992, RGBA, 1,064,508 bytes.
+Created with the built-in imagegen tool for this project. The original generated
+PNG was losslessly encoded as WebP; no manual repainting or alpha retouching.
+The transparent window aperture envelope in source pixels is x=211, y=166,
+width=1165, height=530. Room and landscape remain separate source textures.
+
+Reference roles:
+- Existing licensed Convict Lake daylight adaptation: exterior colour/light
+  context and aperture alignment. Its credits and CC BY-SA 3.0 license are
+  retained in NOTICE-day-study.txt; the foreground does not embed the lake.
+- https://julianneagu.com/immersive : spatial/interaction organisation reference;
+  its website screenshot is not a runtime texture, and no source code is copied.
+- The rejected local static wood-window candidate: negative example.
+
+Generation brief (summary, not a verbatim transcript):
+A full-canvas daylight room foreground seen from a single fixed camera,
+with ceiling, side walls, deep smoked-walnut window reveal, substantial
+horizontal sill and stone floor. One broad undivided window opening must
+be fully transparent. Cool neutral gray walls/floor and consistent natural
+light from upper left; no UI, text, furniture, lamps, plants, curtains,
+particles, glow or decorative effects. Keep one coherent perspective and
+leave the outdoor lake to a separate texture behind the transparent opening.
+
+License for this foreground asset: CC BY-SA 3.0 Unported.
+https://creativecommons.org/licenses/by-sa/3.0/
+Nothing New adaptation by proffitteoy. Site source code: GPL-3.0-only.
+No endorsement by the photographers or reference websites is implied.

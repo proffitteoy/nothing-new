@@ -86,3 +86,51 @@ export function isMobileHomeClient() {
       matchMedia("(hover: none) and (pointer: coarse)").matches)
   )
 }
+
+// Measured from the room asset alpha, not independent CSS offsets.
+export const HOME_ROOM = { width: 1586, height: 992, opening: [211, 166, 1165, 530] } as const
+export const HOME_LAKE = { width: 1672, height: 877 } as const
+
+export function homeWindowProjection(width: number, height: number) {
+  const scale = Math.max(width / HOME_ROOM.width, height / HOME_ROOM.height)
+  // Narrow desktop layouts retain both reveals. Resize the complete interior
+  // together rather than cropping its walls or moving navigation over the lake.
+  const room =
+    width / height <= 1.4
+      ? { x: 0, y: 0, width, height }
+      : {
+          x: (width - HOME_ROOM.width * scale) / 2,
+          y: (height - HOME_ROOM.height * scale) / 2,
+          width: HOME_ROOM.width * scale,
+          height: HOME_ROOM.height * scale,
+        }
+  const [x, y, w, h] = HOME_ROOM.opening
+  const opening = {
+    x: room.x + (x / HOME_ROOM.width) * room.width,
+    y: room.y + (y / HOME_ROOM.height) * room.height,
+    width: (w / HOME_ROOM.width) * room.width,
+    height: (h / HOME_ROOM.height) * room.height,
+  }
+  const lakeScale = Math.max(
+    (opening.width + 64) / HOME_LAKE.width,
+    (opening.height + 64) / HOME_LAKE.height,
+  )
+  const lake = {
+    x: opening.x + (opening.width - HOME_LAKE.width * lakeScale) / 2,
+    y: opening.y + (opening.height - HOME_LAKE.height * lakeScale) / 2,
+    width: HOME_LAKE.width * lakeScale,
+    height: HOME_LAKE.height * lakeScale,
+  }
+  return { room, opening, lake }
+}
+
+// A fixed aperture at 2m, exterior reference plane at 20m; only the viewpoint moves.
+// All exterior pixels (including water) use this one off-axis projection.
+export function homeWindowLook(x: number, y: number, openingHeight: number) {
+  const focal = openingHeight * 1.1
+  const travel = 0.045 * (1 / 2 - 1 / 20) * focal
+  return {
+    x: Math.max(-1, Math.min(1, x)) * travel,
+    y: Math.max(-1, Math.min(1, y)) * travel * 0.7,
+  }
+}

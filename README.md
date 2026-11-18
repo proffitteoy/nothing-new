@@ -13,26 +13,26 @@
 </p>
 
 <p align="center">
-  <img src="./docs/images/home-window/desktop-1440.webp" alt="阿の宝藏之地山湖观景窗首页" width="100%">
+  <img src="./docs/images/home-window/coupled-room-1440.webp" alt="室内观景窗首页，含局部水面运动；待人工视觉审阅" width="100%">
 </p>
 
 ## 关于这个站点
 
-“阿の宝藏之地”不是单一用途的博客模板，而是一套围绕个人内容建立的长期归档系统：项目与开源经历有独立展柜，番剧、杂谈与数学笔记共享同一套视觉语言，首页提供桌面沉浸式场景、两侧导航预览和底部音乐控制。
+“阿の宝藏之地”不是单一用途的博客模板，而是一套围绕个人内容建立的长期归档系统：项目与开源经历有独立展柜，番剧、杂谈与数学笔记共享同一套视觉语言，首页提供桌面沉浸式场景、两侧预览导航和窗台音乐控制。
 
 站点由 **Next.js 主站**与经过本地化改造的 **Quartz 内容管线**共同组成。Markdown 仍是内容源，构建时会生成可供主站读取的文章、目录、搜索索引、反向链接和静态资源；Obsidian 只是可选的写作入口，并不是运行依赖。
 
 ## 页面与能力
 
-| 页面 | 路径                                                      | 主要内容                                               |
-| ---- | --------------------------------------------------------- | ------------------------------------------------------ |
+| 页面 | 路径                                                      | 主要内容                                                 |
+| ---- | --------------------------------------------------------- | -------------------------------------------------------- |
 | 首页 | [<code>/</code>](https://nothing-new.cn/)                 | 桌面山湖观景窗、左右各四入口与窗台音乐；移动访问进入笔记 |
-| 项目 | [<code>/projects</code>](https://nothing-new.cn/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                  |
-| 番剧 | [<code>/anime</code>](https://nothing-new.cn/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档            |
-| 杂谈 | [<code>/chatter</code>](https://nothing-new.cn/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示             |
-| 笔记 | [<code>/blog</code>](https://nothing-new.cn/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接 |
-| 友链 | [<code>/friends</code>](https://nothing-new.cn/friends)   | 朋友站点与独立博客入口                                 |
-| 关于 | [<code>/about</code>](https://nothing-new.cn/about)       | 个人介绍、技术足迹与站点信息                           |
+| 项目 | [<code>/projects</code>](https://nothing-new.cn/projects) | 研究工作、AI 工具、竞赛项目与开源贡献                    |
+| 番剧 | [<code>/anime</code>](https://nothing-new.cn/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档              |
+| 杂谈 | [<code>/chatter</code>](https://nothing-new.cn/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示               |
+| 笔记 | [<code>/blog</code>](https://nothing-new.cn/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接   |
+| 友链 | [<code>/friends</code>](https://nothing-new.cn/friends)   | 朋友站点与独立博客入口                                   |
+| 关于 | [<code>/about</code>](https://nothing-new.cn/about)       | 个人介绍、技术足迹与站点信息                             |
 
 ## 页面预览
 
@@ -53,17 +53,17 @@
 
 ## 核心实现
 
-- **桌面观景窗首页**：授权山湖夜景、分层视差、同源六模态光雾与倒影、窗沿导航及窗台音乐，见[首页实现与集中验证](docs/project/home-scene.md)和[视觉与开发方案](docs/project/Nothing_New_观景窗首页_视觉与开发方案_2026-11-17.md)。移动设备仍进入笔记，其他页面外观不变。
+- **桌面观景窗首页**：连续日景、完整室内窗洞、局部水面谱场响应、指针观察位移、侧栏预览及窗台音乐，见[首页实现与集中验证](docs/project/home-scene.md)和[v2 设计规范](docs/project/Nothing_New_首页重构_设计与开发规范_v2_2026-11-17.md)。当前动态版本已在本地生产构建检查，待人工视觉审阅，尚未部署。移动设备仍进入笔记。
 
 - **友链首页预览**：按需加载首页快照，支持键盘与移动端操作，见[友链说明](docs/project/friends-preview.md)。
 - **按入口启动**：桌面首页开场完成立即揭幕，资源预热并行继续；其他页面和减少动态效果入口跳过开场 iframe，使用有上限的准备阶段。支持跳过与 hydration 失败兜底。职责、独立超时预算与历史记录见[全站启动与导航](docs/project/site-startup.md)。
 - **关于页三个章节**：网站介绍、工程身份与研究身份独立维护 Markdown，共用章节索引和滚动定位，见[关于页结构](docs/project/about-restructure.md)。
-- **统一的页面外壳**：每页仅维护一套固定外观，首页保留深色谱场，内页保留默认浅色；响应式导航、全站背景、动态场景和播放器状态在不同页面间保持一致，不提供昼夜或主题切换。
+- **统一的页面外壳**：每页仅维护一套固定外观，首页为日间动态观景窗，内页保留默认浅色；响应式导航、全站背景、动态场景和播放器状态在不同页面间保持一致，不提供昼夜或主题切换。
 - **全站组件色卡**：蓝色主基调，搭配玫红、紫色和青绿；中性阅读面禁用米黄、奶油白和浅琥珀底色，素材保留原色，见[全站配色规范](docs/project/blue-theme.md)。
 - **桌面文字可读性**：清理重复标签、常驻操作教程和技术错误详情，逐组件改善字号与局部阅读面；文章、个人介绍、项目描述及素材保留原样。笔记目录的自动摘要复用构建后的公式渲染，显式作者摘要与旧产物保持兼容，见[文字与文案约定](docs/project/blue-theme.md#桌面文字与文案2026-11-16)。
-- **界面与场景**：不按时间、系统配色或历史缓存切换外观；首页采用统一高性能及自适应降级。当前约定见[全站配色规范](docs/project/blue-theme.md)，旧天体与显示开关仅保留[历史设计记录](docs/project/home-mode-panels.md)。
-- **导航与侧栏**：首页左右各四个冷蓝灰侧边入口，共用论文侧栏交互，六个页面入口展开静态页面预览，移出后 120ms 收起；内页导航及手机圆盘见[导航视觉更新与验收](docs/project/navigation-renewal.md)。
-- **TDA 文献雷达**：首页侧栏只保留可点击封面，打开后按论文展开阅读；监控仓库的 Action 将完整周报推送至博客，无需每周重新部署。配置见 [TDA 论文周报](docs/project/tda-paper-monitor.md)。
+- **界面与场景**：不按时间、系统配色或历史缓存切换外观；首页默认用单一 WebGL2 合成器处理水面局部采样，减少动态或无 WebGL 时回退完整静态房间。当前约定见[全站配色规范](docs/project/blue-theme.md)，旧天体与显示开关仅保留[历史设计记录](docs/project/home-mode-panels.md)。
+- **导航与侧栏**：首页左右各四入口，保留悬停截图预览、固定、键盘和论文两层阅读；标签固定，预览向内展开，保持所有入口可点；内页导航及手机圆盘见[导航视觉更新与验收](docs/project/navigation-renewal.md)。
+- **TDA 文献雷达**：首页保留周报封面入口，进入后可选期并展开论文；监控仓库的 Action 将完整周报推送至博客，无需每周重新部署。配置见 [TDA 论文周报](docs/project/tda-paper-monitor.md)。
 - **首页音乐控制**：播放、切歌和进度常驻下方，歌词位于控件上方。[接口、隔离预览与验证边界](docs/project/home-music-renewal.md)。
 - **音乐播放**：桌面首页显示底部控件或首次打开项目页耳机面板时加载歌单，不自动播放；加载后由根 Provider/audio 保留跨页状态，首次加载、空歌单及失败均有反馈，支持重试。
 - **项目与兴趣归档**：项目页采用可环绕的窗边研究小屋，保留静态预览和可读目录；项目内容由本地数据维护，番剧页读取服务端同步的不可变快照，并保留 API 回退。
@@ -75,13 +75,13 @@
 
 ## 技术栈
 
-| 层级       | 技术                                               |
-| ---------- | -------------------------------------------------- |
-| Web        | Next.js 16、React 19、TypeScript、Tailwind CSS 4   |
-| 动效与场景 | Framer Motion、Three.js、Canvas 2D                |
-| 内容处理   | Quartz、Markdown、KaTeX、Shiki、FlexSearch         |
-| 数据来源   | 本地 TypeScript 数据、Bangumi API、网易云音乐接口  |
-| 工程化     | ESLint、Prettier、Node.js Test Runner、Vercel      |
+| 层级       | 技术                                              |
+| ---------- | ------------------------------------------------- |
+| Web        | Next.js 16、React 19、TypeScript、Tailwind CSS 4  |
+| 动效与场景 | Framer Motion、Three.js、WebGL2、Canvas 2D        |
+| 内容处理   | Quartz、Markdown、KaTeX、Shiki、FlexSearch        |
+| 数据来源   | 本地 TypeScript 数据、Bangumi API、网易云音乐接口 |
+| 工程化     | ESLint、Prettier、Node.js Test Runner、Vercel     |
 
 ## 快速开始
 

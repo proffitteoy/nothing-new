@@ -1,5 +1,6 @@
-import { spectralDirectionAt } from "./SpectralTracerLayer"
-import { SPECTRAL_PLAYBACK_RATE } from "./spectralField"
+// Historical rejected light/mist study. Never import into the production homepage.
+import { spectralDirectionAt } from "../components/field/SpectralTracerLayer"
+import { SPECTRAL_PLAYBACK_RATE } from "../components/field/spectralField"
 
 // Interleaved direction x/y and curvature. This is a sampled view of the
 // original six-mode field, never a second noise field or a new spectral model.
