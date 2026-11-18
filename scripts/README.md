@@ -8,7 +8,7 @@
 - `celestial-preview.py`：已退役的 #49 入口，旧选项明确报停，不再生成或清理 Next 路由；历史来源与当前替代检查见[日月记录](../docs/project/home-mode-panels.md)。
 - `profile-preview.py`：#47 首页个人信息退场与联系操作测试，详见[个人区调整](../docs/project/profile-renewal.md)。
 - `home-music-preview.py`：#48 音乐控制与舞台歌词测试，详见[音乐](../docs/project/home-music-renewal.md)。
-- `projects-preview.py`：#52 研究小屋与六项目交互测试；`--connection-only` 单独检查 main 基线的首页/项目滚动往返、详情、音乐、历史与退化，不运行依赖旧工具栏的历史矩阵。详见[项目页](../docs/project/projects-room.md)。
+- `projects-preview.py`：#52 研究小屋与六项目交互测试；`--connection-only` 检查窗前／房间／湖景状态、自由查看返程、输入归属、音乐、历史／刷新／resize、八种桌面尺寸及退化，不运行依赖旧工具栏的历史矩阵，不生成画面或修改资产。详见[项目页](../docs/project/projects-room.md)。
 - `about-preview.py`：关于页三章节、索引与滚动定位的响应式检查，详见[关于页结构](../docs/project/about-restructure.md)。
 - `chatter-preview.py`：#55 杂谈图版、搜索和跳转测试；`npm run test:chatter`，详见[杂谈](../docs/project/chatter-magazine.md)。
 

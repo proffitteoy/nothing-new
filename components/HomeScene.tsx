@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
   BookOpen,
   Clapperboard,
@@ -19,6 +19,7 @@ import PaperMonitor, { SidebarPreview } from "./PaperMonitor"
 import ProfileActions from "./ProfileActions"
 import { ToastProvider } from "./ToastProvider"
 import HomeSpectralCanvas from "./HomeSpectralCanvas"
+import { useHomeProjectState } from "./HomeProjectNavigation"
 import type { PaperReport } from "../lib/papers"
 import styles from "./HomeScene.module.css"
 import projectsPreview from "../public/page-previews/projects.webp"
@@ -64,6 +65,24 @@ export default function HomeScene({
   blogHref: string
 }) {
   const [open, setOpen] = useState<string | null>(null)
+  const [draggingMusic, setDraggingMusic] = useState(false)
+  const navigation = useHomeProjectState()
+  const controls = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (controls.current)
+      controls.current.inert = navigation.enabled && navigation.progress.current >= 0.18
+  }, [navigation])
+  useEffect(() => {
+    const finish = () => setDraggingMusic(false)
+    window.addEventListener("pointerup", finish)
+    window.addEventListener("pointercancel", finish)
+    window.addEventListener("blur", finish)
+    return () => {
+      window.removeEventListener("pointerup", finish)
+      window.removeEventListener("pointercancel", finish)
+      window.removeEventListener("blur", finish)
+    }
+  }, [])
   const root = useRef<HTMLElement>(null)
   const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -121,6 +140,7 @@ export default function HomeScene({
         ref={root}
         className={styles.scene}
         data-home-scene
+        data-home-music-dragging={draggingMusic}
         aria-label="Nothing New 山湖观景窗"
         data-home-quality="loading"
         onKeyDown={(event) => {
@@ -131,148 +151,156 @@ export default function HomeScene({
       >
         <h1 className="sr-only">阿の宝藏之地 · Nothing New</h1>
         <HomeSpectralCanvas />
-        {rails.map(({ side, entries }) => (
-          <nav
-            key={side}
-            className={`${styles.rail} ${side === "left" ? styles.left : styles.right}`}
-            aria-label={`首页${side === "left" ? "左" : "右"}侧导航`}
-            data-home-rail={side}
-          >
-            {entries.map(({ id, name, href, icon: Icon, preview }) => {
-              const expanded = open === id
-              return (
-                <aside
-                  key={id}
-                  className={styles.edge}
-                  data-home-edge={id}
-                  data-open={expanded}
-                  onPointerEnter={(event) => {
-                    if (
-                      event.pointerType !== "mouse" ||
-                      (event.target as Element).closest("dialog")
-                    )
-                      return
-                    keyboardSide.current = null
-                    clearTimeout(closeTimer.current)
-                  }}
-                  onPointerLeave={() => scheduleClose(id)}
-                  onBlur={(event) => {
-                    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
-                    if ((event.relatedTarget as Element | null)?.closest("dialog")) return
-                    if (!document.querySelector("dialog[open]")) pinned.current = false
-                    scheduleClose(id)
-                  }}
-                >
-                  <button
-                    type="button"
-                    className={styles.tab}
-                    data-edge-trigger={id}
-                    aria-label={`${expanded ? "收起" : "展开"}${name}`}
-                    aria-expanded={expanded}
-                    aria-controls={`home-${id}-panel`}
+        <div ref={controls} data-home-ui style={{ opacity: "var(--home-navigation-opacity, 1)" }}>
+          {rails.map(({ side, entries }) => (
+            <nav
+              key={side}
+              className={`${styles.rail} ${side === "left" ? styles.left : styles.right}`}
+              aria-label={`首页${side === "left" ? "左" : "右"}侧导航`}
+              data-home-rail={side}
+            >
+              {entries.map(({ id, name, href, icon: Icon, preview }) => {
+                const expanded = open === id
+                return (
+                  <aside
+                    key={id}
+                    className={styles.edge}
+                    data-home-edge={id}
+                    data-open={expanded}
                     onPointerEnter={(event) => {
-                      if (event.pointerType !== "mouse") return
-                      clearTimeout(openTimer.current)
-                      openTimer.current = setTimeout(() => {
-                        pinned.current = false
-                        setOpen(id)
-                      }, 350)
+                      if (
+                        event.pointerType !== "mouse" ||
+                        (event.target as Element).closest("dialog")
+                      )
+                        return
+                      keyboardSide.current = null
+                      clearTimeout(closeTimer.current)
                     }}
                     onPointerLeave={() => scheduleClose(id)}
-                    onFocus={(event) => {
-                      clear()
-                      keyboardSide.current = event.currentTarget.matches(":focus-visible")
-                        ? id
-                        : null
-                      setOpen(id)
-                    }}
-                    onClick={() => {
-                      clear()
-                      // Pointer focus may already have opened this preview.
-                      if (pinned.current && expanded) close()
-                      else {
-                        pinned.current = true
-                        setOpen(id)
-                      }
+                    onBlur={(event) => {
+                      if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+                      if ((event.relatedTarget as Element | null)?.closest("dialog")) return
+                      if (!document.querySelector("dialog[open]")) pinned.current = false
+                      scheduleClose(id)
                     }}
                   >
-                    <Icon size={17} aria-hidden />
-                    <span>{name}</span>
-                  </button>
-                  <div
-                    id={`home-${id}-panel`}
-                    className={styles.preview}
-                    data-home-preview={id}
-                    data-open={expanded}
-                    // Keep the native paper dialogs outside inert/aria-hidden trees.
-                    inert={id !== "papers" && !expanded}
-                    aria-hidden={id !== "papers" && !expanded ? true : undefined}
-                    onPointerDownCapture={(event) => {
-                      if (
-                        (event.target as Element).closest(
-                          "[data-edge-summary], [data-paper-summary]",
-                        )
-                      )
-                        keyboardSide.current = null
-                    }}
-                    onKeyDownCapture={(event) => {
-                      if (
-                        (event.key === "Enter" || event.key === " ") &&
-                        (event.target as Element).closest(
-                          "[data-edge-summary], [data-paper-summary]",
-                        )
-                      )
-                        keyboardSide.current = id
-                    }}
-                  >
-                    {href && preview ? (
-                      <Link
-                        href={href === "/blog" ? blogHref : href}
-                        prefetch={false}
-                        className={styles.previewLink}
-                        data-edge-summary
-                        aria-label={`进入${name}`}
-                      >
-                        <SidebarPreview src={preview} alt={`${name}页面预览`} />
-                      </Link>
-                    ) : id === "papers" ? (
-                      <PaperMonitor
-                        initialReports={reports}
-                        compact
-                        active={expanded}
-                        onIssueClose={() => {
+                    <button
+                      type="button"
+                      className={styles.tab}
+                      data-edge-trigger={id}
+                      aria-label={`${expanded ? "收起" : "展开"}${name}`}
+                      aria-expanded={expanded}
+                      aria-controls={`home-${id}-panel`}
+                      onPointerEnter={(event) => {
+                        if (event.pointerType !== "mouse") return
+                        clearTimeout(openTimer.current)
+                        openTimer.current = setTimeout(() => {
                           pinned.current = false
-                          scheduleClose("papers")
-                        }}
-                      />
-                    ) : (
-                      <div className={styles.contactPanel} data-edge-summary>
-                        <ProfileActions />
-                      </div>
-                    )}
-                  </div>
-                </aside>
-              )
-            })}
-          </nav>
-        ))}
-        <div className={styles.windowSill} data-home-sill>
-          <p className={styles.signature} aria-hidden="true">
-            阿の宝藏之地
-          </p>
-          <div className={styles.musicDock} data-home-music>
-            <LyricBar className={styles.lyrics} />
-            <CloudPlayer dock className={styles.sillPlayer} />
+                          setOpen(id)
+                        }, 350)
+                      }}
+                      onPointerLeave={() => scheduleClose(id)}
+                      onFocus={(event) => {
+                        clear()
+                        keyboardSide.current = event.currentTarget.matches(":focus-visible")
+                          ? id
+                          : null
+                        setOpen(id)
+                      }}
+                      onClick={() => {
+                        clear()
+                        // Pointer focus may already have opened this preview.
+                        if (pinned.current && expanded) close()
+                        else {
+                          pinned.current = true
+                          setOpen(id)
+                        }
+                      }}
+                    >
+                      <Icon size={17} aria-hidden />
+                      <span>{name}</span>
+                    </button>
+                    <div
+                      id={`home-${id}-panel`}
+                      className={styles.preview}
+                      data-home-preview={id}
+                      data-open={expanded}
+                      // Keep the native paper dialogs outside inert/aria-hidden trees.
+                      inert={id !== "papers" && !expanded}
+                      aria-hidden={id !== "papers" && !expanded ? true : undefined}
+                      onPointerDownCapture={(event) => {
+                        if (
+                          (event.target as Element).closest(
+                            "[data-edge-summary], [data-paper-summary]",
+                          )
+                        )
+                          keyboardSide.current = null
+                      }}
+                      onKeyDownCapture={(event) => {
+                        if (
+                          (event.key === "Enter" || event.key === " ") &&
+                          (event.target as Element).closest(
+                            "[data-edge-summary], [data-paper-summary]",
+                          )
+                        )
+                          keyboardSide.current = id
+                      }}
+                    >
+                      {href && preview ? (
+                        <Link
+                          href={href === "/blog" ? blogHref : href}
+                          prefetch={false}
+                          className={styles.previewLink}
+                          data-edge-summary
+                          aria-label={`进入${name}`}
+                        >
+                          <SidebarPreview src={preview} alt={`${name}页面预览`} />
+                        </Link>
+                      ) : id === "papers" ? (
+                        <PaperMonitor
+                          initialReports={reports}
+                          compact
+                          active={expanded}
+                          onIssueClose={() => {
+                            pinned.current = false
+                            scheduleClose("papers")
+                          }}
+                        />
+                      ) : (
+                        <div className={styles.contactPanel} data-edge-summary>
+                          <ProfileActions />
+                        </div>
+                      )}
+                    </div>
+                  </aside>
+                )
+              })}
+            </nav>
+          ))}
+          <div className={styles.windowSill} data-home-sill>
+            <p className={styles.signature} aria-hidden="true">
+              阿の宝藏之地
+            </p>
+            <div
+              className={styles.musicDock}
+              data-home-music
+              onPointerDownCapture={(event) => {
+                if ((event.target as Element).closest('input[type="range"]')) setDraggingMusic(true)
+              }}
+            >
+              <LyricBar className={styles.lyrics} />
+              <CloudPlayer dock className={styles.sillPlayer} />
+            </div>
+            <a
+              className={styles.artCredit}
+              href="/home-window/NOTICE-day-study.txt"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="景观来源与许可：TheDailyNathan、Hike395，CC BY-SA 3.0，已改编"
+            >
+              景观来源
+            </a>
           </div>
-          <a
-            className={styles.artCredit}
-            href="/home-window/NOTICE-day-study.txt"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="景观来源与许可：TheDailyNathan、Hike395，CC BY-SA 3.0，已改编"
-          >
-            景观来源
-          </a>
         </div>
       </main>
     </ToastProvider>

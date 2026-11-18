@@ -1,4 +1,12 @@
 export const HOME_CYCLE_SECONDS = 300
+
+// One native scroll axis: room (-1), window (0), landscape (+1).
+export function homeProjectProgress(top: number, height: number) {
+  return Math.max(-1, Math.min(1, top / Math.max(1, height) / 2 - 1))
+}
+export function homeProjectScroll(progress: number, height: number) {
+  return (2 + 2 * Math.max(-1, Math.min(1, progress))) * Math.max(1, height)
+}
 export const HOME_IMAGE_SIZE = { width: 1672, height: 941 }
 
 // Audited envelope in original image pixels, including veil, bouquet and hands.

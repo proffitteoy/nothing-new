@@ -7,6 +7,8 @@ import {
   homeWindowProjection,
   homeWindowLook,
   HOME_ROOM,
+  HOME_LAKE,
+  homeProjectProgress,
 } from "../lib/home-scene"
 import { SPECTRAL_PLAYBACK_RATE, SPECTRAL_DIRECTION_GLSL } from "./field/spectralField"
 import landscape from "../public/home-window/convict-lake-day-study.webp"
@@ -47,6 +49,7 @@ uniform float uStrength;
 uniform float uTime;
 uniform float uWorldTime;
 uniform float uAmbientBlend;
+uniform float uInteriorOpacity;
 uniform vec4 uEffects;
 ${SPECTRAL_DIRECTION_GLSL}
 float rise(float a,float b,float x){ float v=clamp((x-a)/(b-a),0.,1.); return v*v*(3.-2.*v); }
@@ -96,6 +99,7 @@ void main(){
   vec2 pixel=vec2(uv.x,1.-uv.y)*uSize;
   vec2 r=(pixel-uRoomRect.xy)/uRoomRect.zw;
   vec4 interior=texture(uRoom,vec2(r.x,1.-r.y));
+  interior.a*=uInteriorOpacity;
   if(uAmbientBlend>0.) {
     vec3 receiver=texture(uRoomLight,vec2(r.x,1.-r.y)).rgb;
     float sunlight=cloudAt(receiver.rg,uWorldTime*uEffects.z).a;
@@ -150,6 +154,61 @@ export default function HomeSpectralCanvas() {
       shaders: WebGLShader[] = []
     const uniforms: Record<string, WebGLUniformLocation | null> = {}
     let projection = homeWindowProjection(stage.clientWidth, stage.clientHeight)
+    const scrollRoot = document.getElementById("app-scroll-root")
+    const outsideProgress = () => {
+      const progress =
+        scrollRoot && document.documentElement.dataset.homeProjectNavigation === "true"
+          ? Math.max(0, homeProjectProgress(scrollRoot.scrollTop, scrollRoot.clientHeight))
+          : 0
+      return progress * progress * (3 - 2 * progress)
+    }
+    const lakeRect = (outside: number) => {
+      const scale = Math.max(
+        stage.clientWidth / HOME_LAKE.width,
+        stage.clientHeight / HOME_LAKE.height,
+      )
+      const mix = (a: number, b: number) => a + (b - a) * outside
+      return {
+        x: mix(projection.lake.x, (stage.clientWidth - HOME_LAKE.width * scale) / 2),
+        y: mix(projection.lake.y, (stage.clientHeight - HOME_LAKE.height * scale) / 2),
+        width: mix(projection.lake.width, HOME_LAKE.width * scale),
+        height: mix(projection.lake.height, HOME_LAKE.height * scale),
+      }
+    }
+    let previousOutside = -1
+    // Reuse the existing two poster images for static/reduced-motion states.
+    const syncState = () => {
+      const outside = outsideProgress()
+      if (outside === previousOutside) return
+      previousOutside = outside
+      const lake = lakeRect(outside)
+      const opening = {
+        x: projection.opening.x * (1 - outside),
+        y: projection.opening.y * (1 - outside),
+        width: projection.opening.width + (stage.clientWidth - projection.opening.width) * outside,
+        height:
+          projection.opening.height + (stage.clientHeight - projection.opening.height) * outside,
+      }
+      const viewport = artwork.current?.querySelector<HTMLElement>("[data-home-viewport]")
+      const image = viewport?.querySelector("img")
+      const interior = artwork.current?.querySelector<HTMLImageElement>("[data-home-room]")
+      if (viewport)
+        Object.assign(viewport.style, {
+          left: opening.x + "px",
+          top: opening.y + "px",
+          width: opening.width + "px",
+          height: opening.height + "px",
+        })
+      if (image)
+        Object.assign(image.style, {
+          left: lake.x - opening.x + "px",
+          top: lake.y - opening.y + "px",
+          width: lake.width + "px",
+          height: lake.height + "px",
+        })
+      if (interior) interior.style.opacity = String(1 - outside)
+      stage.dataset.homeLandscapeBlend = outside.toFixed(5)
+    }
     const target = { x: 0, y: 0 },
       look = { x: 0, y: 0 }
     const reduced = matchMedia("(prefers-reduced-motion: reduce)")
@@ -223,6 +282,8 @@ export default function HomeSpectralCanvas() {
         surface.height = Math.round(stage.clientHeight * ratio)
         gl.viewport(0, 0, surface.width, surface.height)
       }
+      previousOutside = -1
+      syncState()
     }
     const render = (now: number) => {
       frame = 0
@@ -265,6 +326,9 @@ export default function HomeSpectralCanvas() {
             (stage.dataset.homeAmbientStrength === "0" ? 0 : 1)
           : 0
       gl.useProgram(program)
+      const outside = outsideProgress()
+      const lake = lakeRect(outside)
+      gl.uniform1f(uniforms.uInteriorOpacity, 1 - outside)
       gl.uniform2f(uniforms.uSize, stage.clientWidth, stage.clientHeight)
       gl.uniform4f(
         uniforms.uRoomRect,
@@ -273,14 +337,8 @@ export default function HomeSpectralCanvas() {
         projection.room.width,
         projection.room.height,
       )
-      gl.uniform4f(
-        uniforms.uLakeRect,
-        projection.lake.x,
-        projection.lake.y,
-        projection.lake.width,
-        projection.lake.height,
-      )
-      gl.uniform2f(uniforms.uLook, offset.x, offset.y)
+      gl.uniform4f(uniforms.uLakeRect, lake.x, lake.y, lake.width, lake.height)
+      gl.uniform2f(uniforms.uLook, offset.x * (1 - outside), offset.y * (1 - outside))
       const requested = Number(stage.dataset.homeWaterStrength ?? "2.8")
       gl.uniform1f(
         uniforms.uStrength,
@@ -397,6 +455,7 @@ export default function HomeSpectralCanvas() {
           "uTime",
           "uWorldTime",
           "uAmbientBlend",
+          "uInteriorOpacity",
           "uEffects",
         ])
           uniforms[name] = gl.getUniformLocation(program, name)
@@ -547,6 +606,7 @@ export default function HomeSpectralCanvas() {
       wake()
     })
     observer.observe(stage)
+    scrollRoot?.addEventListener("scroll", syncState, { passive: true })
     stage.addEventListener("pointermove", move)
     stage.addEventListener("pointerleave", leave)
     document.addEventListener("visibilitychange", visibility)
@@ -564,6 +624,7 @@ export default function HomeSpectralCanvas() {
       })
       pendingImages.clear()
       observer.disconnect()
+      scrollRoot?.removeEventListener("scroll", syncState)
       stage.removeEventListener("pointermove", move)
       stage.removeEventListener("pointerleave", leave)
       document.removeEventListener("visibilitychange", visibility)
@@ -596,6 +657,7 @@ export default function HomeSpectralCanvas() {
         </div>
         <Image
           className={styles.roomImage}
+          data-home-room
           src={room}
           alt="从明亮室内透过浅木观景窗望向山湖"
           fill
