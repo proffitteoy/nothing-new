@@ -1,0 +1,70 @@
+{
+  "checks": [
+    {
+      "check": "environment",
+      "detail": {
+        "browser": "157.0.8103.79",
+        "url": "http://127.0.0.1:3198",
+        "music": "local WAV fixture",
+        "papers": "one local report fixture",
+        "landscape": "real licensed texture; live shader; no injected scene"
+      }
+    },
+    {
+      "check": "observable water, zero-field/outside mask, camera, synthetic hidden pause, music seek and cross-route disposal",
+      "detail": {
+        "differenceBounds": [
+          237,
+          474,
+          1299,
+          614
+        ],
+        "zeroFieldBounds": [
+          237,
+          474,
+          1297,
+          614
+        ]
+      }
+    },
+    {
+      "check": "1440x900: all eight labels reachable, previews stable, reader/Escape and music usable",
+      "detail": true
+    },
+    {
+      "check": "1920x1080: all eight labels reachable, previews stable, reader/Escape and music usable",
+      "detail": true
+    },
+    {
+      "check": "1366x768: all eight labels reachable, previews stable, reader/Escape and music usable",
+      "detail": true
+    },
+    {
+      "check": "1280x800: all eight labels reachable, previews stable, reader/Escape and music usable",
+      "detail": true
+    },
+    {
+      "check": "1024x768: all eight labels reachable, previews stable, reader/Escape and music usable",
+      "detail": true
+    },
+    {
+      "check": "640x720: all eight labels reachable, previews stable, reader/Escape and music usable",
+      "detail": true
+    },
+    {
+      "check": "1024x480: all eight labels reachable, previews stable, reader/Escape and music usable",
+      "detail": true
+    },
+    {
+      "check": "no WebGL: complete room fallback and no animation buffer",
+      "detail": true
+    },
+    {
+      "check": "all coupled-window checks passed",
+      "detail": {
+        "pageErrors": []
+      }
+    }
+  ],
+  "pageErrors": []
+}

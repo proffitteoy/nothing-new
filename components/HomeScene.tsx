@@ -257,6 +257,9 @@ export default function HomeScene({
           </nav>
         ))}
         <div className={styles.windowSill} data-home-sill>
+          <p className={styles.signature} aria-hidden="true">
+            阿の宝藏之地
+          </p>
           <div className={styles.musicDock} data-home-music>
             <LyricBar className={styles.lyrics} />
             <CloudPlayer dock className={styles.sillPlayer} />

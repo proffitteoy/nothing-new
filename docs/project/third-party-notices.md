@@ -24,9 +24,17 @@ title: 第三方代码与授权说明
 
 ## 室内透明前景（2026-11-18）
 
+- 当前审阅稿使用 `public/home-window/observation-room-open.webp`：1585×992、910,632 bytes，由原室内前景经内置 imagegen 调整窗洞、浅木材质与自然受光，无损编码并保留 alpha。完整实际提示词、源资产与许可见 `public/home-window/NOTICE-observation-room-open.txt`；此衍生物继续 CC BY-SA 3.0。
 - `public/home-window/observation-room.webp`：内置 imagegen 生成的完整室内前景，1586×992，1,064,508 bytes，窗洞保留 alpha；无损编码 WebP。
 - 以原授权日景确定光线/视口，另参考室内摄影与交互站的空间组织，不把网站截图作为运行时纹理或复制其代码。
 - 生成过程、参考角色和提示摘要见 `public/home-window/NOTICE-observation-room.txt`。该前景与湖景分别加载，此素材采用 CC BY-SA 3.0；站点代码继续 GPL-3.0-only。
+
+## 薄云、枝叶与室内受光派生素材（2026-11-18）
+
+- `ambient-sky.webp`、`ambient-clouds.webp`、`ambient-branch.webp` 来自当前授权日景，经内置 imagegen 提取／重建和天空补全；保留原日景及室内文件，采用 CC BY-SA 3.0。透明云层和枝叶只做尺寸规范化、裁切与无损编码。
+- `ambient-sky-region.png` 是原图颜色与保护边界生成的数值天空遮罩；`ambient-room-light.png` 是针对当前房间手工编写的接收面投影和直射贡献图。它们不代表摄影深度、反照率或真实光照烘焙。
+- 来源、许可、实际完整提示词、离线导出方法及失败候选见 [NOTICE-ambient.txt](../../public/home-window/NOTICE-ambient.txt)。原始生成 PNG 保留在本地忽略目录 `.sync/tmp-ambient-window/source/`。
+- **倒影配准未通过，运行时保持关闭**：生成清理底图改变了原水纹，合成后出现局部蓝块；不发布该候选，不声称已清除旧云倒影或实现同步倒影。
 
 ## Quartz
 

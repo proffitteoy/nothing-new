@@ -1,0 +1,20 @@
+Nothing New open observation-room foreground, 2026-11-18
+
+Asset: observation-room-open.webp, 1585 x 992 RGBA, 910,632 bytes.
+Created using the built-in imagegen tool, then losslessly encoded as WebP
+with sharp. Generated alpha preserved; no repaint, stretch, masking or
+color filter after generation. Alpha<128 envelope: x=197, y=126,
+width=1193, height=611. Interior and landscape remain separate textures.
+
+Edit target: observation-room.webp (CC BY-SA 3.0), see its NOTICE.
+Supporting color/light reference only: convict-lake-day-study.webp;
+NOTICE-day-study.txt records TheDailyNathan / Hike395 and the adaptation.
+No landscape or third-party website screenshot is embedded in this asset.
+
+Nothing New adaptation by proffitteoy.
+Foreground and derivatives: CC BY-SA 3.0 Unported.
+https://creativecommons.org/licenses/by-sa/3.0/
+Site code: GPL-3.0-only. No photographer/reference-site endorsement implied.
+
+Complete built-in imagegen prompt:
+Use case: precise-object-edit. Asset type: production-bound transparent architectural foreground for Nothing New desktop homepage. Image 1 is the EDIT TARGET (existing room foreground). Image 2 is ONLY a lighting/color reference; do not embed or redraw the landscape. Redesign the room foreground as one coherent photorealistic 16:10 wide daylight interior viewed head-on from a fixed centered camera. Keep the existing single enormous undivided observation window, two side walls with quiet space for vertical navigation, actual thick window reveal and a horizontal physical sill. Change the composition so the clear transparent window aperture occupies about 74 percent of image width and 64 percent of image height, top edge about 10 percent down, bottom edge about 74 percent down; side reveals maintain perspective and are not stretched. Reduce the ceiling to a thin 5-6 percent strip, compress the lower wall and floor so only about 4-5 percent floor remains. Window sill is a comfortably broad clean ledge about 6-7 percent high, suitable for a small music control in its right half, with lower wall below it. Materials: elegant light natural ash/oak reveal and sill, visible fine wood grain, soft neutral light gray mineral plaster walls, a restrained slightly warm natural material undertone only, cool gray stone floor. Avoid yellow/cream walls and dark walnut. Keep believable soft daylight from upper left matching Image 2, gentle blue outdoor bounce, legible softly lit side walls, subtle contact shadows, no deep black wall corners or dramatic theatrical sun patches. The result should feel quieter, more luminous and open than Image 1, with the window dominant and little dead floor space. CRITICAL: output only the full-canvas ROOM FOREGROUND. The entire window hole must be genuine transparent alpha so the existing separate lake texture can show through. Outer room boundaries must reach all four image edges and be opaque. No landscape inside the window, no filled black/white/checkerboard hole, no glass haze over the aperture. No mullions, furniture, plants, curtains, cups, lights, posters, decoration, text, logos, UI, glow, particles or invented objects. Preserve a single physically consistent perspective. This is an architectural asset, not a website screenshot.

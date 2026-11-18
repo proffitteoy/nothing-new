@@ -88,22 +88,23 @@ export function isMobileHomeClient() {
 }
 
 // Measured from the room asset alpha, not independent CSS offsets.
-export const HOME_ROOM = { width: 1586, height: 992, opening: [211, 166, 1165, 530] } as const
+export const HOME_ROOM = {
+  width: 1585,
+  height: 992,
+  opening: [197, 126, 1193, 611],
+  sillCenterY: 775,
+} as const
 export const HOME_LAKE = { width: 1672, height: 877 } as const
 
 export function homeWindowProjection(width: number, height: number) {
   const scale = Math.max(width / HOME_ROOM.width, height / HOME_ROOM.height)
-  // Narrow desktop layouts retain both reveals. Resize the complete interior
-  // together rather than cropping its walls or moving navigation over the lake.
-  const room =
-    width / height <= 1.4
-      ? { x: 0, y: 0, width, height }
-      : {
-          x: (width - HOME_ROOM.width * scale) / 2,
-          y: (height - HOME_ROOM.height * scale) / 2,
-          width: HOME_ROOM.width * scale,
-          height: HOME_ROOM.height * scale,
-        }
+  // Keep the architecture proportional at every viewport, including narrow desktops.
+  const room = {
+    x: (width - HOME_ROOM.width * scale) / 2,
+    y: (height - HOME_ROOM.height * scale) / 2,
+    width: HOME_ROOM.width * scale,
+    height: HOME_ROOM.height * scale,
+  }
   const [x, y, w, h] = HOME_ROOM.opening
   const opening = {
     x: room.x + (x / HOME_ROOM.width) * room.width,

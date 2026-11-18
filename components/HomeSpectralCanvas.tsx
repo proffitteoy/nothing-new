@@ -7,11 +7,15 @@ import {
   homeWindowProjection,
   homeWindowLook,
   HOME_ROOM,
-  HOME_LAKE,
 } from "../lib/home-scene"
 import { SPECTRAL_PLAYBACK_RATE, SPECTRAL_DIRECTION_GLSL } from "./field/spectralField"
 import landscape from "../public/home-window/convict-lake-day-study.webp"
-import room from "../public/home-window/observation-room.webp"
+import room from "../public/home-window/observation-room-open.webp"
+import sky from "../public/home-window/ambient-sky.webp"
+import clouds from "../public/home-window/ambient-clouds.webp"
+import branch from "../public/home-window/ambient-branch.webp"
+import skyRegion from "../public/home-window/ambient-sky-region.png"
+import roomLight from "../public/home-window/ambient-room-light.png"
 import styles from "./HomeScene.module.css"
 
 declare global {
@@ -30,12 +34,20 @@ in vec2 uv;
 out vec4 colour;
 uniform sampler2D uLake;
 uniform sampler2D uRoom;
+uniform sampler2D uSky;
+uniform sampler2D uClouds;
+uniform sampler2D uBranch;
+uniform sampler2D uSkyRegion;
+uniform sampler2D uRoomLight;
 uniform vec2 uSize;
 uniform vec4 uRoomRect;
 uniform vec4 uLakeRect;
 uniform vec2 uLook;
 uniform float uStrength;
 uniform float uTime;
+uniform float uWorldTime;
+uniform float uAmbientBlend;
+uniform vec4 uEffects;
 ${SPECTRAL_DIRECTION_GLSL}
 float rise(float a,float b,float x){ float v=clamp((x-a)/(b-a),0.,1.); return v*v*(3.-2.*v); }
 float waterMask(vec2 p){
@@ -51,10 +63,45 @@ vec2 waterDomain(vec2 p) {
   float depth = max(p.y - .62, 0.);
   return vec2((p.x-.5)*2. / (depth+.20), log(depth+.025)*1.4);
 }
+float skyCoverage(vec2 p) {
+  if(any(lessThan(p,vec2(0.))) || any(greaterThan(p,vec2(1.)))) return 0.;
+  return texture(uSkyRegion,vec2(p.x,1.-p.y)).r;
+}
+float windTravel(float seconds) {
+  return seconds + .6*(1.-cos(seconds*6.2831853/24.));
+}
+vec4 cloudTile(vec2 p) {
+  if(p.x<=0. || p.x>=1. || p.y<=0. || p.y>=316./877.) return vec4(0.);
+  vec4 value=texture(uClouds,vec2(p.x,1.-p.y/(316./877.)));
+  value.a*=.30*rise(0.,.03,p.x)*(1.-rise(.97,1.,p.x));
+  return value;
+}
+vec4 cloudAt(vec2 p,float seconds) {
+  // Repeated sprites cross the edges outside the view; no wrap seam sweeps the sky.
+  float travel=mod(windTravel(seconds)/uLakeRect.z,2.4);
+  vec4 a=cloudTile(p-vec2(travel,0.));
+  vec4 b=cloudTile(p-vec2(travel-2.4,0.));
+  return a.a>b.a ? a : b;
+}
+vec4 nearBranch(vec2 p,float seconds) {
+  float gust=.85+.15*sin(seconds*6.2831853/24.);
+  vec2 sway=vec2(sin(seconds*6.2831853/6.)+.18*sin(seconds*1.73),.25*sin(seconds*6.2831853/6.+1.));
+  vec2 q=p-sway*(3./1.18)*gust*(1.-rise(.13,.23,p.y))/uLakeRect.zw;
+  if(q.x<0. || q.x>168./1672. || q.y<0. || q.y>246./877.) return vec4(0.);
+  vec4 value=texture(uBranch,vec2(q.x/(168./1672.),1.-q.y/(246./877.)));
+  value.a*=1.-rise(.20,.28,q.y);
+  return value;
+}
 void main(){
   vec2 pixel=vec2(uv.x,1.-uv.y)*uSize;
   vec2 r=(pixel-uRoomRect.xy)/uRoomRect.zw;
   vec4 interior=texture(uRoom,vec2(r.x,1.-r.y));
+  if(uAmbientBlend>0.) {
+    vec3 receiver=texture(uRoomLight,vec2(r.x,1.-r.y)).rgb;
+    float sunlight=cloudAt(receiver.rg,uWorldTime*uEffects.z).a;
+    // Authored direct contribution only. The environment base remains lit.
+    interior.rgb*=1.-uAmbientBlend*.30*receiver.b*sunlight;
+  }
   if(interior.a>.99999){ colour=vec4(interior.rgb,1.); return; }
   vec2 p=(pixel-uLakeRect.xy+uLook)/uLakeRect.zw;
   float mask=waterMask(p);
@@ -62,6 +109,19 @@ void main(){
   if(mask>0. && uStrength>0.) response=spectralWaterDirection(waterDomain(p),uTime)*mask*uStrength/uLakeRect.zw;
   vec2 samplePoint=p+response;
   vec3 exterior=texture(uLake,vec2(samplePoint.x,1.-samplePoint.y)).rgb;
+  if(uAmbientBlend>0.) {
+    float coverage=skyCoverage(p);
+    if(coverage>0.) {
+      vec3 clearSky=texture(uSky,vec2(p.x,1.-p.y)).rgb;
+      vec4 cloud=cloudAt(p,uWorldTime*uEffects.x);
+      clearSky=mix(clearSky,cloud.rgb,cloud.a);
+      vec4 leaves=nearBranch(p,uWorldTime*uEffects.w);
+      clearSky=mix(clearSky,leaves.rgb,leaves.a);
+      exterior=mix(exterior,clearSky,coverage*uAmbientBlend);
+    }
+    // Cloud reflection stays disabled: the candidate clean plate changed
+    // protected photographic water detail and failed registration review.
+  }
   colour=vec4(mix(exterior,interior.rgb,interior.a),1.);
 }`
 
@@ -105,6 +165,13 @@ export default function HomeSpectralCanvas() {
       degraded = false,
       staticOnly = false
     let sources: HTMLImageElement[] = []
+    let ambientSources: HTMLImageElement[] = []
+    let ambientRequested = false
+    let ambientOrigin: number | null = null
+    let contextLost = false
+    const pendingImages = new Set<HTMLImageElement>()
+    stage.dataset.homeAmbientStatus = "idle"
+    stage.dataset.homeReflectionStatus = "disabled-registration"
     surface.width = surface.height = 0
     const fallback = () => {
       stage.dataset.homeRendering = "static"
@@ -144,8 +211,8 @@ export default function HomeSpectralCanvas() {
         "--lake-y": lake.y - opening.y,
         "--lake-width": lake.width,
         "--lake-height": lake.height,
-        "--sill-y": room.y + room.height * 0.714,
-        "--music-y": room.y + room.height * 0.736,
+        "--sill-y": opening.y + opening.height,
+        "--music-y": room.y + (HOME_ROOM.sillCenterY / HOME_ROOM.height) * room.height,
         "--left-rail": Math.max(0, room.x + room.width * 0.038 - 28),
         "--right-rail": Math.max(0, stage.clientWidth - (room.x + room.width * 0.962) - 28),
       }))
@@ -159,7 +226,14 @@ export default function HomeSpectralCanvas() {
     }
     const render = (now: number) => {
       frame = 0
-      if (disposed || document.hidden || reduced.matches || staticOnly || !gl || !program) return
+      if (disposed || document.hidden || staticOnly || !gl || !program) return
+      // The query value can update before its change event (observed in Chrome).
+      // Stop AND release here so reduced motion never strands live GL resources.
+      if (reduced.matches) {
+        fallback()
+        release()
+        return
+      }
       if (document.documentElement.dataset.startupPhase !== "ready") return
       const interval = 1000 / (degraded ? 24 : 40)
       if (now < nextDraw - 0.5) {
@@ -176,7 +250,20 @@ export default function HomeSpectralCanvas() {
       const offset = homeWindowLook(look.x, look.y, projection.opening.height)
       const active = (window.__homeVisitClock ?? fallbackClock).read(now)
       if (origin === null) origin = active
+      if (ambientSources.length === 5 && ambientOrigin === null) ambientOrigin = active
       const time = (Math.max(0, active - origin) / 1000) * SPECTRAL_PLAYBACK_RATE
+      const worldOverride = Number(stage.dataset.homeWorldTimeOverride)
+      const worldTime = Math.max(
+        0,
+        Number.isFinite(worldOverride)
+          ? worldOverride
+          : (active - (ambientOrigin ?? active)) / 1000,
+      )
+      const ambientBlend =
+        ambientSources.length === 5
+          ? Math.min(1, Math.max(0, (active - (ambientOrigin ?? active)) / 1200)) *
+            (stage.dataset.homeAmbientStrength === "0" ? 0 : 1)
+          : 0
       gl.useProgram(program)
       gl.uniform2f(uniforms.uSize, stage.clientWidth, stage.clientHeight)
       gl.uniform4f(
@@ -200,16 +287,30 @@ export default function HomeSpectralCanvas() {
         Number.isFinite(requested) ? Math.max(0, Math.min(4, requested)) : 2.8,
       )
       gl.uniform1f(uniforms.uTime, time)
+      gl.uniform1f(uniforms.uWorldTime, worldTime)
+      gl.uniform1f(uniforms.uAmbientBlend, ambientBlend)
+      gl.uniform4f(
+        uniforms.uEffects,
+        stage.dataset.homeClouds === "0" ? 0 : 1,
+        0, // Reflection registration gate; never enable a partial candidate.
+        stage.dataset.homeLight === "0" ? 0 : 1,
+        stage.dataset.homeBranch === "0" ? 0 : 1,
+      )
       gl.drawArrays(gl.TRIANGLES, 0, 3)
       stage.dataset.homeRendering = "dynamic"
       stage.dataset.homeQuality = degraded ? "adaptive-low" : "high"
       stage.dataset.homeEffect = "water-response"
       stage.dataset.homeFieldTime = time.toFixed(4)
+      stage.dataset.homeWorldTime = worldTime.toFixed(3)
+      stage.dataset.homeAmbientBlend = ambientBlend.toFixed(3)
       stage.dataset.homeLook = `${offset.x.toFixed(3)},${offset.y.toFixed(3)}`
       stage.dataset.homeFrames = String(++frames)
       stage.dataset.homeBufferBytes = String(
         surface.width * surface.height * 4 +
-          (HOME_ROOM.width * HOME_ROOM.height + HOME_LAKE.width * HOME_LAKE.height) * 4,
+          [...sources, ...ambientSources].reduce(
+            (bytes, image) => bytes + image.naturalWidth * image.naturalHeight * 4,
+            0,
+          ),
       )
       totalCost += performance.now() - began
       stage.dataset.homeDrawMs = (totalCost / frames).toFixed(2)
@@ -245,7 +346,7 @@ export default function HomeSpectralCanvas() {
       if (!document.hidden) frame = requestAnimationFrame(render)
     }
     const install = () => {
-      if (disposed || sources.length !== 2 || reduced.matches || staticOnly) return
+      if (disposed || sources.length !== 2 || reduced.matches || staticOnly || contextLost) return
       release()
       try {
         gl = surface.getContext("webgl2", {
@@ -283,19 +384,31 @@ export default function HomeSpectralCanvas() {
         for (const name of [
           "uLake",
           "uRoom",
+          "uSky",
+          "uClouds",
+          "uBranch",
+          "uSkyRegion",
+          "uRoomLight",
           "uSize",
           "uRoomRect",
           "uLakeRect",
           "uLook",
           "uStrength",
           "uTime",
+          "uWorldTime",
+          "uAmbientBlend",
+          "uEffects",
         ])
           uniforms[name] = gl.getUniformLocation(program, name)
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-        sources.forEach((image, index) => {
+        ;[...sources, ...ambientSources].forEach((image, index) => {
           const texture = gl!.createTexture()
           if (!texture) throw Error("Texture allocation failed")
           textures.push(texture)
+          gl!.pixelStorei(
+            gl!.UNPACK_COLORSPACE_CONVERSION_WEBGL,
+            index >= 5 ? gl!.NONE : gl!.BROWSER_DEFAULT_WEBGL,
+          )
           gl!.activeTexture(gl!.TEXTURE0 + index)
           gl!.bindTexture(gl!.TEXTURE_2D, texture)
           for (const axis of [gl!.TEXTURE_WRAP_S, gl!.TEXTURE_WRAP_T])
@@ -306,9 +419,24 @@ export default function HomeSpectralCanvas() {
         })
         gl.uniform1i(uniforms.uLake, 0)
         gl.uniform1i(uniforms.uRoom, 1)
+        for (const [index, name] of [
+          "uSky",
+          "uClouds",
+          "uBranch",
+          "uSkyRegion",
+          "uRoomLight",
+        ].entries())
+          gl.uniform1i(uniforms[name], ambientSources.length === 5 ? index + 2 : 0)
         resize()
         wake()
       } catch (error) {
+        if (ambientSources.length) {
+          ambientSources = []
+          stage.dataset.homeAmbientStatus = "unavailable"
+          stage.dataset.homeAmbientError = "Environment texture upload failed"
+          install()
+          return
+        }
         stage.dataset.homeFallbackReason =
           error instanceof Error ? error.message : "Renderer unavailable"
         fallback()
@@ -318,15 +446,50 @@ export default function HomeSpectralCanvas() {
     const load = (url: string) =>
       new Promise<HTMLImageElement>((resolve, reject) => {
         const image = new window.Image()
-        image.onload = () => resolve(image)
-        image.onerror = reject
+        pendingImages.add(image)
+        image.onload = () => {
+          pendingImages.delete(image)
+          resolve(image)
+        }
+        image.onerror = () => {
+          pendingImages.delete(image)
+          reject(new Error("Scene asset unavailable"))
+        }
         image.src = url
       })
+    const loadAmbient = () => {
+      if (
+        disposed ||
+        reduced.matches ||
+        ambientRequested ||
+        sources.length !== 2 ||
+        !gl ||
+        !program
+      )
+        return
+      ambientRequested = true
+      stage.dataset.homeAmbientStatus = "loading"
+      Promise.all([sky, clouds, branch, skyRegion, roomLight].map((asset) => load(asset.src)))
+        .then((images) => {
+          if (disposed) return
+          ambientSources = images
+          ambientOrigin = null
+          stage.dataset.homeAmbientStatus = "ready"
+          install()
+        })
+        .catch(() => {
+          if (!disposed) {
+            stage.dataset.homeAmbientStatus = "unavailable"
+            stage.dataset.homeAmbientError = "Environment asset group unavailable"
+          }
+        })
+    }
     Promise.all([load(landscape.src), load(room.src)])
       .then((images) => {
         if (!disposed) {
           sources = images
           install()
+          loadAmbient()
         }
       })
       .catch(() => fallback())
@@ -365,12 +528,19 @@ export default function HomeSpectralCanvas() {
       } else {
         staticOnly = false
         install()
+        loadAmbient()
       }
     }
     const lost = (event: Event) => {
       event.preventDefault()
-      cancelAnimationFrame(frame)
+      contextLost = true
       fallback()
+      release()
+    }
+    const restored = () => {
+      contextLost = false
+      install()
+      loadAmbient()
     }
     const observer = new ResizeObserver(() => {
       resize()
@@ -383,11 +553,16 @@ export default function HomeSpectralCanvas() {
     window.addEventListener("site-startup-phase", wake)
     reduced.addEventListener("change", mode)
     surface.addEventListener("webglcontextlost", lost)
-    surface.addEventListener("webglcontextrestored", install)
+    surface.addEventListener("webglcontextrestored", restored)
     resize()
     return () => {
       disposed = true
       release()
+      pendingImages.forEach((image) => {
+        image.onload = image.onerror = null
+        image.src = ""
+      })
+      pendingImages.clear()
       observer.disconnect()
       stage.removeEventListener("pointermove", move)
       stage.removeEventListener("pointerleave", leave)
@@ -395,7 +570,7 @@ export default function HomeSpectralCanvas() {
       window.removeEventListener("site-startup-phase", wake)
       reduced.removeEventListener("change", mode)
       surface.removeEventListener("webglcontextlost", lost)
-      surface.removeEventListener("webglcontextrestored", install)
+      surface.removeEventListener("webglcontextrestored", restored)
     }
   }, [])
 
@@ -422,7 +597,7 @@ export default function HomeSpectralCanvas() {
         <Image
           className={styles.roomImage}
           src={room}
-          alt="从室内透过深木窗洞望向山湖"
+          alt="从明亮室内透过浅木观景窗望向山湖"
           fill
           preload
           unoptimized
