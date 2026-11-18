@@ -19,7 +19,10 @@ import {
   X,
 } from "lucide-react"
 import { useMusic } from "../../components/MusicProvider"
-import { useHomeProjectNavigation } from "../../components/HomeProjectNavigation"
+import {
+  useHomeProjectNavigation,
+  useHomeProjectState,
+} from "../../components/HomeProjectNavigation"
 import { projects, type Project, type RoomTarget } from "./projects"
 import { sampleSpectralFamily, spectralParameterAt } from "../../components/field/spectralField"
 import styles from "./room.module.css"
@@ -45,6 +48,7 @@ export default function ProjectsBoard() {
   } = useMusic()
   const reducedMotion = useReducedMotion()
   const linkedNavigation = useHomeProjectNavigation()
+  const { setFreeView, returnWindow } = useHomeProjectState()
   const router = useRouter()
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
   const [staticView, setStaticView] = useState(false)
@@ -60,17 +64,22 @@ export default function ProjectsBoard() {
   const directoryToggle = useRef<HTMLElement>(null)
   const sceneActive = !staticView && status === "ready"
   const panelOpen = selected !== null || musicOpen
+  const finishFreeView = useCallback(() => {
+    setRotationEnabled(false)
+    setResetKey((key) => key + 1)
+    returnWindow(350)
+  }, [returnWindow])
 
   useEffect(() => {
     if (!linkedNavigation || !rotationEnabled || panelOpen) return
     const escape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return
-      setRotationEnabled(false)
-      setResetKey((key) => key + 1)
+      event.preventDefault()
+      finishFreeView()
     }
     window.addEventListener("keydown", escape)
     return () => window.removeEventListener("keydown", escape)
-  }, [linkedNavigation, rotationEnabled, panelOpen])
+  }, [linkedNavigation, rotationEnabled, panelOpen, finishFreeView])
 
   useEffect(() => {
     if (!sceneActive) return
@@ -123,9 +132,11 @@ export default function ProjectsBoard() {
   const failed = useCallback(() => {
     setStatus("error")
     setRotationEnabled(false)
-  }, [])
+    setFreeView(false)
+  }, [setFreeView])
   function toggleStatic() {
     setRotationEnabled(false)
+    setFreeView(false)
     closePanel()
     if (staticView || status === "error") {
       setStatus("loading")
@@ -285,8 +296,11 @@ export default function ProjectsBoard() {
               disabled={!sceneActive || panelOpen}
               aria-pressed={rotationEnabled}
               onClick={() => {
-                setRotationEnabled((value) => !value)
-                if (rotationEnabled) setResetKey((key) => key + 1)
+                if (rotationEnabled) finishFreeView()
+                else {
+                  setRotationEnabled(true)
+                  setFreeView(true)
+                }
               }}
             >
               <Rotate3D size={15} />

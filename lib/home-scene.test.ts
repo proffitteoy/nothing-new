@@ -1,8 +1,30 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { createHomeVisitClock, homeCycleAt, homeImageRect, HOME_PERSON } from "./home-scene"
+import {
+  createHomeVisitClock,
+  homeCycleAt,
+  homeImageRect,
+  HOME_PERSON,
+  homeProjectProgress,
+  homeProjectScroll,
+} from "./home-scene"
 import { proxy } from "../proxy"
 import { NextRequest } from "next/server"
+
+test("window, room and landscape checkpoints round-trip through the native track after resize", () => {
+  for (const height of [480, 600, 768, 800, 900, 928, 1080]) {
+    assert.equal(homeProjectProgress(0, height), -1)
+    assert.equal(homeProjectProgress(2 * height, height), 0)
+    assert.equal(homeProjectProgress(4 * height, height), 1)
+    for (const progress of [-1, -0.9, -0.35, 0, 0.35, 0.9, 1])
+      assert.ok(
+        Math.abs(homeProjectProgress(homeProjectScroll(progress, height), height) - progress) <
+          1e-12,
+      )
+  }
+  assert.equal(homeProjectProgress(-100, 900), -1)
+  assert.equal(homeProjectProgress(100000, 900), 1)
+})
 
 test("visible visit time pauses for hidden 60s, resumes and can start a new visit", () => {
   const clock = createHomeVisitClock(1000)
