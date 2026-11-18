@@ -1,0 +1,159 @@
+{
+  "checks": [
+    {
+      "check": "ambient environment",
+      "detail": {
+        "browser": "157.0.8103.79",
+        "url": "http://127.0.0.1:3198",
+        "DPR": 1,
+        "time": "real visible seconds; no browser virtual time",
+        "music": "local WAV fixture",
+        "reflection": "disabled-registration; not an accepted effect"
+      }
+    },
+    {
+      "check": "group request failure preserves water-only renderer",
+      "detail": {
+        "homeScene": "true",
+        "homeQuality": "high",
+        "homeAmbientStatus": "unavailable",
+        "homeReflectionStatus": "disabled-registration",
+        "homeRendering": "dynamic",
+        "homeEffect": "water-response",
+        "homeBufferBytes": "17338656",
+        "homeAmbientError": "Environment asset group unavailable",
+        "homeFieldTime": "0.5750",
+        "homeWorldTime": "0.000",
+        "homeAmbientBlend": "0.000",
+        "homeLook": "0.000,0.000",
+        "homeFrames": "79",
+        "homeDrawMs": "0.27"
+      }
+    },
+    {
+      "check": "partial optional upload failure releases group and reinstalls base water",
+      "detail": {
+        "state": {
+          "homeScene": "true",
+          "homeQuality": "high",
+          "homeAmbientStatus": "unavailable",
+          "homeReflectionStatus": "disabled-registration",
+          "homeRendering": "dynamic",
+          "homeEffect": "water-response",
+          "homeBufferBytes": "17338656",
+          "homeAmbientError": "Environment texture upload failed",
+          "homeFieldTime": "0.0200",
+          "homeWorldTime": "0.000",
+          "homeAmbientBlend": "0.000",
+          "homeLook": "0.000,0.000",
+          "homeFrames": "5",
+          "homeDrawMs": "0.88"
+        },
+        "resources": {
+          "textures": 2,
+          "buffers": 1,
+          "programs": 1,
+          "shaders": 2
+        }
+      }
+    },
+    {
+      "check": "WebGL restore, reduced-motion toggle, synthetic 1.5s hidden clock and seven-texture rebuild",
+      "detail": {
+        "before": {
+          "homeScene": "true",
+          "homeQuality": "high",
+          "homeAmbientStatus": "ready",
+          "homeReflectionStatus": "disabled-registration",
+          "homeRendering": "dynamic",
+          "homeEffect": "water-response",
+          "homeBufferBytes": "32003488",
+          "homeFieldTime": "0.7401",
+          "homeWorldTime": "2.467",
+          "homeAmbientBlend": "1.000",
+          "homeLook": "0.000,0.000",
+          "homeFrames": "58",
+          "homeDrawMs": "0.22"
+        },
+        "after": {
+          "homeScene": "true",
+          "homeQuality": "high",
+          "homeAmbientStatus": "ready",
+          "homeReflectionStatus": "disabled-registration",
+          "homeRendering": "dynamic",
+          "homeEffect": "water-response",
+          "homeBufferBytes": "32003488",
+          "homeFieldTime": "0.8334",
+          "homeWorldTime": "2.778",
+          "homeAmbientBlend": "1.000",
+          "homeLook": "0.000,0.000",
+          "homeFrames": "73",
+          "homeDrawMs": "0.21"
+        },
+        "resources": {
+          "textures": 7,
+          "buffers": 1,
+          "programs": 1,
+          "shaders": 2
+        }
+      }
+    },
+    {
+      "check": "cross-route releases all seven textures, buffer, program and shaders; one playing audio continues",
+      "detail": true
+    },
+    {
+      "check": "initial reduced-motion skips optional group and GPU allocations",
+      "detail": true
+    },
+    {
+      "check": "unmount during five held optional loads cancels sources and releases base renderer",
+      "detail": true
+    },
+    {
+      "check": "injected 125ms RAF contention: 40fps to 24fps to static release",
+      "detail": {
+        "low": {
+          "homeScene": "true",
+          "homeQuality": "adaptive-low",
+          "homeAmbientStatus": "ready",
+          "homeReflectionStatus": "disabled-registration",
+          "homeRendering": "dynamic",
+          "homeEffect": "water-response",
+          "homeBufferBytes": "32003488",
+          "homeFieldTime": "2.0795",
+          "homeWorldTime": "6.932",
+          "homeAmbientBlend": "1.000",
+          "homeLook": "0.000,0.000",
+          "homeFrames": "98",
+          "homeDrawMs": "0.18",
+          "homeFps": "7.9"
+        },
+        "final": {
+          "homeScene": "true",
+          "homeQuality": "static",
+          "homeAmbientStatus": "ready",
+          "homeReflectionStatus": "disabled-registration",
+          "homeRendering": "static",
+          "homeEffect": "none",
+          "homeBufferBytes": "0",
+          "homeFieldTime": "3.0334",
+          "homeWorldTime": "10.111",
+          "homeAmbientBlend": "1.000",
+          "homeLook": "0.000,0.000",
+          "homeFrames": "123",
+          "homeDrawMs": "0.18",
+          "homeFps": "7.8",
+          "homeFallbackReason": "Persistent low frame rate"
+        }
+      }
+    },
+    {
+      "check": "ambient checks completed with reflection registration gate",
+      "detail": {
+        "pageErrors": []
+      }
+    }
+  ],
+  "pageErrors": []
+}

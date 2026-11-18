@@ -1,0 +1,123 @@
+[
+  {
+    "size": [
+      1440,
+      900
+    ],
+    "state": {
+      "homeScene": "true",
+      "homeQuality": "high",
+      "homeAmbientStatus": "ready",
+      "homeReflectionStatus": "disabled-registration",
+      "homeRendering": "dynamic",
+      "homeEffect": "water-response",
+      "homeBufferBytes": "32003488",
+      "homeFieldTime": "0.9900",
+      "homeWorldTime": "3.300",
+      "homeAmbientBlend": "1.000",
+      "homeLook": "0.000,0.000",
+      "homeFrames": "135",
+      "homeDrawMs": "0.26",
+      "homeFps": "41.5"
+    },
+    "errors": [],
+    "network": "no routes or synthetic API fixtures"
+  },
+  {
+    "size": [
+      1920,
+      1080
+    ],
+    "state": {
+      "homeScene": "true",
+      "homeQuality": "high",
+      "homeAmbientStatus": "ready",
+      "homeReflectionStatus": "disabled-registration",
+      "homeRendering": "dynamic",
+      "homeEffect": "water-response",
+      "homeBufferBytes": "35113888",
+      "homeFieldTime": "1.0950",
+      "homeWorldTime": "3.650",
+      "homeAmbientBlend": "1.000",
+      "homeLook": "0.000,0.000",
+      "homeFrames": "149",
+      "homeDrawMs": "0.27",
+      "homeFps": "41.3"
+    },
+    "errors": [],
+    "network": "no routes or synthetic API fixtures"
+  },
+  {
+    "size": [
+      1280,
+      800
+    ],
+    "state": {
+      "homeScene": "true",
+      "homeQuality": "high",
+      "homeAmbientStatus": "ready",
+      "homeReflectionStatus": "disabled-registration",
+      "homeRendering": "dynamic",
+      "homeEffect": "water-response",
+      "homeBufferBytes": "30915488",
+      "homeFieldTime": "1.0000",
+      "homeWorldTime": "3.333",
+      "homeAmbientBlend": "1.000",
+      "homeLook": "0.000,0.000",
+      "homeFrames": "136",
+      "homeDrawMs": "0.29",
+      "homeFps": "41.2"
+    },
+    "errors": [],
+    "network": "no routes or synthetic API fixtures"
+  },
+  {
+    "size": [
+      1024,
+      768
+    ],
+    "state": {
+      "homeScene": "true",
+      "homeQuality": "high",
+      "homeAmbientStatus": "ready",
+      "homeReflectionStatus": "disabled-registration",
+      "homeRendering": "dynamic",
+      "homeEffect": "water-response",
+      "homeBufferBytes": "29965216",
+      "homeFieldTime": "0.9099",
+      "homeWorldTime": "3.033",
+      "homeAmbientBlend": "1.000",
+      "homeLook": "0.000,0.000",
+      "homeFrames": "124",
+      "homeDrawMs": "0.23",
+      "homeFps": "41.3"
+    },
+    "errors": [],
+    "network": "no routes or synthetic API fixtures"
+  },
+  {
+    "deviceDPR": 2,
+    "drawingBuffer": [
+      2160,
+      1350
+    ],
+    "seconds": 15.015999999988708,
+    "fps": 40.090570058634306,
+    "state": {
+      "homeScene": "true",
+      "homeQuality": "high",
+      "homeAmbientStatus": "ready",
+      "homeReflectionStatus": "disabled-registration",
+      "homeRendering": "dynamic",
+      "homeEffect": "water-response",
+      "homeBufferBytes": "38483488",
+      "homeFieldTime": "4.8751",
+      "homeWorldTime": "16.250",
+      "homeAmbientBlend": "1.000",
+      "homeLook": "0.000,0.000",
+      "homeFrames": "653",
+      "homeDrawMs": "0.30",
+      "homeFps": "40.0"
+    }
+  }
+]

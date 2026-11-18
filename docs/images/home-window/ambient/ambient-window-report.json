@@ -1,0 +1,394 @@
+{
+  "checks": [
+    {
+      "check": "ambient environment",
+      "detail": {
+        "browser": "157.0.8103.79",
+        "url": "http://127.0.0.1:3198",
+        "DPR": 1,
+        "time": "real visible seconds; no browser virtual time",
+        "music": "local WAV fixture",
+        "reflection": "disabled-registration; not an accepted effect"
+      }
+    },
+    {
+      "check": "1440x900: neutral/extremes, protected terrain, fixed-world water and real performance",
+      "detail": {
+        "motion": {
+          "bounds": [
+            1,
+            37,
+            1438,
+            900
+          ],
+          "above2": 94772,
+          "max": 218
+        },
+        "water": {
+          "bounds": [
+            237,
+            474,
+            1294,
+            614
+          ],
+          "above2": 106263,
+          "max": 178
+        },
+        "seconds": 15.01600000000326,
+        "fps": 39.89078316461574,
+        "CPUsubmitMeanMs": 0.22,
+        "logicalRGBABytes": 32003488,
+        "gpu": {
+          "supported": true,
+          "samples": [
+            0.793385,
+            0.786093,
+            0.801666,
+            0.612135,
+            0.808437,
+            0.61375,
+            0.877864,
+            0.488541,
+            0.709531,
+            0.490208,
+            0.79677,
+            0.79052,
+            0.798177,
+            0.78875,
+            0.867552,
+            0.812239,
+            0.86052,
+            0.934687,
+            0.649166,
+            0.894635,
+            0.801145,
+            0.7975,
+            0.796458,
+            0.64177,
+            0.843281,
+            0.606406,
+            0.616406,
+            0.620885,
+            0.889427
+          ],
+          "disjoint": 0,
+          "renderer": "ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+        }
+      }
+    },
+    {
+      "check": "1920x1080: neutral/extremes, protected terrain, fixed-world water and real performance",
+      "detail": {
+        "motion": {
+          "bounds": [
+            92,
+            0,
+            1831,
+            1080
+          ],
+          "above2": 244954,
+          "max": 208
+        },
+        "water": {
+          "bounds": [
+            333,
+            569,
+            1709,
+            751
+          ],
+          "above2": 174981,
+          "max": 167
+        },
+        "seconds": 15.0,
+        "fps": 40.06666666666667,
+        "CPUsubmitMeanMs": 0.19,
+        "logicalRGBABytes": 35113888,
+        "gpu": {
+          "supported": true,
+          "samples": [
+            0.895052,
+            0.980572,
+            0.84526,
+            0.828437,
+            0.818958,
+            1.09177,
+            0.842395,
+            0.795,
+            0.966302,
+            0.980312,
+            0.98151,
+            0.982968,
+            0.860468,
+            0.852864,
+            0.979635,
+            0.997812,
+            0.976614,
+            1.082864,
+            0.945781,
+            0.973385,
+            0.848958,
+            0.85552,
+            0.996927,
+            1.011458,
+            0.994166,
+            0.988177,
+            0.876927,
+            0.933333,
+            0.838697,
+            0.835156
+          ],
+          "disjoint": 0,
+          "renderer": "ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+        }
+      }
+    },
+    {
+      "check": "1280x800: neutral/extremes, protected terrain, fixed-world water and real performance",
+      "detail": {
+        "motion": {
+          "bounds": [
+            2,
+            33,
+            1279,
+            800
+          ],
+          "above2": 75969,
+          "max": 220
+        },
+        "water": {
+          "bounds": [
+            205,
+            422,
+            1158,
+            548
+          ],
+          "above2": 87029,
+          "max": 197
+        },
+        "seconds": 15.01600000000326,
+        "fps": 40.09057005859545,
+        "CPUsubmitMeanMs": 0.2,
+        "logicalRGBABytes": 30915488,
+        "gpu": {
+          "supported": true,
+          "samples": [
+            0.81625,
+            0.737187,
+            0.823854,
+            0.916145,
+            0.823489,
+            0.880156,
+            0.898281,
+            0.883697,
+            0.934375,
+            0.822291,
+            0.813645,
+            0.643645,
+            0.938385,
+            0.829479,
+            0.815104,
+            0.832291,
+            0.908802,
+            0.823229,
+            0.631302,
+            0.893229,
+            0.948229,
+            0.820572,
+            1.023697,
+            0.642395,
+            0.669947,
+            1.736927,
+            0.817291,
+            0.671145,
+            0.821614,
+            0.956458
+          ],
+          "disjoint": 0,
+          "renderer": "ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+        }
+      }
+    },
+    {
+      "check": "1024x768: neutral/extremes, protected terrain, fixed-world water and real performance",
+      "detail": {
+        "motion": {
+          "bounds": [
+            0,
+            32,
+            1024,
+            768
+          ],
+          "above2": 69180,
+          "max": 213
+        },
+        "water": {
+          "bounds": [
+            93,
+            406,
+            1012,
+            527
+          ],
+          "above2": 81005,
+          "max": 188
+        },
+        "seconds": 15.0,
+        "fps": 40.13333333333333,
+        "CPUsubmitMeanMs": 0.2,
+        "logicalRGBABytes": 29965216,
+        "gpu": {
+          "supported": true,
+          "samples": [
+            0.599947,
+            0.608177,
+            0.602864,
+            0.70875,
+            0.64026,
+            0.580885,
+            0.645052,
+            0.59651,
+            0.61401,
+            0.698541,
+            0.601093,
+            0.598281,
+            0.597812,
+            0.591145,
+            0.715052,
+            0.604166,
+            0.61151,
+            0.593958,
+            0.607708,
+            0.466406,
+            0.566302,
+            0.579114,
+            0.626666,
+            0.607239,
+            0.611458,
+            0.649062,
+            0.600156,
+            0.671822,
+            0.595416,
+            0.612291
+          ],
+          "disjoint": 0,
+          "renderer": "ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+        }
+      }
+    },
+    {
+      "check": "Clouds: off/on and >=15s real-speed video",
+      "detail": {
+        "motion": {
+          "bounds": [
+            141,
+            82,
+            1309,
+            305
+          ],
+          "above2": 32233,
+          "max": 30
+        },
+        "recordedActiveSeconds": 16.296999999991385,
+        "worldStart": "2.500",
+        "worldEnd": "18.483",
+        "water": "disabled",
+        "reflection": "disabled-registration"
+      }
+    },
+    {
+      "check": "Reflection: off/on and >=15s real-speed video",
+      "detail": {
+        "motion": {
+          "bounds": null,
+          "above2": 0,
+          "max": 0
+        },
+        "recordedActiveSeconds": 16.139999999999418,
+        "worldStart": "2.301",
+        "worldEnd": "18.133",
+        "water": "disabled",
+        "reflection": "disabled-registration"
+      }
+    },
+    {
+      "check": "Light: off/on and >=15s real-speed video",
+      "detail": {
+        "motion": {
+          "bounds": [
+            1,
+            37,
+            1438,
+            900
+          ],
+          "above2": 64100,
+          "max": 10
+        },
+        "recordedActiveSeconds": 16.48399999999674,
+        "worldStart": "2.350",
+        "worldEnd": "18.300",
+        "water": "disabled",
+        "reflection": "disabled-registration"
+      }
+    },
+    {
+      "check": "Branch: off/on and >=15s real-speed video",
+      "detail": {
+        "motion": {
+          "bounds": [
+            131,
+            115,
+            251,
+            223
+          ],
+          "above2": 906,
+          "max": 193
+        },
+        "recordedActiveSeconds": 16.438000000009197,
+        "worldStart": "2.600",
+        "worldEnd": "18.683",
+        "water": "disabled",
+        "reflection": "disabled-registration"
+      }
+    },
+    {
+      "check": "All: off/on and >=15s real-speed video",
+      "detail": {
+        "motion": {
+          "bounds": [
+            1,
+            37,
+            1438,
+            900
+          ],
+          "above2": 201979,
+          "max": 190
+        },
+        "recordedActiveSeconds": 16.843999999997322,
+        "worldStart": "2.583",
+        "worldEnd": "18.933",
+        "water": "normal",
+        "reflection": "disabled-registration"
+      }
+    },
+    {
+      "check": "group request failure preserves water-only renderer",
+      "detail": {
+        "homeScene": "true",
+        "homeQuality": "high",
+        "homeAmbientStatus": "unavailable",
+        "homeReflectionStatus": "disabled-registration",
+        "homeRendering": "dynamic",
+        "homeEffect": "water-response",
+        "homeBufferBytes": "17338656",
+        "homeAmbientError": "Environment asset group unavailable",
+        "homeFieldTime": "0.6000",
+        "homeWorldTime": "0.000",
+        "homeAmbientBlend": "0.000",
+        "homeLook": "0.000,0.000",
+        "homeFrames": "83",
+        "homeDrawMs": "0.26",
+        "homeFps": "41.5"
+      }
+    }
+  ],
+  "pageErrors": []
+}

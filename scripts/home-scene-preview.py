@@ -2,6 +2,8 @@
 
 The default coupled-window mode checks the live room, spectral water response,
 restored sidebar previews and pointer, plus the root audio. Earlier modes are historical.
+ambient-window adds isolated real-speed environment videos and four-size GPU
+queries; ambient-lifecycle runs only the environment failure/resource cases.
 The snapshots mode updates public/page-previews/ from local pages. It may read
 the public production anime data when local data is unavailable, while keeping
 the current local renderer and styles. Synthetic fixtures are never published.
@@ -32,7 +34,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--url', default='http://127.0.0.1:3161')
 parser.add_argument('--output', default='.sync/tmp-home-scene-evidence')
 parser.add_argument('--browser', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
-parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'production-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview', 'static-window', 'coupled-window'], default='coupled-window')
+parser.add_argument('--mode', choices=['matrix', 'stills', 'interactions', 'performance', 'accelerated', 'realtime', 'navigation', 'snapshots', 'preview', 'preload', 'night-window', 'production-window', 'night-compare', 'day-static', 'day-spectral', 'day-spectral-ab', 'day-preview', 'static-window', 'coupled-window', 'ambient-window', 'ambient-lifecycle'], default='coupled-window')
 parser.add_argument('--day-study', action='store_true', help='Apply the corrected daylight field to the real navigation acceptance (reduced motion at the existing reduced sizes); never changes production code.')
 parser.add_argument('--day-variant', choices=['static', 'corrected', 'before', 'a', 'b'], default='corrected', help='day-preview only: corrected (default), static or before; R/O/0 keys in the review tab. a/b are compatibility aliases, not design candidates.')
 args = parser.parse_args()
@@ -147,7 +149,156 @@ with sync_playwright() as p:
         check('environment', {'browser':browser.version, 'url':args.url,
             'music':'local WAV fixture; external music service not asserted',
             'visibility':'synthetic document.hidden event where explicitly labelled'})
-    if args.mode == 'coupled-window':
+    if args.mode in ['ambient-window','ambient-lifecycle']:
+        from PIL import Image, ImageChops, ImageEnhance
+        effects = ['Clouds', 'Reflection', 'Light', 'Branch']
+        audit = '''(() => {
+          const counts = window.__ambientAudit = {textures:0,buffers:0,programs:0,shaders:0};
+          for(const [kind,key] of [['Texture','textures'],['Buffer','buffers'],['Program','programs'],['Shader','shaders']]) {
+            const live = new Set(), proto = WebGL2RenderingContext.prototype;
+            const make = proto['create'+kind], drop = proto['delete'+kind];
+            proto['create'+kind] = function(...args) { const value=make.apply(this,args); if(value&&this.canvas.matches('[data-home-canvas]')) {live.add(value);counts[key]=live.size;} return value; };
+            proto['delete'+kind] = function(value) {if(live.delete(value))counts[key]=live.size;return drop.call(this,value);};
+          }
+        })()'''
+        def ambient_context(width=1440, height=900, video=False, reduced=False):
+            context=context_for(browser,width,height,video=video,reduced=reduced)
+            context.add_init_script(audit)
+            return context
+        def ambient_visit(context, ready=True):
+            page=visit(context)
+            if ready:page.wait_for_function("Number(document.querySelector('[data-home-scene]').dataset.homeAmbientBlend)>.99",timeout=30000)
+            page.evaluate('document.fonts.ready')
+            page.mouse.move(1,1)
+            return page
+        def canvas_image(page):
+            return Image.open(io.BytesIO(page.locator('[data-home-canvas]').screenshot())).convert('RGB')
+        def freeze(page, effect='All', at='0', water='0'):
+            page.locator('[data-home-scene]').evaluate('''(e,p)=>{
+              for(const k of ['Clouds','Reflection','Light','Branch'])e.dataset['home'+k]=(p.effect==='All'||p.effect===k)?'1':'0';
+              e.dataset.homeWaterStrength=p.water;
+              if(p.at===null)delete e.dataset.homeWorldTimeOverride;else e.dataset.homeWorldTimeOverride=p.at;
+            }''',{'effect':effect,'at':at,'water':water})
+            page.wait_for_timeout(150)
+        def delta_stats(a,b):
+            d=ImageChops.difference(a,b)
+            return d,{'bounds':d.getbbox(),'above2':sum(max(p)>2 for p in d.get_flattened_data()),'max':max(v[1] for v in d.getextrema())}
+        check('ambient environment',{'browser':browser.version,'url':args.url,'DPR':1,'time':'real visible seconds; no browser virtual time','music':'local WAV fixture','reflection':'disabled-registration; not an accepted effect'})
+        for width,height in ([] if args.mode=='ambient-lifecycle' else [(1440,900),(1920,1080),(1280,800),(1024,768)]):
+            context=ambient_context(width,height);page=ambient_visit(context)
+            assert page.evaluate('window.__ambientAudit.textures')==7
+            freeze(page,at='10',water='2.8')
+            capture(page,f'ambient-{width}x{height}')
+            opening=page.locator('[data-home-window]').bounding_box()
+            for name,x,y in [('left',opening['x']+2,opening['y']+opening['height']/2),('right',opening['x']+opening['width']-2,opening['y']+opening['height']/2),('up',opening['x']+opening['width']/2,opening['y']+2),('down',opening['x']+opening['width']/2,opening['y']+opening['height']-2)]:
+                page.mouse.move(x,y);page.wait_for_timeout(900)
+                capture(page,f'ambient-{width}x{height}-{name}')
+            page.mouse.move(1,1);page.wait_for_timeout(4000)
+            freeze(page,at='0');a=canvas_image(page)
+            freeze(page,at='10');b=canvas_image(page)
+            d,stats=delta_stats(a,b)
+            a.save(out/f'ambient-{width}x{height}-t0.png');b.save(out/f'ambient-{width}x{height}-t10.png')
+            ImageEnhance.Brightness(d).enhance(5).save(out/f'ambient-{width}x{height}-difference-x5.png')
+            # Terrain, bank and stones are unchanged with water disabled.
+            lake=page.locator('[data-home-scene]').evaluate("e=>{const s=getComputedStyle(e),n=k=>parseFloat(s.getPropertyValue(k));return {x:n('--view-x')+n('--lake-x'),y:n('--view-y')+n('--lake-y'),w:n('--lake-width'),h:n('--lake-height')}}")
+            for name,rect in [('terrain',(.20,.47,.90,.61)),('bank',(.18,.61,.90,.64)),('stones',(.15,.86,.40,.90))]:
+                l,t,r,bottom=rect
+                box=(max(0,int(lake['x']+l*lake['w'])),max(0,int(lake['y']+t*lake['h'])),min(width,int(lake['x']+r*lake['w'])),min(height,int(lake['y']+bottom*lake['h'])))
+                assert d.crop(box).getbbox() is None,(name,box)
+            freeze(page,at='10',water='0');zero=canvas_image(page)
+            freeze(page,at='10',water='2.8');active=canvas_image(page)
+            wd,ws=delta_stats(zero,active)
+            shore=max(0,int(lake['y']+.62*lake['h']));near=min(height,math.ceil(lake['y']+.86*lake['h']))
+            assert wd.getbbox() and wd.crop((0,0,width,shore)).getbbox() is None and wd.crop((0,near,width,height)).getbbox() is None
+            zero.save(out/f'water-{width}x{height}-zero.png');active.save(out/f'water-{width}x{height}-active.png')
+            freeze(page,at=None,water='2.8')
+            gpu=page.evaluate('''() => {
+              const gl=document.querySelector('[data-home-canvas]').getContext('webgl2'),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+              const debug=gl.getExtension('WEBGL_debug_renderer_info');
+              const data=window.__ambientGpu={supported:!!ext,samples:[],disjoint:0,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
+              const original=gl.drawArrays;let pending=null,count=0;
+              gl.drawArrays=function(...args){
+                if(pending&&gl.getQueryParameter(pending,gl.QUERY_RESULT_AVAILABLE)){
+                  if(gl.getParameter(ext.GPU_DISJOINT_EXT))data.disjoint++;else data.samples.push(gl.getQueryParameter(pending,gl.QUERY_RESULT)/1e6);
+                  gl.deleteQuery(pending);pending=null;
+                }
+                if(ext&&!pending&&++count%20===0){pending=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,pending);original.apply(gl,args);gl.endQuery(ext.TIME_ELAPSED_EXT);}else original.apply(gl,args);
+              };
+              window.__stopAmbientGpu=()=>{gl.drawArrays=original;if(pending)gl.deleteQuery(pending);return data;};return {supported:data.supported,renderer:data.renderer};
+            }''')
+            before=state(page);began=time.monotonic();page.wait_for_timeout(15000);elapsed=time.monotonic()-began;after=state(page)
+            gpu=page.evaluate('window.__stopAmbientGpu()')
+            check(f'{width}x{height}: neutral/extremes, protected terrain, fixed-world water and real performance',{'motion':stats,'water':ws,'seconds':elapsed,'fps':(int(after['homeFrames'])-int(before['homeFrames']))/elapsed,'CPUsubmitMeanMs':float(after['homeDrawMs']),'logicalRGBABytes':int(after['homeBufferBytes']),'gpu':gpu})
+            context.close()
+        for effect in ([] if args.mode=='ambient-lifecycle' else effects+['All']):
+            context=ambient_context(video=True);page=ambient_visit(context)
+            freeze(page,effect,at='0',water='2.8' if effect=='All' else '0');a=canvas_image(page);a.save(out/f'{effect}-off.png')
+            freeze(page,effect,at=None,water='2.8' if effect=='All' else '0')
+            began=time.monotonic();before=state(page)
+            page.wait_for_timeout(10000);b=canvas_image(page);b.save(out/f'{effect}-on-10s.png')
+            page.wait_for_timeout(5100);after=state(page)
+            d,stats=delta_stats(a,b);ImageEnhance.Brightness(d).enhance(5).save(out/f'{effect}-difference-x5.png')
+            if effect=='Reflection':assert stats['max']==0
+            else:assert stats['above2']>100
+            check(f'{effect}: off/on and >=15s real-speed video',{'motion':stats,'recordedActiveSeconds':time.monotonic()-began,'worldStart':before['homeWorldTime'],'worldEnd':after['homeWorldTime'],'water':'normal' if effect=='All' else 'disabled','reflection':'disabled-registration'})
+            context.close();Path(page.video.path()).replace(out/f'{effect}-real-speed.webm')
+        # Failure of any member keeps the base water-only renderer, with no partial group.
+        context=ambient_context();context.route('**/*ambient-clouds*',lambda r:r.abort())
+        page=ambient_visit(context,False);page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeAmbientStatus==='unavailable'")
+        assert state(page)['homeRendering']=='dynamic' and page.evaluate('window.__ambientAudit.textures')==2
+        page.wait_for_timeout(300);frames=int(state(page)['homeFrames']);page.wait_for_timeout(700);assert int(state(page)['homeFrames'])>frames
+        capture(page,'ambient-group-failed');check('group request failure preserves water-only renderer',state(page));context.close()
+        context=ambient_context()
+        context.add_init_script('''const upload=WebGL2RenderingContext.prototype.texImage2D;
+          WebGL2RenderingContext.prototype.texImage2D=function(...args){if(args.at(-1)?.src?.includes('ambient-branch'))throw Error('injected optional upload failure');return upload.apply(this,args);};''')
+        page=ambient_visit(context,False);page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeAmbientStatus==='unavailable'&&document.querySelector('[data-home-scene]').dataset.homeRendering==='dynamic'")
+        assert page.evaluate('window.__ambientAudit.textures')==2
+        check('partial optional upload failure releases group and reinstalls base water',{'state':state(page),'resources':page.evaluate('window.__ambientAudit')});context.close()
+        # Real WebGL context loss/restore, OS media-query changes, synthetic hidden clock.
+        context=ambient_context();page=ambient_visit(context)
+        page.evaluate("window.__lostContext=document.querySelector('[data-home-canvas]').getContext('webgl2').getExtension('WEBGL_lose_context');window.__lostContext.loseContext()")
+        page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeRendering==='static'");assert page.evaluate('window.__ambientAudit.textures')==0
+        page.wait_for_timeout(500);page.evaluate('window.__lostContext.restoreContext()')
+        page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeRendering==='dynamic'");assert page.evaluate('window.__ambientAudit.textures')==7
+        page.emulate_media(reduced_motion='reduce')
+        page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeRendering==='static'",timeout=5000)
+        assert page.evaluate('window.__ambientAudit.textures')==0 and state(page)['homeRendering']=='static',{'resources':page.evaluate('window.__ambientAudit'),'state':state(page),'reduced':page.evaluate("matchMedia('(prefers-reduced-motion: reduce)').matches")}
+        page.emulate_media(reduced_motion='no-preference');page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeRendering==='dynamic'")
+        before=page.evaluate("() => {Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));return {...document.querySelector('[data-home-scene]').dataset}}")
+        page.wait_for_timeout(1500);assert state(page)['homeFrames']==before['homeFrames']
+        page.evaluate("delete document.hidden;document.dispatchEvent(new Event('visibilitychange'))");page.wait_for_timeout(300)
+        after=state(page);assert 0<=float(after['homeWorldTime'])-float(before['homeWorldTime'])<.8
+        check('WebGL restore, reduced-motion toggle, synthetic 1.5s hidden clock and seven-texture rebuild',{'before':before,'after':after,'resources':page.evaluate('window.__ambientAudit')})
+        page.get_by_role('button',name='播放',exact=True).click();page.wait_for_function("document.querySelector('audio').currentTime>.1")
+        page.evaluate("window.__oldSurface=document.querySelector('[data-home-canvas]');window.__oldAudio=document.querySelector('audio');window.__audioTime=window.__oldAudio.currentTime")
+        page.locator('[data-edge-trigger=about]').hover();page.wait_for_timeout(450);page.get_by_role('link',name='进入关于',exact=True).click();page.wait_for_url('**/about')
+        assert page.evaluate('Object.values(window.__ambientAudit).every(v=>v===0)&&window.__oldSurface.width===0&&document.querySelector("audio")===window.__oldAudio&&!window.__oldAudio.paused&&window.__oldAudio.currentTime>=window.__audioTime')
+        check('cross-route releases all seven textures, buffer, program and shaders; one playing audio continues');context.close()
+        context=ambient_context(reduced=True);page=ambient_visit(context,False)
+        assert state(page)['homeAmbientStatus']=='idle' and page.evaluate('window.__ambientAudit.textures')==0
+        check('initial reduced-motion skips optional group and GPU allocations');context.close()
+        context=ambient_context()
+        context.add_init_script('''(() => {const Native=window.Image,src=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');window.__heldAmbientImages=0;
+          window.Image=function(...args){const image=new Native(...args);let timer=null;
+            Object.defineProperty(image,'src',{get:()=>src.get.call(image),set:url=>{
+              if(timer!==null){clearTimeout(timer);timer=null;window.__heldAmbientImages--;}
+              if(String(url).includes('ambient-')){window.__heldAmbientImages++;timer=setTimeout(()=>{timer=null;window.__heldAmbientImages--;src.set.call(image,url);},10000);}
+              else src.set.call(image,url);
+            }});return image;};window.Image.prototype=Native.prototype;})()''')
+        page=ambient_visit(context,False);page.wait_for_function("window.__heldAmbientImages===5&&document.querySelector('[data-home-scene]').dataset.homeRendering==='dynamic'")
+        page.evaluate("window.__oldSurface=document.querySelector('[data-home-canvas]')")
+        page.locator('[data-edge-trigger=about]').hover();page.wait_for_timeout(450);page.get_by_role('link',name='进入关于',exact=True).click();page.wait_for_url('**/about')
+        assert page.evaluate('window.__heldAmbientImages===0&&Object.values(window.__ambientAudit).every(v=>v===0)&&window.__oldSurface.width===0')
+        check('unmount during five held optional loads cancels sources and releases base renderer');context.close()
+        context=ambient_context();page=ambient_visit(context)
+        page.evaluate('''() => {const native=requestAnimationFrame;window.requestAnimationFrame=callback=>native(()=>{const start=performance.now();while(performance.now()-start<125){}callback(performance.now());});}''')
+        page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeQuality==='adaptive-low'",timeout=15000);low=state(page)
+        page.wait_for_function("document.querySelector('[data-home-scene]').dataset.homeQuality==='static'",timeout=15000)
+        assert page.evaluate('window.__ambientAudit.textures')==0
+        check('injected 125ms RAF contention: 40fps to 24fps to static release',{'low':low,'final':state(page)});context.close()
+        assert not errors,errors
+        check('ambient checks completed with reflection registration gate',{'pageErrors':errors})
+    elif args.mode == 'coupled-window':
         from PIL import Image, ImageChops
         reports=[{'date':'2026-11-18','introduction':'','conclusion':'','papers':[{'title':'Coupled-window test paper','priority':'精读','url':'https://example.org/paper','html':'<p>Local interaction fixture.</p>'}]}]
         check('environment',{'browser':browser.version,'url':args.url,'music':'local WAV fixture','papers':'one local report fixture','landscape':'real licensed texture; live shader; no injected scene'})
@@ -188,6 +339,8 @@ with sync_playwright() as p:
             page.keyboard.press('Escape');page.keyboard.press('Escape');page.keyboard.press('Escape')
             expect(page.locator('[data-edge-trigger=papers]')).to_be_focused()
             if dynamic:
+                # Isolate the original spectral-water proof from world motion.
+                page.locator('[data-home-scene]').evaluate('(e)=>e.dataset.homeAmbientStrength="0"')
                 page.mouse.move(5,5);page.wait_for_timeout(1200)
                 surface=page.locator('[data-home-canvas]')
                 first=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
@@ -202,17 +355,22 @@ with sync_playwright() as p:
                 page.locator('[data-home-scene]').evaluate('(e)=>e.dataset.homeWaterStrength="2.8"');page.wait_for_timeout(120)
                 active=Image.open(io.BytesIO(surface.screenshot())).convert('RGB')
                 delta=ImageChops.difference(zero,active)
-                assert delta.crop((0,0,1440,455)).getbbox() is None
-                assert delta.crop((0,610,1440,900)).getbbox() is None
+                lake_rect=page.locator('[data-home-scene]').evaluate("e=>{const s=getComputedStyle(e);const px=k=>parseFloat(s.getPropertyValue(k));return {y:px('--view-y')+px('--lake-y'),height:px('--lake-height')}}")
+                # Protect the mountains/sky above the earliest shoreline and the
+                # foreground below the water response, independent of room framing.
+                shore=math.floor(lake_rect['y']+lake_rect['height']*.62)
+                foreground=math.ceil(lake_rect['y']+lake_rect['height']*.86)
+                assert delta.crop((0,0,width,max(0,shore))).getbbox() is None
+                assert delta.crop((0,min(height,foreground),width,height)).getbbox() is None
                 assert delta.getbbox() is not None
                 zero.save(out/'coupled-water-zero.png');active.save(out/'coupled-water-active.png')
+                page.locator('[data-home-scene]').evaluate('(e)=>delete e.dataset.homeAmbientStrength')
                 page.mouse.move(1150,300);page.wait_for_timeout(800)
                 assert abs(float(state(page)['homeLook'].split(',')[0]))>1
                 capture(page,'coupled-pointer-right')
                 page.mouse.move(290,300);page.wait_for_timeout(800)
                 capture(page,'coupled-pointer-left')
-                frame_count=state(page)['homeFrames']
-                page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))")
+                frame_count=page.evaluate("() => {Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));return document.querySelector('[data-home-scene]').dataset.homeFrames}")
                 page.wait_for_timeout(250)
                 assert state(page)['homeFrames']==frame_count
                 page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))")

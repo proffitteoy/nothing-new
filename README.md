@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="./docs/images/home-window/coupled-room-1440.webp" alt="室内观景窗首页，含局部水面运动；待人工视觉审阅" width="100%">
+  <img src="./docs/images/home-window/ambient/1440x900.webp" alt="浅木观景窗第二阶段本地审阅稿；已接入薄云、采光与枝叶，倒影配准未通过而关闭" width="100%">
 </p>
 
 ## 关于这个站点

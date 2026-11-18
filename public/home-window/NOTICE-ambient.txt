@@ -1,0 +1,70 @@
+Nothing New ambient-window assets, local review, 2026-11-18
+
+Original photograph: "Convict Lake at night" by TheDailyNathan (2011-10-09).
+Lens-distortion correction: Hike395 (2017-12-21).
+Source: https://commons.wikimedia.org/wiki/File:Convict_Lake_at_night_fixed.jpg
+Revision: https://commons.wikimedia.org/w/index.php?title=File:Convict_Lake_at_night_fixed.jpg&oldid=1091227287
+License: CC BY-SA 3.0 Unported, https://creativecommons.org/licenses/by-sa/3.0/
+Existing adaptation: convict-lake-day-study.webp; full history in NOTICE-day-study.txt.
+Room reference: observation-room-open.webp; see NOTICE-observation-room-open.txt.
+Adaptation by proffitteoy, using the built-in imagegen tool.
+These image derivatives and data maps remain CC BY-SA 3.0. Site code is GPL-3.0-only.
+No photographer or reference-site endorsement is implied.
+
+Accepted runtime derivatives:
+ambient-sky.webp: 1672x877 opaque empty-sky plate, generated from the original
+  landscape, followed by a second gradient correction. Replaces sky only.
+ambient-clouds.webp: 1672x316 RGBA top crop of a full-frame generated extraction/
+  reconstruction of the original wisps. Generated alpha retained, lossless WebP.
+ambient-branch.webp: 168x246 RGBA top-left crop of generated extraction/
+  reconstruction of a small portion of the existing left tree. Alpha retained.
+ambient-sky-region.png: 1672x877 numeric mask from original source RGB. For x>=200,
+  first non-blue sky pixel below y170; left protected ridge y=280+.25*x.
+  Two source-pixel safety gap, three-pixel feather. Lower green foliage remains
+  stationary from y>.22*877. It is a conservative mask, not a depth reconstruction.
+ambient-room-light.png: 512x320 RGB numeric receiving map authored for the
+  unchanged 1585x992 room. R/G: cloud-plane receiving UV; B: direct-light fraction.
+  Parallel-light receiver projection uses fixed upper-left cloud-plane sun UV
+  [0.1764705882,0.0862745098], a designed artistic anchor, not a measurement.
+  The attenuation reads the same moving cloud alpha; ambient base remains lit.
+  This is not recovered physical irradiance, albedo or baked illumination.
+
+Registered original scene and room are unchanged. Cloud speed is about 1 CSS px/s
+at the 1440 review viewport. Branch free end is bounded near 3px, with a 6s main
+period and a 24s shared gust; the lower root remains fixed. Branch and clouds
+share the same exterior projection and visible-seconds clock.
+
+REJECTED, NOT IMPORTED BY THE PRODUCT:
+The full clean landscape study redrew terrain. The later reflection clean plate
+changed existing water detail and showed a visible blue patch when composited.
+Cloud reflection is therefore DISABLED (data-home-reflection-status =
+disabled-registration). No claim of synchronized, registered lake reflection
+or removal of the original static cloud reflections is made.
+Both rejected full images are retained only in the ignored local source archive.
+
+Offline export: node scripts/home-ambient-assets.mjs [source directory]
+Requires sky-corrected.png, clouds.png and branch.png from the retained imagegen
+sources, as well as the unchanged original landscape. Sharp only normalizes
+dimensions, crops, encodes and authors numeric data maps. No Python art editing.
+Source archive: .sync/tmp-ambient-window/source/ (not downloaded by the site).
+The original generated PNGs also remain in the local Codex generated_images folder.
+
+Complete actual prompts, in chronological order:
+
+Rejected full clean study:
+Use case: precise-object-edit. Asset type: registered clean-plate texture for the existing Nothing New lake landscape, not a redesign. Edit the supplied original landscape. Keep exactly the same camera, crop, mountain silhouettes, mountain textures, shoreline, rocks, water ripples and mountain reflections, lighting and blue-green color. Remove only the thin wispy clouds from the sky, replacing them with a clean natural blue sky that matches the original sky gradient. Also remove only the small near-camera upper-left tree branch that overlaps the SKY above the left mountain; extend the blue sky behind it. Keep all trees that overlap the mountain and the entire shoreline vegetation. Clean away any faint cloud-only reflection in the water while preserving the much stronger mountain reflections and all rocks. Do not invent new mountains or change the lake. This texture will be sampled only in protected sky/selected reflection regions, and all original terrain pixels remain authoritative. Full landscape in the same wide 1672:877 proportions; do not add objects, room, windows, text, haze, clouds or decoration. Output opaque clean-plate image, natural matching morning exposure.
+
+Cloud RGBA extraction/reconstruction:
+Use case: background-extraction. Asset type: transparent full-frame cloud layer registered to the supplied Nothing New landscape. Extract/reconstruct ONLY the existing fine white morning cirrus wisps seen in the supplied image; preserve the delicate photographic appearance, not a cartoon puff or a fog overlay. Keep the SAME landscape coordinate system and wide 1672:877 framing. Make two restrained connected wispy cloud groups at their original upper-left/upper-middle and upper-right sky positions, with a few strands reaching down to about the upper 25 percent of the frame over the central valley. The remaining entire image must have genuine transparent alpha, including all sky between the cloud strands and everything below the cloud groups. Cloud pixels should be natural softly lit white/cool gray with high-quality feathered transparency, no blue backdrop baked into the layer. Keep cloud size and locations referenced to the original landscape, so the layer can sit over a clean blue-sky plate at the same UV coordinates. No trees, mountains, water, room, horizon, UI, text, lights, trails, particles, or dark matte. Do not create a dense overcast sky. Output only the registered cloud RGBA layer, full-frame with transparent margins.
+
+Branch RGBA extraction/reconstruction:
+Use case: background-extraction. Asset type: registered near-branch RGBA for the supplied Nothing New landscape. Extract ONLY the small upper-left near-camera branch/leaves that overlap the blue sky, at their SAME absolute position and scale in the full wide landscape framing. Use the original distinctive fine dark green foliage and thin woody twigs, not a newly invented plant. The selected part is confined to the leftmost roughly 9 percent of the image and top 25 percent; its root continues off the left edge near 20 percent image height. Keep the lower trees over the mountain and shoreline OUT of this layer. Preserve a full-frame canvas with the same 1672:877 aspect as the input; all pixels except that small upper-left foliage must be genuine transparent alpha. Fine accurate leaf and twig edges without blue sky halos or an opaque matte. Do not include sky, cloud, mountains, water, stone, room, text, UI, container, or shadows. Do not expand the tree into the center or put branches on another side. Output only this small source-matched branch in the original landscape coordinates on a transparent canvas.
+
+First empty sky plate:
+Use case: precise-object-edit. Asset type: opaque clean SKY ONLY texture for the supplied landscape. Produce a full-canvas empty clear cool morning blue sky whose colors and gentle vertical atmospheric gradient match the blue sky in the reference. Extend that sky over the ENTIRE image all the way to the bottom; the bottom should continue the pale atmospheric blue that would lie behind the mountains. This is the hidden blue-sky clean plate for a separate protected mountain mask: absolutely NO mountains, trees, water, horizon line, clouds, sun disk, lights, texture stripes, objects, gradients that band, room, text or UI. Keep the same wide roughly 1672:877 proportions. Natural subtle sky gradient, slightly deeper clean blue at top and paler toward bottom, no yellow, no gray fog or decorative color. Original landscape is color reference only; remove every non-sky object from the output. Opaque RGB.
+
+Accepted second sky plate:
+Use case: precise-object-edit. EDIT TARGET image 1 is a blue sky texture. Supporting color reference image 2 is the original landscape. Correct ONLY the empty sky plate to match the reference's sky color at the SAME normalized x and y locations. CRITICAL: the original sky gets pale at y=0.35 to 0.46 of the FULL LANDSCAPE height, not only at the bottom of the canvas. Top right is darker blue RGB approximately 52 117 181, top center 74 134 198, top left light blue approximately 140 180 230. At y=0.23 the center is RGB approximately 105 166 225 and right 93 156 219. At y=0.35 the center is approximately 133 186 236; the left is even paler. Left sky is noticeably paler than right at every height, as in image 2. Extend the empty sky below y=0.46 as softly pale atmospheric blue with no objects. Preserve this wide landscape coordinate system. Remove ALL clouds, trees, mountains, water, horizon, sun, text and objects: the output must be only empty natural blue sky covering the entire canvas, but its upper half matches the original landscape sky gradient position. No straight horizon line or colored bands. This will be composited behind a protected photographic mountain mask.
+
+Rejected reflection clean plate:
+Use case: precise-object-edit. EDIT TARGET: the supplied existing Nothing New lake landscape. Make a registered clean-water reflection plate. Preserve the EXACT original camera, image proportions, mountains, ridge silhouettes, vegetation, shoreline, rocks, sky and every mountain reflection. In the lake water ONLY, gently remove the pale thin-cloud reflection streaks in the sky-colored open water, especially the lower-left/lower-middle open lake patches between the reflected mountain silhouettes. Replace those pale cloud streaks with matching empty blue-sky reflection and the SAME fine existing calm ripples. Do not smooth out water texture. Do not change any mountain reflection, bank reflection or foreground rock. Do not move the horizon or invent terrain. This image will be used ONLY inside a tightly protected open-water sky-reflection mask and cannot alter the real terrain. Do not paint new clouds or their reflections. No room, text, UI, particles or added objects. Keep it photorealistic and visually almost identical to the source; this is targeted cleanup of old cloud reflection only.

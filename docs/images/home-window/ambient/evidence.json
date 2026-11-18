@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-18",
+  "branch": "feat/home-living-window-20261118",
+  "base": "main@99df36b plus unchanged stage-one shallow-oak room",
+  "device": {
+    "os": "Windows",
+    "cpu": "Intel Core Ultra 7 155H",
+    "gpu": "Intel Arc Graphics",
+    "gpuDriver": "31.0.101.5382",
+    "browser": "Chrome 157.0.8103.79 / ANGLE D3D11",
+    "headless": true
+  },
+  "acceptedEffects": [
+    "clouds",
+    "authored room direct-light attenuation",
+    "local branch sway"
+  ],
+  "disabledEffects": {
+    "reflection": "registration failed: candidate altered water texture; source static cloud reflections remain"
+  },
+  "evidence": {
+    "normal": "ambient-window-report.json",
+    "lifecycle": "ambient-lifecycle-report.json",
+    "navigation": "coupled-window-report.json",
+    "unmocked": "final-unmocked.json"
+  },
+  "videoArchive": ".sync/tmp-ambient-window/production/",
+  "videoHashes": {
+    "All-real-speed.webm": {
+      "sha256": "5e857adcfb965f50f17abd897d69edbfd3b848dd5f10ffeb12887249b04ca49d",
+      "bytes": 13478151
+    },
+    "Branch-real-speed.webm": {
+      "sha256": "0858077511e1c8f1c316ab695a2b0a8189a9bcd794ecdb58f6308a22d4a69598",
+      "bytes": 10900586
+    },
+    "Clouds-real-speed.webm": {
+      "sha256": "e3bbc47fef24f1da0039b523263548920942e70cae0ff8cc1c887a1161873e74",
+      "bytes": 10926794
+    },
+    "Light-real-speed.webm": {
+      "sha256": "2802ee660eb4d105cd98a64810839d19639eb541f354cfd792ef61bb0d06626a",
+      "bytes": 11284469
+    },
+    "Reflection-real-speed.webm": {
+      "sha256": "04da6685c8263cb1390dbdf18ca08bc7dbea822812ddcbd8a6d2e960db1acebb",
+      "bytes": 10380071
+    }
+  },
+  "protectedStageOne": [
+    {
+      "file": "F:\\my blog\\.worktrees\\home-living-window\\components\\field\\spectralField.ts",
+      "sha256": "800DC0E7C221588231EA7678E193A387DB0AD0851C78A406BB5C532253DC77FE",
+      "unchanged": true
+    },
+    {
+      "file": "F:\\my blog\\.worktrees\\home-living-window\\lib\\home-scene.ts",
+      "sha256": "102984E2D2C3C3B0FE134F21BA62D0A438AA8558A65889BF99FE0EEBBCB2757C",
+      "unchanged": true
+    },
+    {
+      "file": "F:\\my blog\\.worktrees\\home-living-window\\public\\home-window\\convict-lake-day-study.webp",
+      "sha256": "366F6AA96BEF20F81C8ECFC1CF8779B0FB08F0E242E5F44C8907B7C8D0DA08B9",
+      "unchanged": true
+    },
+    {
+      "file": "F:\\my blog\\.worktrees\\home-living-window\\public\\home-window\\observation-room-open.webp",
+      "sha256": "72B19AC3399A95B4D80906CFAD47850478E2E74A4C2BD289C2B96072222B0CD7",
+      "unchanged": true
+    }
+  ],
+  "limits": [
+    "No Safari or real OS-background acceptance",
+    "Normal four-size performance and videos predate only the reduced-motion release guard",
+    "No deployment, commit or push",
+    "Artistic quietness and 10-second human noticeability await user review"
+  ],
+  "reviewVideos": {
+    "All-16s.mp4": {
+      "seconds": 16,
+      "speed": 1,
+      "sha256": "8d2d874b99287181fc2c2d05b5c62eebde1dac1e579bb17ef081ca91f59e78ee",
+      "bytes": 1751401
+    },
+    "Branch-16s.mp4": {
+      "seconds": 16,
+      "speed": 1,
+      "sha256": "63c0377a651745bc342a1f05dc2384694128da87c3e02fd5f00c0a64dda3d267",
+      "bytes": 431449
+    },
+    "Clouds-16s.mp4": {
+      "seconds": 16,
+      "speed": 1,
+      "sha256": "aaed38742169a76d7738ce04cbb25c5f852934a2b7fcc072028de5204ad664c8",
+      "bytes": 437053
+    },
+    "Light-16s.mp4": {
+      "seconds": 16,
+      "speed": 1,
+      "sha256": "22c4fbc5fa3b619d23aa7115ecdf368973041eaf45129b86800092f6b1245c01",
+      "bytes": 476484
+    },
+    "Reflection-16s.mp4": {
+      "seconds": 16,
+      "speed": 1,
+      "sha256": "ad7dcb25b8c14df89b7e1c52330eed319fb05438cd3c0fdb860f83efc44ee2ad",
+      "bytes": 421234
+    }
+  },
+  "reviewVideoProcessing": "Trimmed loading prelude; H.264 MP4 at unchanged 1x speed; raw WebM retained locally."
+}
