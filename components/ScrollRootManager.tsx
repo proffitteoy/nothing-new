@@ -60,6 +60,11 @@ export default function ScrollRootManager() {
     let secondFrame = 0
     const firstFrame = window.requestAnimationFrame(() => {
       secondFrame = window.requestAnimationFrame(() => {
+        if (
+          document.documentElement.dataset.homeProjectNavigation === "true" &&
+          (pathname === "/" || pathname === "/projects")
+        )
+          return
         scrollRoot.scrollTo({ top: nextScrollTop, behavior: "auto" })
       })
     })

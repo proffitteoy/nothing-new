@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react"
 import { useMusic } from "../../components/MusicProvider"
+import { useHomeProjectNavigation } from "../../components/HomeProjectNavigation"
 import { projects, type Project, type RoomTarget } from "./projects"
 import { sampleSpectralFamily, spectralParameterAt } from "../../components/field/spectralField"
 import styles from "./room.module.css"
@@ -43,6 +44,7 @@ export default function ProjectsBoard() {
     initializeMusic,
   } = useMusic()
   const reducedMotion = useReducedMotion()
+  const linkedNavigation = useHomeProjectNavigation()
   const router = useRouter()
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
   const [staticView, setStaticView] = useState(false)
@@ -58,6 +60,17 @@ export default function ProjectsBoard() {
   const directoryToggle = useRef<HTMLElement>(null)
   const sceneActive = !staticView && status === "ready"
   const panelOpen = selected !== null || musicOpen
+
+  useEffect(() => {
+    if (!linkedNavigation || !rotationEnabled || panelOpen) return
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      setRotationEnabled(false)
+      setResetKey((key) => key + 1)
+    }
+    window.addEventListener("keydown", escape)
+    return () => window.removeEventListener("keydown", escape)
+  }, [linkedNavigation, rotationEnabled, panelOpen])
 
   useEffect(() => {
     if (!sceneActive) return
@@ -107,8 +120,12 @@ export default function ProjectsBoard() {
     [router, initializeMusic],
   )
   const ready = useCallback(() => setStatus("ready"), [])
-  const failed = useCallback(() => setStatus("error"), [])
+  const failed = useCallback(() => {
+    setStatus("error")
+    setRotationEnabled(false)
+  }, [])
   function toggleStatic() {
+    setRotationEnabled(false)
     closePanel()
     if (staticView || status === "error") {
       setStatus("loading")
@@ -119,7 +136,10 @@ export default function ProjectsBoard() {
   }
 
   return (
-    <main className={styles.page}>
+    <main
+      className={styles.page}
+      data-project-navigation-blocked={panelOpen || (linkedNavigation && rotationEnabled)}
+    >
       <section
         className={styles.stage}
         aria-labelledby="study-title"
@@ -156,6 +176,7 @@ export default function ProjectsBoard() {
             key={sceneVersion}
             reduceMotion={!!reducedMotion}
             rotationEnabled={rotationEnabled}
+            wheelNavigation={linkedNavigation}
             paused={panelOpen}
             resetKey={resetKey}
             showLabels={showLabels}
@@ -253,6 +274,26 @@ export default function ProjectsBoard() {
             <p>拖动环绕 · 滚轮缩放 · 点击物件</p>
           </details>
         </div>
+        {linkedNavigation && (
+          <div
+            className={styles.sceneTools}
+            data-home-project-controls
+            style={{ position: "fixed", right: 24, bottom: 24, zIndex: 20 }}
+          >
+            <button
+              type="button"
+              disabled={!sceneActive || panelOpen}
+              aria-pressed={rotationEnabled}
+              onClick={() => {
+                setRotationEnabled((value) => !value)
+                if (rotationEnabled) setResetKey((key) => key + 1)
+              }}
+            >
+              <Rotate3D size={15} />
+              <span>{rotationEnabled ? "结束自由查看" : "自由查看"}</span>
+            </button>
+          </div>
+        )}
         <p className={styles.hint} role={status === "loading" || status === "error" ? "status" : undefined}>
           {status === "loading" && !staticView ? (
             <>
