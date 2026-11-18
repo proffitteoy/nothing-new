@@ -12,6 +12,7 @@ import styles from "./room.module.css"
 type Props = {
   reduceMotion: boolean
   rotationEnabled: boolean
+  wheelNavigation: boolean
   paused: boolean
   showLabels: boolean
   resetKey: number
@@ -360,6 +361,7 @@ export default memo(function RoomScene(props: Props) {
       mobile = media.matches
       const interactive = !latest.current.paused && (!mobile || latest.current.rotationEnabled)
       controls.enabled = interactive
+      controls.enableZoom = !latest.current.wheelNavigation || latest.current.rotationEnabled
       controls.enableDamping = !latest.current.reduceMotion
       canvas!.style.touchAction = mobile && !latest.current.rotationEnabled ? "pan-y" : "none"
       if (resetKey !== latest.current.resetKey) {

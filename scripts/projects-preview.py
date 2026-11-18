@@ -5,6 +5,7 @@ import json
 import math
 import re
 import struct
+import sys
 import wave
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -14,6 +15,7 @@ parser.add_argument('--url', default='http://127.0.0.1:3152')
 parser.add_argument('--output', type=Path, default=Path('.sync/tmp-projects-52-evidence'))
 parser.add_argument('--case', help='Run a single WIDTHxHEIGHT case')
 parser.add_argument('--browser', help='Existing Chromium executable; otherwise Playwright Chromium')
+parser.add_argument('--connection-only', action='store_true', help='Check main-based home/project navigation without the historical toolbar matrix')
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
 ids = ['rumor', 'topp', 'iris', 'competitions', 'gudhi', 'animeko']
@@ -111,8 +113,139 @@ def project_checks(page):
     expect(page.locator('summary').filter(has_text='项目目录')).to_be_focused()
 
 
+def connection_checks(browser):
+    context = browser.new_context(viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
+    context.route('**/api/music?*', music_route)
+    context.route('**/projects-check.wav', audio_route)
+    page = context.new_page()
+    page.on('pageerror', lambda error: errors.append(str(error)))
+    page.goto(args.url + '/', wait_until='networkidle')
+    page.wait_for_function("document.documentElement.classList.contains('splash-seen')", timeout=30000)
+    expect(page.locator('[data-home-project-track]')).to_have_count(1)
+    page.get_by_role('button', name='播放', exact=True).click()
+    page.wait_for_function("document.querySelector('audio')?.currentTime > 0.1")
+    audio_element = page.locator('audio').element_handle()
+    playback_time = audio_element.evaluate('el => el.currentTime')
+    home_top = page.locator('#app-scroll-root').evaluate('el => el.scrollTop')
+    player = page.locator('[data-home-music]').bounding_box()
+    page.mouse.move(player['x'] + 20, player['y'] + 20)
+    page.mouse.wheel(0, -1200)
+    page.wait_for_timeout(200)
+    assert page.locator('#app-scroll-root').evaluate('el => el.scrollTop') == home_top
+    page.locator('[data-edge-trigger="projects"]').click()
+    page.mouse.move(720, 400)
+    page.mouse.wheel(0, -1200)
+    page.wait_for_timeout(200)
+    assert page.url == args.url + '/'
+    assert page.locator('#app-scroll-root').evaluate('el => el.scrollTop') == home_top
+    page.mouse.click(720, 400)
+    page.mouse.wheel(0, -1200)
+    page.wait_for_url(args.url + '/projects')
+    ready(page)
+    assert page.locator('[data-room-hotspot]:visible').count() == 9
+    results.append('home-wheel-entry/player-and-preview-protection')
+    for target, name in zip(ids, names):
+        button = page.locator(f'[data-room-hotspot="{target}"]')
+        button.click()
+        dialog = page.get_by_role('dialog')
+        expect(dialog.get_by_role('heading', name=name, exact=True)).to_be_visible()
+        assert dialog.get_by_role('link').get_attribute('href').startswith('https://github.com/')
+        dialog.hover()
+        page.mouse.wheel(0, 1200)
+        page.wait_for_timeout(100)
+        assert page.url == args.url + '/projects'
+        page.keyboard.press('Escape')
+        expect(button).to_be_focused()
+    results.append('six-project-details/links/escape/scroll-protection')
+    initial = page.locator('[data-room-hotspot="rumor"]').bounding_box()
+    page.get_by_role('button', name='自由查看', exact=True).click()
+    page.mouse.move(720, 500)
+    page.mouse.wheel(0, 500)
+    page.wait_for_timeout(300)
+    assert page.url == args.url + '/projects'
+    assert page.locator('#app-scroll-root').evaluate('el => el.scrollTop') == 0
+    zoomed = page.locator('[data-room-hotspot="rumor"]').bounding_box()
+    assert zoomed is None or abs(zoomed['x'] - initial['x']) + abs(zoomed['y'] - initial['y']) > 2
+    page.get_by_role('button', name='结束自由查看', exact=True).click()
+    page.get_by_role('button', name='自由查看', exact=True).click()
+    page.keyboard.press('Escape')
+    expect(page.get_by_role('button', name='自由查看', exact=True)).to_have_attribute('aria-pressed', 'false')
+    results.append('explicit-free-view/escape')
+    page.mouse.move(720, 500)
+    page.mouse.wheel(0, 1200)
+    page.wait_for_url(args.url + '/')
+    page.wait_for_function("document.querySelector('[data-home-scene]') !== null")
+    assert audio_element.evaluate("el => el === document.querySelector('audio') && !el.paused")
+    assert audio_element.evaluate('el => el.currentTime') > playback_time
+    expect(page.locator('audio')).to_have_count(1)
+    results.append('return-to-home/same-playing-audio')
+    page.go_back(wait_until='domcontentloaded')
+    page.wait_for_url(args.url + '/projects')
+    ready(page)
+    page.go_back(wait_until='domcontentloaded')
+    page.wait_for_url(args.url + '/')
+    page.go_forward(wait_until='domcontentloaded')
+    page.wait_for_url(args.url + '/projects')
+    ready(page)
+    page.set_viewport_size({'width': 1280, 'height': 800})
+    assert page.locator('#app-scroll-root').evaluate('el => el.scrollTop') == 0
+    results.append('back-forward/resize')
+    page.locator('[data-room-hotspot="notes"]').click()
+    page.wait_for_url(re.compile(r'.*/blog(?:/.*)?$'))
+    expect(page.locator('[data-home-project-track]')).to_have_count(0)
+    assert page.evaluate('scrollY') == 0
+    results.append('normal-notes-route')
+    context.close()
+
+    for width, height, reduced in [(1440, 900, False), (1280, 600, False), (800, 600, False), (600, 600, False), (1440, 900, True)]:
+        context = browser.new_context(viewport={'width': width, 'height': height}, reduced_motion='reduce' if reduced else 'no-preference')
+        page = context.new_page()
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.goto(args.url + '/projects', wait_until='networkidle')
+        ready(page)
+        page.wait_for_function("document.documentElement.classList.contains('splash-seen')", timeout=30000)
+        expect(page.locator('[data-home-project-track]')).to_have_count(1)
+        page.mouse.move(width // 2, height // 2)
+        page.mouse.wheel(0, 1200)
+        page.wait_for_url(args.url + '/')
+        page.wait_for_selector('[data-home-scene]')
+        page.mouse.wheel(0, -1200)
+        page.wait_for_url(args.url + '/projects')
+        ready(page)
+        context.close()
+        results.append(f'desktop-wheel-roundtrip/{width}x{height}/reduced-{reduced}')
+
+    context = browser.new_context(viewport={'width': 1440, 'height': 900})
+    context.route('**/projects-room/study.glb', lambda route: route.abort())
+    page = context.new_page()
+    page.on('pageerror', lambda error: errors.append(str(error)))
+    page.goto(args.url + '/projects', wait_until='networkidle')
+    expect(page.locator('[data-room-status]')).to_have_attribute('data-room-status', 'error', timeout=45000)
+    expect(page.locator('details article')).to_have_count(6)
+    expect(page.locator('summary').filter(has_text='项目目录')).to_be_visible()
+    results.append('model-failure/readable-six-projects')
+    context.close()
+    context = browser.new_context(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True,
+        user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1')
+    page = context.new_page()
+    page.goto(args.url + '/', wait_until='networkidle')
+    page.wait_for_url(re.compile(r'.*/blog(?:/.*)?$'))
+    expect(page.locator('[data-home-project-track]')).to_have_count(0)
+    context.close()
+    results.append('mobile-home-redirect')
+
+
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, executable_path=args.browser)
+    if args.connection_only:
+        connection_checks(browser)
+        browser.close()
+        (args.output / 'connection-report.json').write_text(json.dumps({'matrix': results, 'pageErrors': errors,
+            'music': 'Local browser fixture; unchanged root Provider and real audio element',
+            'scope': 'Route handoff only; main scenes retained; continuous 3D camera transition not implemented'}, indent=2), encoding='utf-8')
+        assert not errors, errors
+        print('PASS', ', '.join(results), flush=True)
+        sys.exit(0)
     matrix = [(1440,1000,False), (960,800,False), (768,1024,True),
               (390,844,True), (320,568,True), (844,390,True)]
     for width, height, touch in matrix:

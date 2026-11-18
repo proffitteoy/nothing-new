@@ -7,6 +7,7 @@ import { siteConfig } from "../siteConfig"
 import BackgroundSlider from "../components/BackgroundSlider"
 import SplashScreen from "../components/SplashScreen"
 import ScrollRootManager from "../components/ScrollRootManager"
+import HomeProjectNavigator from "../components/HomeProjectNavigation"
 import Navbar from "../components/Navbar"
 
 import MobileBackButton from "../components/MobileBackButton"
@@ -104,7 +105,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               data-scroll-root
               data-site-ui
             >
-              {children}
+              <HomeProjectNavigator>{children}</HomeProjectNavigator>
             </div>
 
             <div className="md:hidden block" data-site-ui>
