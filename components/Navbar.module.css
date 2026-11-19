@@ -1,11 +1,11 @@
-/* Navigation aliases follow the shared day/night blue palette. */
+/* Navigation uses the Window & Formula reading palette. */
 .visualScope {
   --journal-paper: var(--site-surface);
   --journal-ink: var(--site-ink);
   --journal-muted: var(--site-muted);
   --journal-accent: var(--site-accent);
   --journal-line: var(--site-line);
-  --journal-pink: var(--site-detail);
+  --journal-pink: var(--site-pink);
   --journal-ui: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --journal-display: "Newsreader", "Source Han Serif SC", "Noto Serif SC", "SimSun", serif;
   color: var(--journal-ink);
