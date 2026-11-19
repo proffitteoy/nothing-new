@@ -1,36 +1,36 @@
 @import "tailwindcss";
 
-/* Blue leads navigation; rose, violet and mint give components distinct accents. */
+/* Window & Formula: cool neutral reading layers, lake-blue structure, restrained cherry accents. */
 @theme {
-  --color-blue-50: #f2f5ff;
-  --color-blue-100: #e7edff;
-  --color-blue-200: #cdd9ff;
-  --color-blue-300: #a4b8ff;
-  --color-blue-400: #7997eb;
-  --color-blue-500: #5a7de0;
-  --color-blue-600: #4266cf;
-  --color-blue-700: #3554b2;
-  --color-blue-800: #2c448c;
-  --color-blue-900: #24355f;
-  --color-blue-950: #192440;
-  --color-rose-50: #fff1f7;
-  --color-rose-100: #fbdce9;
-  --color-rose-200: #f4bad2;
-  --color-rose-300: #f18fb8;
-  --color-rose-400: #e875a5;
-  --color-rose-500: #dc6093;
-  --color-rose-600: #ce4a83;
-  --color-rose-700: #ad346c;
-  --color-rose-800: #8c2b59;
+  --color-blue-50: #eef5f7;
+  --color-blue-100: #deedf2;
+  --color-blue-200: #bed6df;
+  --color-blue-300: #98b9c8;
+  --color-blue-400: #7197a8;
+  --color-blue-500: #41758b;
+  --color-blue-600: #1e5b73;
+  --color-blue-700: #17485e;
+  --color-blue-800: #12384b;
+  --color-blue-900: #0d2c3d;
+  --color-blue-950: #092431;
+  --color-rose-50: #fff2f5;
+  --color-rose-100: #fbe5eb;
+  --color-rose-200: #f3c9d6;
+  --color-rose-300: #e9a9bd;
+  --color-rose-400: #d9819e;
+  --color-rose-500: #c85a7c;
+  --color-rose-600: #b4486b;
+  --color-rose-700: #913450;
+  --color-rose-800: #752c45;
   --color-violet-50: #f5f1fc;
   --color-violet-100: #e9def9;
   --color-violet-200: #d6c1ef;
   --color-violet-300: #bba0ee;
   --color-violet-400: #a085de;
   --color-violet-500: #916bd4;
-  --color-violet-600: #805ac8;
-  --color-violet-700: #68449f;
-  --color-violet-800: #503578;
+  --color-violet-600: #6a5882;
+  --color-violet-700: #5b4a72;
+  --color-violet-800: #4a3c61;
   --color-violet-950: #271b3e;
   --color-teal-50: #eefaf5;
   --color-teal-100: #d8f3e8;
@@ -38,25 +38,26 @@
   --color-teal-300: #70ccb6;
   --color-teal-400: #48b8a0;
   --color-teal-500: #269e8b;
-  --color-teal-600: #168579;
-  --color-teal-700: #146d64;
-  --color-teal-800: #15584f;
+  --color-teal-600: #26714f;
+  --color-teal-700: #225f44;
+  --color-teal-800: #1b4d38;
 }
 
 :root {
   color-scheme: light;
   --site-bg: #f2f5fa;
-  --site-surface: #ffffff;
-  --site-recess: #edf1f8;
-  --site-ink: #29354b;
-  --site-muted: #627087;
-  --site-accent: #4266cf;
-  --site-detail: #ad346c;
-  --site-violet: #805ac8;
-  --site-mint: #146d64;
-  --site-line: #d8dfeb;
-  --site-glass: rgb(247 249 255 / 78%);
-  --site-wash: rgb(66 102 207 / 8%);
+  --site-surface: #eef2f6;
+  --site-recess: #e4ebf2;
+  --site-ink: #1e2226;
+  --site-muted: #5c646d;
+  --site-accent: #1e5b73;
+  --site-pink: #c85a7c;
+  --site-detail: #913450;
+  --site-violet: #6a5882;
+  --site-mint: #26714f;
+  --site-line: #ced7e0;
+  --site-glass: rgb(242 245 250 / 94%);
+  --site-wash: rgb(242 245 250 / 10%);
 }
 
 ::selection {

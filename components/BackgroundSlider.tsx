@@ -25,12 +25,7 @@ export default function BackgroundSlider() {
         quality={75}
         className="scale-[1.01] object-cover object-center opacity-100 transition-opacity duration-1000"
       />
-      <div
-        className="absolute inset-0 bg-white/[0.12] transition-colors duration-1000"
-        style={{
-          backgroundImage: `linear-gradient(135deg, ${siteConfig.themeColors.map((color) => `${color}24`).join(", ")})`,
-        }}
-      />
+      <div className="absolute inset-0 bg-[var(--site-wash)] transition-colors duration-1000" />
     </div>
   )
 }
