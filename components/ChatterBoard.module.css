@@ -140,7 +140,7 @@
   min-height: min-content;
   --frame-ratio: var(--cover-ratio, 4 / 3);
   color: #ffffff;
-  background: var(--site-surface);
+  background: var(--site-recess);
   text-decoration: none;
   isolation: isolate;
 }
@@ -290,11 +290,12 @@
   cursor: pointer;
 }
 @media (min-width: 768px) {
+  /* Editorial controls stay open against the shared illustration. */
   .headingRow,
   .search,
   .toolbar {
-    background: var(--paper);
-    border-radius: 6px;
+    background: transparent;
+    border-radius: 0;
   }
   .headingRow {
     padding: 12px 16px;
@@ -314,7 +315,7 @@
     font-size: 13px;
   }
   .cover::after {
-    background: none;
+    background: linear-gradient(180deg, transparent 42%, rgb(8 12 22 / 78%) 100%);
   }
   .caption {
     background: linear-gradient(180deg, transparent, rgb(8 12 22 / 90%) 48px);
@@ -324,11 +325,7 @@
     font-size: 12px;
   }
   .folderTag {
-    padding: 4px 8px;
-    border-radius: 4px;
-    background: rgb(8 12 22 / 90%);
     font-size: 12px;
-    text-shadow: none;
   }
 }
 @media (max-width: 1023px) {
@@ -426,7 +423,7 @@
   padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--paper);
+  background: var(--site-glass);
 }
 .column:nth-child(2),
 .column:nth-child(3) { padding-top: 0; }
