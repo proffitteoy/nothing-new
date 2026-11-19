@@ -6,8 +6,12 @@ export default function EngineeringSection({ html }: { html: string }) {
       id="about-engineering"
       data-about-section="engineering"
       className={styles.section}
-      aria-label="工程实践"
+      aria-labelledby="about-engineering-title"
     >
+      <header className={styles.sectionHeader}>
+        <h2 id="about-engineering-title" className={styles.sectionTitle}>工程身份</h2>
+        <p className={styles.sectionSubtitle}>算法、开源软件与平台开发</p>
+      </header>
       <div className={styles.prose} dangerouslySetInnerHTML={{ __html: html }} />
     </section>
   )
