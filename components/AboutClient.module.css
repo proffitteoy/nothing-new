@@ -189,6 +189,7 @@
 .prose {
   min-width: 0;
   padding: clamp(20px, 2.5vw, 30px);
+  /* A restrained local reading layer; never tint the entire illustration. */
   background: var(--about-surface);
   font-family: var(--font-serif);
   font-size: 17px;
@@ -316,9 +317,6 @@
 }
 
 @media (min-width: 768px) {
-  .page {
-    --about-surface: var(--site-surface);
-  }
   .indexNav {
     margin-top: 52px;
     padding: 20px 12px;
