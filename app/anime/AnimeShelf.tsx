@@ -167,23 +167,11 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
               const groupId = group.score === null ? "anime-unrated" : `anime-rating-${group.score}`
               return (
                 <section key={groupId} aria-labelledby={groupId}>
-                  <div className="mb-4 flex items-center gap-3 md:w-fit md:rounded-lg md:bg-[var(--site-surface)] md:py-2 md:pr-4">
-                    <span
-                      className={
-                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-lg font-black shadow-sm " +
-                        (group.score === null
-                          ? "border-[var(--site-line)] bg-[var(--site-surface)] text-slate-500"
-                          : "border-rose-200/70 bg-rose-50/75 text-rose-700")
-                      }
-                    >
-                      {group.score ?? "—"}
-                    </span>
-                    <div>
-                      <h3 id={groupId} className="mt-0.5 text-lg font-black text-slate-900">
-                        {group.score === null ? "未评分" : `${group.score} 分`}
-                      </h3>
-                    </div>
-                    <span className="h-px flex-1 bg-gradient-to-r from-slate-300/70 to-transparent" />
+                  <div className="mb-4 flex items-center gap-3">
+                    <h3 id={groupId} className="text-lg font-black text-[var(--site-ink)]">
+                      {group.score === null ? "未评分" : `${group.score} 分`}
+                    </h3>
+                    <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-[var(--site-line)] to-transparent" />
                   </div>
                   <AnimeGrid
                     items={group.items}
@@ -269,21 +257,14 @@ function AnimeGrid({
               <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-white/20 opacity-70 transition-opacity group-hover:opacity-40" />
               <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20 sm:rounded-2xl" />
               {showRating && (
-                <span
-                  className={
-                    "absolute right-1.5 top-1.5 rounded-full border px-1.5 py-0.5 text-[8px] font-black shadow-sm sm:right-2 sm:top-2 sm:text-[9px] md:text-xs " +
-                    (anime.score === undefined
-                      ? "border-white/40 bg-slate-900/55 text-white md:bg-[var(--site-ink)]"
-                      : "border-rose-200/70 bg-rose-700/95 text-white")
-                  }
-                >
+                <span className="absolute right-2 top-2 text-[11px] font-black text-white [text-shadow:0_1px_5px_rgba(0,0,0,0.95)] sm:right-2.5 sm:top-2.5 sm:text-xs">
                   {anime.score === undefined ? "未评" : `${anime.score} 分`}
                 </span>
               )}
             </span>
             <span
               title={title}
-              className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-blue-600 sm:mt-2.5 sm:text-xs sm:leading-5 md:line-clamp-3 md:rounded-md md:bg-[var(--site-surface)] md:px-2 md:py-2 md:text-sm md:font-semibold md:leading-6"
+              className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-blue-600 sm:mt-2.5 sm:text-xs sm:leading-5 md:line-clamp-3 md:text-sm md:font-semibold md:leading-6"
             >
               {title}
             </span>
