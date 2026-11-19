@@ -247,7 +247,7 @@ function AnimeGrid({
             rel="noopener noreferrer"
             className="group min-w-0"
           >
-            <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/55 bg-slate-200/70 shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl sm:rounded-2xl">
+            <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-[var(--site-line)] bg-[var(--site-recess)] shadow-md transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[0.35deg] group-hover:shadow-xl sm:rounded-2xl">
               <AnimeCoverImage
                 src={anime.cover}
                 alt={`${title}封面`}
@@ -264,7 +264,7 @@ function AnimeGrid({
             </span>
             <span
               title={title}
-              className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-slate-800 transition-colors group-hover:text-blue-600 sm:mt-2.5 sm:text-xs sm:leading-5 md:line-clamp-3 md:text-sm md:font-semibold md:leading-6"
+              className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-[var(--site-ink)] transition-colors group-hover:text-[var(--site-accent)] sm:mt-2.5 sm:text-xs sm:leading-5 md:line-clamp-3 md:text-sm md:font-semibold md:leading-6"
             >
               {title}
             </span>
@@ -281,8 +281,8 @@ function EmptyShelf({ message }: { message: string }) {
       data-field-obstacle
       className="rounded-[1.75rem] border border-dashed border-[var(--site-line)] bg-[var(--site-surface)] px-6 py-14 text-center shadow-lg"
     >
-      <Clapperboard className="mx-auto h-8 w-8 text-blue-400" aria-hidden="true" />
-      <p className="mt-4 text-sm font-black text-slate-700">{message}</p>
+      <Clapperboard className="mx-auto h-8 w-8 text-[var(--site-accent)]" aria-hidden="true" />
+      <p className="mt-4 text-sm font-black text-[var(--site-ink)]">{message}</p>
     </div>
   )
 }
@@ -304,7 +304,7 @@ function LoadMoreControl({
         data-field-obstacle
         type="button"
         onClick={onLoadMore}
-        className="relative inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-surface)] px-5 py-3 text-xs font-black text-slate-700 shadow-lg transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600"
+        className="relative inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-surface)] px-5 py-3 text-xs font-black text-[var(--site-ink)] shadow-lg transition hover:-translate-y-0.5 hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
       >
         <ChevronDown className="h-4 w-4 animate-bounce" aria-hidden="true" />
         继续展开 · 还有 {remaining} 部
@@ -328,8 +328,8 @@ function ShelfState({
         data-field-obstacle
         className="mt-8 rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--site-surface)] px-6 py-16 text-center shadow-xl"
       >
-        <Clapperboard className="mx-auto h-9 w-9 text-blue-400" aria-hidden="true" />
-        <h1 className="mt-5 text-xl font-black text-slate-950">{title}</h1>
+        <Clapperboard className="mx-auto h-9 w-9 text-[var(--site-accent)]" aria-hidden="true" />
+        <h1 className="mt-5 text-xl font-black text-[var(--site-ink)]">{title}</h1>
         {description && (
           <p className="mt-2 text-sm font-medium text-[var(--site-muted)]">{description}</p>
         )}
@@ -337,7 +337,7 @@ function ShelfState({
           <button
             type="button"
             onClick={action}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-recess)] px-4 py-2.5 text-xs font-black text-slate-700 shadow-md transition hover:text-blue-600"
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-recess)] px-4 py-2.5 text-xs font-black text-[var(--site-ink)] shadow-md transition hover:text-[var(--site-accent)]"
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             重试
