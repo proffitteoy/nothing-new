@@ -34,14 +34,14 @@ with sync_playwright() as p:
         article = page.locator("article[aria-labelledby='about-title']")
         nav = article.get_by_role("navigation", name="关于页章节导航")
         buttons = nav.get_by_role("button")
-        assert buttons.count() == 1
-        assert buttons.first.get_attribute("aria-controls") == "about-website"
-        assert "网站介绍" in buttons.first.inner_text()
+        assert buttons.count() == 3
+        for i, (section_id, label) in enumerate(zip(SECTIONS, ("网站介绍", "工程身份", "研究身份"))):
+            assert buttons.nth(i).get_attribute("aria-controls") == section_id
+            assert label in buttons.nth(i).inner_text()
 
         # The two former identity headings and subtitles must not return.
         for heading in ("工程身份", "研究身份"):
             assert article.get_by_role("heading", name=heading, exact=True).count() == 0
-            assert nav.get_by_text(heading, exact=True).count() == 0
         for subtitle in ("算法、开源软件与平台开发", "拓扑数据分析、同调理论与双曲几何"):
             assert article.get_by_text(subtitle, exact=True).count() == 0
 
@@ -62,9 +62,18 @@ with sync_playwright() as p:
             "(images) => images.every((image) => image.complete && image.naturalWidth > 0)"
         )
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-        buttons.first.click()
-        assert article.locator("#about-website").is_visible()
+        for i, section_id in enumerate(SECTIONS):
+            buttons.nth(i).click()
+            page.wait_for_function(
+                "(i) => document.querySelectorAll('nav[aria-label=\"关于页章节导航\"] button')[i].getAttribute('aria-current') === 'location'",
+                arg=i,
+            )
+            assert article.locator("#" + section_id).is_visible()
+        article.locator("#about-website").scroll_into_view_if_needed()
+        page.wait_for_function(
+            "() => document.querySelector('nav[aria-label=\"关于页章节导航\"] button').getAttribute('aria-current') === 'location'"
+        )
         assert not errors, errors
-        print(f"/about OK width={width}: one TOC item, no identity headings, all content, images, no overflow")
+        print(f"/about OK width={width}: three sidebar items with scroll tracking, no body identity headings, all content, images, no overflow")
         context.close()
     browser.close()
