@@ -1,4 +1,4 @@
-"""Smoke-test the three independently authored sections of the real /about page.
+"""Smoke-test /about: keep all profile content without identity headings.
 
 Requires a running Next.js preview and Python Playwright.
 Example: python scripts/about-preview.py --url http://127.0.0.1:3168
@@ -12,7 +12,6 @@ parser.add_argument("--browser", help="Existing Chromium binary (otherwise Playw
 args = parser.parse_args()
 
 SECTIONS = ("about-website", "about-engineering", "about-research")
-LABELS = ("网站介绍", "工程身份", "研究身份")
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, executable_path=args.browser)
@@ -35,13 +34,27 @@ with sync_playwright() as p:
         article = page.locator("article[aria-labelledby='about-title']")
         nav = article.get_by_role("navigation", name="关于页章节导航")
         buttons = nav.get_by_role("button")
-        assert buttons.count() == 3
-        for i, (section_id, label) in enumerate(zip(SECTIONS, LABELS)):
+        assert buttons.count() == 1
+        assert buttons.first.get_attribute("aria-controls") == "about-website"
+        assert "网站介绍" in buttons.first.inner_text()
+
+        # The two former identity headings and subtitles must not return.
+        for heading in ("工程身份", "研究身份"):
+            assert article.get_by_role("heading", name=heading, exact=True).count() == 0
+            assert nav.get_by_text(heading, exact=True).count() == 0
+        for subtitle in ("算法、开源软件与平台开发", "拓扑数据分析、同调理论与双曲几何"):
+            assert article.get_by_text(subtitle, exact=True).count() == 0
+
+        for section_id in SECTIONS:
             section = article.locator("#" + section_id)
             assert section.count() == 1
             assert section.get_attribute("data-about-section")
-            assert section.get_by_role("heading", name=label, exact=True).count() == 1
-            assert buttons.nth(i).get_attribute("aria-controls") == section_id
+        assert article.locator("#about-engineering").get_by_role(
+            "heading", name="开源算法", exact=True
+        ).count() == 1
+        assert article.locator("#about-research").get_by_role(
+            "heading", name="拓扑数据分析", exact=True
+        ).count() == 1
 
         assert article.locator("#activity-heatmap-title").count() == 0
         assert article.get_by_text("GitHub 贡献数据暂时不可用").count() == 0
@@ -49,20 +62,9 @@ with sync_playwright() as p:
             "(images) => images.every((image) => image.complete && image.naturalWidth > 0)"
         )
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-
-        for i, section_id in enumerate(SECTIONS):
-            buttons.nth(i).click()
-            page.wait_for_function(
-                "(i) => document.querySelectorAll('nav[aria-label=\"关于页章节导航\"] button')[i].getAttribute('aria-current') === 'location'",
-                arg=i,
-            )
-            assert article.locator("#" + section_id).is_visible()
-        # Wheel/trackpad scrolling back to the first section must restore its active marker.
-        article.locator("#about-website").scroll_into_view_if_needed()
-        page.wait_for_function(
-            "() => document.querySelector('nav[aria-label=\"关于页章节导航\"] button').getAttribute('aria-current') === 'location'"
-        )
+        buttons.first.click()
+        assert article.locator("#about-website").is_visible()
         assert not errors, errors
-        print(f"/about OK width={width}: sections, navigation, scroll tracking, images, no overflow")
+        print(f"/about OK width={width}: one TOC item, no identity headings, all content, images, no overflow")
         context.close()
     browser.close()
