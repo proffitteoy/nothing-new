@@ -6,12 +6,8 @@ export default function ResearchSection({ html }: { html: string }) {
       id="about-research"
       data-about-section="research"
       className={styles.section}
-      aria-labelledby="about-research-title"
+      aria-label="研究内容"
     >
-      <header className={styles.sectionHeader}>
-        <h2 id="about-research-title" className={styles.sectionTitle}>研究身份</h2>
-        <p className={styles.sectionSubtitle}>拓扑数据分析、同调理论与双曲几何</p>
-      </header>
       <div className={styles.prose} dangerouslySetInnerHTML={{ __html: html }} />
     </section>
   )
