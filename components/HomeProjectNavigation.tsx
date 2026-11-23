@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import {
   createContext,
   useCallback,
@@ -16,6 +17,13 @@ import {
 import { usePathname, useRouter } from "next/navigation"
 import { homeProjectProgress, homeProjectScroll, isMobileHomeClient } from "../lib/home-scene"
 import { preloadRoomAssets } from "../app/projects/room-preload"
+import { dampWorldProgress } from "../lib/home-scene"
+import type { RoomSceneProps } from "../app/projects/RoomScene"
+
+const UnifiedScene = dynamic(
+  () => import("../app/projects/RoomScene").then((module) => module.UnifiedScene),
+  { ssr: false },
+)
 
 type Mode = "narrative" | "free" | "returning"
 type Stage = "window" | "room" | "landscape" | "transition"
@@ -26,6 +34,9 @@ const Context = createContext({
   mode: "narrative" as Mode,
   setFreeView: noop as (free: boolean) => void,
   returnWindow: noop as (delay?: number) => void,
+  sceneStatus: "loading" as "loading" | "ready" | "error",
+  setRoomProps: noop as (props: RoomSceneProps | null) => void,
+  retryScene: noop,
 })
 export const useHomeProjectState = () => useContext(Context)
 export const useHomeProjectNavigation = () => useContext(Context).enabled
@@ -36,7 +47,7 @@ const smooth = (value: number) => {
   return t * t * (3 - 2 * t)
 }
 
-// This owner controls state and routing. Existing scene renderers/assets stay intact.
+// The shared layout owns one renderer, scene and camera across both URLs.
 export default function HomeProjectNavigator({ children }: { children: ReactNode }) {
   const pathname = usePathname(),
     router = useRouter()
@@ -46,6 +57,19 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
   const modeRef = useRef<Mode>("narrative")
   const [mode, updateMode] = useState<Mode>("narrative")
   const [atWindow, setAtWindow] = useState(true)
+  const [roomProps, setRoomProps] = useState<RoomSceneProps | null>(null)
+  const [sceneStatus, setSceneStatus] = useState<"loading" | "ready" | "error">("loading")
+  const statusRef = useRef(sceneStatus)
+  const [sceneVersion, setSceneVersion] = useState(0)
+  const ready = useCallback(() => setSceneStatus("ready"), [])
+  const failed = useCallback(() => setSceneStatus("error"), [])
+  const retryScene = useCallback(() => {
+    setSceneStatus("loading")
+    setSceneVersion((v) => v + 1)
+  }, [])
+  useLayoutEffect(() => {
+    statusRef.current = sceneStatus
+  }, [sceneStatus])
   const height = useRef(1),
     frame = useRef(0),
     lockUntil = useRef(0)
@@ -134,6 +158,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
       return
     }
     const root = document.getElementById("app-scroll-root")!
+    const sceneHandoff = !restoring.current && automatic.current === pathname
     height.current = root.clientHeight || innerHeight
     const saved = history.state?.homeProjectCheckpoint
     if (
@@ -151,7 +176,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
     previous.current = pathname
     restoring.current = false
     automatic.current = null
-    root.scrollTop = homeProjectScroll(progress.current, height.current)
+    if (!sceneHandoff) root.scrollTop = homeProjectScroll(progress.current, height.current)
     root.dispatchEvent(new Event("scroll"))
   }, [active, pathname, cancelReturn, setMode])
 
@@ -173,20 +198,33 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
     if (!active) return
     const root = document.getElementById("app-scroll-root")!
     const oldOverflow = root.style.overflowY
+    let motionFrame = 0,
+      previousTime = 0
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)")
     const blocked = () =>
       modeRef.current === "free" ||
       performance.now() < lockUntil.current ||
       !!root.querySelector(
         '[data-home-preview][data-open="true"],dialog[open],[role="dialog"],details[open],[data-project-navigation-blocked="true"],[data-home-music-dragging="true"]',
       ) ||
-      !document.documentElement.classList.contains("splash-seen")
+      !document.documentElement.classList.contains("splash-seen") ||
+      statusRef.current !== "ready"
     const updateLock = () => {
       const locked = blocked()
       root.style.overflowY = locked ? "hidden" : "auto"
       if (locked && frame.current && performance.now() >= lockUntil.current) cancelReturn()
+      if (!locked && !motionFrame) motionFrame = requestAnimationFrame(sync)
     }
-    const sync = () => {
-      const p = homeProjectProgress(root.scrollTop, height.current)
+    const sync = (now = performance.now()) => {
+      motionFrame = 0
+      const target = homeProjectProgress(root.scrollTop, height.current)
+      const dt = previousTime ? Math.min((now - previousTime) / 1000, 0.05) : 1 / 60
+      previousTime = now
+      const p = blocked()
+        ? progress.current
+        : reduced.matches
+          ? target
+          : dampWorldProgress(progress.current, target, dt)
       progress.current = p
       const stage: Stage =
         p <= -0.999
@@ -199,28 +237,35 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
       root.dataset.homeProjectStage = stage
       root.dataset.homeProjectProgress = p.toFixed(5)
       root.dataset.homeProjectMode = modeRef.current
-      const outside = smooth(Math.max(0, p) / 0.18)
+      const outside = smooth(Math.abs(p) / 0.18)
       root.style.setProperty("--home-navigation-opacity", String(1 - outside))
       const controls = root.querySelector<HTMLElement>("[data-home-ui]")
       if (controls) controls.inert = outside === 1
       setAtWindow(Math.abs(p) < 0.002)
-      if (location.pathname === currentPath.current)
+      root.dispatchEvent(new Event("home-project-frame"))
+      if (p === target && location.pathname === currentPath.current && automatic.current === null)
         history.replaceState(
           { ...history.state, homeProjectCheckpoint: { path: location.pathname, progress: p } },
           "",
         )
-      const destination = p <= -0.999 ? "/projects" : "/"
-      if (destination !== currentPath.current && automatic.current !== destination) {
+      const destination = p === -1 ? "/projects" : p > -0.999 ? "/" : currentPath.current
+      if (
+        destination !== currentPath.current &&
+        automatic.current !== destination &&
+        statusRef.current === "ready"
+      ) {
         automatic.current = destination
         router.replace(destination, { scroll: false })
       }
+      if (p !== target && !blocked() && !document.hidden) motionFrame = requestAnimationFrame(sync)
+      else previousTime = 0
     }
     const scroll = () => {
       if (blocked()) {
         root.scrollTop = homeProjectScroll(progress.current, height.current)
         return
       }
-      sync()
+      if (!motionFrame) motionFrame = requestAnimationFrame(sync)
     }
     const wheel = (event: WheelEvent) => {
       if (event.ctrlKey) return
@@ -236,7 +281,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
         return
       }
       cancelReturn()
-      // Both existing scenes are fixed layers; forward to the sole native scroller.
+      // Wheel and keyboard input share the same native scroll target.
       event.preventDefault()
       root.scrollTop +=
         event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height.current : 1)
@@ -266,11 +311,17 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
       }
     }
     const resize = () => {
+      const target = homeProjectProgress(root.scrollTop, height.current)
       height.current = root.clientHeight
-      root.scrollTop = homeProjectScroll(progress.current, height.current)
+      root.scrollTop = homeProjectScroll(target, height.current)
     }
     const visibility = () => {
       if (document.hidden) cancelReturn()
+      previousTime = 0
+      if (document.hidden) {
+        cancelAnimationFrame(motionFrame)
+        motionFrame = 0
+      } else updateLock()
     }
     const observer = new MutationObserver(updateLock)
     observer.observe(root, {
@@ -287,6 +338,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
     root.addEventListener("scroll", scroll, { passive: true })
     root.addEventListener("wheel", wheel, { passive: false })
     root.addEventListener("home-project-mode", updateLock)
+    root.addEventListener("home-project-status", updateLock)
     window.addEventListener("keydown", keyboard)
     window.addEventListener("resize", resize)
     window.addEventListener("site-startup-phase", updateLock)
@@ -300,6 +352,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
     return () => {
       observer.disconnect()
       cancelReturn()
+      cancelAnimationFrame(motionFrame)
       root.style.overflowY = oldOverflow
       root.style.removeProperty("--home-navigation-opacity")
       delete root.dataset.homeProjectStage
@@ -308,15 +361,28 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
       root.removeEventListener("scroll", scroll)
       root.removeEventListener("wheel", wheel)
       root.removeEventListener("home-project-mode", updateLock)
+      root.removeEventListener("home-project-status", updateLock)
       window.removeEventListener("keydown", keyboard)
       window.removeEventListener("resize", resize)
       window.removeEventListener("site-startup-phase", updateLock)
       document.removeEventListener("visibilitychange", visibility)
     }
   }, [active, router, cancelReturn])
+  useEffect(() => {
+    document.getElementById("app-scroll-root")?.dispatchEvent(new Event("home-project-status"))
+  }, [sceneStatus])
   const value = useMemo(
-    () => ({ enabled: active, progress, mode, setFreeView, returnWindow }),
-    [active, mode, setFreeView, returnWindow],
+    () => ({
+      enabled: active,
+      progress,
+      mode,
+      setFreeView,
+      returnWindow,
+      sceneStatus,
+      setRoomProps,
+      retryScene,
+    }),
+    [active, mode, setFreeView, returnWindow, sceneStatus, retryScene],
   )
 
   return (
@@ -326,7 +392,38 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
           data-home-project-track
           style={{ height: "500dvh", position: "relative", flexShrink: 0 }}
         >
-          <div style={{ position: "sticky", top: 0, height: "100dvh" }}>{children}</div>
+          <div style={{ position: "sticky", top: 0, height: "100dvh", isolation: "isolate" }}>
+            <UnifiedScene
+              key={sceneVersion}
+              reduceMotion={false}
+              rotationEnabled={roomProps?.rotationEnabled ?? false}
+              wheelNavigation
+              paused={roomProps?.paused ?? false}
+              showLabels={roomProps?.showLabels ?? false}
+              resetKey={roomProps?.resetKey ?? 0}
+              onReady={ready}
+              onError={failed}
+              onChoose={roomProps?.onChoose ?? noop}
+            />
+            {children}
+            {sceneStatus === "error" && pathname === "/" && (
+              <div
+                data-home-project-controls
+                style={{
+                  position: "fixed",
+                  bottom: 24,
+                  left: 24,
+                  zIndex: 30,
+                  padding: 16,
+                  background: "var(--site-surface)",
+                }}
+                role="status"
+              >
+                暂时无法加载山湖小屋。<button onClick={retryScene}>重试</button>{" "}
+                <Link href="/projects">项目目录</Link>
+              </div>
+            )}
+          </div>
           {!atWindow && (
             <div
               data-home-project-controls

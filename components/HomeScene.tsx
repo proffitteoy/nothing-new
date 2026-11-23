@@ -70,7 +70,7 @@ export default function HomeScene({
   const controls = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     if (controls.current)
-      controls.current.inert = navigation.enabled && navigation.progress.current >= 0.18
+      controls.current.inert = navigation.enabled && Math.abs(navigation.progress.current) >= 0.18
   }, [navigation])
   useEffect(() => {
     const finish = () => setDraggingMusic(false)
@@ -140,6 +140,7 @@ export default function HomeScene({
         ref={root}
         className={styles.scene}
         data-home-scene
+        data-unified={navigation.enabled}
         data-home-music-dragging={draggingMusic}
         aria-label="Nothing New 山湖观景窗"
         data-home-quality="loading"

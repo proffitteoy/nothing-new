@@ -1,5 +1,11 @@
 export const HOME_CYCLE_SECONDS = 300
 
+// Exponential damping has the same response at different display refresh rates.
+export function dampWorldProgress(current: number, target: number, seconds: number) {
+  const next = current + (target - current) * -Math.expm1(-10 * Math.max(0, seconds))
+  return Math.abs(next - target) < 0.00001 ? target : next
+}
+
 // One native scroll axis: room (-1), window (0), landscape (+1).
 export function homeProjectProgress(top: number, height: number) {
   return Math.max(-1, Math.min(1, top / Math.max(1, height) / 2 - 1))

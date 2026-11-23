@@ -4,6 +4,32 @@ title: 窗边研究小屋：实现与验证
 
 # 窗边研究小屋
 
+## 统一三维世界（2026-11-23）
+
+根布局的 `HomeProjectNavigator` 持有唯一桌面 `UnifiedScene`。项目页 `RoomScene` 仅向共享场景注册暂停、自由查看、热点与详情回调；`/` 与 `/projects` 切换不卸载 Canvas、不重新解析模型或重置相机。离开这两个路由才释放场景。手机项目页仍使用独立、按需加载的原房间逻辑，手机首页仍分流到笔记。
+
+原 `study.glb` 保留。加载时打通背窗，在同一世界中添加外部侧墙、带实际门洞的前墙、坡屋顶、岸线、水面和摄影远景。外墙同时参与热点拾取和标签遮挡。两条路径在窗前共享相同位置和朝向：负进度经前门后退抬升、绕屋一周、重新入室；正进度穿窗向湖面前进并降低至 0.32m。`directWorldCamera` 是无播放状态的绝对采样，滚动反向无需排队或重播阶段动画。
+
+滚动目标仍来自 `5H` 原生轨道，显示进度使用按秒计算的指数阻尼。相机移动期间每个 RAF 绘制，静止后才降低环境更新频率；后台暂停，减少动态偏好直接跟随输入。手动「返回窗前」可被新输入中断，自由查看结束先平滑回归轨迹，再返程。原生历史检查点、播放器保护、项目详情和键盘交互继续共用该进度。
+
+自动验证命令：
+
+```powershell
+npm test
+npm run typecheck
+npm run lint
+npm run build -- --webpack
+python scripts/projects-preview.py --url http://localhost:3183 --connection-only --browser 'C:\Program Files\Google\Chrome\Application\chrome.exe' --output .sync/tmp-unified-world/production
+```
+
+相机测试检查端点、两分支连续性、精确反向采样及不同刷新率的阻尼；几何测试读取实际 GLB，确认背窗开口，并对两条路径逐段检查原模型和新增建筑的碰撞。浏览器连接测试已改为检查同一 Canvas、工作台机位、真实湖面位置和往返交互，不再对已删除的首页合成器做像素相等断言。被否定的摄影投影水面已删除；当前使用世界坐标细波纹、谱场微法线扰动、Fresnel 与同一场景的平面反射，反射目标固定为 768² 并随场景释放。远景有限深度、外墙精度与美术构图仍受当前资源约束，最终外观需人工验收。
+
+本地验证：Node 24.11.1 下 132 项测试、类型检查与 247 页生产构建通过；ESLint 0 错误、3 条既有警告。生产 Chrome 的 22 组连接检查通过，包含九组视口／动效设置、单 Canvas／WebGL 上下文、跨页单次模型请求、滚动目标保持、热点焦点恢复、共享音频、历史与 resize、模型失败及手机分流；未捕获页面异常为 0。记录在 `.sync/tmp-unified-world/production/connection-report.json`。水体专项另通过实际着色器输出和 context loss／重试，约 800ms 采样中移动绘制 48 次／49 次 RAF，静止绘制 12 次；记录与窗前／岸边／贴水截图在 `.sync/tmp-unified-world/water-review/`。音乐使用本地音轨，番剧预热失败在浏览器中固定回退，不作为外部服务验证。尚未在 Node 22、Safari 或真实手机上复验，未部署。
+
+审阅截图（尚待人工视觉确认）：[窗前](../images/unified-world/window.png)、[工作台](../images/unified-world/desk.png)、[绕屋](../images/unified-world/orbit.png)、[贴水](../images/unified-world/water.png)。
+
+以下为旧连接版本的历史记录；其中双渲染器、原图切换及旧验收数字不适用于上述实现。
+
 ## 首页与项目页连接（2026-11-18）
 
 以 `main@7ac92f2` 为基线，接入窗前／房间／湖景状态与既有素材显示切换。房间 GLB、默认镜头、原图片及材质沿用 main；不进行房间几何重建或同一三维空间内的连续镜头转场。
