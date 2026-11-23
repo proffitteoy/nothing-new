@@ -4,31 +4,33 @@ title: 窗边研究小屋：实现与验证
 
 # 窗边研究小屋
 
-## 统一三维世界（2026-11-23）
+## 首页原貌与室内后退转场（2026-11-23）
 
-根布局的 `HomeProjectNavigator` 持有唯一桌面 `UnifiedScene`。项目页 `RoomScene` 仅向共享场景注册暂停、自由查看、热点与详情回调；`/` 与 `/projects` 切换不卸载 Canvas、不重新解析模型或重置相机。离开这两个路由才释放场景。手机项目页仍使用独立、按需加载的原房间逻辑，手机首页仍分流到笔记。
+默认首页恢复 #113 之前的浅木观景窗、完整山湖取景和原有环境动态，导航及音乐保持原布局。原首页着色器进入同一个渲染器，默认帧保留原 RGB 公式，不用项目房间窄窗或三维房屋全景替换首页。
 
-原 `study.glb` 保留。加载时打通背窗，在同一世界中添加外部侧墙、带实际门洞的前墙、坡屋顶、岸线、水面和摄影远景。外墙同时参与热点拾取和标签遮挡。两条路径在窗前共享相同位置和朝向：负进度经前门后退抬升、绕屋一周、重新入室；正进度穿窗向湖面前进并降低至 0.32m。`directWorldCamera` 是无播放状态的绝对采样，滚动反向无需排队或重播阶段动画。
+上滑遵循固定顺序：窗前后退 → 露出桌面 → 到桌前继续后退 → 转身朝向后方落地窗 → 穿过开口进入项目页。相机保持 1.89–1.93m 眼高，位置和朝向由连续进度绝对采样，任何位置都能反向；URL 更新不覆盖未完成的滚动目标。屋顶、外部建筑外壳和绕屋路径已删除。
 
-滚动目标仍来自 `5H` 原生轨道，显示进度使用按秒计算的指数阻尼。相机移动期间每个 RAF 绘制，静止后才降低环境更新频率；后台暂停，减少动态偏好直接跟随输入。手动「返回窗前」可被新输入中断，自由查看结束先平滑回归轨迹，再返程。原生历史检查点、播放器保护、项目详情和键盘交互继续共用该进度。
+转场工作台只复用既有模型几何和贴图，不新增外景建筑。原 `study.glb` 的几何、窗户、材质和交互锚点保持不变；项目场景使用固定的世界坐标变换放置在后方开口之后，终点投影与原局部相机 `(-0.62, 1.9, 2.72)`、47° FOV 一致。自由查看、详情焦点恢复、共享音频、历史检查点和失败回退沿用现有职责。手机首页继续分流至笔记，手机项目逻辑保留。
 
-自动验证命令：
+自动验证：
 
 ```powershell
 npm test
 npm run typecheck
 npm run lint
 npm run build -- --webpack
-python scripts/projects-preview.py --url http://localhost:3183 --connection-only --browser 'C:\Program Files\Google\Chrome\Application\chrome.exe' --output .sync/tmp-unified-world/production
+python scripts/projects-preview.py --url http://localhost:3183 --connection-only --browser 'C:\Program Files\Google\Chrome\Application\chrome.exe' --output .sync/tmp-unified-world/interior-production
 ```
 
-相机测试检查端点、两分支连续性、精确反向采样及不同刷新率的阻尼；几何测试读取实际 GLB，确认背窗开口，并对两条路径逐段检查原模型和新增建筑的碰撞。浏览器连接测试已改为检查同一 Canvas、工作台机位、真实湖面位置和往返交互，不再对已删除的首页合成器做像素相等断言。被否定的摄影投影水面已删除；当前使用世界坐标细波纹、谱场微法线扰动、Fresnel 与同一场景的平面反射，反射目标固定为 768² 并随场景释放。远景有限深度、外墙精度与美术构图仍受当前资源约束，最终外观需人工验收。
+回归包含原首页 shader 公式哈希、默认帧 GPU 像素对照、室内眼高和后退顺序、落地窗之前完成转身、原项目局部投影、实际模型避碰、单 Canvas 与 URL 连续性。外观需要结合关键帧检查，不能以测试通过代替视觉确认。
 
-本地验证：Node 24.11.1 下 132 项测试、类型检查与 247 页生产构建通过；ESLint 0 错误、3 条既有警告。生产 Chrome 的 22 组连接检查通过，包含九组视口／动效设置、单 Canvas／WebGL 上下文、跨页单次模型请求、滚动目标保持、热点焦点恢复、共享音频、历史与 resize、模型失败及手机分流；未捕获页面异常为 0。记录在 `.sync/tmp-unified-world/production/connection-report.json`。水体专项另通过实际着色器输出和 context loss／重试，约 800ms 采样中移动绘制 48 次／49 次 RAF，静止绘制 12 次；记录与窗前／岸边／贴水截图在 `.sync/tmp-unified-world/water-review/`。音乐使用本地音轨，番剧预热失败在浏览器中固定回退，不作为外部服务验证。尚未在 Node 22、Safari 或真实手机上复验，未部署。
+本轮 Node 22.23.4 下 134 项测试、TypeScript 与 247 页生产构建通过；ESLint 0 错误、3 条既有警告。默认首页 1440×900 的 GPU 输出与原全屏投影比较，最大通道差为 1/255，属于投影插值的舍入范围，并非逐像素零差异。
 
-审阅截图（尚待人工视觉确认）：[窗前](../images/unified-world/window.png)、[工作台](../images/unified-world/desk.png)、[绕屋](../images/unified-world/orbit.png)、[贴水](../images/unified-world/water.png)。
+生产 Chrome 的 23 组连接检查通过，未捕获页面异常为 0；覆盖原首页保真、可逆轨迹、同一 Canvas／相机、项目详情、共享音频、历史／刷新／resize、失败回退及手机分流。报告位于 `.sync/tmp-unified-world/interior-production/connection-report.json`，像素对照均值为 `0.0000873843`（通道整数单位）。音乐使用本地音轨与真实根 audio 元素，番剧请求固定失败回退，不作为外部服务验证；Safari 与真实手机未验收。
 
-以下为旧连接版本的历史记录；其中双渲染器、原图切换及旧验收数字不适用于上述实现。
+审阅截图：[原首页](../images/unified-world/window.png)、[后退到桌前](../images/unified-world/desk-front.png)、[转身](../images/unified-world/turn.png)、[后方落地窗处](../images/unified-world/rear-window.png)、[项目页](../images/unified-world/desk.png)。转场连接的墙面、地面与后窗目前仍为基础几何，入湖方向沿用已有水体，外观仍待人工审阅；未执行生产发布。
+
+以下为旧连接版本的历史记录；#113 曾引入的房屋全景及其截图不再描述当前首页。
 
 ## 首页与项目页连接（2026-11-18）
 

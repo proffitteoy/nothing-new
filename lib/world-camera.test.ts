@@ -7,6 +7,9 @@ import {
   HOME_TARGET,
   DESK_POSITION,
   DESK_TARGET,
+  HOME_DESK_POSITION,
+  HOME_DESK_TARGET,
+  PROJECT_TRANSFORM,
 } from "./world-camera"
 import { dampWorldProgress } from "./home-scene"
 
@@ -57,29 +60,49 @@ test("both camera branches are continuous and exactly reversible", () => {
   assert.ok(camera.quaternion.angleTo(junction.quaternion) < 1e-7)
 })
 
-test("flight clears the doorway, pitched roof and rear window", () => {
+test("backtrack stays inside at eye height, passes the desk, then turns at the rear window", () => {
   const camera = new THREE.PerspectiveCamera()
-  let doors = 0,
-    windows = 0,
-    exterior = 0
+  directWorldCamera(camera, -3 / 7)
+  assert.ok(camera.position.distanceTo(HOME_DESK_POSITION) < 1e-10)
+  const desk = camera.clone()
+  desk.lookAt(HOME_DESK_TARGET)
+  assert.ok(camera.quaternion.angleTo(desk.quaternion) < 1e-7)
+  let previousZ = HOME_POSITION.z,
+    windows = 0
   for (let i = 0; i <= 10000; i++) {
     directWorldCamera(camera, -i / 10000)
-    const { x, y, z } = camera.position
-    if (Math.abs(z - 4.2) < 0.1 && y < 3.25) {
-      doors++
-      assert.ok(Math.abs(x) < 0.72 && y < 2.48, "clear door jambs and header")
-    }
-    if (Math.abs(x) < 3.7 && z > -1.8 && z < 4.4 && y > 3)
-      assert.ok(y > 4.22, "clear the pitched roof")
-    if (y > 4.2 && Math.abs(x) > 4) exterior++
-    directWorldCamera(camera, i / 10000)
-    if (Math.abs(camera.position.z + 1.65) < 0.08) {
+    assert.ok(camera.position.y >= 1.89 && camera.position.y <= 1.93, "no rise or roof view")
+    assert.ok(Math.abs(camera.position.x) < 2.0, "no exterior orbit")
+    assert.ok(camera.position.z >= previousZ - 1e-8, "keep backing towards the rear")
+    previousZ = camera.position.z
+    if (Math.abs(camera.position.z - 4.6) < 0.08) {
       windows++
-      assert.ok(camera.position.x > -1.65 && camera.position.x < -0.33)
-      assert.ok(camera.position.y > 1.35 && camera.position.y < 2.49)
+      assert.ok(
+        camera.getWorldDirection(new THREE.Vector3()).z > 0.65,
+        "face the rear glazing before passing it",
+      )
     }
   }
-  assert.ok(doors > 20 && windows > 20 && exterior > 1000)
+  assert.ok(windows > 20)
+})
+
+test("project endpoint preserves the original model-space desktop composition", () => {
+  const original = new THREE.PerspectiveCamera(47, 1.6, 0.05, 700)
+  original.position.set(-0.62, 1.9, 2.72)
+  original.lookAt(0.08, 1.06, -0.5)
+  original.updateMatrixWorld()
+  const actual = original.clone()
+  directWorldCamera(actual, -1)
+  actual.updateMatrixWorld()
+  for (const point of [
+    new THREE.Vector3(0, 0.74, -0.5),
+    new THREE.Vector3(-1, 1, -1),
+    new THREE.Vector3(1, 1.5, -0.3),
+  ]) {
+    const expected = point.clone().project(original)
+    const projected = point.clone().applyMatrix4(PROJECT_TRANSFORM).project(actual)
+    assert.ok(expected.distanceTo(projected) < 1e-10)
+  }
 })
 
 test("damping is refresh-rate independent and reverses smoothly mid-flight", () => {

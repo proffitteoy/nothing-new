@@ -423,7 +423,15 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
           data-home-project-track
           style={{ height: "500dvh", position: "relative", flexShrink: 0 }}
         >
-          <div style={{ position: "sticky", top: 0, height: "100dvh", isolation: "isolate" }}>
+          <div
+            style={{
+              position: "sticky",
+              top: 0,
+              width: "100vw",
+              height: "100dvh",
+              isolation: "isolate",
+            }}
+          >
             <UnifiedScene
               key={sceneVersion}
               reduceMotion={false}

@@ -1,82 +1,167 @@
 import * as THREE from "three"
 import { Reflector } from "three/addons/objects/Reflector.js"
 import { HOME_POSITION, HOME_TARGET } from "./world-camera"
-import { SPECTRAL_DIRECTION_GLSL } from "../components/field/spectralField"
+import { homeWindowProjection, homeWindowLook } from "./home-scene"
+import { HOME_WINDOW_FRAGMENT } from "../components/field/homeWindowShader"
+import { SPECTRAL_DIRECTION_GLSL, SPECTRAL_PLAYBACK_RATE } from "../components/field/spectralField"
 
-// Remove the baked sky panels and centre mullion, keeping the original wall,
-// sill, furniture and atlas. BVHs must be built after this geometry change.
-export function openCabinWindows(model: THREE.Group) {
-  model.updateMatrixWorld(true)
-  const point = new THREE.Vector3()
-  for (const name of ["wall_back", "wall_left"]) {
-    const wall = model.getObjectByName(name) as THREE.Mesh<THREE.BufferGeometry>
-    const geometry = wall.geometry
-    const positions = geometry.getAttribute("position")
-    const index = geometry.getIndex()
-    const retained: number[] = []
-    for (let i = 0; i < (index?.count ?? positions.count); i += 3) {
-      const ids = [0, 1, 2].map((j) => (index ? index.getX(i + j) : i + j))
-      const remove = ids.every((id) => {
-        point.fromBufferAttribute(positions, id).applyMatrix4(wall.matrixWorld)
-        return name === "wall_back"
-          ? (point.x > -1.695 &&
-              point.x < -0.285 &&
-              point.y > 1.285 &&
-              point.y < 2.555 &&
-              point.z < -1.72) ||
-              (Math.abs(point.x + 0.99) < 0.02 &&
-                point.y > 1.25 &&
-                point.y < 2.59 &&
-                point.z < -1.6)
-          : point.x < -2.34 && point.y > 0.89 && point.y < 2.71
-      })
-      if (!remove) retained.push(...ids)
-    }
-    geometry.setIndex(retained)
-    geometry.computeBoundingBox()
-  }
-}
-
-export async function buildCabinWorld(scene: THREE.Scene) {
+export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   const world = new THREE.Group()
-  world.name = "cabin-lake-world"
+  world.name = "home-interior-world"
   scene.add(world)
-  scene.background = new THREE.Color(0xcbdce5)
-  const plaster = new THREE.MeshLambertMaterial({ color: 0xd7dcdd })
+  const outside = new THREE.Group()
+  outside.name = "lake-environment"
+  world.add(outside)
+  const interior = new THREE.Group()
+  interior.name = "home-room-interior"
+  world.add(interior)
+  const plaster = new THREE.MeshLambertMaterial({ color: 0xbfc2bf })
   const wood = new THREE.MeshLambertMaterial({ color: 0x827362 })
-  const roof = new THREE.MeshLambertMaterial({ color: 0x535e69, side: THREE.DoubleSide })
   const earth = new THREE.MeshLambertMaterial({ color: 0x788474 })
   const shore = new THREE.MeshLambertMaterial({ color: 0x9b9d90 })
-  const box = (name: string, size: number[], position: number[], material: THREE.Material) => {
+  const box = (
+    name: string,
+    size: number[],
+    position: number[],
+    material: THREE.Material,
+    parent = outside,
+  ) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(size[0], size[1], size[2]), material)
     mesh.name = name
     mesh.position.set(position[0], position[1], position[2])
-    world.add(mesh)
+    parent.add(mesh)
     return mesh
   }
-  // The former open-front diorama now has an exterior. The desk camera (z=2.72)
-  // is inside; the flight leaves and re-enters through a real, 1.7m-wide doorway.
-  box("cabin-floor", [7, 0.12, 5.9], [0, -0.09, 1.25], wood)
-  box("cabin-left-exterior", [0.16, 3.25, 5.9], [-3.58, 1.625, 1.25], plaster)
-  box("cabin-right-exterior", [0.16, 3.25, 5.9], [3.58, 1.625, 1.25], plaster)
-  box("cabin-front-left", [2.65, 3.25, 0.16], [-2.175, 1.625, 4.2], plaster)
-  box("cabin-front-right", [2.65, 3.25, 0.16], [2.175, 1.625, 4.2], plaster)
-  box("cabin-door-header", [1.7, 0.65, 0.16], [0, 2.925, 4.2], plaster)
-  for (const sign of [-1, 1]) {
-    const panel = box("cabin-pitched-roof", [3.98, 0.12, 6.35], [sign * 1.86, 3.67, 1.25], roof)
-    panel.rotation.z = -sign * 0.23
+  // A small interior extension only. Never add a building exterior or roof.
+  const home = model.clone(true)
+  home.name = "home-desk-interior"
+  home.position.x += HOME_POSITION.x
+  home.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return
+    object.material = (object.material as THREE.Material).clone()
+    object.material.toneMapped = false
+    object.material.side = THREE.DoubleSide
+    if (object.name === "wall_back") object.visible = false
+  })
+  interior.add(home)
+  const rearPlaster = new THREE.MeshBasicMaterial({ color: 0xb5b6b1, toneMapped: false })
+  const homeBack = new THREE.Group()
+  homeBack.name = "home-window-wall"
+  interior.add(homeBack)
+  const fills = ["left", "right", "top", "bottom"].map((side) =>
+    box("home-window-wall-" + side, [1, 1, 0.035], [0, 0, -3.165], rearPlaster, homeBack),
+  )
+  box(
+    "interior-floor-extension",
+    [5.43, 0.015, 9.5],
+    [HOME_POSITION.x / 2, 0.005, 1.6],
+    new THREE.MeshBasicMaterial({ color: 0x898e8f, toneMapped: false }),
+    interior,
+  )
+  box(
+    "interior-left-return",
+    [0.1, 3.15, 4.7],
+    [-2.22 + HOME_POSITION.x, 1.575, 4.0],
+    plaster,
+    interior,
+  )
+  box(
+    "interior-right-return",
+    [0.1, 3.15, 3.0],
+    [2.22 + HOME_POSITION.x, 1.575, 3.15],
+    plaster,
+    interior,
+  )
+  // Close the short connector around the project room's existing open front.
+  box("interior-rear-return", [0.99, 3.15, 0.1], [-2.715, 1.575, 6.35], plaster, interior)
+  box("interior-rear-side", [0.1, 3.15, 1.7], [2.22, 1.575, 5.5], plaster, interior)
+  box("interior-ceiling", [5.43, 0.06, 9.5], [-0.495, 3.18, 1.6], plaster, interior)
+  const glazing = new THREE.Group()
+  glazing.name = "rear-floor-window"
+  interior.add(glazing)
+  for (const x of [-2.06, 2.06])
+    box("rear-window-jamb", [0.055, 3.1, 0.075], [x + HOME_POSITION.x, 1.55, 4.6], wood, glazing)
+  for (const y of [0.025, 3.075])
+    box("rear-window-rail", [4.175, 0.05, 0.075], [HOME_POSITION.x, y, 4.6], wood, glazing)
+  const homeUniforms = {
+    uLake: { value: null as THREE.Texture | null },
+    uRoom: { value: null as THREE.Texture | null },
+    uSky: { value: null as THREE.Texture | null },
+    uClouds: { value: null as THREE.Texture | null },
+    uBranch: { value: null as THREE.Texture | null },
+    uSkyRegion: { value: null as THREE.Texture | null },
+    uRoomLight: { value: null as THREE.Texture | null },
+    uSize: { value: new THREE.Vector2() },
+    uRoomRect: { value: new THREE.Vector4() },
+    uLakeRect: { value: new THREE.Vector4() },
+    uLook: { value: new THREE.Vector2() },
+    uStrength: { value: 2.8 },
+    uTime: { value: 0 },
+    uWorldTime: { value: 0 },
+    uAmbientBlend: { value: 0 },
+    uInteriorOpacity: { value: 1 },
+    uReveal: { value: 0 },
+    uWindowCrop: { value: 0 },
+    uAtRest: { value: true },
+    uEffects: { value: new THREE.Vector4(1, 0, 1, 1) },
   }
-  const gable = new THREE.Shape()
-  gable.moveTo(-3.58, 3.23)
-  gable.lineTo(3.58, 3.23)
-  gable.lineTo(0, 4.08)
-  gable.closePath()
-  for (const z of [-1.7, 4.2]) {
-    const cap = new THREE.Mesh(new THREE.ShapeGeometry(gable), plaster)
-    cap.material = plaster.clone()
-    cap.material.side = THREE.DoubleSide
-    cap.position.z = z
-    world.add(cap)
+  const surface = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.RawShaderMaterial({
+      glslVersion: THREE.GLSL3,
+      uniforms: homeUniforms,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+      vertexShader: `precision highp float;
+      uniform mat4 projectionMatrix,modelViewMatrix; uniform bool uAtRest;
+      in vec3 position; in vec2 uv; out vec2 homeUv;
+      void main(){homeUv=uv;gl_Position=uAtRest?vec4(uv*2.-1.,0.,1.):projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+      fragmentShader: HOME_WINDOW_FRAGMENT,
+    }),
+  )
+  surface.name = "original-home-window"
+  surface.renderOrder = 10
+  surface.frustumCulled = false
+  world.add(surface)
+  const referenceHome = new THREE.PerspectiveCamera(47, 1, 0.05, 700)
+  referenceHome.position.copy(HOME_POSITION)
+  referenceHome.lookAt(HOME_TARGET)
+  referenceHome.updateMatrixWorld()
+  const direction = new THREE.Vector3()
+  referenceHome.getWorldDirection(direction)
+  surface.position.copy(HOME_POSITION).addScaledVector(direction, 2.8)
+  surface.quaternion.copy(referenceHome.quaternion)
+  let width = 1,
+    height = 1,
+    homeProjection = homeWindowProjection(1, 1)
+  const resize = (w: number, h: number) => {
+    width = w
+    height = h
+    homeProjection = homeWindowProjection(w, h)
+    const fullHeight = 2 * 2.8 * Math.tan((47 * Math.PI) / 360)
+    surface.scale.set((fullHeight * w) / h, fullHeight, 1)
+    homeUniforms.uSize.value.set(w, h)
+    const r = homeProjection.room,
+      l = homeProjection.lake
+    homeUniforms.uRoomRect.value.set(r.x, r.y, r.width, r.height)
+    homeUniforms.uLakeRect.value.set(l.x, l.y, l.width, l.height)
+    const worldW = surface.scale.x,
+      worldH = surface.scale.y
+    const left = HOME_POSITION.x + ((r.x + r.width * 0.04) / w - 0.5) * worldW
+    const right = HOME_POSITION.x + ((r.x + r.width * 0.96) / w - 0.5) * worldW
+    const bottom = HOME_POSITION.y + (0.5 - (r.y + r.height * 0.84) / h) * worldH
+    const top = HOME_POSITION.y + (0.5 - (r.y + r.height * 0.025) / h) * worldH
+    const edgeLeft = HOME_POSITION.x - 2.22,
+      edgeRight = HOME_POSITION.x + 2.22
+    fills[0].scale.set(Math.max(0.001, left - edgeLeft), 3.2, 1)
+    fills[0].position.set((left + edgeLeft) / 2, 1.6, surface.position.z - 0.02)
+    fills[1].scale.set(Math.max(0.001, edgeRight - right), 3.2, 1)
+    fills[1].position.set((right + edgeRight) / 2, 1.6, surface.position.z - 0.02)
+    fills[2].scale.set(4.44, Math.max(0.001, 3.2 - top), 1)
+    fills[2].position.set(HOME_POSITION.x, (3.2 + top) / 2, surface.position.z - 0.02)
+    fills[3].scale.set(4.44, Math.max(0.001, bottom), 1)
+    fills[3].position.set(HOME_POSITION.x, bottom / 2, surface.position.z - 0.02)
   }
   box("near-ground", [600, 0.2, 600], [0, -0.27, 297.5], earth)
   for (const sign of [-1, 1]) {
@@ -89,7 +174,7 @@ export async function buildCabinWorld(scene: THREE.Scene) {
     const stone = new THREE.Mesh(stoneGeometry, shore)
     stone.position.set(Math.sin(i * 6.7) * 9, 0.04, -3.7 + Math.cos(i * 2.4) * 0.8)
     stone.scale.set(0.1 + (i % 4) * 0.04, 0.07, 0.09 + (i % 3) * 0.05)
-    world.add(stone)
+    outside.add(stone)
   }
   scene.add(new THREE.HemisphereLight(0xe6f2ff, 0x6f735c, 2.3))
   const sun = new THREE.DirectionalLight(0xfff7e9, 2.1)
@@ -184,7 +269,7 @@ export async function buildCabinWorld(scene: THREE.Scene) {
   lake.name = "lake-water"
   lake.rotation.x = -Math.PI / 2
   lake.position.set(0, -0.01, -149.5)
-  world.add(lake)
+  outside.add(lake)
   const mountains = new THREE.Mesh(
     new THREE.PlaneGeometry(520, 110),
     new THREE.ShaderMaterial({
@@ -204,24 +289,94 @@ export async function buildCabinWorld(scene: THREE.Scene) {
   )
   mountains.name = "distant-mountains"
   mountains.position.set(0, 54.95, -180)
-  world.add(mountains)
-  // Existing authorised photography belongs to the distant terrain only.
+  outside.add(mountains)
+  const loaded = new Set<THREE.Texture>()
+  let failed = false
+  const names = [
+    "uLake",
+    "uRoom",
+    "uSky",
+    "uClouds",
+    "uBranch",
+    "uSkyRegion",
+    "uRoomLight",
+  ] as const
+  const files = [
+    "convict-lake-day-study.webp",
+    "observation-room-open.webp",
+    "ambient-sky.webp",
+    "ambient-clouds.webp",
+    "ambient-branch.webp",
+    "ambient-sky-region.png",
+    "ambient-room-light.png",
+  ]
   try {
-    uniforms.photograph.value = await new THREE.TextureLoader().loadAsync(
-      "/home-window/convict-lake-day-study.webp",
+    await Promise.all(
+      files.map(async (file, i) => {
+        const texture = await new THREE.TextureLoader().loadAsync("/home-window/" + file)
+        if (failed) {
+          texture.dispose()
+          return
+        }
+        texture.colorSpace = THREE.NoColorSpace
+        texture.minFilter = THREE.LinearFilter
+        texture.magFilter = THREE.LinearFilter
+        texture.generateMipmaps = false
+        loaded.add(texture)
+        homeUniforms[names[i]].value = texture
+      }),
     )
-    // Shader samples source sRGB values directly, then performs output conversion.
-    uniforms.photograph.value.colorSpace = THREE.SRGBColorSpace
+    const terrain = homeUniforms.uLake.value!.clone()
+    terrain.colorSpace = THREE.SRGBColorSpace
+    terrain.needsUpdate = true
+    loaded.add(terrain)
+    uniforms.photograph.value = terrain
   } catch (error) {
+    failed = true
     world.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return
-      if (object instanceof Reflector) object.getRenderTarget().dispose()
-      object.geometry.dispose()
-      for (const mat of Array.isArray(object.material) ? object.material : [object.material])
-        mat.dispose()
+      if (object instanceof THREE.Mesh) {
+        if (object instanceof Reflector) object.getRenderTarget().dispose()
+        object.geometry.dispose()
+        for (const material of Array.isArray(object.material) ? object.material : [object.material])
+          material.dispose()
+      }
     })
+    for (const texture of loaded) texture.dispose()
     scene.remove(world)
     throw error
   }
-  return uniforms.time
+  resize(1, 1)
+  const update = (progress: number, seconds: number, pointer: THREE.Vector2, publish = true) => {
+    homeUniforms.uAtRest.value = progress === 0
+    homeUniforms.uTime.value = seconds * SPECTRAL_PLAYBACK_RATE
+    homeUniforms.uWorldTime.value = seconds
+    homeUniforms.uAmbientBlend.value = Math.min(1, seconds / 1.2)
+    homeUniforms.uReveal.value = THREE.MathUtils.smoothstep(progress, 0.04, 0.18)
+    homeUniforms.uWindowCrop.value = THREE.MathUtils.smoothstep(-progress, 0.015, 0.08)
+    const look = homeWindowLook(pointer.x, pointer.y, homeProjection.opening.height)
+    homeUniforms.uLook.value.set(look.x, look.y)
+    surface.material.depthTest = progress !== 0
+    surface.visible = progress > -0.75
+    interior.visible = progress < 0 && progress > -1
+    outside.visible = progress > 0
+    model.visible = progress < -0.5
+    scene.background = progress === -1 ? null : new THREE.Color(progress > 0 ? 0xcbdce5 : 0xdfe4e6)
+    const stage =
+      publish && typeof document !== "undefined"
+        ? document.querySelector<HTMLElement>("[data-home-scene]")
+        : null
+    if (stage) {
+      stage.dataset.homeRendering = "dynamic"
+      stage.dataset.homeAmbientBlend = homeUniforms.uAmbientBlend.value.toFixed(3)
+      stage.dataset.homeFieldTime = homeUniforms.uTime.value.toFixed(4)
+      stage.dataset.homeWorldTime = seconds.toFixed(3)
+      stage.dataset.homeReflectionStatus = "disabled-registration"
+      stage.dataset.homeLook = homeUniforms.uLook.value
+        .toArray()
+        .map((n) => n.toFixed(3))
+        .join(",")
+    }
+    return { width, height }
+  }
+  return { time: uniforms.time, resize, update }
 }

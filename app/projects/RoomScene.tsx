@@ -10,8 +10,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js"
 import { lifeObjects, projects, roomTargets, type RoomTarget } from "./projects"
 import styles from "./room.module.css"
 import { useHomeProjectState } from "../../components/HomeProjectNavigation"
-import { buildCabinWorld, openCabinWindows } from "../../lib/cabin-world"
-import { directWorldCamera, DESK_TARGET } from "../../lib/world-camera"
+import { buildCabinWorld } from "../../lib/cabin-world"
+import { directWorldCamera, DESK_TARGET, PROJECT_TRANSFORM } from "../../lib/world-camera"
 import { SPECTRAL_PLAYBACK_RATE } from "../../components/field/spectralField"
 
 export type RoomSceneProps = {
@@ -53,11 +53,10 @@ function disposeModel(root: THREE.Object3D, extraTextures: Iterable<THREE.Textur
     texture.dispose()
   }
 }
-async function prepareRoom(unified: boolean): Promise<PreparedRoom> {
+async function prepareRoom(): Promise<PreparedRoom> {
   const data = await preloadRoomAssets()
   const { scene: model } = await new GLTFLoader().parseAsync(data, "/projects-room/")
   try {
-    if (unified) openCabinWindows(model)
     const meshes: THREE.Mesh[] = []
     model.traverse((node) => {
       if (node instanceof THREE.Mesh) meshes.push(node)
@@ -129,6 +128,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
     const nodeGeometry = new THREE.SphereGeometry(0.004, 8, 6)
     const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0xafd9e9, toneMapped: false })
     const signalNodes = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, 7)
+    if (unified) signalNodes.applyMatrix4(PROJECT_TRANSFORM)
     const nodePoints = [
       [-0.45, 0.09],
       [-0.5, 0.14],
@@ -145,6 +145,9 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
     scene.add(signalNodes)
     let signalStarted = 0
     let worldTime: { value: number } | null = null
+    let world: Awaited<ReturnType<typeof buildCabinWorld>> | null = null
+    const homePointer = new THREE.Vector2(),
+      homeLook = new THREE.Vector2()
     let visibleTime = 0
     let idleTimer: ReturnType<typeof setTimeout> | undefined
     let previousFree = false
@@ -193,16 +196,20 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
     }
 
     function resetCamera() {
+      const portrait = host!.clientWidth / Math.max(host!.clientHeight, 1) < 1
+      controls.minDistance = portrait ? 3.1 : 2.4
+      controls.maxDistance = portrait ? 7 : 5.8
       if (unified && navigationRef.current.mode !== "free") {
         directWorldCamera(camera, navigationRef.current.progress.current)
         return
       }
-      const portrait = host!.clientWidth / Math.max(host!.clientHeight, 1) < 1
       // Human-scale view: eyes above the desktop, looking slightly down into the room.
       camera.position.set(portrait ? -0.75 : -0.62, portrait ? 2.3 : 1.9, portrait ? 4.8 : 2.72)
       controls.target.set(0.08, 1.06, -0.5)
-      controls.minDistance = portrait ? 3.1 : 2.4
-      controls.maxDistance = portrait ? 7 : 5.8
+      if (unified) {
+        camera.position.applyMatrix4(PROJECT_TRANSFORM)
+        controls.target.applyMatrix4(PROJECT_TRANSFORM)
+      }
       controls.update()
     }
 
@@ -219,11 +226,11 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
     }
 
     function selectableMeshes() {
-      return meshes.filter(
-        (mesh) =>
-          mesh.visible &&
-          (!(mesh.material instanceof THREE.MeshBasicMaterial) || mesh.material.opacity > 0.5),
-      )
+      return meshes.filter((mesh) => {
+        for (let node: THREE.Object3D | null = mesh; node; node = node.parent)
+          if (!node.visible) return false
+        return !(mesh.material instanceof THREE.MeshBasicMaterial) || mesh.material.opacity > 0.5
+      })
     }
 
     // Static local BVHs accelerate both label occlusion and pointer selection.
@@ -351,11 +358,17 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
           if (t === 1) returnStarted = 0
         }
       }
-      visibleTime += elapsed
+      if (document.documentElement.dataset.startupPhase === "ready" && !isReduced())
+        visibleTime += elapsed
       if (worldTime && !isReduced()) worldTime.value = visibleTime * SPECTRAL_PLAYBACK_RATE
+      homeLook.lerp(homePointer, -Math.expm1(-10 * dt))
+      world?.update(navigationRef.current.progress.current, visibleTime, homeLook)
       let changing = false
-      for (const wall of unified ? [] : walls) {
-        const outside = camera.position[wall.axis] * wall.sign > (wall.axis === "x" ? 1.95 : 1.5)
+      const wallCamera = unified
+        ? camera.position.clone().applyMatrix4(PROJECT_TRANSFORM.clone().invert())
+        : camera.position
+      for (const wall of unified && narrative ? [] : walls) {
+        const outside = wallCamera[wall.axis] * wall.sign > (wall.axis === "x" ? 1.95 : 1.5)
         const goal = outside ? 0 : 1
         const difference = goal - wall.material.opacity
         wall.material.opacity = isReduced()
@@ -416,7 +429,8 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
         changing ||
         now < animateUntil ||
         returnStarted ||
-        (narrative && !before.equals(camera.position))
+        (narrative && !before.equals(camera.position)) ||
+        homeLook.distanceToSquared(homePointer) > 0.000001
       )
         schedule()
       else if (unified && ready && !isReduced()) idleTimer = setTimeout(schedule, 1000 / 20)
@@ -467,6 +481,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       const orientationChanged = camera.aspect < 1 !== aspect < 1
       camera.aspect = aspect
       camera.updateProjectionMatrix()
+      world?.resize(width, height)
       if (!ready || wasMobile !== mobile || orientationChanged) resetCamera()
       update()
     }
@@ -494,6 +509,10 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       dragged = false
     }
     function move(event: PointerEvent) {
+      homePointer.set(
+        (event.clientX / innerWidth - 0.5) * 2,
+        (event.clientY / innerHeight - 0.5) * 2,
+      )
       if (
         pointerDown &&
         Math.hypot(event.clientX - pointerDown.x, event.clientY - pointerDown.y) > 6
@@ -520,6 +539,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       highlight(null)
     }
     function leave() {
+      homePointer.set(0, 0)
       highlight(null)
     }
     function visibility() {
@@ -557,7 +577,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
     observer.observe(host)
     resize()
 
-    void prepareRoom(unified)
+    void prepareRoom()
       .then(async (room) => {
         if (disposed) {
           disposeModel(room.model)
@@ -567,7 +587,13 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
         model = room.model
         for (const [mesh, tree] of room.trees) hitTrees.set(mesh, tree)
         scene.add(model)
-        if (unified) worldTime = await buildCabinWorld(scene)
+        if (unified) {
+          world = await buildCabinWorld(scene, model)
+          world.resize(host.clientWidth, host.clientHeight)
+          world.update(navigationRef.current.progress.current, visibleTime, homeLook, false)
+          worldTime = world.time
+          model.applyMatrix4(PROJECT_TRANSFORM)
+        }
         if (disposed) {
           disposeModel(scene)
           return
@@ -598,8 +624,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
           }
         })
         if (unified) {
-          // Exterior walls participate in picking and label occlusion as well.
-          scene.getObjectByName("cabin-lake-world")?.traverse((object) => {
+          scene.getObjectByName("home-interior-world")?.traverse((object) => {
             if (!(object instanceof THREE.Mesh)) return
             meshes.push(object)
             object.geometry.computeBoundingBox()
@@ -680,6 +705,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
         ref={canvasRef}
         className={styles.canvas}
         data-world-canvas={navigation.enabled || undefined}
+        data-home-canvas={navigation.enabled || undefined}
         data-home-artwork={navigation.enabled ? "loading" : undefined}
         aria-hidden="true"
       />
