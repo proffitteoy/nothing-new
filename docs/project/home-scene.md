@@ -1,5 +1,13 @@
 # 当前首页：共享三维山湖小屋
 
+## 首页页面入口（2026-11-23）
+
+六个页面标签的文字、图标与展开的截图都是指向对应页面的链接；鼠标悬停或键盘聚焦仍展开预览，Enter 直接进入页面。论文和联系保留点击固定、Escape 收起与焦点归还。页面链接开始导航后，场景暂停自动路由交接，直到目标路由提交，避免慢响应期间的滚轮输入把目标页面覆盖成项目页。
+
+`public/page-previews/` 更新为当前页面截图，项目页等待共享三维小屋就绪后取景；截图继续通过静态导入生成内容哈希地址，发布新构建后请求新图片。番剧使用生产公开真实快照在本地新版页面中渲染，没有使用模拟收藏数据。复验入口：`python scripts/projects-preview.py --navigation-only --url http://127.0.0.1:3192 --browser "C:/Program Files/Google/Chrome/Application/chrome.exe" --output .sync/tmp-navigation-fix/production`。
+
+本地 Node 24.11.1 下通过 132 项测试、类型检查、修改组件的 ESLint 和 247 页生产构建；Chrome 157 通过 39 项导航检查与原有 22 组连接检查，未捕获页面异常为 0。旧路由逻辑在相同的慢响应、Escape、滚轮操作下实际跳到 `/projects`，新逻辑保持请求的 `/about`。浏览器报告保存在忽略目录 `.sync/tmp-navigation-fix/`；音乐使用本地音频，番剧公开截图使用 2026-11-23 的真实快照 `fd34a1646169`。尚未在 Node 22、Safari 或真实手机上复验。
+
 ## 单场景空间连接（2026-11-23）
 
 桌面首页与 `/projects` 共用根布局中的 `UnifiedScene`：同一个 Three.js Renderer、Scene、PerspectiveCamera 和房间模型持续存在，路由仅更换 React UI。`HomeProjectNavigator` 把原生轨道输入转换为带时间阻尼的连续进度，`lib/world-camera.ts` 以两条 Catmull–Rom 曲线和四元数 SLERP 绝对采样相机，支持任意位置反向滚动。项目端点保持原桌面 47° 相机及 `(-0.62, 1.9, 2.72)` 机位。

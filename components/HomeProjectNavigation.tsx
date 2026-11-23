@@ -76,6 +76,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
   const automatic = useRef<string | null>(null),
     previous = useRef<string | null>(null),
     restoring = useRef(false)
+  const navigating = useRef(false)
   const currentPath = useRef(pathname)
   useLayoutEffect(() => {
     currentPath.current = pathname
@@ -152,6 +153,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
   }, [cancelReturn])
 
   useLayoutEffect(() => {
+    navigating.current = false
     if (!active) {
       previous.current = null
       cancelReturn()
@@ -202,6 +204,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
       previousTime = 0
     const reduced = matchMedia("(prefers-reduced-motion: reduce)")
     const blocked = () =>
+      navigating.current ||
       modeRef.current === "free" ||
       performance.now() < lockUntil.current ||
       !!root.querySelector(
@@ -217,6 +220,12 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
     }
     const sync = (now = performance.now()) => {
       motionFrame = 0
+      // A Link owns the next URL once clicked, including while its RSC response is pending.
+      if (
+        navigating.current ||
+        (currentPath.current !== "/" && currentPath.current !== "/projects")
+      )
+        return
       const target = homeProjectProgress(root.scrollTop, height.current)
       const dt = previousTime ? Math.min((now - previousTime) / 1000, 0.05) : 1 / 60
       previousTime = now
@@ -323,6 +332,26 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
         motionFrame = 0
       } else updateLock()
     }
+    const navigate = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return
+      const link = (event.target as Element).closest<HTMLAnchorElement>("a[href]")
+      if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self")) return
+      const destination = new URL(link.href)
+      if (destination.origin !== location.origin || destination.pathname === currentPath.current)
+        return
+      navigating.current = true
+      cancelReturn()
+      cancelAnimationFrame(motionFrame)
+      motionFrame = 0
+    }
     const observer = new MutationObserver(updateLock)
     observer.observe(root, {
       subtree: true,
@@ -336,6 +365,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
       ],
     })
     root.addEventListener("scroll", scroll, { passive: true })
+    root.addEventListener("click", navigate)
     root.addEventListener("wheel", wheel, { passive: false })
     root.addEventListener("home-project-mode", updateLock)
     root.addEventListener("home-project-status", updateLock)
@@ -359,6 +389,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
       delete root.dataset.homeProjectProgress
       delete root.dataset.homeProjectMode
       root.removeEventListener("scroll", scroll)
+      root.removeEventListener("click", navigate)
       root.removeEventListener("wheel", wheel)
       root.removeEventListener("home-project-mode", updateLock)
       root.removeEventListener("home-project-status", updateLock)
