@@ -4,13 +4,13 @@ title: 窗边研究小屋：实现与验证
 
 # 窗边研究小屋
 
-## 首页原貌与室内后退转场（2026-11-23）
+## 同一房间的窗前与桌前视角（2026-11-24）
 
 默认首页恢复 #113 之前的浅木观景窗、完整山湖取景和原有环境动态，导航及音乐保持原布局。原首页着色器进入同一个渲染器，默认帧保留原 RGB 公式，不用项目房间窄窗或三维房屋全景替换首页。
 
-上滑遵循固定顺序：窗前后退 → 露出桌面 → 到桌前继续后退 → 转身朝向后方落地窗 → 穿过开口进入项目页。相机保持 1.89–1.93m 眼高，位置和朝向由连续进度绝对采样，任何位置都能反向；URL 更新不覆盖未完成的滚动目标。屋顶、外部建筑外壳和绕屋路径已删除。
+窗户位于唯一工作间后方。上滑从窗前向房内后退，到桌前后转身，看向同一张工作台并接入项目页。相机保持 1.89–1.93m 眼高，位置和朝向由连续进度绝对采样，任何位置都能反向；URL 更新不覆盖未完成的滚动目标。
 
-转场工作台只复用既有模型几何和贴图，不新增外景建筑。原 `study.glb` 的几何、窗户、材质和交互锚点保持不变；项目场景使用固定的世界坐标变换放置在后方开口之后，终点投影与原局部相机 `(-0.62, 1.9, 2.72)`、47° FOV 一致。自由查看、详情焦点恢复、共享音频、历史检查点和失败回退沿用现有职责。手机首页继续分流至笔记，手机项目逻辑保留。
+删除 #115 中 `model.clone(true)` 产生的第二套房间／家具、双房间之间的落地窗和连接段。场景只有原 `study.glb` 一个模型及其一套工作台，后方补齐的地板、侧墙和原首页窗户属于这一个房间。转身前后始终显示同一组物件；项目端点也保留后窗，供自由查看时回头观察。原 GLB 与局部默认相机 `(-0.62, 1.9, 2.72)`、47° FOV 保持不变，自由查看、项目详情、共享音频、历史恢复和失败回退沿用现有逻辑。
 
 自动验证：
 
@@ -19,18 +19,18 @@ npm test
 npm run typecheck
 npm run lint
 npm run build -- --webpack
-python scripts/projects-preview.py --url http://localhost:3183 --connection-only --browser 'C:\Program Files\Google\Chrome\Application\chrome.exe' --output .sync/tmp-unified-world/interior-production
+python scripts/projects-preview.py --url http://localhost:3183 --connection-only --browser 'C:\Program Files\Google\Chrome\Application\chrome.exe' --output .sync/tmp-unified-world/single-room-production
 ```
 
-回归包含原首页 shader 公式哈希、默认帧 GPU 像素对照、室内眼高和后退顺序、落地窗之前完成转身、原项目局部投影、实际模型避碰、单 Canvas 与 URL 连续性。外观需要结合关键帧检查，不能以测试通过代替视觉确认。
+回归包含原首页 shader 公式哈希、默认帧 GPU 像素对照、所有原模型物件只有一个实例、转身前后模型身份不变、桌前回看后窗、室内眼高和后退顺序、原项目投影、实际模型避碰、单 Canvas 与 URL 连续性。外观仍需结合真实关键帧人工审阅。
 
-本轮 Node 22.23.4 下 134 项测试、TypeScript 与 247 页生产构建通过；ESLint 0 错误、3 条既有警告。默认首页 1440×900 的 GPU 输出与原全屏投影比较，最大通道差为 1/255，属于投影插值的舍入范围，并非逐像素零差异。
+Node 22.23.4 下 134 项测试、TypeScript 与 247 页生产构建通过；ESLint 0 错误、3 条既有警告。生产 Chrome 的 24 组连接检查通过，页面脚本异常为 0，覆盖同一画布的背面观察／返回桌前、音频连续性、原首页保真、项目详情、九组视口／动效设置、历史恢复与失败回退。报告：`.sync/tmp-unified-world/single-room-production/connection-report.json`；默认首页 GPU 像素对照最大通道差为 1/255，原视觉公式哈希保持一致。
 
-生产 Chrome 的 23 组连接检查通过，未捕获页面异常为 0；覆盖原首页保真、可逆轨迹、同一 Canvas／相机、项目详情、共享音频、历史／刷新／resize、失败回退及手机分流。报告位于 `.sync/tmp-unified-world/interior-production/connection-report.json`，像素对照均值为 `0.0000873843`（通道整数单位）。音乐使用本地音轨与真实根 audio 元素，番剧请求固定失败回退，不作为外部服务验证；Safari 与真实手机未验收。
+实际截图：[原首页](../images/unified-world/window.png)、[向房内后退](../images/unified-world/backtrack.png)、[转身](../images/unified-world/turn.png)、[桌前正面](../images/unified-world/desk.png)、[工作台背面与后方首页窗户](../images/unified-world/rear-view.png)。自由查看转到背面后，能在同一套显示器背后看到首页窗户；结束查看并再次进入桌前时，墙面恢复原取景。
 
-审阅截图：[原首页](../images/unified-world/window.png)、[后退到桌前](../images/unified-world/desk-front.png)、[转身](../images/unified-world/turn.png)、[后方落地窗处](../images/unified-world/rear-window.png)、[项目页](../images/unified-world/desk.png)。转场连接的墙面、地面与后窗目前仍为基础几何，入湖方向沿用已有水体，外观仍待人工审阅；未执行生产发布。
+音乐测试使用本地音轨与真实根 audio 元素，番剧请求固定失败回退，不作为外部服务验证；Safari 与真实手机未验收。后窗周围的地面和墙面仍为基础几何，入湖方向沿用已有水体，外观仍待人工审阅，未执行生产发布。
 
-以下为旧连接版本的历史记录；#113 曾引入的房屋全景及其截图不再描述当前首页。
+以下为旧连接版本的历史记录；#113 的房屋全景与 #115 的双房间连接均不再描述当前实现。
 
 ## 首页与项目页连接（2026-11-18）
 

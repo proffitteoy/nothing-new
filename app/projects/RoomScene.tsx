@@ -367,7 +367,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       const wallCamera = unified
         ? camera.position.clone().applyMatrix4(PROJECT_TRANSFORM.clone().invert())
         : camera.position
-      for (const wall of unified && narrative ? [] : walls) {
+      for (const wall of walls) {
         const outside = wallCamera[wall.axis] * wall.sign > (wall.axis === "x" ? 1.95 : 1.5)
         const goal = outside ? 0 : 1
         const difference = goal - wall.material.opacity

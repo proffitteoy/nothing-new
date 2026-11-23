@@ -6,7 +6,7 @@ import { Reflector } from "three/addons/objects/Reflector.js"
 import { buildCabinWorld } from "./cabin-world"
 import { directWorldCamera, HOME_POSITION, PROJECT_TRANSFORM } from "./world-camera"
 
-test("interior backtrack keeps the shipped room intact and clears the rear floor window", async () => {
+test("home and projects share one physical room and one set of workstation objects", async () => {
   const bytes = readFileSync(new URL("../public/projects-room/study.glb", import.meta.url))
   const length = bytes.readUInt32LE(12)
   const asset = JSON.parse(bytes.subarray(20, 20 + length).toString("utf8")) as {
@@ -61,10 +61,12 @@ test("interior backtrack keeps the shipped room intact and clears the rear floor
 
   const scene = new THREE.Scene()
   scene.add(model)
+  const originalObjects = [...model.children]
   const load = THREE.TextureLoader.prototype.loadAsync
   THREE.TextureLoader.prototype.loadAsync = async () => new THREE.Texture()
+  let world: Awaited<ReturnType<typeof buildCabinWorld>>
   try {
-    await buildCabinWorld(scene, model)
+    world = await buildCabinWorld(scene, model)
   } finally {
     THREE.TextureLoader.prototype.loadAsync = load
   }
@@ -74,6 +76,20 @@ test("interior backtrack keeps the shipped room intact and clears the rear floor
     "do not cut or rebuild the project model",
   )
   assert.ok(scene.getObjectByName("rear-floor-window"))
+  assert.equal(scene.getObjectByName("home-desk-interior"), undefined)
+  for (const original of originalObjects) {
+    const matching: THREE.Object3D[] = []
+    scene.traverse((object) => {
+      if (object.name === original.name) matching.push(object)
+    })
+    assert.deepEqual(matching, [original], `only the original ${original.name}, no mirrored copy`)
+  }
+  for (const progress of [-0.1, -0.5, -0.8, -1]) {
+    world.update(progress, 0, new THREE.Vector2(), false)
+    assert.ok(model.visible, "the same room stays present throughout the turn")
+    assert.ok(scene.getObjectByName("original-home-window")!.visible)
+    assert.ok(scene.getObjectByName("home-room-interior")!.visible)
+  }
   assert.equal(scene.getObjectByName("cabin-pitched-roof"), undefined)
   model.applyMatrix4(PROJECT_TRANSFORM)
   scene.updateMatrixWorld(true)
@@ -83,6 +99,14 @@ test("interior backtrack keeps the shipped room intact and clears the rear floor
   assert.equal(lake.getRenderTarget().height, 768)
   assert.equal("photograph" in (lake.material as THREE.ShaderMaterial).uniforms, false)
   const camera = new THREE.PerspectiveCamera()
+  const rearWindow = scene.getObjectByName("original-home-window")!
+  directWorldCamera(camera, -1)
+  const deskDirection = camera.getWorldDirection(new THREE.Vector3())
+  camera.lookAt(rearWindow.position)
+  assert.ok(
+    camera.getWorldDirection(new THREE.Vector3()).dot(deskDirection) < -0.9,
+    "looking back from the desk finds the original home window in this room",
+  )
   for (const sign of [-1]) {
     const previous = HOME_POSITION.clone()
     for (let i = 1; i <= 10000; i++) {

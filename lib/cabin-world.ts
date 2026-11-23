@@ -16,7 +16,6 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   interior.name = "home-room-interior"
   world.add(interior)
   const plaster = new THREE.MeshLambertMaterial({ color: 0xbfc2bf })
-  const wood = new THREE.MeshLambertMaterial({ color: 0x827362 })
   const earth = new THREE.MeshLambertMaterial({ color: 0x788474 })
   const shore = new THREE.MeshLambertMaterial({ color: 0x9b9d90 })
   const box = (
@@ -32,57 +31,25 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     parent.add(mesh)
     return mesh
   }
-  // A small interior extension only. Never add a building exterior or roof.
-  const home = model.clone(true)
-  home.name = "home-desk-interior"
-  home.position.x += HOME_POSITION.x
-  home.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return
-    object.material = (object.material as THREE.Material).clone()
-    object.material.toneMapped = false
-    object.material.side = THREE.DoubleSide
-    if (object.name === "wall_back") object.visible = false
-  })
-  interior.add(home)
+  // Complete only the rear of the existing room. No second model or desk.
   const rearPlaster = new THREE.MeshBasicMaterial({ color: 0xb5b6b1, toneMapped: false })
   const homeBack = new THREE.Group()
-  homeBack.name = "home-window-wall"
+  homeBack.name = "rear-floor-window"
   interior.add(homeBack)
   const fills = ["left", "right", "top", "bottom"].map((side) =>
     box("home-window-wall-" + side, [1, 1, 0.035], [0, 0, -3.165], rearPlaster, homeBack),
   )
   box(
     "interior-floor-extension",
-    [5.43, 0.015, 9.5],
-    [HOME_POSITION.x / 2, 0.005, 1.6],
+    [5.06, 0.015, 5.95],
+    [-1.3, 0.005, -0.175],
     new THREE.MeshBasicMaterial({ color: 0x898e8f, toneMapped: false }),
     interior,
   )
-  box(
-    "interior-left-return",
-    [0.1, 3.15, 4.7],
-    [-2.22 + HOME_POSITION.x, 1.575, 4.0],
-    plaster,
-    interior,
-  )
-  box(
-    "interior-right-return",
-    [0.1, 3.15, 3.0],
-    [2.22 + HOME_POSITION.x, 1.575, 3.15],
-    plaster,
-    interior,
-  )
-  // Close the short connector around the project room's existing open front.
-  box("interior-rear-return", [0.99, 3.15, 0.1], [-2.715, 1.575, 6.35], plaster, interior)
-  box("interior-rear-side", [0.1, 3.15, 1.7], [2.22, 1.575, 5.5], plaster, interior)
-  box("interior-ceiling", [5.43, 0.06, 9.5], [-0.495, 3.18, 1.6], plaster, interior)
-  const glazing = new THREE.Group()
-  glazing.name = "rear-floor-window"
-  interior.add(glazing)
-  for (const x of [-2.06, 2.06])
-    box("rear-window-jamb", [0.055, 3.1, 0.075], [x + HOME_POSITION.x, 1.55, 4.6], wood, glazing)
-  for (const y of [0.025, 3.075])
-    box("rear-window-rail", [4.175, 0.05, 0.075], [HOME_POSITION.x, y, 4.6], wood, glazing)
+  box("interior-left-return", [0.1, 3.15, 5.95], [-3.83, 1.575, -0.175], plaster, interior)
+  box("interior-right-return", [0.1, 3.15, 5.95], [1.23, 1.575, -0.175], plaster, interior)
+  box("interior-side-return", [0.62, 3.15, 0.1], [0.92, 1.575, 2.8], plaster, interior)
+  box("interior-ceiling", [5.06, 0.06, 5.95], [-1.3, 3.18, -0.175], plaster, interior)
   const homeUniforms = {
     uLake: { value: null as THREE.Texture | null },
     uRoom: { value: null as THREE.Texture | null },
@@ -152,16 +119,16 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     const right = HOME_POSITION.x + ((r.x + r.width * 0.96) / w - 0.5) * worldW
     const bottom = HOME_POSITION.y + (0.5 - (r.y + r.height * 0.84) / h) * worldH
     const top = HOME_POSITION.y + (0.5 - (r.y + r.height * 0.025) / h) * worldH
-    const edgeLeft = HOME_POSITION.x - 2.22,
-      edgeRight = HOME_POSITION.x + 2.22
+    const edgeLeft = -3.83,
+      edgeRight = 1.23
     fills[0].scale.set(Math.max(0.001, left - edgeLeft), 3.2, 1)
     fills[0].position.set((left + edgeLeft) / 2, 1.6, surface.position.z - 0.02)
     fills[1].scale.set(Math.max(0.001, edgeRight - right), 3.2, 1)
     fills[1].position.set((right + edgeRight) / 2, 1.6, surface.position.z - 0.02)
-    fills[2].scale.set(4.44, Math.max(0.001, 3.2 - top), 1)
-    fills[2].position.set(HOME_POSITION.x, (3.2 + top) / 2, surface.position.z - 0.02)
-    fills[3].scale.set(4.44, Math.max(0.001, bottom), 1)
-    fills[3].position.set(HOME_POSITION.x, bottom / 2, surface.position.z - 0.02)
+    fills[2].scale.set(5.06, Math.max(0.001, 3.2 - top), 1)
+    fills[2].position.set(-1.3, (3.2 + top) / 2, surface.position.z - 0.02)
+    fills[3].scale.set(5.06, Math.max(0.001, bottom), 1)
+    fills[3].position.set(-1.3, bottom / 2, surface.position.z - 0.02)
   }
   box("near-ground", [600, 0.2, 600], [0, -0.27, 297.5], earth)
   for (const sign of [-1, 1]) {
@@ -356,10 +323,10 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     const look = homeWindowLook(pointer.x, pointer.y, homeProjection.opening.height)
     homeUniforms.uLook.value.set(look.x, look.y)
     surface.material.depthTest = progress !== 0
-    surface.visible = progress > -0.75
-    interior.visible = progress < 0 && progress > -1
+    surface.visible = true
+    interior.visible = progress < 0
     outside.visible = progress > 0
-    model.visible = progress < -0.5
+    model.visible = progress < 0
     scene.background = progress === -1 ? null : new THREE.Color(progress > 0 ? 0xcbdce5 : 0xdfe4e6)
     const stage =
       publish && typeof document !== "undefined"
