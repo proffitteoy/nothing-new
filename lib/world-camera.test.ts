@@ -7,8 +7,6 @@ import {
   HOME_TARGET,
   DESK_POSITION,
   DESK_TARGET,
-  HOME_DESK_POSITION,
-  HOME_DESK_TARGET,
   PROJECT_TRANSFORM,
 } from "./world-camera"
 import { dampWorldProgress } from "./home-scene"
@@ -60,30 +58,27 @@ test("both camera branches are continuous and exactly reversible", () => {
   assert.ok(camera.quaternion.angleTo(junction.quaternion) < 1e-7)
 })
 
-test("backtrack stays inside at eye height, passes the desk, then turns at the rear window", () => {
+test("backtrack leaves the rear window and turns towards the same room's desk", () => {
   const camera = new THREE.PerspectiveCamera()
-  directWorldCamera(camera, -3 / 7)
-  assert.ok(camera.position.distanceTo(HOME_DESK_POSITION) < 1e-10)
-  const desk = camera.clone()
-  desk.lookAt(HOME_DESK_TARGET)
-  assert.ok(camera.quaternion.angleTo(desk.quaternion) < 1e-7)
-  let previousZ = HOME_POSITION.z,
-    windows = 0
+  const windowDirection = HOME_TARGET.clone().sub(HOME_POSITION).normalize()
+  let previousZ = HOME_POSITION.z
   for (let i = 0; i <= 10000; i++) {
-    directWorldCamera(camera, -i / 10000)
+    const t = i / 10000
+    directWorldCamera(camera, -t)
     assert.ok(camera.position.y >= 1.89 && camera.position.y <= 1.93, "no rise or roof view")
     assert.ok(Math.abs(camera.position.x) < 2.0, "no exterior orbit")
-    assert.ok(camera.position.z >= previousZ - 1e-8, "keep backing towards the rear")
+    assert.ok(camera.position.z >= previousZ - 1e-8, "back away from the rear window")
+    assert.ok(camera.position.z <= DESK_POSITION.z + 1e-8, "stay in the same room")
     previousZ = camera.position.z
-    if (Math.abs(camera.position.z - 4.6) < 0.08) {
-      windows++
+    if (t <= 0.58)
       assert.ok(
-        camera.getWorldDirection(new THREE.Vector3()).z > 0.65,
-        "face the rear glazing before passing it",
+        camera.getWorldDirection(new THREE.Vector3()).dot(windowDirection) > 0.999,
+        "keep looking at the rear window until the turn",
       )
-    }
   }
-  assert.ok(windows > 20)
+  assert.ok(camera.getWorldDirection(new THREE.Vector3()).dot(windowDirection) < -0.9)
+  const localCamera = camera.position.clone().applyMatrix4(PROJECT_TRANSFORM.clone().invert())
+  assert.ok(localCamera.distanceTo(new THREE.Vector3(-0.62, 1.9, 2.72)) < 1e-10)
 })
 
 test("project endpoint preserves the original model-space desktop composition", () => {

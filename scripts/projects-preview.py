@@ -301,7 +301,7 @@ def connection_checks(browser):
     assert world.evaluate("c => c.isConnected && c === document.querySelector('[data-world-canvas]')")
     assert page.evaluate('window.worldContexts.size') == 1
     assert len(model_requests) == 1
-    assert page.locator('[data-world-canvas]').get_attribute('data-camera-position') == '0.62000,1.90000,6.08000'
+    assert page.locator('[data-world-canvas]').get_attribute('data-camera-position') == '-0.99000,1.90000,2.48000'
     shot(page, 'unified-desk')
     results.append('same-canvas/desk-camera/player-and-preview-protection')
     page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 2 * el.clientHeight')
@@ -334,11 +334,23 @@ def connection_checks(browser):
     assert page.locator('#app-scroll-root').evaluate('el => el.scrollTop') == 0
     zoomed = page.locator('[data-room-hotspot="rumor"]').bounding_box()
     assert zoomed is None or abs(zoomed['x'] - initial['x']) + abs(zoomed['y'] - initial['y']) > 2
+    page.mouse.move(360, 500)
+    page.mouse.down()
+    page.mouse.move(360 + 900 / (2 * .65), 500, steps=30)
+    page.mouse.up()
+    page.wait_for_function("(()=>{const q=document.querySelector('[data-world-canvas]').dataset.cameraQuaternion.split(',').map(Number);return 2*(q[0]**2+q[1]**2)-1 < -.85;})()")
+    assert world.evaluate("c => c.isConnected && c === document.querySelector('[data-world-canvas]')")
+    shot(page, 'single-room-rear-view')
+    results.append('single-room/reverse-view-with-same-canvas')
     page.get_by_role('button', name='结束自由查看', exact=True).click()
     page.wait_for_url(args.url + '/')
     expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'window')
-    page.goto(args.url + '/projects', wait_until='networkidle')
+    page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 0')
+    page.wait_for_url(args.url + '/projects')
     ready(page)
+    assert world.evaluate("c => c.isConnected && c === document.querySelector('[data-world-canvas]')")
+    page.wait_for_timeout(600)
+    shot(page, 'single-room-restored-desk')
     page.get_by_role('button', name='自由查看', exact=True).click()
     page.locator('[data-room-hotspot="iris"]').click()
     page.keyboard.press('Escape')
@@ -349,11 +361,9 @@ def connection_checks(browser):
     page.wait_for_url(args.url + '/')
     expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'window')
     results.append('free-view-return/button/escape/dialog-priority')
-    # A direct reload above creates a new Provider. Start the music continuity
-    # assertion within this visit, then verify the same audio across real routes.
-    page.get_by_role('button', name='播放', exact=True).click()
+    # Turning and returning to the desk never reloads this visit or its audio.
+    assert audio_element.evaluate("el => el.isConnected && el === document.querySelector('audio') && !el.paused")
     page.wait_for_function("document.querySelector('audio')?.currentTime > 0.1")
-    audio_element = page.locator('audio').element_handle()
     playback_time = audio_element.evaluate('el => el.currentTime')
     page.mouse.move(720, 400)
     page.mouse.wheel(0, 2400)
@@ -482,7 +492,7 @@ with sync_playwright() as p:
         browser.close()
         (args.output / 'connection-report.json').write_text(json.dumps({'matrix': results, 'pageErrors': errors,
             'music': 'Local browser fixture; unchanged root Provider and real audio element',
-            'scope': 'Original home composition retained; interior backtrack past the desk, turn before rear floor window, original project view; persistent camera and existing interactions'}, indent=2), encoding='utf-8')
+            'scope': 'One physical room and workstation; original home window at the rear, backtrack then reverse the camera towards the same desk; persistent camera and existing interactions'}, indent=2), encoding='utf-8')
         assert not errors, errors
         print('PASS', ', '.join(results), flush=True)
         sys.exit(0)
