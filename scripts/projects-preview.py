@@ -16,6 +16,7 @@ parser.add_argument('--output', type=Path, default=Path('.sync/tmp-projects-52-e
 parser.add_argument('--case', help='Run a single WIDTHxHEIGHT case')
 parser.add_argument('--browser', help='Existing Chromium executable; otherwise Playwright Chromium')
 parser.add_argument('--connection-only', action='store_true', help='Check the persistent world, reversible camera, and home/project interactions')
+parser.add_argument('--navigation-only', action='store_true', help='Check home text/preview links, keyboard access, and pending page navigation')
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
 ids = ['rumor', 'topp', 'iris', 'competitions', 'gudhi', 'animeko']
@@ -114,6 +115,89 @@ def project_checks(page):
 
 
 
+def navigation_checks(browser):
+    for reduced in [False, True]:
+        context = browser.new_context(viewport={'width': 1440, 'height': 900}, reduced_motion='reduce' if reduced else 'no-preference')
+        context.route('**/api/music?*', music_route)
+        context.route('**/projects-check.wav', audio_route)
+        context.route(re.compile(r'.*/(?:anime/latest\.json|api/anime)$'), lambda route: route.fulfill(status=503, json={}))
+        page = context.new_page()
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.goto(args.url + '/', wait_until='networkidle')
+        page.wait_for_function("document.documentElement.classList.contains('splash-seen')", timeout=30000)
+        page.wait_for_selector('[data-world-canvas][data-home-artwork=ready]', state='attached', timeout=60000)
+        for method in ['text', 'preview', 'keyboard']:
+            for entry in ['projects', 'anime', 'chatter', 'blog', 'friends', 'about']:
+                trigger = page.locator(f'[data-edge-trigger="{entry}"]')
+                assert trigger.evaluate('el => el.tagName') == 'A'
+                destination = trigger.get_attribute('href')
+                if method == 'preview':
+                    trigger.hover()
+                    expect(trigger).to_have_attribute('aria-expanded', 'true')
+                    link = page.locator(f'#home-{entry}-panel a')
+                    assert link.get_attribute('href') == destination
+                    expect(link.locator('img')).to_be_visible()
+                    link.click()
+                elif method == 'keyboard':
+                    trigger.focus()
+                    page.keyboard.press('Enter')
+                else:
+                    trigger.locator('span').click()
+                page.wait_for_url(args.url + destination)
+                page.wait_for_timeout(350)
+                assert page.url == args.url + destination, (method, entry, page.url)
+                if entry == 'projects':
+                    expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'room')
+                    page.get_by_role('button', name='返回窗前', exact=True).click()
+                else:
+                    expect(page.locator('[data-home-project-track]')).to_have_count(0)
+                    page.locator('header a[href="/"]').click()
+                page.wait_for_url(args.url + '/')
+                expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'window')
+                page.wait_for_selector('[data-world-canvas][data-home-artwork=ready]', state='attached', timeout=60000)
+                results.append(f'{"reduced" if reduced else "motion"}/{method}/{entry}')
+        for entry in ['papers', 'contact']:
+            trigger = page.locator(f'[data-edge-trigger="{entry}"]')
+            assert trigger.evaluate('el => el.tagName') == 'BUTTON'
+            trigger.click()
+            expect(trigger).to_have_attribute('aria-expanded', 'true')
+            page.keyboard.press('Escape')
+            expect(trigger).to_have_attribute('aria-expanded', 'false')
+            expect(trigger).to_be_focused()
+        results.append(f'{"reduced" if reduced else "motion"}/panel-buttons-and-escape')
+        context.close()
+
+    # Keep a real Link response pending while the visitor dismisses the preview
+    # and scrolls. The scene must not replace that requested page with /projects.
+    context = browser.new_context(viewport={'width': 1440, 'height': 900}, reduced_motion='reduce')
+    context.route('**/api/music?*', music_route)
+    context.route('**/projects-check.wav', audio_route)
+    context.route(re.compile(r'.*/(?:anime/latest\.json|api/anime)$'), lambda route: route.fulfill(status=503, json={}))
+    pending = []
+    context.route(re.compile(r'.*/about\?.*'), lambda route: route.abort() if 'next-router-prefetch' in route.request.headers else pending.append(route))
+    page = context.new_page()
+    page.on('pageerror', lambda error: errors.append(str(error)))
+    page.goto(args.url + '/', wait_until='domcontentloaded')
+    page.wait_for_function("document.documentElement.classList.contains('splash-seen')", timeout=30000)
+    page.wait_for_selector('[data-world-canvas][data-home-artwork=ready]', state='attached', timeout=60000)
+    page.locator('[data-edge-trigger="about"]').click()
+    page.wait_for_timeout(150)
+    assert pending, 'The page response must still be pending for this race check'
+    page.keyboard.press('Escape')
+    page.mouse.move(720, 400)
+    page.mouse.wheel(0, -3000)
+    page.wait_for_timeout(500)
+    assert page.url == args.url + '/', page.url
+    assert page.locator('#app-scroll-root').evaluate('el => el.scrollTop == 2 * el.clientHeight')
+    for route in pending:
+        route.continue_()
+    page.wait_for_url(args.url + '/about')
+    page.wait_for_timeout(500)
+    assert page.url == args.url + '/about'
+    results.append('pending-link/escape/wheel/keeps-requested-page')
+    context.close()
+
+
 def connection_checks(browser):
     context = browser.new_context(viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
     context.add_init_script("""(() => {
@@ -169,7 +253,8 @@ def connection_checks(browser):
     page.mouse.wheel(0, -2400)
     page.wait_for_timeout(200)
     assert page.locator('#app-scroll-root').evaluate('el => el.scrollTop') == home_top
-    page.locator('[data-edge-trigger="projects"]').click()
+    page.locator('[data-edge-trigger="projects"]').hover()
+    expect(page.locator('[data-edge-trigger="projects"]')).to_have_attribute('aria-expanded', 'true')
     page.mouse.move(720, 400)
     page.mouse.wheel(0, -2400)
     page.wait_for_timeout(200)
@@ -352,6 +437,13 @@ def connection_checks(browser):
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, executable_path=args.browser)
+    if args.navigation_only:
+        navigation_checks(browser)
+        browser.close()
+        (args.output / 'navigation-report.json').write_text(json.dumps({'checks': results, 'pageErrors': errors}, indent=2), encoding='utf-8')
+        assert not errors, errors
+        print('PASS', ', '.join(results), flush=True)
+        sys.exit(0)
     if args.connection_only:
         connection_checks(browser)
         browser.close()

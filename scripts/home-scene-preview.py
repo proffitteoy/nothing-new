@@ -1059,6 +1059,9 @@ with sync_playwright() as p:
                 page.wait_for_load_state('networkidle', timeout=15000)
             except Exception:
                 pass  # A slow external image must not prevent the local page capture.
+            if route == 'projects':
+                page.wait_for_selector('[data-world-canvas][data-home-artwork=ready]', state='attached', timeout=60000)
+                expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'room')
             if route == 'anime' and page.get_by_role('heading', name='番剧数据暂时不可用').count():
                 # Read real public data, never an old production screenshot or a test fixture.
                 latest = context.request.get('https://nothing-new.cn/anime/latest.json')

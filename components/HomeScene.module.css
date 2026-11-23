@@ -147,6 +147,7 @@
   background: transparent;
   cursor: pointer;
   font-size: 14px;
+  text-decoration: none;
   pointer-events: auto;
   box-shadow: none;
 }

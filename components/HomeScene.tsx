@@ -1,7 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react"
 import {
   BookOpen,
   Clapperboard,
@@ -95,7 +102,9 @@ export default function HomeScene({
   const close = (restore = false) => {
     clear()
     if (restore && open)
-      root.current?.querySelector<HTMLButtonElement>(`[data-edge-trigger="${open}"]`)?.focus()
+      root.current
+        ?.querySelector<HTMLElement>(`[data-edge-trigger="${open}"]`)
+        ?.focus({ preventScroll: true })
     pinned.current = false
     keyboardSide.current = null
     setOpen(null)
@@ -162,6 +171,32 @@ export default function HomeScene({
             >
               {entries.map(({ id, name, href, icon: Icon, preview }) => {
                 const expanded = open === id
+                const triggerProps = {
+                  className: styles.tab,
+                  "data-edge-trigger": id,
+                  "aria-expanded": expanded,
+                  "aria-controls": `home-${id}-panel`,
+                  onPointerEnter: (event: ReactPointerEvent<HTMLElement>) => {
+                    if (event.pointerType !== "mouse") return
+                    clearTimeout(openTimer.current)
+                    openTimer.current = setTimeout(() => {
+                      pinned.current = false
+                      setOpen(id)
+                    }, 350)
+                  },
+                  onPointerLeave: () => scheduleClose(id),
+                  onFocus: (event: FocusEvent<HTMLElement>) => {
+                    clear()
+                    keyboardSide.current = event.currentTarget.matches(":focus-visible") ? id : null
+                    setOpen(id)
+                  },
+                }
+                const label = (
+                  <>
+                    <Icon size={17} aria-hidden />
+                    <span>{name}</span>
+                  </>
+                )
                 return (
                   <aside
                     key={id}
@@ -185,42 +220,32 @@ export default function HomeScene({
                       scheduleClose(id)
                     }}
                   >
-                    <button
-                      type="button"
-                      className={styles.tab}
-                      data-edge-trigger={id}
-                      aria-label={`${expanded ? "收起" : "展开"}${name}`}
-                      aria-expanded={expanded}
-                      aria-controls={`home-${id}-panel`}
-                      onPointerEnter={(event) => {
-                        if (event.pointerType !== "mouse") return
-                        clearTimeout(openTimer.current)
-                        openTimer.current = setTimeout(() => {
-                          pinned.current = false
-                          setOpen(id)
-                        }, 350)
-                      }}
-                      onPointerLeave={() => scheduleClose(id)}
-                      onFocus={(event) => {
-                        clear()
-                        keyboardSide.current = event.currentTarget.matches(":focus-visible")
-                          ? id
-                          : null
-                        setOpen(id)
-                      }}
-                      onClick={() => {
-                        clear()
-                        // Pointer focus may already have opened this preview.
-                        if (pinned.current && expanded) close()
-                        else {
-                          pinned.current = true
-                          setOpen(id)
-                        }
-                      }}
-                    >
-                      <Icon size={17} aria-hidden />
-                      <span>{name}</span>
-                    </button>
+                    {href ? (
+                      <Link
+                        {...triggerProps}
+                        href={href === "/blog" ? blogHref : href}
+                        prefetch={false}
+                      >
+                        {label}
+                      </Link>
+                    ) : (
+                      <button
+                        {...triggerProps}
+                        type="button"
+                        aria-label={`${expanded ? "收起" : "展开"}${name}`}
+                        onClick={() => {
+                          clear()
+                          // Pointer focus may already have opened this preview.
+                          if (pinned.current && expanded) close()
+                          else {
+                            pinned.current = true
+                            setOpen(id)
+                          }
+                        }}
+                      >
+                        {label}
+                      </button>
+                    )}
                     <div
                       id={`home-${id}-panel`}
                       className={styles.preview}
