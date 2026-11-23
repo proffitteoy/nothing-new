@@ -33,6 +33,10 @@ export default function HomeSpectralCanvas() {
       stage.style.setProperty("--view-y", `${view.opening.y}px`)
       stage.style.setProperty("--view-width", `${view.opening.width}px`)
       stage.style.setProperty("--view-height", `${view.opening.height}px`)
+      stage.style.setProperty("--lake-x", `${view.lake.x - view.opening.x}px`)
+      stage.style.setProperty("--lake-y", `${view.lake.y - view.opening.y}px`)
+      stage.style.setProperty("--lake-width", `${view.lake.width}px`)
+      stage.style.setProperty("--lake-height", `${view.lake.height}px`)
       stage.style.setProperty(
         "--music-y",
         `${view.room.y + (view.room.height * HOME_ROOM.sillCenterY) / HOME_ROOM.height}px`,
@@ -62,6 +66,7 @@ export default function HomeSpectralCanvas() {
       </div>
       <Image
         className={styles.roomImage}
+        data-home-room
         src={room}
         alt="从明亮室内透过浅木观景窗望向山湖"
         fill

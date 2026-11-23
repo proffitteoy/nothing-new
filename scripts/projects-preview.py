@@ -198,6 +198,37 @@ def navigation_checks(browser):
     context.close()
 
 
+def compare_window_shader(page):
+    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position','-0.99000,1.92000,-0.35000')
+    page.wait_for_function("document.querySelector('[data-home-scene]')?.dataset.homeAmbientBlend==='1.000'")
+    result = page.evaluate("""()=>new Promise(resolve=>requestAnimationFrame(()=>{
+              const c=document.querySelector('[data-world-canvas]'),g=c.getContext('webgl2');
+              const current=g.getParameter(g.CURRENT_PROGRAM),vao=g.getParameter(g.VERTEX_ARRAY_BINDING),buf=g.getParameter(g.ARRAY_BUFFER_BINDING);
+              const shaders=g.getAttachedShaders(current),fragment=shaders.find(s=>g.getShaderParameter(s,g.SHADER_TYPE)===g.FRAGMENT_SHADER);
+              g.bindVertexArray(vao);g.useProgram(current);g.drawElements(g.TRIANGLES,6,g.UNSIGNED_SHORT,0);
+              const a=new Uint8Array(c.width*c.height*4),b=new Uint8Array(a.length);g.readPixels(0,0,c.width,c.height,g.RGBA,g.UNSIGNED_BYTE,a);
+              const compile=(type,source)=>{const s=g.createShader(type);g.shaderSource(s,source);g.compileShader(s);if(!g.getShaderParameter(s,g.COMPILE_STATUS))throw Error(g.getShaderInfoLog(s));return s;};
+              const vs=compile(g.VERTEX_SHADER,'#version 300 es\\nprecision highp float;in vec2 position;out vec2 homeUv;void main(){homeUv=position*.5+.5;gl_Position=vec4(position,0.,1.);}');
+              const fs=compile(g.FRAGMENT_SHADER,g.getShaderSource(fragment).replace('uniform float uReveal;','').replace('uniform float uWindowCrop;','').replace('  float border=step(.04,r.x)*(1.-step(.96,r.x))*step(.025,r.y)*(1.-step(.84,r.y));','').replace('  float wallAlpha=mix(1.,border,uWindowCrop);','').replace('colour=vec4(interior.rgb,wallAlpha)','colour=vec4(interior.rgb,1.)').replace('max(interior.a,1.-uReveal)*wallAlpha','1.'));
+              const ref=g.createProgram();g.attachShader(ref,vs);g.attachShader(ref,fs);g.linkProgram(ref);if(!g.getProgramParameter(ref,g.LINK_STATUS))throw Error(g.getProgramInfoLog(ref));
+              g.useProgram(ref);
+              for(let i=0;i<g.getProgramParameter(current,g.ACTIVE_UNIFORMS);i++){
+                const info=g.getActiveUniform(current,i),loc=g.getUniformLocation(ref,info.name);if(loc===null)continue;
+                const v=g.getUniform(current,g.getUniformLocation(current,info.name));
+                if(info.type===g.FLOAT)g.uniform1f(loc,v);else if(info.type===g.FLOAT_VEC2)g.uniform2fv(loc,v);else if(info.type===g.FLOAT_VEC4)g.uniform4fv(loc,v);else if(info.type===g.SAMPLER_2D)g.uniform1i(loc,v);else throw Error('uniform '+info.name);
+              }
+              const rv=g.createVertexArray(),rb=g.createBuffer();g.bindVertexArray(rv);g.bindBuffer(g.ARRAY_BUFFER,rb);g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW);
+              const pos=g.getAttribLocation(ref,'position');g.enableVertexAttribArray(pos);g.vertexAttribPointer(pos,2,g.FLOAT,false,0,0);
+              g.drawArrays(g.TRIANGLES,0,3);g.readPixels(0,0,c.width,c.height,g.RGBA,g.UNSIGNED_BYTE,b);
+              let changed=0,max=0,total=0;for(let i=0;i<a.length;i++){const d=Math.abs(a[i]-b[i]);if(d)changed++;max=Math.max(max,d);total+=d;}
+              g.useProgram(current);g.bindVertexArray(vao);g.bindBuffer(g.ARRAY_BUFFER,buf);g.drawElements(g.TRIANGLES,6,g.UNSIGNED_SHORT,0);
+              g.deleteVertexArray(rv);g.deleteBuffer(rb);g.deleteProgram(ref);g.deleteShader(vs);g.deleteShader(fs);
+              resolve({width:c.width,height:c.height,changedChannels:changed,maxDifference:max,meanDifference:total/a.length});
+            }))""")
+    assert result['maxDifference'] <= 1 and result['meanDifference'] < 0.0002, result
+    (args.output/'home-pixel-comparison.json').write_text(json.dumps(result,indent=2),encoding='utf8')
+
+
 def connection_checks(browser):
     context = browser.new_context(viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
     context.add_init_script("""(() => {
@@ -224,15 +255,17 @@ def connection_checks(browser):
     world = page.locator('[data-world-canvas]').element_handle()
     expect(page.locator('canvas')).to_have_count(1)
     results.append('single-shared-webgl-scene')
+    compare_window_shader(page)
+    results.append('original-home-shader/pixel-preservation')
     for value in [-0.46, 0.35, -0.46, 0]:
         page.locator('#app-scroll-root').evaluate('(el,p) => el.scrollTop = (2 + 2*p) * el.clientHeight', value)
         page.wait_for_function('(p) => Math.abs(Number(document.getElementById("app-scroll-root").dataset.homeProjectProgress)-p)<0.00001', arg=value)
         page.wait_for_timeout(250)
         if value == -0.46:
             pose = page.locator('[data-world-canvas]').get_attribute('data-camera-position')
-            if 'orbit_pose' in locals(): assert pose == orbit_pose
-            orbit_pose = pose
-            shot(page, 'unified-orbit')
+            if 'desk_pose' in locals(): assert pose == desk_pose
+            desk_pose = pose
+            shot(page, 'interior-backtrack')
     results.append('reversible-spline/identical-resampled-pose')
     page.get_by_role('button', name='播放', exact=True).click()
     page.wait_for_function("document.querySelector('audio')?.currentTime > 0.1")
@@ -268,7 +301,7 @@ def connection_checks(browser):
     assert world.evaluate("c => c.isConnected && c === document.querySelector('[data-world-canvas]')")
     assert page.evaluate('window.worldContexts.size') == 1
     assert len(model_requests) == 1
-    assert page.locator('[data-world-canvas]').get_attribute('data-camera-position') == '-0.62000,1.90000,2.72000'
+    assert page.locator('[data-world-canvas]').get_attribute('data-camera-position') == '0.62000,1.90000,6.08000'
     shot(page, 'unified-desk')
     results.append('same-canvas/desk-camera/player-and-preview-protection')
     page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 2 * el.clientHeight')
@@ -449,7 +482,7 @@ with sync_playwright() as p:
         browser.close()
         (args.output / 'connection-report.json').write_text(json.dumps({'matrix': results, 'pageErrors': errors,
             'music': 'Local browser fixture; unchanged root Provider and real audio element',
-            'scope': 'One persistent Three.js scene and camera across home/projects, reversible cabin/lake trajectories, existing project interactions and root audio'}, indent=2), encoding='utf-8')
+            'scope': 'Original home composition retained; interior backtrack past the desk, turn before rear floor window, original project view; persistent camera and existing interactions'}, indent=2), encoding='utf-8')
         assert not errors, errors
         print('PASS', ', '.join(results), flush=True)
         sys.exit(0)

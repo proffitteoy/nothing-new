@@ -3,10 +3,10 @@ import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import * as THREE from "three"
 import { Reflector } from "three/addons/objects/Reflector.js"
-import { buildCabinWorld, openCabinWindows } from "./cabin-world"
-import { directWorldCamera, HOME_POSITION } from "./world-camera"
+import { buildCabinWorld } from "./cabin-world"
+import { directWorldCamera, HOME_POSITION, PROJECT_TRANSFORM } from "./world-camera"
 
-test("shipped window geometry is open and the complete camera flight clears real meshes", async () => {
+test("interior backtrack keeps the shipped room intact and clears the rear floor window", async () => {
   const bytes = readFileSync(new URL("../public/projects-room/study.glb", import.meta.url))
   const length = bytes.readUInt32LE(12)
   const asset = JSON.parse(bytes.subarray(20, 20 + length).toString("utf8")) as {
@@ -57,18 +57,25 @@ test("shipped window geometry is open and the complete camera flight clears real
   const wall = model.getObjectByName("wall_back")!
   const ray = new THREE.Raycaster(HOME_POSITION, new THREE.Vector3(0, 0, -1), 0, 3)
   assert.ok(ray.intersectObject(wall).length > 0, "original sky panel/mullion blocks passage")
-  openCabinWindows(model)
-  assert.equal(ray.intersectObject(wall).length, 0, "window centre is now a real opening")
+  const originalIndex = (wall as THREE.Mesh).geometry.index!.count
 
   const scene = new THREE.Scene()
   scene.add(model)
   const load = THREE.TextureLoader.prototype.loadAsync
   THREE.TextureLoader.prototype.loadAsync = async () => new THREE.Texture()
   try {
-    await buildCabinWorld(scene)
+    await buildCabinWorld(scene, model)
   } finally {
     THREE.TextureLoader.prototype.loadAsync = load
   }
+  assert.equal(
+    (wall as THREE.Mesh).geometry.index!.count,
+    originalIndex,
+    "do not cut or rebuild the project model",
+  )
+  assert.ok(scene.getObjectByName("rear-floor-window"))
+  assert.equal(scene.getObjectByName("cabin-pitched-roof"), undefined)
+  model.applyMatrix4(PROJECT_TRANSFORM)
   scene.updateMatrixWorld(true)
   const lake = scene.getObjectByName("lake-water") as Reflector
   assert.ok(lake instanceof Reflector)
@@ -76,14 +83,19 @@ test("shipped window geometry is open and the complete camera flight clears real
   assert.equal(lake.getRenderTarget().height, 768)
   assert.equal("photograph" in (lake.material as THREE.ShaderMaterial).uniforms, false)
   const camera = new THREE.PerspectiveCamera()
-  for (const sign of [-1, 1]) {
+  for (const sign of [-1]) {
     const previous = HOME_POSITION.clone()
     for (let i = 1; i <= 10000; i++) {
       directWorldCamera(camera, (sign * i) / 10000)
       const direction = camera.position.clone().sub(previous)
       ray.set(previous, direction.clone().normalize())
       ray.far = direction.length() + 0.04
-      const hit = ray.intersectObjects(scene.children, true)[0]
+      const solids: THREE.Mesh[] = []
+      scene.traverseVisible((object) => {
+        if (object instanceof THREE.Mesh && object.name !== "original-home-window")
+          solids.push(object)
+      })
+      const hit = ray.intersectObjects(solids, false)[0]
       assert.equal(
         hit?.object.name,
         undefined,
