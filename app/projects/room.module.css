@@ -859,7 +859,9 @@
   min-height: 100dvh !important;
   max-height: none;
 }
-.stage::before { display: none; }
+.stage::before {
+  display: none;
+}
 .scene,
 .poster {
   inset: 0;
@@ -884,9 +886,16 @@
   bottom: clamp(24px, 8vh, 84px);
 }
 @media (max-width: 767px) {
-  .page { padding: 0 !important; }
-  .stage { min-height: 100dvh !important; height: 100dvh !important; }
-  .panel { inset: 24px 16px; }
+  .page {
+    padding: 0 !important;
+  }
+  .stage {
+    min-height: 100dvh !important;
+    height: 100dvh !important;
+  }
+  .panel {
+    inset: 24px 16px;
+  }
 }
 
 /* Restore the accessible directory only if WebGL fails. */
@@ -898,5 +907,29 @@
   display: block;
 }
 .stage[data-room-status="error"] .sceneTools,
-.stage[data-room-status="error"] .staticButton,
-.stage[data-room-status="error"] .help { display: none; }
+.stage[data-room-status="error"] .help {
+  display: none;
+}
+
+/* Shared layout canvas sits below route UI and survives route changes. */
+.unified {
+  position: absolute;
+  z-index: 1;
+  --muted: var(--site-muted);
+  --ink: var(--site-ink);
+  --accent: var(--site-accent);
+}
+.page[data-unified="true"] {
+  pointer-events: none;
+  z-index: 2;
+}
+.page[data-unified="true"] :is(button, a, summary, .panel, .directoryBody) {
+  pointer-events: auto;
+}
+.route:has(.page[data-unified="true"]) {
+  z-index: 2;
+  pointer-events: none;
+}
+.route:has(.page[data-unified="true"]) .backdrop {
+  display: none;
+}

@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function ProjectsPage() {
   return (
-    <div className="relative min-h-screen">
+    <div className={`relative min-h-screen ${styles.route}`}>
       <div aria-hidden="true" className={styles.backdrop} />
       <PageTransition>
         <ProjectsBoard />

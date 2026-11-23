@@ -42,6 +42,14 @@
 .poster {
   z-index: 0;
 }
+.scene[data-unified="true"] {
+  z-index: 2;
+  background: transparent;
+  pointer-events: none;
+}
+.poster[hidden] {
+  display: none;
+}
 .roomImage {
   object-fit: cover;
 }

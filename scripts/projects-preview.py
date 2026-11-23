@@ -15,7 +15,7 @@ parser.add_argument('--url', default='http://127.0.0.1:3152')
 parser.add_argument('--output', type=Path, default=Path('.sync/tmp-projects-52-evidence'))
 parser.add_argument('--case', help='Run a single WIDTHxHEIGHT case')
 parser.add_argument('--browser', help='Existing Chromium executable; otherwise Playwright Chromium')
-parser.add_argument('--connection-only', action='store_true', help='Check main-based home/project navigation without the historical toolbar matrix')
+parser.add_argument('--connection-only', action='store_true', help='Check the persistent world, reversible camera, and home/project interactions')
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
 ids = ['rumor', 'topp', 'iris', 'competitions', 'gudhi', 'animeko']
@@ -114,57 +114,42 @@ def project_checks(page):
 
 
 
-def compare_window_shader(page):
-    # Compare the authorized switch at progress=0 against the original shader,
-    # using the same actual textures/uniforms. No screenshots or new assets.
-    page.wait_for_function("document.querySelector('[data-home-scene]')?.dataset.homeRendering === 'dynamic'")
-    page.wait_for_function("document.querySelector('[data-home-scene]')?.dataset.homeAmbientBlend === '1.000'")
-    result = page.evaluate("""() => new Promise(resolve => requestAnimationFrame(() => {
-      const c=document.querySelector('[data-home-canvas]'), gl=c.getContext('webgl2');
-      const current=gl.getParameter(gl.CURRENT_PROGRAM), attached=gl.getAttachedShaders(current);
-      const vertex=attached.find(s=>gl.getShaderParameter(s,gl.SHADER_TYPE)===gl.VERTEX_SHADER);
-      const fragment=attached.find(s=>gl.getShaderParameter(s,gl.SHADER_TYPE)===gl.FRAGMENT_SHADER);
-      const original=gl.getShaderSource(fragment).replace('uniform float uInteriorOpacity;','').replace('  interior.a*=uInteriorOpacity;','');
-      const fs=gl.createShader(gl.FRAGMENT_SHADER);gl.shaderSource(fs,original);gl.compileShader(fs);
-      if(!gl.getShaderParameter(fs,gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(fs));
-      const legacy=gl.createProgram();gl.attachShader(legacy,vertex);gl.attachShader(legacy,fs);
-      gl.bindAttribLocation(legacy,gl.getAttribLocation(current,'position'),'position');gl.linkProgram(legacy);
-      if(!gl.getProgramParameter(legacy,gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(legacy));
-      gl.useProgram(current);gl.drawArrays(gl.TRIANGLES,0,3);
-      const a=new Uint8Array(c.width*c.height*4), b=new Uint8Array(a.length);
-      gl.readPixels(0,0,c.width,c.height,gl.RGBA,gl.UNSIGNED_BYTE,a);
-      const opacity=gl.getUniform(current,gl.getUniformLocation(current,'uInteriorOpacity'));
-      gl.useProgram(legacy);
-      for(let i=0;i<gl.getProgramParameter(current,gl.ACTIVE_UNIFORMS);i++) {
-        const info=gl.getActiveUniform(current,i), loc=gl.getUniformLocation(legacy,info.name);
-        if(loc===null) continue;
-        const value=gl.getUniform(current,gl.getUniformLocation(current,info.name));
-        if(info.type===gl.FLOAT) gl.uniform1f(loc,value);
-        else if(info.type===gl.FLOAT_VEC2) gl.uniform2fv(loc,value);
-        else if(info.type===gl.FLOAT_VEC4) gl.uniform4fv(loc,value);
-        else if(info.type===gl.SAMPLER_2D || info.type===gl.INT) gl.uniform1i(loc,value);
-        else throw Error('Unexpected uniform '+info.name);
-      }
-      gl.drawArrays(gl.TRIANGLES,0,3);gl.readPixels(0,0,c.width,c.height,gl.RGBA,gl.UNSIGNED_BYTE,b);
-      let changed=0;for(let i=0;i<a.length;i++) if(a[i]!==b[i]) changed++;
-      gl.useProgram(current);gl.drawArrays(gl.TRIANGLES,0,3);gl.deleteProgram(legacy);gl.deleteShader(fs);
-      resolve({width:c.width,height:c.height,changedChannels:changed,interiorOpacity:opacity});
-    }))""")
-    assert result['interiorOpacity'] == 1, result
-    assert result['changedChannels'] == 0, result
-    (args.output/'window-shader-comparison.json').write_text(json.dumps(result,indent=2),encoding='utf8')
-
 def connection_checks(browser):
     context = browser.new_context(viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
+    context.add_init_script("""(() => {
+        window.worldContexts = new Set();
+        const original = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function(...args) {
+            const context = original.apply(this, args);
+            if (args[0].startsWith('webgl') && this.hasAttribute('data-world-canvas') && context)
+                window.worldContexts.add(context);
+            return context;
+        };
+    })()""")
     context.route('**/api/music?*', music_route)
     context.route('**/projects-check.wav', audio_route)
+    context.route(re.compile(r'.*/(?:anime/latest\.json|api/anime)$'), lambda route: route.fulfill(status=503, content_type='application/json', body='{}'))
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
+    model_requests = []
+    page.on('request', lambda request: model_requests.append(request.url) if '/projects-room/study.glb' in request.url else None)
     page.goto(args.url + '/', wait_until='networkidle')
     page.wait_for_function("document.documentElement.classList.contains('splash-seen')", timeout=30000)
     expect(page.locator('[data-home-project-track]')).to_have_count(1)
-    compare_window_shader(page)
-    results.append('window-default-shader/pixel-identical')
+    page.wait_for_function("document.querySelector('[data-world-canvas]')?.dataset.homeArtwork === 'ready'", timeout=30000)
+    world = page.locator('[data-world-canvas]').element_handle()
+    expect(page.locator('canvas')).to_have_count(1)
+    results.append('single-shared-webgl-scene')
+    for value in [-0.46, 0.35, -0.46, 0]:
+        page.locator('#app-scroll-root').evaluate('(el,p) => el.scrollTop = (2 + 2*p) * el.clientHeight', value)
+        page.wait_for_function('(p) => Math.abs(Number(document.getElementById("app-scroll-root").dataset.homeProjectProgress)-p)<0.00001', arg=value)
+        page.wait_for_timeout(250)
+        if value == -0.46:
+            pose = page.locator('[data-world-canvas]').get_attribute('data-camera-position')
+            if 'orbit_pose' in locals(): assert pose == orbit_pose
+            orbit_pose = pose
+            shot(page, 'unified-orbit')
+    results.append('reversible-spline/identical-resampled-pose')
     page.get_by_role('button', name='播放', exact=True).click()
     page.wait_for_function("document.querySelector('audio')?.currentTime > 0.1")
     audio_element = page.locator('audio').element_handle()
@@ -195,7 +180,20 @@ def connection_checks(browser):
     page.wait_for_url(args.url + '/projects')
     ready(page)
     assert page.locator('[data-room-hotspot]:visible').count() == 9
-    results.append('home-wheel-entry/player-and-preview-protection')
+    assert world.evaluate("c => c.isConnected && c === document.querySelector('[data-world-canvas]')")
+    assert page.evaluate('window.worldContexts.size') == 1
+    assert len(model_requests) == 1
+    assert page.locator('[data-world-canvas]').get_attribute('data-camera-position') == '-0.62000,1.90000,2.72000'
+    shot(page, 'unified-desk')
+    results.append('same-canvas/desk-camera/player-and-preview-protection')
+    page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 2 * el.clientHeight')
+    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '-0.99000,1.92000,-0.35000')
+    page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 0')
+    page.wait_for_url(args.url + '/projects')
+    ready(page)
+    assert world.evaluate("c => c === document.querySelector('[data-world-canvas]')")
+    results.append('route-handoff-preserves-unfinished-scroll-target')
+
     for target, name in zip(ids, names):
         button = page.locator(f'[data-room-hotspot="{target}"]')
         button.click()
@@ -242,12 +240,11 @@ def connection_checks(browser):
     page.mouse.move(720, 400)
     page.mouse.wheel(0, 2400)
     expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'landscape')
-    expect(page.locator('[data-home-scene]')).to_have_attribute('data-home-landscape-blend', '1.00000')
+    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '0.00000,0.32000,-22.00000')
+    expect(page.locator('canvas')).to_have_count(1)
     assert page.locator('[data-home-ui]').evaluate('el => el.inert')
-    assert page.locator('[data-home-room]').evaluate('el => Number(el.style.opacity)') == 0
-    bounds=page.locator('[data-home-viewport]').bounding_box()
-    assert abs(bounds['width']-page.viewport_size['width'])<1 and abs(bounds['height']-page.viewport_size['height'])<1
-    results.append('landscape-existing-asset/fullscreen/controls-inert')
+    shot(page, 'unified-lake')
+    results.append('real-lake-camera/controls-inert')
     assert page.url == args.url + '/'
     page.mouse.wheel(0, -300)
     expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'transition')
@@ -255,7 +252,7 @@ def connection_checks(browser):
     page.wait_for_timeout(200)
     page.mouse.move(720, 400)
     page.mouse.wheel(0, -100)
-    page.wait_for_timeout(200)
+    page.wait_for_timeout(1500)
     stopped = page.locator('#app-scroll-root').get_attribute('data-home-project-progress')
     page.wait_for_timeout(300)
     assert page.locator('#app-scroll-root').get_attribute('data-home-project-progress') == stopped
@@ -264,7 +261,7 @@ def connection_checks(browser):
     assert audio_element.evaluate("el => el === document.querySelector('audio') && !el.paused")
     assert audio_element.evaluate('el => el.currentTime') > playback_time
     assert not page.locator('[data-home-ui]').evaluate('el => el.inert')
-    expect(page.locator('[data-home-scene]')).to_have_attribute('data-home-landscape-blend', '0.00000')
+    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '-0.99000,1.92000,-0.35000')
     results.append('three-states/reverse/interruptible-return/same-audio')
     page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 2.5 * el.clientHeight')
     expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-progress', '0.25000')
@@ -301,6 +298,7 @@ def connection_checks(browser):
 
     for width, height, reduced in [(1920, 1080, False), (1648, 928, False), (1440, 900, False), (1366, 768, False), (1280, 800, False), (1024, 768, False), (700, 800, False), (844, 480, False), (1440, 900, True)]:
         context = browser.new_context(viewport={'width': width, 'height': height}, reduced_motion='reduce' if reduced else 'no-preference')
+        context.route(re.compile(r'.*/(?:anime/latest\.json|api/anime)$'), lambda route: route.fulfill(status=503, content_type='application/json', body='{}'))
         page = context.new_page()
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(args.url + '/projects', wait_until='networkidle')
@@ -318,11 +316,10 @@ def connection_checks(browser):
             page.mouse.move(width//2,height//2)
             page.mouse.wheel(0,3000)
             expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage','landscape')
-            expect(page.locator('[data-home-scene]')).to_have_attribute('data-home-landscape-blend','1.00000')
-            assert page.locator('[data-home-room]').evaluate('el => Number(el.style.opacity)') == 0
+            expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '0.00000,0.32000,-22.00000')
             page.get_by_role('button',name='返回窗前',exact=True).click()
             expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage','window')
-            results.append('reduced-motion-existing-poster/landscape-and-return')
+            results.append('reduced-motion/absolute-camera-sampling')
         page.mouse.move(width//2,height//2)
         page.mouse.wheel(0, -2400)
         page.wait_for_url(args.url + '/projects')
@@ -333,6 +330,7 @@ def connection_checks(browser):
 
     context = browser.new_context(viewport={'width': 1440, 'height': 900})
     context.route('**/projects-room/study.glb', lambda route: route.abort())
+    context.route(re.compile(r'.*/(?:anime/latest\.json|api/anime)$'), lambda route: route.fulfill(status=503, content_type='application/json', body='{}'))
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(args.url + '/projects', wait_until='networkidle')
@@ -343,6 +341,7 @@ def connection_checks(browser):
     context.close()
     context = browser.new_context(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True,
         user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1')
+    context.route(re.compile(r'.*/(?:anime/latest\.json|api/anime)$'), lambda route: route.fulfill(status=503, content_type='application/json', body='{}'))
     page = context.new_page()
     page.goto(args.url + '/', wait_until='networkidle')
     page.wait_for_url(re.compile(r'.*/blog(?:/.*)?$'))
@@ -358,7 +357,7 @@ with sync_playwright() as p:
         browser.close()
         (args.output / 'connection-report.json').write_text(json.dumps({'matrix': results, 'pageErrors': errors,
             'music': 'Local browser fixture; unchanged root Provider and real audio element',
-            'scope': 'Window/room/landscape state and existing-asset display switching; original images/GLB/materials/default framing retained; continuous same-room 3D camera not implemented'}, indent=2), encoding='utf-8')
+            'scope': 'One persistent Three.js scene and camera across home/projects, reversible cabin/lake trajectories, existing project interactions and root audio'}, indent=2), encoding='utf-8')
         assert not errors, errors
         print('PASS', ', '.join(results), flush=True)
         sys.exit(0)

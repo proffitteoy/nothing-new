@@ -1,15 +1,20 @@
 "use client"
 
-import { memo, useEffect, useRef } from "react"
+import { memo, useEffect, useLayoutEffect, useRef } from "react"
 import * as THREE from "three"
 import { OrbitControls } from "three/addons/controls/OrbitControls.js"
+import { Reflector } from "three/addons/objects/Reflector.js"
 import { MeshBVH } from "three-mesh-bvh"
 import { preloadRoomAssets } from "./room-preload"
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js"
 import { lifeObjects, projects, roomTargets, type RoomTarget } from "./projects"
 import styles from "./room.module.css"
+import { useHomeProjectState } from "../../components/HomeProjectNavigation"
+import { buildCabinWorld, openCabinWindows } from "../../lib/cabin-world"
+import { directWorldCamera, DESK_TARGET } from "../../lib/world-camera"
+import { SPECTRAL_PLAYBACK_RATE } from "../../components/field/spectralField"
 
-type Props = {
+export type RoomSceneProps = {
   reduceMotion: boolean
   rotationEnabled: boolean
   wheelNavigation: boolean
@@ -30,11 +35,15 @@ function disposeModel(root: THREE.Object3D, extraTextures: Iterable<THREE.Textur
   const textures = new Set(extraTextures)
   root.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return
+    if (object instanceof Reflector) object.getRenderTarget().dispose()
     object.geometry.dispose()
     for (const mat of Array.isArray(object.material) ? object.material : [object.material]) {
       materials.add(mat)
       for (const value of Object.values(mat))
         if (value instanceof THREE.Texture) textures.add(value)
+      if (mat instanceof THREE.ShaderMaterial)
+        for (const uniform of Object.values(mat.uniforms))
+          if (uniform.value instanceof THREE.Texture) textures.add(uniform.value)
     }
   })
   for (const mat of materials) mat.dispose()
@@ -44,10 +53,11 @@ function disposeModel(root: THREE.Object3D, extraTextures: Iterable<THREE.Textur
     texture.dispose()
   }
 }
-async function prepareRoom(): Promise<PreparedRoom> {
+async function prepareRoom(unified: boolean): Promise<PreparedRoom> {
   const data = await preloadRoomAssets()
   const { scene: model } = await new GLTFLoader().parseAsync(data, "/projects-room/")
   try {
+    if (unified) openCabinWindows(model)
     const meshes: THREE.Mesh[] = []
     model.traverse((node) => {
       if (node instanceof THREE.Mesh) meshes.push(node)
@@ -65,7 +75,9 @@ async function prepareRoom(): Promise<PreparedRoom> {
 }
 // This component owns all GPU resources. React owns the accessible text layer.
 // Music progress rerenders ProjectsBoard; only scene prop changes cross this boundary.
-export default memo(function RoomScene(props: Props) {
+export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
+  const navigation = useHomeProjectState()
+  const navigationRef = useRef(navigation)
   const hostRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const latest = useRef(props)
@@ -75,21 +87,25 @@ export default memo(function RoomScene(props: Props) {
   } | null>(null)
 
   useEffect(() => {
+    navigationRef.current = navigation
     latest.current = props
     controller.current?.update()
-  }, [props])
+  }, [props, navigation])
 
   useEffect(() => {
     const host = hostRef.current
     const canvas = canvasRef.current
     if (!host || !canvas) return
+    const unified = navigationRef.current.enabled
+    const reduceMedia = matchMedia("(prefers-reduced-motion: reduce)")
+    const isReduced = () => latest.current.reduceMotion || reduceMedia.matches
     let renderer: THREE.WebGLRenderer
     try {
       renderer = new THREE.WebGLRenderer({
         canvas,
         antialias: true,
         alpha: true,
-        powerPreference: "low-power",
+        powerPreference: unified ? "high-performance" : "low-power",
       })
     } catch {
       latest.current.onError()
@@ -99,12 +115,12 @@ export default memo(function RoomScene(props: Props) {
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(47, 1, 0.05, 35)
+    const camera = new THREE.PerspectiveCamera(47, 1, 0.05, unified ? 700 : 35)
     const controls = new OrbitControls(camera, canvas)
     controls.enablePan = false
     controls.minPolarAngle = 0.45
     controls.maxPolarAngle = Math.PI / 2 - 0.18
-    controls.enableDamping = !latest.current.reduceMotion
+    controls.enableDamping = !isReduced()
     controls.dampingFactor = 0.12
     controls.rotateSpeed = 0.65
     controls.zoomSpeed = 0.65
@@ -128,6 +144,13 @@ export default memo(function RoomScene(props: Props) {
     signalNodes.visible = false
     scene.add(signalNodes)
     let signalStarted = 0
+    let worldTime: { value: number } | null = null
+    let visibleTime = 0
+    let idleTimer: ReturnType<typeof setTimeout> | undefined
+    let previousFree = false
+    let returnStarted = 0
+    const returnPosition = new THREE.Vector3()
+    const returnQuaternion = new THREE.Quaternion()
 
     let model: THREE.Group | null = null
     let disposed = false
@@ -170,6 +193,10 @@ export default memo(function RoomScene(props: Props) {
     }
 
     function resetCamera() {
+      if (unified && navigationRef.current.mode !== "free") {
+        directWorldCamera(camera, navigationRef.current.progress.current)
+        return
+      }
       const portrait = host!.clientWidth / Math.max(host!.clientHeight, 1) < 1
       // Human-scale view: eyes above the desktop, looking slightly down into the room.
       camera.position.set(portrait ? -0.75 : -0.62, portrait ? 2.3 : 1.9, portrait ? 4.8 : 2.72)
@@ -224,6 +251,12 @@ export default memo(function RoomScene(props: Props) {
       for (const [id, anchor] of anchors) {
         const button = buttons.get(id)
         if (!button) continue
+        if (unified && navigationRef.current.progress.current !== -1) {
+          button.hidden = true
+          const leader = host!.querySelector<SVGLineElement>(`[data-room-leader="${id}"]`)
+          if (leader) leader.style.display = "none"
+          continue
+        }
         anchor.getWorldPosition(worldPosition)
         projected.copy(worldPosition).project(camera)
         let visible =
@@ -298,19 +331,34 @@ export default memo(function RoomScene(props: Props) {
       frame = 0
       if (disposed || document.visibilityState !== "visible") return
       // Moving frames target 30Hz on narrow touch layouts; static scenes have no RAF loop.
-      if (mobile && now - lastFrame < 30) {
+      if (!unified && mobile && now - lastFrame < 30) {
         schedule()
         return
       }
-      const dt = Math.min((now - lastFrame) / 1000, 0.05)
+      const elapsed = lastFrame ? Math.max(0, (now - lastFrame) / 1000) : 0
+      const dt = Math.min(elapsed, 0.05)
       lastFrame = now
-      const moved = controls.update()
+      const narrative = unified && navigationRef.current.mode !== "free"
+      const moved = narrative ? false : controls.update()
+      const before = camera.position.clone()
+      if (narrative) {
+        directWorldCamera(camera, navigationRef.current.progress.current)
+        if (returnStarted) {
+          const t = isReduced() ? 1 : Math.min(1, (now - returnStarted) / 350)
+          const blend = t * t * (3 - 2 * t)
+          camera.position.lerpVectors(returnPosition, camera.position, blend)
+          camera.quaternion.slerpQuaternions(returnQuaternion, camera.quaternion, blend)
+          if (t === 1) returnStarted = 0
+        }
+      }
+      visibleTime += elapsed
+      if (worldTime && !isReduced()) worldTime.value = visibleTime * SPECTRAL_PLAYBACK_RATE
       let changing = false
-      for (const wall of walls) {
+      for (const wall of unified ? [] : walls) {
         const outside = camera.position[wall.axis] * wall.sign > (wall.axis === "x" ? 1.95 : 1.5)
         const goal = outside ? 0 : 1
         const difference = goal - wall.material.opacity
-        wall.material.opacity = latest.current.reduceMotion
+        wall.material.opacity = isReduced()
           ? goal
           : Math.abs(difference) < 0.015
             ? goal
@@ -328,9 +376,7 @@ export default memo(function RoomScene(props: Props) {
         const base = basePositions.get(object)!
         const active = id === highlighted && !latest.current.paused
         const lift =
-          active && ["rumor", "gudhi", "animeko"].includes(id) && !latest.current.reduceMotion
-            ? 0.008
-            : 0
+          active && ["rumor", "gudhi", "animeko"].includes(id) && !isReduced() ? 0.008 : 0
         object.position.y = base.y + (id === "rumor" ? lift : 0)
         object.position.z = base.z + (["gudhi", "animeko"].includes(id) ? lift * 2 : 0)
         const mesh = object as THREE.Mesh
@@ -340,7 +386,7 @@ export default memo(function RoomScene(props: Props) {
       }
       signalNodes.visible = highlighted === "rumor" && !latest.current.paused
       if (signalNodes.visible) {
-        signalNodes.count = latest.current.reduceMotion
+        signalNodes.count = isReduced()
           ? 7
           : Math.min(7, 1 + Math.floor((now - signalStarted) / 100))
         changing ||= signalNodes.count < 7
@@ -352,19 +398,51 @@ export default memo(function RoomScene(props: Props) {
         // Standard DOM diagnostics; no global debug API or persistent counters.
         canvas!.dataset.triangles = String(renderer.info.render.triangles)
         canvas!.dataset.drawCalls = String(renderer.info.render.calls)
+        if (unified) {
+          canvas!.dataset.cameraPosition = camera.position
+            .toArray()
+            .map((n) => n.toFixed(5))
+            .join(",")
+          canvas!.dataset.cameraQuaternion = camera.quaternion
+            .toArray()
+            .map((n) => n.toFixed(6))
+            .join(",")
+          canvas!.dataset.homeArtwork = "ready"
+        }
       }
-      if (moved || changing || now < animateUntil) schedule()
+      clearTimeout(idleTimer)
+      if (
+        moved ||
+        changing ||
+        now < animateUntil ||
+        returnStarted ||
+        (narrative && !before.equals(camera.position))
+      )
+        schedule()
+      else if (unified && ready && !isReduced()) idleTimer = setTimeout(schedule, 1000 / 20)
     }
 
     function update() {
       if (disposed) return
       mobile = media.matches
-      const interactive = !latest.current.paused && (!mobile || latest.current.rotationEnabled)
+      const free = navigationRef.current.mode === "free"
+      const interactive =
+        !latest.current.paused && (unified ? free : !mobile || latest.current.rotationEnabled)
+      if (unified && free && !previousFree) {
+        controls.target.copy(DESK_TARGET)
+        controls.update()
+      }
+      if (unified && !free && previousFree) {
+        returnPosition.copy(camera.position)
+        returnQuaternion.copy(camera.quaternion)
+        returnStarted = performance.now()
+      }
+      previousFree = free
       controls.enabled = interactive
       controls.enableZoom = !latest.current.wheelNavigation || latest.current.rotationEnabled
-      controls.enableDamping = !latest.current.reduceMotion
+      controls.enableDamping = !isReduced()
       canvas!.style.touchAction = mobile && !latest.current.rotationEnabled ? "pan-y" : "none"
-      if (resetKey !== latest.current.resetKey) {
+      if (resetKey !== latest.current.resetKey && !returnStarted) {
         resetKey = latest.current.resetKey
         resetCamera()
       }
@@ -395,6 +473,7 @@ export default memo(function RoomScene(props: Props) {
 
     function hitAt(event: PointerEvent) {
       if (!model) return null
+      if (unified && navigationRef.current.progress.current !== -1) return null
       const rect = canvas!.getBoundingClientRect()
       pointer.set(
         ((event.clientX - rect.left) / rect.width) * 2 - 1,
@@ -432,7 +511,7 @@ export default memo(function RoomScene(props: Props) {
         if (id) latest.current.onChoose(id)
       }
       pointerDown = null
-      animateUntil = latest.current.reduceMotion ? 0 : performance.now() + 700
+      animateUntil = isReduced() ? 0 : performance.now() + 700
       schedule()
     }
     function cancel() {
@@ -444,13 +523,19 @@ export default memo(function RoomScene(props: Props) {
       highlight(null)
     }
     function visibility() {
+      lastFrame = performance.now()
       if (document.visibilityState === "hidden") {
+        clearTimeout(idleTimer)
         cancelAnimationFrame(frame)
         frame = 0
       } else schedule()
     }
     function lost(event: Event) {
       event.preventDefault()
+      ready = false
+      clearTimeout(idleTimer)
+      cancelAnimationFrame(frame)
+      frame = 0
       latest.current.onError()
     }
     function change() {
@@ -458,6 +543,9 @@ export default memo(function RoomScene(props: Props) {
     }
     controller.current = { update, highlight }
     controls.addEventListener("change", change)
+    const scrollRoot = document.getElementById("app-scroll-root")
+    scrollRoot?.addEventListener("home-project-frame", schedule)
+    reduceMedia.addEventListener("change", update)
     canvas.addEventListener("pointerdown", down)
     canvas.addEventListener("pointermove", move)
     canvas.addEventListener("pointerup", up)
@@ -469,7 +557,7 @@ export default memo(function RoomScene(props: Props) {
     observer.observe(host)
     resize()
 
-    void prepareRoom()
+    void prepareRoom(unified)
       .then(async (room) => {
         if (disposed) {
           disposeModel(room.model)
@@ -479,6 +567,11 @@ export default memo(function RoomScene(props: Props) {
         model = room.model
         for (const [mesh, tree] of room.trees) hitTrees.set(mesh, tree)
         scene.add(model)
+        if (unified) worldTime = await buildCabinWorld(scene)
+        if (disposed) {
+          disposeModel(scene)
+          return
+        }
         model.updateMatrixWorld(true)
         const sourceMaterials = new Set<THREE.Material>()
         model.traverse((object) => {
@@ -504,6 +597,16 @@ export default memo(function RoomScene(props: Props) {
             }
           }
         })
+        if (unified) {
+          // Exterior walls participate in picking and label occlusion as well.
+          scene.getObjectByName("cabin-lake-world")?.traverse((object) => {
+            if (!(object instanceof THREE.Mesh)) return
+            meshes.push(object)
+            object.geometry.computeBoundingBox()
+            occluders.set(object, object.geometry.boundingBox!.clone())
+            hitTrees.set(object, new MeshBVH(object.geometry, { indirect: true }))
+          })
+        }
         for (const material of sourceMaterials) material.dispose()
         for (const id of roomTargets) {
           const object = model.getObjectByName(id)
@@ -531,6 +634,7 @@ export default memo(function RoomScene(props: Props) {
 
     return () => {
       disposed = true
+      clearTimeout(idleTimer)
       cancelAnimationFrame(frame)
       observer.disconnect()
       controls.removeEventListener("change", change)
@@ -543,7 +647,9 @@ export default memo(function RoomScene(props: Props) {
       canvas.removeEventListener("pointerleave", leave)
       canvas.removeEventListener("webglcontextlost", lost)
       document.removeEventListener("visibilitychange", visibility)
-      if (model) release(model)
+      scrollRoot?.removeEventListener("home-project-frame", schedule)
+      reduceMedia.removeEventListener("change", update)
+      if (model) release(scene)
       else
         for (const texture of bakedTextures) {
           ;(texture.source.data as ImageBitmap).close()
@@ -563,8 +669,20 @@ export default memo(function RoomScene(props: Props) {
   }, [])
 
   return (
-    <div ref={hostRef} className={styles.scene} data-labels={props.showLabels} inert={props.paused}>
-      <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
+    <div
+      ref={hostRef}
+      className={`${styles.scene} ${navigation.enabled ? styles.unified : ""}`}
+      data-unified-scene={navigation.enabled || undefined}
+      data-labels={props.showLabels}
+      inert={props.paused}
+    >
+      <canvas
+        ref={canvasRef}
+        className={styles.canvas}
+        data-world-canvas={navigation.enabled || undefined}
+        data-home-artwork={navigation.enabled ? "loading" : undefined}
+        aria-hidden="true"
+      />
       <svg className={styles.leaders} aria-hidden="true">
         {roomTargets.map((id) => (
           <line key={id} data-room-leader={id} />
@@ -620,4 +738,23 @@ export default memo(function RoomScene(props: Props) {
       </div>
     </div>
   )
+})
+
+// A project page registers controls and callbacks; the shared renderer stays mounted.
+function SharedRoomControls({ props }: { props: RoomSceneProps }) {
+  const { setRoomProps, sceneStatus } = useHomeProjectState()
+  const { onReady, onError } = props
+  useLayoutEffect(() => {
+    setRoomProps(props)
+    return () => setRoomProps(null)
+  }, [props, setRoomProps])
+  useEffect(() => {
+    if (sceneStatus === "ready") onReady()
+    if (sceneStatus === "error") onError()
+  }, [sceneStatus, onReady, onError])
+  return null
+}
+export default memo(function RoomScene(props: RoomSceneProps) {
+  const navigation = useHomeProjectState()
+  return navigation.enabled ? <SharedRoomControls props={props} /> : <UnifiedScene {...props} />
 })

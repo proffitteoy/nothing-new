@@ -38,19 +38,15 @@ const archiveCurves = Array.from({ length: 3 }, (_, index) =>
 const RoomScene = dynamic(() => import("./RoomScene"), { ssr: false })
 
 export default function ProjectsBoard() {
-  const {
-    currentSong,
-    isPlaying,
-    togglePlay,
-    musicStatus,
-    retryMusic,
-    initializeMusic,
-  } = useMusic()
+  const { currentSong, isPlaying, togglePlay, musicStatus, retryMusic, initializeMusic } =
+    useMusic()
   const reducedMotion = useReducedMotion()
   const linkedNavigation = useHomeProjectNavigation()
-  const { setFreeView, returnWindow } = useHomeProjectState()
+  const { setFreeView, returnWindow, retryScene, sceneStatus } = useHomeProjectState()
   const router = useRouter()
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    linkedNavigation ? sceneStatus : "loading",
+  )
   const [staticView, setStaticView] = useState(false)
   const [sceneVersion, setSceneVersion] = useState(0)
   const [showLabels, setShowLabels] = useState(false)
@@ -139,6 +135,7 @@ export default function ProjectsBoard() {
     setFreeView(false)
     closePanel()
     if (staticView || status === "error") {
+      if (linkedNavigation) retryScene()
       setStatus("loading")
       setSceneVersion((value) => value + 1)
       setStaticView(false)
@@ -149,6 +146,7 @@ export default function ProjectsBoard() {
   return (
     <main
       className={styles.page}
+      data-unified={linkedNavigation}
       data-project-navigation-blocked={panelOpen || (linkedNavigation && rotationEnabled)}
     >
       <section
@@ -170,10 +168,7 @@ export default function ProjectsBoard() {
         </div>
         {/* Posters use the same perspective and baked surfaces as the live scene. */}
         <picture className={styles.poster} data-visible={!sceneActive}>
-          <source
-            media="(max-width: 767px)"
-            srcSet="/projects-room/mobile.webp"
-          />
+          <source media="(max-width: 767px)" srcSet="/projects-room/mobile.webp" />
           <img
             src="/projects-room/day.webp"
             width={1440}
@@ -308,7 +303,10 @@ export default function ProjectsBoard() {
             </button>
           </div>
         )}
-        <p className={styles.hint} role={status === "loading" || status === "error" ? "status" : undefined}>
+        <p
+          className={styles.hint}
+          role={status === "loading" || status === "error" ? "status" : undefined}
+        >
           {status === "loading" && !staticView ? (
             <>
               <LoaderCircle size={13} className={styles.spinner} />
@@ -348,9 +346,7 @@ export default function ProjectsBoard() {
             </button>
             {selected ? (
               <>
-                <p className={styles.eyebrow}>
-                  {selected.contribution ? "开源协作" : "项目"}
-                </p>
+                <p className={styles.eyebrow}>{selected.contribution ? "开源协作" : "项目"}</p>
                 <div className={styles.detailIllustration} aria-hidden="true">
                   <svg className={styles.archiveMotif} viewBox="0 0 320 168" fill="none">
                     {archiveCurves.map((path, index) => (
