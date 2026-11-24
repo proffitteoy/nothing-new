@@ -84,6 +84,22 @@ test("backtrack leaves the rear window and turns towards the same room's desk", 
   assert.ok(camera.position.distanceTo(new THREE.Vector3(-0.62, 1.9, 2.72)) < 1e-10)
 })
 
+test("the room turn keeps moving smoothly through the old rotation segment boundaries", () => {
+  const camera = new THREE.PerspectiveCamera()
+  const step = 0.0001
+  for (const t of [0.4, 0.6, 0.8]) {
+    directWorldCamera(camera, -t + step)
+    const before = camera.quaternion.clone()
+    directWorldCamera(camera, -t)
+    const at = camera.quaternion.clone()
+    directWorldCamera(camera, -t - step)
+    const leftSpeed = before.angleTo(at) / step
+    const rightSpeed = at.angleTo(camera.quaternion) / step
+    assert.ok(leftSpeed > 1 && rightSpeed > 1, `turn must not stop at ${t}`)
+    assert.ok(Math.abs(leftSpeed - rightSpeed) < 0.02, `continuous angular velocity at ${t}`)
+  }
+})
+
 test("project endpoint preserves the original model-space desktop composition", () => {
   for (const aspect of [1.6, 0.875]) {
     const original = new THREE.PerspectiveCamera(47, aspect, 0.05, 35)

@@ -239,7 +239,8 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
         localRay.copy(ray.ray).applyMatrix4(inverse)
         const bound = occluders.get(mesh)
         if (!bound || !localRay.intersectBox(bound, localHit)) continue
-        const hit = hitTrees.get(mesh)?.raycastFirst(localRay, THREE.DoubleSide)
+        const side = Array.isArray(mesh.material) ? THREE.DoubleSide : mesh.material.side
+        const hit = hitTrees.get(mesh)?.raycastFirst(localRay, side)
         if (!hit) continue
         localHit.copy(hit.point)
         const distance = localHit.applyMatrix4(mesh.matrixWorld).distanceTo(ray.ray.origin)
@@ -343,17 +344,6 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       const dt = Math.min(elapsed, 0.05)
       lastFrame = now
       const narrative = unified && navigationRef.current.mode !== "free"
-      if (unified) {
-        const start =
-          1 - THREE.MathUtils.smoothstep(Math.abs(navigationRef.current.progress.current), 0, 0.04)
-        if (start > 0)
-          host!.style.setProperty(
-            "width",
-            `${Math.round(THREE.MathUtils.lerp(host!.parentElement!.clientWidth, innerWidth, start))}px`,
-            "important",
-          )
-        else host!.style.removeProperty("width")
-      }
       const moved = narrative ? false : controls.update()
       const before = camera.position.clone()
       if (narrative) {
@@ -374,7 +364,18 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
         visibleTime += elapsed
       if (worldTime && !isReduced()) worldTime.value = visibleTime * SPECTRAL_PLAYBACK_RATE
       homeLook.lerp(homePointer, -Math.expm1(-10 * dt))
-      world?.update(navigationRef.current.progress.current, visibleTime, homeLook)
+      if (narrative && !isReduced()) {
+        // Pointer observation moves the actual eye. Architecture, shoreline
+        // and reflections therefore share the same perspective/parallax.
+        const weight =
+          1 - THREE.MathUtils.smoothstep(Math.abs(navigationRef.current.progress.current), 0, 0.25)
+        camera.position.add(
+          new THREE.Vector3(homeLook.x * 0.012, -homeLook.y * 0.008, 0)
+            .applyQuaternion(camera.quaternion)
+            .multiplyScalar(weight),
+        )
+      }
+      world?.update(navigationRef.current.progress.current, visibleTime, homeLook, true, camera)
       let changing = false
       const wallCamera = camera.position
       for (const wall of walls) {
@@ -492,6 +493,13 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       camera.aspect = aspect
       camera.updateProjectionMatrix()
       world?.resize(width, height)
+      if (world)
+        scene.getObjectByName("home-interior-world")?.traverse((object) => {
+          if (!(object instanceof THREE.Mesh)) return
+          object.geometry.computeBoundingBox()
+          occluders.set(object, object.geometry.boundingBox!.clone())
+          hitTrees.set(object, new MeshBVH(object.geometry, { indirect: true }))
+        })
       if (!ready || wasMobile !== mobile || orientationChanged) resetCamera()
       update()
     }
@@ -600,7 +608,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
         if (unified) {
           world = await buildCabinWorld(scene, model)
           world.resize(host.clientWidth, host.clientHeight)
-          world.update(navigationRef.current.progress.current, visibleTime, homeLook, false)
+          world.update(navigationRef.current.progress.current, visibleTime, homeLook, false, camera)
           worldTime = world.time
         }
         if (disposed) {

@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 import { createHash } from "node:crypto"
 import { HOME_WINDOW_FRAGMENT } from "./homeWindowShader"
 
-test("initial homepage retains the pre-transition composition and shader formulas", () => {
+test("photo material helpers retain the original shader formulas", () => {
   // This digest comes from c966422's original homepage shader, with version and
   // blank lines removed. Transition-only alpha controls must not alter its RGB.
   const resting = HOME_WINDOW_FRAGMENT.replace("uniform float uReveal;", "")
