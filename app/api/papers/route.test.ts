@@ -24,6 +24,7 @@ function route(compile?: (value: unknown) => Promise<PaperReport[]>) {
   runInNewContext(source, {
     exports,
     Response,
+    URL,
     Buffer,
     console: { error() {} },
     process: { env: { BLOB_READ_WRITE_TOKEN: "test-only", PAPERS_SYNC_SECRET: "test-only" } },
@@ -104,6 +105,40 @@ test("a same-period Markdown correction is visible immediately and only one vers
   await api.GET()
   assert.deepEqual(api.counts(), { compiles: 3, reads: 5, writes: 0 })
 })
+
+test(
+  "the latest issue loads before a pending archive and both compilation caches remain reusable",
+  { timeout: 5_000 },
+  async () => {
+    let finish!: (reports: PaperReport[]) => void
+    const pending = new Promise<PaperReport[]>((resolve) => {
+      finish = resolve
+    })
+    const api = route(async (value) => {
+      const entries = value as ReturnType<typeof payload>
+      if (entries.length > 1) return pending
+      return [{ ...report(entries[0].markdown)[0], date: entries[0].path.slice(8, 18) }]
+    })
+    api.setSource([
+      { path: "reports/2026-10-30.md", markdown: "old" },
+      { path: "reports/2026-11-23.md", markdown: "latest" },
+    ])
+    const archive = api.GET()
+    await new Promise(setImmediate)
+    const latest = () => api.GET(new Request("http://localhost/api/papers?latest=1"))
+    const response = await latest()
+    assert.equal(response.headers.get("Cache-Control"), "no-store")
+    const first = (await response.json()).reports
+    assert.equal(first.length, 1)
+    assert.equal(first[0].date, "2026-11-23")
+    assert.equal(first[0].introduction, "latest")
+    finish(report("archive ready"))
+    await archive
+    await latest()
+    assert.equal((await (await api.GET()).json()).reports[0].introduction, "archive ready")
+    assert.deepEqual(api.counts(), { compiles: 2, reads: 4, writes: 0 })
+  },
+)
 
 test("a failed compilation is evicted and an unchanged source can retry", async () => {
   let attempts = 0

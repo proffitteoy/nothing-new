@@ -8,25 +8,31 @@ export const maxDuration = 60
 const SNAPSHOT_PATH = "papers/reports.json"
 const MAX_BYTES = 2_000_000
 
-// One content version per process. Blob is still read on every GET, without a TTL.
-let compiledSnapshot: {
-  version: string
-  result: ReturnType<typeof compilePaperReports>
-} | null = null
+// Keep the latest issue independent of archive compilation. Every GET still reads Blob.
+const compiledSnapshots: Partial<
+  Record<"all" | "latest", { version: string; result: ReturnType<typeof compilePaperReports> }>
+> = {}
 
-function compileSnapshot(source: unknown) {
-  const version = createHash("sha256").update(JSON.stringify(source)).digest("hex")
-  if (compiledSnapshot?.version === version) return compiledSnapshot.result
-  const entry = { version, result: compilePaperReports(source) }
-  compiledSnapshot = entry
+function compileSnapshot(source: unknown, scope: "all" | "latest" = "all") {
+  const payload =
+    scope === "latest" && Array.isArray(source)
+      ? [...source].sort((a, b) => String(b?.path).localeCompare(String(a?.path))).slice(0, 1)
+      : source
+  const version = createHash("sha256").update(JSON.stringify(payload)).digest("hex")
+  const cached = compiledSnapshots[scope]
+  if (cached?.version === version) return cached.result
+  const entry = { version, result: compilePaperReports(payload) }
+  compiledSnapshots[scope] = entry
   void entry.result.catch(() => {
-    if (compiledSnapshot === entry) compiledSnapshot = null
+    if (compiledSnapshots[scope] === entry) delete compiledSnapshots[scope]
   })
   return entry.result
 }
 
-export async function GET() {
+export async function GET(request?: Request) {
   try {
+    const scope =
+      request && new URL(request.url).searchParams.get("latest") === "1" ? "latest" : "all"
     let source: unknown = seedReports
     if (
       process.env.BLOB_READ_WRITE_TOKEN ||
@@ -38,7 +44,7 @@ export async function GET() {
       else if (response.status !== 404) throw new Error(`Blob returned ${response.status}`)
     }
     return Response.json(
-      { reports: await compileSnapshot(source) },
+      { reports: await compileSnapshot(source, scope) },
       { headers: { "Cache-Control": "no-store" } },
     )
   } catch (error) {

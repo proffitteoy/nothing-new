@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { ArrowUpRight, ChevronRight, Folder, FolderOpen, Network, RotateCcw } from "lucide-react"
+import { ArrowUpRight, ChevronRight, Folder, FolderOpen, RotateCcw } from "lucide-react"
 import type { LibraryPaper, ZoteroPaper } from "@/lib/paper-library"
 import { buildPaperFolderData, folderDescendants } from "./graph/data"
 import type { GraphController, KGSelection } from "./graph/types"
@@ -24,7 +24,6 @@ export default function PaperFolderGraph({
   const queryRef = useRef(query)
   const [folder, setFolder] = useState("")
   const [expanded, setExpanded] = useState(new Set<string>())
-  const [mindmap, setMindmap] = useState(false)
   const [failed, setFailed] = useState(false)
   const data = useMemo(() => buildPaperFolderData(papers, collections), [papers, collections])
   const keys = useMemo(
@@ -188,16 +187,6 @@ export default function PaperFolderGraph({
           </div>
         </div>
         <div className={styles.graphControls}>
-          <button
-            type="button"
-            onClick={() => {
-              controller.current?.toggleLayout()
-              setMindmap((current) => !current)
-            }}
-          >
-            <Network size={15} aria-hidden />
-            {mindmap ? "关系图" : "脑图"}
-          </button>
           <button type="button" onClick={() => controller.current?.resetView()}>
             <RotateCcw size={15} aria-hidden />
             重置视图

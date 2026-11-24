@@ -46,11 +46,12 @@ export default function PaperLibrary({
   notes: PublicPaperNote[]
   noteLinks: Record<string, string[]>
 }) {
-  const [reports, setReports] = useState(initialReports)
-  const [status, setStatus] = useState("")
+  const [reports, setReports] = useState<PaperReport[]>([])
+  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState("正在加载最新周报…")
   const [tab, setTab] = useState("weekly")
   const [query, setQuery] = useState("")
-  const [date, setDate] = useState(initialReports[0]?.date ?? "")
+  const [date, setDate] = useState("")
   const [limit, setLimit] = useState(30)
   // Freeze the preview and its report versions until it closes, even during a refresh.
   const [selected, setSelected] = useState<{
@@ -97,24 +98,41 @@ export default function PaperLibrary({
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch("/api/papers", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Reports unavailable")
-        const data = (await response.json()) as { reports: PaperReport[] }
-        if (!data.reports?.length) throw new Error("No reports")
-        setReports(data.reports)
-        setDate((current) =>
-          chosenDate.current && data.reports.some((report) => report.date === current)
-            ? current
-            : data.reports[0].date,
-        )
+    const load = async (url: string) => {
+      const response = await fetch(url, { cache: "no-store", signal: controller.signal })
+      if (!response.ok) throw new Error("Reports unavailable")
+      const data = (await response.json()) as { reports: PaperReport[] }
+      controller.signal.throwIfAborted()
+      if (!data.reports?.length) throw new Error("No reports")
+      setReports(data.reports)
+      setDate((current) =>
+        chosenDate.current && data.reports.some((report) => report.date === current)
+          ? current
+          : data.reports[0].date,
+      )
+    }
+    void (async () => {
+      try {
+        await load("/api/papers?latest=1")
+        setLoading(false)
         setStatus("")
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setStatus("周报更新暂不可用，正在展示已保存的内容。")
-      })
+      } catch {
+        if (!controller.signal.aborted) {
+          setReports(initialReports)
+          setDate(initialReports[0]?.date ?? "")
+          setLoading(false)
+          setStatus("周报更新暂不可用，正在展示已保存的内容。")
+        }
+        return
+      }
+      try {
+        await load("/api/papers")
+      } catch {
+        if (!controller.signal.aborted) setStatus("往期周报暂不可用，正在展示最新一期。")
+      }
+    })()
     return () => controller.abort()
-  }, [])
+  }, [initialReports])
 
   useEffect(() => {
     if (!selected) return
@@ -276,7 +294,7 @@ export default function PaperLibrary({
                   </li>
                 ))}
               </ol>
-              {!filtered.length && (
+              {!filtered.length && !loading && (
                 <div className={styles.empty}>
                   <BookOpen size={25} aria-hidden />
                   <h2>没有找到论文</h2>
