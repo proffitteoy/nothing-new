@@ -10,7 +10,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js"
 import { lifeObjects, projects, roomTargets, type RoomTarget } from "./projects"
 import styles from "./room.module.css"
 import { useHomeProjectState } from "../../components/HomeProjectNavigation"
-import { buildCabinWorld } from "../../lib/cabin-world"
+import { buildCabinWorld, clearRearWindow } from "../../lib/cabin-world"
 import { directWorldCamera, DESK_TARGET } from "../../lib/world-camera"
 import { SPECTRAL_PLAYBACK_RATE } from "../../components/field/spectralField"
 
@@ -53,10 +53,11 @@ function disposeModel(root: THREE.Object3D, extraTextures: Iterable<THREE.Textur
     texture.dispose()
   }
 }
-async function prepareRoom(): Promise<PreparedRoom> {
+async function prepareRoom(unified: boolean): Promise<PreparedRoom> {
   const data = await preloadRoomAssets()
   const { scene: model } = await new GLTFLoader().parseAsync(data, "/projects-room/")
   try {
+    if (unified) clearRearWindow(model)
     const meshes: THREE.Mesh[] = []
     model.traverse((node) => {
       if (node instanceof THREE.Mesh) meshes.push(node)
@@ -222,7 +223,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
 
     function selectableMeshes() {
       return meshes.filter((mesh) => {
-        if (mesh.name === "original-home-window") return false
+        if (mesh.name === "home-compositor") return false
         for (let node: THREE.Object3D | null = mesh; node; node = node.parent)
           if (!node.visible) return false
         return !(mesh.material instanceof THREE.MeshBasicMaterial) || mesh.material.opacity > 0.5
@@ -342,6 +343,17 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       const dt = Math.min(elapsed, 0.05)
       lastFrame = now
       const narrative = unified && navigationRef.current.mode !== "free"
+      if (unified) {
+        const start =
+          1 - THREE.MathUtils.smoothstep(Math.abs(navigationRef.current.progress.current), 0, 0.04)
+        if (start > 0)
+          host!.style.setProperty(
+            "width",
+            `${Math.round(THREE.MathUtils.lerp(host!.parentElement!.clientWidth, innerWidth, start))}px`,
+            "important",
+          )
+        else host!.style.removeProperty("width")
+      }
       const moved = narrative ? false : controls.update()
       const before = camera.position.clone()
       if (narrative) {
@@ -353,6 +365,10 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
           camera.quaternion.slerpQuaternions(returnQuaternion, camera.quaternion, blend)
           if (t === 1) returnStarted = 0
         }
+      }
+      if (unified && (!narrative || returnStarted) && camera.far !== 700) {
+        camera.far = 700
+        camera.updateProjectionMatrix()
       }
       if (document.documentElement.dataset.startupPhase === "ready" && !isReduced())
         visibleTime += elapsed
@@ -571,7 +587,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
     observer.observe(host)
     resize()
 
-    void prepareRoom()
+    void prepareRoom(unified)
       .then(async (room) => {
         if (disposed) {
           disposeModel(room.model)

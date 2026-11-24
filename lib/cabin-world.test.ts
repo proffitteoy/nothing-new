@@ -2,8 +2,7 @@ import test from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import * as THREE from "three"
-import { Reflector } from "three/addons/objects/Reflector.js"
-import { buildCabinWorld } from "./cabin-world"
+import { buildCabinWorld, clearRearWindow } from "./cabin-world"
 import { directWorldCamera, HOME_POSITION, REAR_WINDOW_Z } from "./world-camera"
 
 test("home and projects share one physical room and one set of workstation objects", async () => {
@@ -60,6 +59,16 @@ test("home and projects share one physical room and one set of workstation objec
 
   const scene = new THREE.Scene()
   scene.add(model)
+  const room = model.getObjectByName("room") as THREE.Mesh
+  const down = new THREE.Vector3(0, -1, 0)
+  const propHeight = (x: number, z: number) =>
+    new THREE.Raycaster(new THREE.Vector3(x, 2, z), down).intersectObject(room)[0].point.y
+  assert.ok(propHeight(0.93, 1.52) > 0.4)
+  assert.ok(propHeight(1.56, 1.65) > 1.4)
+  clearRearWindow(model)
+  assert.ok(propHeight(0.93, 1.52) < 0.01, "chair removed from window opening")
+  assert.ok(propHeight(1.56, 1.65) < 0.01, "standing lamp removed from window opening")
+  assert.ok(propHeight(-0.22, -0.5) > 0.7, "desk stays intact")
   const originalObjects = [...model.children]
   const load = THREE.TextureLoader.prototype.loadAsync
   THREE.TextureLoader.prototype.loadAsync = async () => new THREE.Texture()
@@ -86,8 +95,7 @@ test("home and projects share one physical room and one set of workstation objec
   for (const progress of [-0.1, -0.5, -0.8, -1]) {
     world.update(progress, 0, new THREE.Vector2(), false)
     assert.ok(model.visible, "the same room stays present throughout the turn")
-    assert.ok(scene.getObjectByName("original-home-window")!.visible)
-    assert.ok(scene.getObjectByName("rear-floor-window")!.visible)
+    assert.equal(scene.getObjectByName("home-compositor")!.visible, false)
   }
   assert.equal(scene.getObjectByName("cabin-pitched-roof"), undefined)
   assert.ok(
@@ -102,20 +110,50 @@ test("home and projects share one physical room and one set of workstation objec
   ])
     assert.equal(scene.getObjectByName(name), undefined, "no hall or added room")
   scene.updateMatrixWorld(true)
-  const lake = scene.getObjectByName("lake-water") as Reflector
-  assert.ok(lake instanceof Reflector)
-  assert.equal(lake.getRenderTarget().width, 768)
-  assert.equal(lake.getRenderTarget().height, 768)
-  assert.equal("photograph" in (lake.material as THREE.ShaderMaterial).uniforms, false)
-  const camera = new THREE.PerspectiveCamera()
-  const rearWindow = scene.getObjectByName("original-home-window")!
-  assert.equal(rearWindow.scale.x, 4.44)
-  assert.equal(rearWindow.scale.y, 3.15)
-  assert.ok(Math.abs(rearWindow.position.z - REAR_WINDOW_Z) < 0.05)
-  assert.ok(
-    Math.abs(rearWindow.position.y - rearWindow.scale.y / 2) < 1e-8,
-    "glazing reaches the floor",
+  assert.equal(scene.getObjectByName("near-ground"), undefined, "no new foreground block")
+  const lake = scene.getObjectByName("lake-water") as THREE.Mesh
+  const mountains = scene.getObjectByName("distant-mountains") as THREE.Mesh
+  assert.ok(lake instanceof THREE.Mesh)
+  assert.equal(
+    (lake.material as THREE.RawShaderMaterial).fragmentShader,
+    (mountains.material as THREE.RawShaderMaterial).fragmentShader,
+    "one landscape sampling path",
   )
+  const exterior = lake.material as THREE.RawShaderMaterial
+  assert.equal(exterior.transparent, false, "no second landscape alpha crossfade")
+  assert.equal(
+    exterior.uniforms.uInteriorOpacity.value,
+    0,
+    "the landscape never contains a room photograph",
+  )
+  world.resize(1440, 900)
+  const waterVertices = lake.geometry.getAttribute("position")
+  const landVertices = mountains.geometry.getAttribute("position")
+  for (let i = 0; i < waterVertices.count; i++)
+    assert.ok(Math.abs(waterVertices.getY(i)) < 1e-6, "water is a horizontal world plane")
+  for (let i = 0; i <= 80; i++) {
+    const a = new THREE.Vector3().fromBufferAttribute(waterVertices, i)
+    const b = new THREE.Vector3().fromBufferAttribute(landVertices, landVertices.count - 81 + i)
+    assert.ok(a.distanceTo(b) < 1e-5, "the bank and lake meet without a second photograph")
+  }
+  const camera = new THREE.PerspectiveCamera()
+  assert.equal(
+    scene.getObjectByName("original-home-window"),
+    undefined,
+    "no landscape photograph at the glazing",
+  )
+  const rearWindow = scene.getObjectByName("rear-window-rail")!
+  assert.equal(rearWindow.position.z, REAR_WINDOW_Z)
+  assert.ok(rearWindow.position.y < 0.05, "glazing reaches the floor")
+  for (const p of [-0.000001, -0.01, -0.03, 0.000001, 0.01, 0.03, 0.1, 0.5, 1]) {
+    world.update(p, 0, new THREE.Vector2(), false)
+    assert.equal(
+      scene.getObjectByName("home-compositor")!.visible,
+      false,
+      "no full-home overlay at any point after departure",
+    )
+  }
+  world.update(-1, 0, new THREE.Vector2(), false)
   for (const sign of [-1]) {
     const previous = HOME_POSITION.clone()
     for (let i = 1; i <= 10000; i++) {
@@ -125,8 +163,7 @@ test("home and projects share one physical room and one set of workstation objec
       ray.far = direction.length() + 0.04
       const solids: THREE.Mesh[] = []
       scene.traverseVisible((object) => {
-        if (object instanceof THREE.Mesh && object.name !== "original-home-window")
-          solids.push(object)
+        if (object instanceof THREE.Mesh && object.name !== "home-compositor") solids.push(object)
       })
       const hit = ray.intersectObjects(solids, false)[0]
       assert.equal(
@@ -139,7 +176,6 @@ test("home and projects share one physical room and one set of workstation objec
   }
   scene.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return
-    if (object instanceof Reflector) object.getRenderTarget().dispose()
     object.geometry.dispose()
     for (const material of Array.isArray(object.material) ? object.material : [object.material])
       material.dispose()

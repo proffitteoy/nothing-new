@@ -3,17 +3,17 @@ import * as THREE from "three"
 // Keep the shipped room and project camera in their original coordinates.
 export const DESK_POSITION = new THREE.Vector3(-0.62, 1.9, 2.72)
 export const DESK_TARGET = new THREE.Vector3(0.08, 1.06, -0.5)
-export const HOME_POSITION = new THREE.Vector3(0, 1.575, 2)
-export const HOME_TARGET = new THREE.Vector3(0, 1.575, 2.4)
+export const HOME_POSITION = new THREE.Vector3(0, 1.92, 0.5)
+export const HOME_TARGET = new THREE.Vector3(0, 1.92, 2.4)
 export const REAR_WINDOW_Z = 2.4
-export const HOME_FOV = THREE.MathUtils.radToDeg(2 * Math.atan((3.15 * 0.53) / 0.4))
+export const HOME_FOV = 47
 
 const roomPoints = [
   HOME_POSITION,
-  new THREE.Vector3(0, 1.7, 1.3),
+  new THREE.Vector3(0, 1.92, 0.2),
+  new THREE.Vector3(0, 1.92, 0),
   new THREE.Vector3(0, 1.9, 0.6),
-  new THREE.Vector3(0, 1.9, 0.9),
-  new THREE.Vector3(-0.3, 1.9, 1.9),
+  new THREE.Vector3(-0.3, 1.9, 1.7),
   DESK_POSITION,
 ]
 const lakePoints = [
@@ -46,12 +46,8 @@ const lakeDirections = lakePoints.map((point, i) =>
 export function directWorldCamera(camera: THREE.PerspectiveCamera, progress: number) {
   const room = progress < 0,
     t = Math.min(1, Math.max(0, Math.abs(progress)))
-  const fov = room
-    ? t <= 0.4
-      ? THREE.MathUtils.lerp(HOME_FOV, 110, THREE.MathUtils.smoothstep(t, 0, 0.4))
-      : THREE.MathUtils.lerp(110, 47, THREE.MathUtils.smoothstep(t, 0.4, 0.8))
-    : THREE.MathUtils.lerp(HOME_FOV, 47, THREE.MathUtils.smoothstep(t, 0, 0.4))
-  const far = progress > 0 ? 700 : 35
+  const fov = HOME_FOV
+  const far = progress === -1 ? 35 : 700
   if (camera.fov !== fov || camera.far !== far) {
     camera.fov = fov
     camera.far = far

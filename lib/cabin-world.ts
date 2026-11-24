@@ -1,9 +1,38 @@
 import * as THREE from "three"
-import { Reflector } from "three/addons/objects/Reflector.js"
-import { HOME_POSITION, HOME_TARGET, REAR_WINDOW_Z } from "./world-camera"
-import { homeWindowLook } from "./home-scene"
+import { HOME_POSITION, HOME_TARGET, HOME_FOV, REAR_WINDOW_Z } from "./world-camera"
+import { homeWindowLook, homeWindowProjection } from "./home-scene"
 import { HOME_WINDOW_FRAGMENT } from "../components/field/homeWindowShader"
-import { SPECTRAL_DIRECTION_GLSL, SPECTRAL_PLAYBACK_RATE } from "../components/field/spectralField"
+import { SPECTRAL_PLAYBACK_RATE } from "../components/field/spectralField"
+
+// These unlabelled props are merged into the room mesh. Clear only the reading
+// chair and standing lamp in front of the rear opening; keep the floor and desk.
+export function clearRearWindow(model: THREE.Group) {
+  model.updateMatrixWorld(true)
+  const room = model.getObjectByName("room") as THREE.Mesh
+  const geometry = room.geometry,
+    positions = geometry.getAttribute("position"),
+    index = geometry.index!
+  const remove = new Uint8Array(positions.count),
+    point = new THREE.Vector3()
+  for (let i = 0; i < positions.count; i++) {
+    point.fromBufferAttribute(positions, i).applyMatrix4(room.matrixWorld)
+    if (point.y < 0 || point.y > 1.7) continue
+    const chair =
+      point.x >= 0.66 && point.x <= 1.2 && point.z >= 1.25 && point.z <= 1.84 && point.y <= 1.05
+    const lamp = point.x >= 1.38 && point.x <= 1.74 && point.z >= 1.47 && point.z <= 1.84
+    if (chair || lamp) remove[i] = 1
+  }
+  const keep: number[] = []
+  for (let i = 0; i < index.count; i += 3) {
+    const a = index.getX(i),
+      b = index.getX(i + 1),
+      c = index.getX(i + 2)
+    if (!(remove[a] && remove[b] && remove[c])) keep.push(a, b, c)
+  }
+  geometry.setIndex(keep)
+  geometry.computeBoundingBox()
+  geometry.computeBoundingSphere()
+}
 
 export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   const world = new THREE.Group()
@@ -16,9 +45,12 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   const interior = new THREE.Group()
   interior.name = "rear-floor-window"
   world.add(interior)
-  const frame = new THREE.MeshBasicMaterial({ color: 0x9c866e, toneMapped: false })
-  const earth = new THREE.MeshLambertMaterial({ color: 0x788474 })
-  const shore = new THREE.MeshLambertMaterial({ color: 0x9b9d90 })
+  const frame = new THREE.MeshBasicMaterial({
+    color: 0x9c866e,
+    toneMapped: false,
+    transparent: true,
+    depthWrite: false,
+  })
   const box = (
     name: string,
     size: number[],
@@ -45,6 +77,21 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     uBranch: { value: null as THREE.Texture | null },
     uSkyRegion: { value: null as THREE.Texture | null },
     uRoomLight: { value: null as THREE.Texture | null },
+    uPanorama: { value: null as THREE.Texture | null },
+    uPanoramaBlend: { value: 0 },
+    uPanoramaProjection: {
+      value: new THREE.Matrix3().set(
+        0.3985677015,
+        -0.0182282825,
+        0.2939334549,
+        -0.0086034341,
+        0.6090405779,
+        0.2288247034,
+        -0.0193967742,
+        -0.0440799696,
+        1,
+      ),
+    },
     uSize: { value: new THREE.Vector2() },
     uRoomRect: { value: new THREE.Vector4() },
     uLakeRect: { value: new THREE.Vector4() },
@@ -53,7 +100,8 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     uTime: { value: 0 },
     uWorldTime: { value: 0 },
     uAmbientBlend: { value: 0 },
-    uInteriorOpacity: { value: 0 },
+    uInteriorOpacity: { value: 1 },
+    uOpacity: { value: 1 },
     uReveal: { value: 0 },
     uWindowCrop: { value: 0 },
     uEffects: { value: new THREE.Vector4(1, 0, 1, 1) },
@@ -64,170 +112,200 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
       glslVersion: THREE.GLSL3,
       uniforms: homeUniforms,
       transparent: true,
+      depthTest: false,
       depthWrite: false,
       toneMapped: false,
       vertexShader: `precision highp float;
-      uniform mat4 projectionMatrix,modelViewMatrix;
       in vec3 position; in vec2 uv; out vec2 homeUv;
-      void main(){homeUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-      fragmentShader: HOME_WINDOW_FRAGMENT,
+      void main(){homeUv=uv;gl_Position=vec4(uv*2.-1.,0.,1.);}`,
+      fragmentShader:
+        HOME_WINDOW_FRAGMENT.replace("void main(){", "void shadeHome(){") +
+        "\nuniform float uOpacity; void main(){shadeHome();colour.a*=uOpacity;}",
     }),
   )
-  surface.name = "original-home-window"
-  surface.renderOrder = 10
+  surface.name = "home-compositor"
+  surface.renderOrder = 100
   surface.frustumCulled = false
   world.add(surface)
-  const referenceHome = new THREE.PerspectiveCamera(47, 1, 0.05, 700)
-  referenceHome.position.copy(HOME_POSITION)
-  referenceHome.lookAt(HOME_TARGET)
-  referenceHome.updateMatrixWorld()
-  surface.position.set(0, 1.575, REAR_WINDOW_Z + 0.004)
-  surface.rotation.y = Math.PI
-  surface.scale.set(4.44, 3.15, 1)
-  let width = 1,
-    height = 1
-  const resize = (w: number, h: number) => {
-    width = w
-    height = h
-    // Texture coordinates belong to the full floor-to-ceiling opening.
-    const pictureHeight = (1440 * 3.15) / 4.44
-    const scale = Math.max(1440 / 1672, pictureHeight / 877)
-    homeUniforms.uSize.value.set(1440, pictureHeight)
-    homeUniforms.uRoomRect.value.set(0, 0, 1440, pictureHeight)
-    homeUniforms.uLakeRect.value.set(
-      (1440 - 1672 * scale) / 2,
-      (pictureHeight - 877 * scale) / 2,
-      1672 * scale,
-      877 * scale,
-    )
-  }
-  box("near-ground", [600, 0.2, 600], [0, -0.27, 297.5], earth)
-  for (const sign of [-1, 1]) {
-    box("lake-bank", [180, 0.22, 300], [sign * 160, -0.25, -152], earth)
-  }
-  box("stone-shore", [140, 0.08, 2.8], [0, -0.04, -3.6], shore)
-  // Small grounded stones provide a near-field scale cue independent of the panorama.
-  const stoneGeometry = new THREE.DodecahedronGeometry(1, 0)
-  for (let i = 0; i < 35; i++) {
-    const stone = new THREE.Mesh(stoneGeometry, shore)
-    stone.position.set(Math.sin(i * 6.7) * 9, 0.04, -3.7 + Math.cos(i * 2.4) * 0.8)
-    stone.scale.set(0.1 + (i % 4) * 0.04, 0.07, 0.09 + (i % 3) * 0.05)
-    outside.add(stone)
-  }
-  scene.add(new THREE.HemisphereLight(0xe6f2ff, 0x6f735c, 2.3))
-  const sun = new THREE.DirectionalLight(0xfff7e9, 2.1)
-  sun.position.set(-12, 25, 8)
-  scene.add(sun)
-  const reference = new THREE.PerspectiveCamera(47, 1672 / 877, 0.05, 700)
+  // The resting homepage is pixel-identical to the old shader. On departure,
+  // separate its opaque architecture from its landscape without crossfading
+  // two views. Both world materials use this same calibrated photo projection.
+  const reference = new THREE.PerspectiveCamera(HOME_FOV, 1, 0.05, 700)
   reference.position.copy(HOME_POSITION)
   reference.lookAt(HOME_TARGET)
   reference.updateMatrixWorld(true)
-  const projection = new THREE.Matrix4().multiplyMatrices(
-    reference.projectionMatrix,
-    reference.matrixWorldInverse,
-  )
-  const uniforms = {
-    photograph: { value: null as THREE.Texture | null },
-    projection: { value: projection },
-    horizonBias: {
-      value: 0.375 - (new THREE.Vector3(HOME_POSITION.x, 0, 180).project(reference).y * 0.5 + 0.5),
-    },
-    time: { value: 0 },
-  }
-  const vertexShader = `
-    varying vec4 photo; varying vec3 worldPoint;
-    uniform mat4 projection;
-    void main() {
-      vec4 world = modelMatrix * vec4(position,1.);
-      worldPoint=world.xyz; photo=projection*world;
+  const projection = new THREE.Matrix4()
+  const vertexShader = `precision highp float;
+    uniform mat4 modelMatrix, viewMatrix, projectionMatrix, homeProjection;
+    in vec3 position; out vec2 homeUv;
+    void main(){
+      vec4 world=modelMatrix*vec4(position,1.);
+      vec4 photo=homeProjection*world;
+      homeUv=photo.xy/photo.w*.5+.5;
       gl_Position=projectionMatrix*viewMatrix*world;
     }`
-  // Reflect the actual world into one bounded target in the same renderer.
-  // No photographed water pixels are projected or stretched onto this surface.
-  const lake = new Reflector(new THREE.PlaneGeometry(140, 290), {
-    color: 0x174958,
-    textureWidth: 768,
-    textureHeight: 768,
-    multisample: 0,
-    clipBias: 0.002,
-    shader: {
-      name: "LakeWater",
-      uniforms: {
-        color: { value: null },
-        tDiffuse: { value: null },
-        textureMatrix: { value: null },
-        time: { value: 0 },
-      },
-      vertexShader: `
-        uniform mat4 textureMatrix;
-        varying vec4 mirrorCoord; varying vec3 worldPoint;
-        void main() {
-          vec4 world=modelMatrix*vec4(position,1.);
-          worldPoint=world.xyz;
-          mirrorCoord=textureMatrix*vec4(position,1.);
-          gl_Position=projectionMatrix*viewMatrix*world;
-        }`,
-      fragmentShader: `
-        uniform sampler2D tDiffuse; uniform vec3 color; uniform float time;
-        varying vec4 mirrorCoord; varying vec3 worldPoint;
-        ${SPECTRAL_DIRECTION_GLSL}
-        vec2 ripple(vec2 p,vec2 direction,float k,float speed,float strength,float footprint) {
-          vec2 d=normalize(direction);
-          float filtered=exp(-.5*k*k*footprint*footprint);
-          return d*strength*filtered*cos(dot(p,d)*k+time*speed);
-        }
-        void main() {
-          vec2 p=worldPoint.xz;
-          float footprint=max(length(dFdx(p)),length(dFdy(p)));
-          vec2 slope=ripple(p,vec2(1.,.36),11.,.9,.018,footprint)
-            +ripple(p,vec2(-.43,1.),18.,-.7,.012,footprint)
-            +ripple(p,vec2(.74,-.67),31.,1.3,.014,footprint)
-            +ripple(p,vec2(.21,1.),49.,-.9,.010,footprint)
-            +ripple(p,vec2(-.86,.51),73.,1.7,.008,footprint);
-          vec2 field=spectralWaterDirection(p*.08,time);
-          slope+=field*.006*sin(dot(p,vec2(.7,1.1))+time*.45);
-          vec3 normal=normalize(vec3(-slope.x,1.,-slope.y));
-          vec3 view=normalize(cameraPosition-worldPoint);
-          float distanceToEye=length(cameraPosition-worldPoint);
-          vec2 uv=mirrorCoord.xy/mirrorCoord.w;
-          uv+=normal.xz*(.11+.10/max(distanceToEye,.3));
-          vec3 reflection=texture2D(tDiffuse,clamp(uv,vec2(.002),vec2(.998))).rgb;
-          float fresnel=.02037+.97963*pow(1.-max(dot(view,normal),0.),5.);
-          vec3 water=mix(color,reflection,fresnel);
-          vec3 sun=normalize(vec3(-12.,25.,8.));
-          water+=vec3(1.,.96,.88)*pow(max(dot(reflect(-sun,normal),view),0.),180.)*.18;
-          gl_FragColor=vec4(water,1.);
-          #include <colorspace_fragment>
-        }`,
-    },
-  })
-  const water = lake.material as THREE.ShaderMaterial
-  water.uniforms.time = uniforms.time
-  water.toneMapped = false
-  lake.name = "lake-water"
-  lake.rotation.x = -Math.PI / 2
-  lake.position.set(0, -0.01, -149.5)
-  outside.add(lake)
-  const mountains = new THREE.Mesh(
-    new THREE.PlaneGeometry(520, 110),
-    new THREE.ShaderMaterial({
-      uniforms,
-      vertexShader,
-      fragmentShader: `
-      uniform sampler2D photograph; uniform float horizonBias; varying vec4 photo;
-      void main(){
-        vec2 uv=photo.xy/photo.w*.5+.5;
-        uv.y+=horizonBias;
-        gl_FragColor=vec4(texture2D(photograph,clamp(uv,vec2(.002),vec2(.998))).rgb,1.);
-        #include <colorspace_fragment>
-      }`,
-      toneMapped: false,
-      side: THREE.DoubleSide,
-    }),
+  // Preserve projective interpolation, including when a triangle spans depth.
+  const projectedVertex = vertexShader
+    .replace("out vec2 homeUv;", "out vec4 homePhoto;")
+    .replace("homeUv=photo.xy/photo.w*.5+.5;", "homePhoto=photo;")
+  const projectedFragment = HOME_WINDOW_FRAGMENT.replace(
+    "in vec2 homeUv;",
+    "in vec4 homePhoto;\n#define homeUv (homePhoto.xy/homePhoto.w*.5+.5)\n",
   )
+  const roomMaterial = new THREE.RawShaderMaterial({
+    glslVersion: THREE.GLSL3,
+    uniforms: { ...homeUniforms, homeProjection: { value: projection } },
+    vertexShader: projectedVertex,
+    fragmentShader: projectedFragment.replace(
+      "if(interior.a>.99999){ colour=vec4(interior.rgb,wallAlpha); return; }",
+      "colour=interior; return;",
+    ),
+    transparent: true,
+    depthWrite: false,
+    toneMapped: false,
+    side: THREE.FrontSide,
+  })
+  const roomSurface = new THREE.Mesh(new THREE.PlaneGeometry(4.44, 3.15), roomMaterial)
+  roomSurface.name = "home-window-architecture"
+  roomSurface.position.set(0, 1.575, REAR_WINDOW_Z)
+  roomSurface.rotation.y = Math.PI
+  roomSurface.renderOrder = 2
+  world.add(roomSurface)
+  const exteriorUniforms = {
+    ...homeUniforms,
+    homeProjection: { value: projection },
+    uInteriorOpacity: { value: 0 },
+  }
+  const exteriorVertex = projectedVertex
+    .replace("out vec4 homePhoto;", "out vec4 homePhoto; out vec3 exteriorPoint;")
+    .replace("homePhoto=photo;", "homePhoto=photo; exteriorPoint=world.xyz;")
+  const exteriorFragment = projectedFragment
+    .replace(
+      "void main(){",
+      "in vec3 exteriorPoint; uniform float waterDetail; uniform vec3 cameraPosition; uniform sampler2D uPanorama; uniform mat3 uPanoramaProjection; uniform float uPanoramaBlend; void main(){ if(exteriorPoint.z<2.4) discard;",
+    )
+    .replace(
+      "  float mask=waterMask(p);",
+      `
+      vec2 sourcePoint=p;
+      float mask=waterMask(p);`,
+    )
+    .replace(
+      "  colour=vec4(mix(exterior,interior.rgb,interior.a)",
+      `
+      // Feature-registered outpainting supplies a single continuous wider field.
+      // Hand off the source on these same surfaces, avoiding an inset image.
+      vec3 registered=uPanoramaProjection*vec3(sourcePoint,1.);
+      vec2 panoramaUv=registered.xy/registered.z;
+      vec3 periphery=texture(uPanorama,vec2(panoramaUv.x,1.-panoramaUv.y)).rgb;
+      float sourceCoverage=rise(0.,.025,sourcePoint.x)*(1.-rise(.975,1.,sourcePoint.x))
+        *rise(0.,.025,sourcePoint.y)*(1.-rise(.975,1.,sourcePoint.y));
+      exterior=mix(periphery,exterior,sourceCoverage*(1.-uPanoramaBlend));
+      // At grazing angles, retain the photographic colour/reflection and use
+      // water detail at a fixed world scale instead of magnifying image pixels.
+      vec2 q=exteriorPoint.xz*vec2(.31,.49);
+      q+=spectralWaterDirection(q*.2,uTime)*.012;
+      q=1.-abs(mod(q,2.)-1.);
+      vec3 detail=texture(uPanorama,vec2(.35+.55*q.x,1.-(.73+.20*q.y))).rgb;
+      float nearWater=waterDetail*(1.-rise(4.,18.,distance(cameraPosition,exteriorPoint)));
+      float beyondWater=rise(.96,1.,panoramaUv.y);
+      exterior=mix(exterior,detail,max(nearWater*.75,beyondWater));
+      colour=vec4(mix(exterior,interior.rgb,interior.a)`,
+    )
+  const exteriorMaterial = new THREE.RawShaderMaterial({
+    glslVersion: THREE.GLSL3,
+    uniforms: { ...exteriorUniforms, waterDetail: { value: 0 } },
+    vertexShader: exteriorVertex,
+    fragmentShader: exteriorFragment,
+    side: THREE.DoubleSide,
+    toneMapped: false,
+  })
+  const waterMaterial = new THREE.RawShaderMaterial({
+    glslVersion: THREE.GLSL3,
+    uniforms: { ...exteriorUniforms, waterDetail: { value: 0 } },
+    vertexShader: exteriorVertex,
+    fragmentShader: exteriorFragment,
+    side: THREE.DoubleSide,
+    toneMapped: false,
+  })
+  // A single landscape, split at the photographed far bank: mountains above
+  // the water and a horizontal lake below. No photograph lives on the glass.
+  const mountains = new THREE.Mesh(new THREE.BufferGeometry(), exteriorMaterial)
   mountains.name = "distant-mountains"
-  mountains.position.set(0, 54.95, -180)
-  outside.add(mountains)
+  const lake = new THREE.Mesh(new THREE.BufferGeometry(), waterMaterial)
+  lake.name = "lake-water"
+  outside.rotation.y = 0
+  outside.add(mountains, lake)
+  const bankX = [0, 103, 252, 459, 802, 1118, 1414, 1672]
+  const bankY = [579, 558, 552, 549, 548, 545, 546, 544]
+  const bank = (x: number) => {
+    const p = THREE.MathUtils.clamp(x * 1672, 0, 1672)
+    for (let i = 0; i < bankX.length - 1; i++)
+      if (p <= bankX[i + 1])
+        return (
+          THREE.MathUtils.lerp(bankY[i], bankY[i + 1], (p - bankX[i]) / (bankX[i + 1] - bankX[i])) /
+          877
+        )
+    return bankY[7] / 877
+  }
+  let width = 1,
+    height = 1,
+    homeProjection = homeWindowProjection(1, 1)
+  const resize = (w: number, h: number) => {
+    width = w
+    height = h
+    homeProjection = homeWindowProjection(w, h)
+    const r = homeProjection.room,
+      l = homeProjection.lake
+    homeUniforms.uSize.value.set(w, h)
+    homeUniforms.uRoomRect.value.set(r.x, r.y, r.width, r.height)
+    homeUniforms.uLakeRect.value.set(l.x, l.y, l.width, l.height)
+    reference.aspect = w / h
+    reference.updateProjectionMatrix()
+    projection.multiplyMatrices(reference.projectionMatrix, reference.matrixWorldInverse)
+    for (const [mesh, water] of [
+      [mountains, false],
+      [lake, true],
+    ] as const) {
+      const positions: number[] = [],
+        indices: number[] = []
+      const columns = 80,
+        rows = water ? 24 : 32
+      for (let y = 0; y <= rows; y++) {
+        for (let x = 0; x <= columns; x++) {
+          const px = -1 + (3 * x) / columns
+          const edge = bank(px)
+          const py = water
+            ? THREE.MathUtils.lerp(edge, 3, y / rows)
+            : THREE.MathUtils.lerp(-2, edge, y / rows)
+          const screen = new THREE.Vector3(
+            (2 * (l.x + px * l.width)) / w - 1,
+            1 - (2 * (l.y + py * l.height)) / h,
+            0.5,
+          )
+            .unproject(reference)
+            .sub(reference.position)
+            .normalize()
+          // Keep terrain above the lake. At the photographed waterline these
+          // two surfaces share exactly the same vertices, with no overlapping
+          // water photograph underneath the mountains.
+          const groundDistance = screen.y < 0 ? -HOME_POSITION.y / screen.y : Infinity
+          const distance = water ? groundDistance : Math.min(180 / screen.z, groundDistance)
+          const point = reference.position.clone().addScaledVector(screen, distance)
+          positions.push(point.x, point.y, point.z)
+          if (x < columns && y < rows) {
+            const i = y * (columns + 1) + x
+            indices.push(i, i + 1, i + columns + 1, i + 1, i + columns + 2, i + columns + 1)
+          }
+        }
+      }
+      mesh.geometry.dispose()
+      mesh.geometry = new THREE.BufferGeometry()
+      mesh.geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
+      mesh.geometry.setIndex(indices)
+      mesh.geometry.computeBoundingSphere()
+    }
+  }
   const loaded = new Set<THREE.Texture>()
   let failed = false
   const names = [
@@ -238,6 +316,7 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     "uBranch",
     "uSkyRegion",
     "uRoomLight",
+    "uPanorama",
   ] as const
   const files = [
     "convict-lake-day-study.webp",
@@ -247,6 +326,7 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     "ambient-branch.webp",
     "ambient-sky-region.png",
     "ambient-room-light.png",
+    "lake-periphery-v1.webp",
   ]
   try {
     await Promise.all(
@@ -264,16 +344,10 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
         homeUniforms[names[i]].value = texture
       }),
     )
-    const terrain = homeUniforms.uLake.value!.clone()
-    terrain.colorSpace = THREE.SRGBColorSpace
-    terrain.needsUpdate = true
-    loaded.add(terrain)
-    uniforms.photograph.value = terrain
   } catch (error) {
     failed = true
     world.traverse((object) => {
       if (object instanceof THREE.Mesh) {
-        if (object instanceof Reflector) object.getRenderTarget().dispose()
         object.geometry.dispose()
         for (const material of Array.isArray(object.material) ? object.material : [object.material])
           material.dispose()
@@ -288,13 +362,22 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     homeUniforms.uTime.value = seconds * SPECTRAL_PLAYBACK_RATE
     homeUniforms.uWorldTime.value = seconds
     homeUniforms.uAmbientBlend.value = Math.min(1, seconds / 1.2)
-    homeUniforms.uReveal.value = THREE.MathUtils.smoothstep(progress, 0.04, 0.18)
-    const look = homeWindowLook(pointer.x, pointer.y, (1440 * 3.15) / 4.44)
+    const departing = Math.abs(progress)
+    homeUniforms.uPanoramaBlend.value = THREE.MathUtils.smoothstep(departing, 0, 0.012)
+    waterMaterial.uniforms.waterDetail.value = THREE.MathUtils.smoothstep(progress, 0.08, 0.35)
+    homeUniforms.uOpacity.value = 1
+    const look = homeWindowLook(pointer.x, pointer.y, homeProjection.opening.height)
     homeUniforms.uLook.value.set(look.x, look.y)
-    surface.visible = true
-    interior.visible = true
-    outside.visible = progress > 0
-    model.visible = progress <= 0
+    surface.visible = progress === 0
+    // Only the room photograph recedes into the existing room materials. The
+    // landscape is always opaque and is never alpha-blended with another view.
+    const roomBlend = progress < 0 ? 1 - THREE.MathUtils.smoothstep(departing, 0.04, 0.24) : 1
+    homeUniforms.uInteriorOpacity.value = roomBlend
+    roomSurface.visible = progress !== 0 && roomBlend > 0
+    frame.opacity = 1 - roomBlend
+    interior.visible = frame.opacity > 0
+    outside.visible = progress !== 0
+    model.visible = progress < 0
     scene.background = progress === -1 ? null : new THREE.Color(progress > 0 ? 0xcbdce5 : 0xdfe4e6)
     const stage =
       publish && typeof document !== "undefined"
@@ -313,5 +396,5 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     }
     return { width, height }
   }
-  return { time: uniforms.time, resize, update }
+  return { time: homeUniforms.uTime, resize, update }
 }

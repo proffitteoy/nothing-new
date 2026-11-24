@@ -1,0 +1,34 @@
+Nothing New lake periphery, 2026-11-24
+
+Original photograph: "Convict Lake at night" by TheDailyNathan (2011-10-09).
+Lens-distortion correction: Hike395 (2017-12-21).
+Source: https://commons.wikimedia.org/wiki/File:Convict_Lake_at_night_fixed.jpg
+License: CC BY-SA 3.0 Unported, https://creativecommons.org/licenses/by-sa/3.0/
+Existing adaptation: convict-lake-day-study.webp; see NOTICE-day-study.txt.
+Adaptation by proffitteoy using the built-in imagegen tool, not the CLI/API.
+This derivative remains CC BY-SA 3.0. Site code is GPL-3.0-only.
+
+Runtime asset: lake-periphery-v1.webp, 2172x724, quality-92 WebP.
+The original homepage images are retained unchanged. The resting homepage uses
+its original shader. During departure, the wider image is registered on the
+same geometry and takes over the complete environment, preventing a visible
+rectangular source image surrounded by a different landscape. This is a
+photographic finite-depth scene, not surveyed terrain or real-time reflection.
+
+Two built-in generation steps produced the wider field. Only the second result
+is shipped. Sharp was used solely for PNG to WebP encoding. OpenCV SIFT feature
+matching and RANSAC estimated source-to-output coordinates without editing art.
+333 ratio-filtered matches; 285 homography inliers at a 4-output-pixel threshold.
+Source size 1672x877; output size 2172x724. Normalized source top-left UV -> output
+UV homography (row-major):
+[ 0.3985677015, -0.0182282825, 0.2939334549 ]
+[-0.0086034341,  0.6090405779, 0.2288247034 ]
+[-0.0193967742, -0.0440799696, 1.0000000000 ]
+Generation is approximate, not a pixel-preserving or physically reconstructed
+extension. The source and generated region differ in cloud and branch detail.
+
+Actual prompt 1 (input: convict-lake-day-study.webp):
+Edit target: attached photograph of Convict Lake. Create a photorealistic outpainted environment texture, 3:2 landscape aspect ratio. Extend the image on ALL FOUR SIDES. Keep the ENTIRE ORIGINAL 1672x877 photograph centered as the middle 60% of image width and middle 47.2% of image height; absolutely preserve its mountain silhouettes, exact perspective, lake shoreline, colours, daylight and water. Add about one-third of the original width on the left and right, and about half the original height above and below. Continue the same mountains and lake coherently to the left and right without mirroring or repeating mountains, branches, or rocks. Above: uninterrupted blue sky with the same subtle thin clouds. Below: continuous deep blue lake water with small fine photographic horizontal ripples, no new foreground rocks, no land, no boats or objects. Maintain the original horizon at its original center-image relative position. This must be a single continuous photograph, not an inset picture, panel, collage, border, frame, window, or rendered room. No text, no people, no houses, no buildings, no logos. The purpose is to fill the previously missing peripheral field of view for a 3D camera moving out of an existing window; exact central-image registration and seamlessly continued surroundings are essential.
+
+Actual prompt 2 (input: first generated image):
+Outpaint this exact landscape photograph HORIZONTALLY ONLY into an ultrawide 3:1 panorama (3072 x 1024). Preserve the entire input image unchanged in the exact CENTRAL HALF of the output width, maintaining its full height. Extend by half of the original image width to the left AND by half of the original image width to the right. Do not crop the top or bottom, move the horizon, zoom in, redesign or redraw the central landscape, or change the photography. Extend the same natural lake, mountains, pale cirrus blue sky, shore forest and fine blue water ripples coherently in the newly added side areas. No mirrored or repeated trees, mountains, rocks or water. No inset image, frames, borders, graphic gradient, fog, houses, buildings, people, boats, text or new foreground objects. This is an environment continuation only; retain all original features and positions in the central half. Wide continuous photographic texture.
