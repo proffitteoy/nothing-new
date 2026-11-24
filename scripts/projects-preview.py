@@ -198,35 +198,33 @@ def navigation_checks(browser):
     context.close()
 
 
-def compare_window_shader(page):
-    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position','-0.99000,1.92000,-0.35000')
-    page.wait_for_function("document.querySelector('[data-home-scene]')?.dataset.homeAmbientBlend==='1.000'")
-    result = page.evaluate("""()=>new Promise(resolve=>requestAnimationFrame(()=>{
-              const c=document.querySelector('[data-world-canvas]'),g=c.getContext('webgl2');
-              const current=g.getParameter(g.CURRENT_PROGRAM),vao=g.getParameter(g.VERTEX_ARRAY_BINDING),buf=g.getParameter(g.ARRAY_BUFFER_BINDING);
-              const shaders=g.getAttachedShaders(current),fragment=shaders.find(s=>g.getShaderParameter(s,g.SHADER_TYPE)===g.FRAGMENT_SHADER);
-              g.bindVertexArray(vao);g.useProgram(current);g.drawElements(g.TRIANGLES,6,g.UNSIGNED_SHORT,0);
-              const a=new Uint8Array(c.width*c.height*4),b=new Uint8Array(a.length);g.readPixels(0,0,c.width,c.height,g.RGBA,g.UNSIGNED_BYTE,a);
-              const compile=(type,source)=>{const s=g.createShader(type);g.shaderSource(s,source);g.compileShader(s);if(!g.getShaderParameter(s,g.COMPILE_STATUS))throw Error(g.getShaderInfoLog(s));return s;};
-              const vs=compile(g.VERTEX_SHADER,'#version 300 es\\nprecision highp float;in vec2 position;out vec2 homeUv;void main(){homeUv=position*.5+.5;gl_Position=vec4(position,0.,1.);}');
-              const fs=compile(g.FRAGMENT_SHADER,g.getShaderSource(fragment).replace('uniform float uReveal;','').replace('uniform float uWindowCrop;','').replace('  float border=step(.04,r.x)*(1.-step(.96,r.x))*step(.025,r.y)*(1.-step(.84,r.y));','').replace('  float wallAlpha=mix(1.,border,uWindowCrop);','').replace('colour=vec4(interior.rgb,wallAlpha)','colour=vec4(interior.rgb,1.)').replace('max(interior.a,1.-uReveal)*wallAlpha','1.'));
-              const ref=g.createProgram();g.attachShader(ref,vs);g.attachShader(ref,fs);g.linkProgram(ref);if(!g.getProgramParameter(ref,g.LINK_STATUS))throw Error(g.getProgramInfoLog(ref));
-              g.useProgram(ref);
-              for(let i=0;i<g.getProgramParameter(current,g.ACTIVE_UNIFORMS);i++){
-                const info=g.getActiveUniform(current,i),loc=g.getUniformLocation(ref,info.name);if(loc===null)continue;
-                const v=g.getUniform(current,g.getUniformLocation(current,info.name));
-                if(info.type===g.FLOAT)g.uniform1f(loc,v);else if(info.type===g.FLOAT_VEC2)g.uniform2fv(loc,v);else if(info.type===g.FLOAT_VEC4)g.uniform4fv(loc,v);else if(info.type===g.SAMPLER_2D)g.uniform1i(loc,v);else throw Error('uniform '+info.name);
-              }
-              const rv=g.createVertexArray(),rb=g.createBuffer();g.bindVertexArray(rv);g.bindBuffer(g.ARRAY_BUFFER,rb);g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW);
-              const pos=g.getAttribLocation(ref,'position');g.enableVertexAttribArray(pos);g.vertexAttribPointer(pos,2,g.FLOAT,false,0,0);
-              g.drawArrays(g.TRIANGLES,0,3);g.readPixels(0,0,c.width,c.height,g.RGBA,g.UNSIGNED_BYTE,b);
-              let changed=0,max=0,total=0;for(let i=0;i<a.length;i++){const d=Math.abs(a[i]-b[i]);if(d)changed++;max=Math.max(max,d);total+=d;}
-              g.useProgram(current);g.bindVertexArray(vao);g.bindBuffer(g.ARRAY_BUFFER,buf);g.drawElements(g.TRIANGLES,6,g.UNSIGNED_SHORT,0);
-              g.deleteVertexArray(rv);g.deleteBuffer(rb);g.deleteProgram(ref);g.deleteShader(vs);g.deleteShader(fs);
-              resolve({width:c.width,height:c.height,changedChannels:changed,maxDifference:max,meanDifference:total/a.length});
-            }))""")
-    assert result['maxDifference'] <= 1 and result['meanDifference'] < 0.0002, result
-    (args.output/'home-pixel-comparison.json').write_text(json.dumps(result,indent=2),encoding='utf8')
+def compare_original_project_camera(browser, page):
+    import base64
+    from PIL import Image, ImageChops, ImageStat
+    def capture(target, name):
+        encoded = target.evaluate("""()=>new Promise(resolve=>{
+            document.dispatchEvent(new Event('visibilitychange'));
+            requestAnimationFrame(()=>resolve((document.querySelector('[data-world-canvas]')||document.querySelector('[data-room-status] canvas')).toDataURL().split(',')[1]));
+        })""")
+        data = base64.b64decode(encoded)
+        (args.output / (name + '.png')).write_bytes(data)
+        return Image.open(io.BytesIO(data)).convert('RGBA')
+    actual = capture(page, 'project-canvas')
+    # Select the original independent RoomScene, keeping the desktop viewport.
+    reference = browser.new_context(viewport={'width':1440,'height':900}, device_scale_factor=1, user_agent='Android OriginalRoomReference')
+    reference.route('**/api/music?*', music_route)
+    reference.route(re.compile(r'.*/(?:anime/latest\.json|api/anime)$'), lambda route: route.fulfill(status=503, json={}))
+    original = reference.new_page()
+    original.goto(args.url + '/projects', wait_until='networkidle')
+    ready(original)
+    original.wait_for_function("document.documentElement.classList.contains('splash-seen')")
+    expected = capture(original, 'original-project-canvas')
+    assert actual.size == expected.size, (actual.size, expected.size)
+    diff = ImageChops.difference(actual, expected)
+    result = {'width':actual.width, 'height':actual.height, 'maxDifference':max(v[1] for v in diff.getextrema()), 'meanDifference':sum(ImageStat.Stat(diff).mean)/4}
+    (args.output / 'project-camera-comparison.json').write_text(json.dumps(result,indent=2),encoding='utf8')
+    assert result['meanDifference'] < .01, result
+    reference.close()
 
 
 def connection_checks(browser):
@@ -255,8 +253,8 @@ def connection_checks(browser):
     world = page.locator('[data-world-canvas]').element_handle()
     expect(page.locator('canvas')).to_have_count(1)
     results.append('single-shared-webgl-scene')
-    compare_window_shader(page)
-    results.append('original-home-shader/pixel-preservation')
+    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position','0.00000,1.57500,2.00000')
+    results.append('actual-floor-to-ceiling-rear-window')
     for value in [-0.46, 0.35, -0.46, 0]:
         page.locator('#app-scroll-root').evaluate('(el,p) => el.scrollTop = (2 + 2*p) * el.clientHeight', value)
         page.wait_for_function('(p) => Math.abs(Number(document.getElementById("app-scroll-root").dataset.homeProjectProgress)-p)<0.00001', arg=value)
@@ -301,11 +299,13 @@ def connection_checks(browser):
     assert world.evaluate("c => c.isConnected && c === document.querySelector('[data-world-canvas]')")
     assert page.evaluate('window.worldContexts.size') == 1
     assert len(model_requests) == 1
-    assert page.locator('[data-world-canvas]').get_attribute('data-camera-position') == '-0.99000,1.90000,2.48000'
+    assert page.locator('[data-world-canvas]').get_attribute('data-camera-position') == '-0.62000,1.90000,2.72000'
+    compare_original_project_camera(browser, page)
+    results.append('original-project-camera/pixel-comparison')
     shot(page, 'unified-desk')
     results.append('same-canvas/desk-camera/player-and-preview-protection')
     page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 2 * el.clientHeight')
-    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '-0.99000,1.92000,-0.35000')
+    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '0.00000,1.57500,2.00000')
     page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 0')
     page.wait_for_url(args.url + '/projects')
     ready(page)
@@ -338,7 +338,7 @@ def connection_checks(browser):
     page.mouse.down()
     page.mouse.move(360 + 900 / (2 * .65), 500, steps=30)
     page.mouse.up()
-    page.wait_for_function("(()=>{const q=document.querySelector('[data-world-canvas]').dataset.cameraQuaternion.split(',').map(Number);return 2*(q[0]**2+q[1]**2)-1 < -.85;})()")
+    page.wait_for_function("(()=>{const q=document.querySelector('[data-world-canvas]').dataset.cameraQuaternion.split(',').map(Number);return 2*(q[0]**2+q[1]**2)-1 > .85;})()")
     assert world.evaluate("c => c.isConnected && c === document.querySelector('[data-world-canvas]')")
     shot(page, 'single-room-rear-view')
     results.append('single-room/reverse-view-with-same-canvas')
@@ -368,7 +368,7 @@ def connection_checks(browser):
     page.mouse.move(720, 400)
     page.mouse.wheel(0, 2400)
     expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'landscape')
-    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '0.00000,0.32000,-22.00000')
+    page.wait_for_function("document.querySelector('[data-world-canvas]').dataset.cameraPosition.split(',').map(Number).every((v,i)=>Math.abs(v-[0,.32,22][i])<.00001)")
     expect(page.locator('canvas')).to_have_count(1)
     assert page.locator('[data-home-ui]').evaluate('el => el.inert')
     shot(page, 'unified-lake')
@@ -389,7 +389,7 @@ def connection_checks(browser):
     assert audio_element.evaluate("el => el === document.querySelector('audio') && !el.paused")
     assert audio_element.evaluate('el => el.currentTime') > playback_time
     assert not page.locator('[data-home-ui]').evaluate('el => el.inert')
-    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '-0.99000,1.92000,-0.35000')
+    expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '0.00000,1.57500,2.00000')
     results.append('three-states/reverse/interruptible-return/same-audio')
     page.locator('#app-scroll-root').evaluate('el => el.scrollTop = 2.5 * el.clientHeight')
     expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-progress', '0.25000')
@@ -444,7 +444,7 @@ def connection_checks(browser):
             page.mouse.move(width//2,height//2)
             page.mouse.wheel(0,3000)
             expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage','landscape')
-            expect(page.locator('[data-world-canvas]')).to_have_attribute('data-camera-position', '0.00000,0.32000,-22.00000')
+            page.wait_for_function("document.querySelector('[data-world-canvas]').dataset.cameraPosition.split(',').map(Number).every((v,i)=>Math.abs(v-[0,.32,22][i])<.00001)")
             page.get_by_role('button',name='返回窗前',exact=True).click()
             expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage','window')
             results.append('reduced-motion/absolute-camera-sampling')
@@ -492,7 +492,7 @@ with sync_playwright() as p:
         browser.close()
         (args.output / 'connection-report.json').write_text(json.dumps({'matrix': results, 'pageErrors': errors,
             'music': 'Local browser fixture; unchanged root Provider and real audio element',
-            'scope': 'One physical room and workstation; original home window at the rear, backtrack then reverse the camera towards the same desk; persistent camera and existing interactions'}, indent=2), encoding='utf-8')
+            'scope': 'Original project model and viewport; rear floor-to-ceiling glazing directly on the existing floor edge; no added hall or room; reversible camera and existing interactions'}, indent=2), encoding='utf-8')
         assert not errors, errors
         print('PASS', ', '.join(results), flush=True)
         sys.exit(0)

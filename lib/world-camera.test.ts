@@ -7,7 +7,8 @@ import {
   HOME_TARGET,
   DESK_POSITION,
   DESK_TARGET,
-  PROJECT_TRANSFORM,
+  REAR_WINDOW_Z,
+  HOME_FOV,
 } from "./world-camera"
 import { dampWorldProgress } from "./home-scene"
 
@@ -23,11 +24,11 @@ test("camera endpoints match the home window and original project camera exactly
     expected.lookAt(target)
     assert.ok(camera.position.distanceTo(position) < 1e-10)
     assert.ok(camera.quaternion.angleTo(expected.quaternion) < 1e-7)
-    assert.equal(camera.fov, 47)
+    assert.equal(camera.fov, progress === 0 ? HOME_FOV : 47)
   }
   directWorldCamera(camera, 1)
   assert.ok(camera.position.y > 0.1 && camera.position.y < 0.5)
-  assert.ok(camera.position.z < -20)
+  assert.ok(camera.position.z > 20)
 })
 
 test("both camera branches are continuous and exactly reversible", () => {
@@ -61,42 +62,50 @@ test("both camera branches are continuous and exactly reversible", () => {
 test("backtrack leaves the rear window and turns towards the same room's desk", () => {
   const camera = new THREE.PerspectiveCamera()
   const windowDirection = HOME_TARGET.clone().sub(HOME_POSITION).normalize()
-  let previousZ = HOME_POSITION.z
+  directWorldCamera(camera, -0.2)
+  assert.ok(camera.position.z < HOME_POSITION.z, "first move is backwards from the glazing")
   for (let i = 0; i <= 10000; i++) {
     const t = i / 10000
     directWorldCamera(camera, -t)
-    assert.ok(camera.position.y >= 1.89 && camera.position.y <= 1.93, "no rise or roof view")
+    assert.ok(camera.position.y >= 1.57 && camera.position.y <= 1.93, "no rise or roof view")
     assert.ok(Math.abs(camera.position.x) < 2.0, "no exterior orbit")
-    assert.ok(camera.position.z >= previousZ - 1e-8, "back away from the rear window")
-    assert.ok(camera.position.z <= DESK_POSITION.z + 1e-8, "stay in the same room")
-    previousZ = camera.position.z
-    if (t <= 0.58)
+    assert.ok(camera.position.z > -1.6 && camera.position.z <= DESK_POSITION.z + 1e-8)
+    if (t <= 0.4)
       assert.ok(
-        camera.getWorldDirection(new THREE.Vector3()).dot(windowDirection) > 0.999,
+        camera.getWorldDirection(new THREE.Vector3()).z > 0.95,
         "keep looking at the rear window until the turn",
       )
   }
   assert.ok(camera.getWorldDirection(new THREE.Vector3()).dot(windowDirection) < -0.9)
-  const localCamera = camera.position.clone().applyMatrix4(PROJECT_TRANSFORM.clone().invert())
-  assert.ok(localCamera.distanceTo(new THREE.Vector3(-0.62, 1.9, 2.72)) < 1e-10)
+  assert.ok(
+    camera.position.z > REAR_WINDOW_Z,
+    "original project camera is just outside the rear opening",
+  )
+  assert.ok(camera.position.distanceTo(new THREE.Vector3(-0.62, 1.9, 2.72)) < 1e-10)
 })
 
 test("project endpoint preserves the original model-space desktop composition", () => {
-  const original = new THREE.PerspectiveCamera(47, 1.6, 0.05, 700)
-  original.position.set(-0.62, 1.9, 2.72)
-  original.lookAt(0.08, 1.06, -0.5)
-  original.updateMatrixWorld()
-  const actual = original.clone()
-  directWorldCamera(actual, -1)
-  actual.updateMatrixWorld()
-  for (const point of [
-    new THREE.Vector3(0, 0.74, -0.5),
-    new THREE.Vector3(-1, 1, -1),
-    new THREE.Vector3(1, 1.5, -0.3),
-  ]) {
-    const expected = point.clone().project(original)
-    const projected = point.clone().applyMatrix4(PROJECT_TRANSFORM).project(actual)
-    assert.ok(expected.distanceTo(projected) < 1e-10)
+  for (const aspect of [1.6, 0.875]) {
+    const original = new THREE.PerspectiveCamera(47, aspect, 0.05, 35)
+    original.position.set(
+      aspect < 1 ? -0.75 : -0.62,
+      aspect < 1 ? 2.3 : 1.9,
+      aspect < 1 ? 4.8 : 2.72,
+    )
+    original.lookAt(0.08, 1.06, -0.5)
+    original.updateMatrixWorld()
+    const actual = original.clone()
+    directWorldCamera(actual, -1)
+    actual.updateMatrixWorld()
+    for (const point of [
+      new THREE.Vector3(0, 0.74, -0.5),
+      new THREE.Vector3(-1, 1, -1),
+      new THREE.Vector3(1, 1.5, -0.3),
+    ]) {
+      const expected = point.clone().project(original)
+      const projected = point.clone().project(actual)
+      assert.ok(expected.distanceTo(projected) < 1e-10)
+    }
   }
 })
 
