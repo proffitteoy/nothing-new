@@ -3,20 +3,13 @@
 import dynamic from "next/dynamic"
 import { useEffect, useSyncExternalStore } from "react"
 import Link from "next/link"
-import type { PaperReport } from "../lib/papers"
 import { createHomeVisitClock, isMobileHomeClient } from "../lib/home-scene"
 
 const HomeScene = dynamic(() => import("./HomeScene"), { ssr: false })
 const subscribe = () => () => {}
 const desktop = () => !isMobileHomeClient()
 
-export default function HomeDeviceGate({
-  reports,
-  blogHref,
-}: {
-  reports: PaperReport[]
-  blogHref: string
-}) {
+export default function HomeDeviceGate({ blogHref }: { blogHref: string }) {
   const allowed = useSyncExternalStore(subscribe, desktop, () => false)
   useEffect(() => {
     if (isMobileHomeClient()) {
@@ -38,7 +31,7 @@ export default function HomeDeviceGate({
     }
   }, [])
   return allowed ? (
-    <HomeScene reports={reports} blogHref={blogHref} />
+    <HomeScene blogHref={blogHref} />
   ) : (
     <main
       aria-label="阿の宝藏之地"

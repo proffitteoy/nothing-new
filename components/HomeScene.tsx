@@ -22,12 +22,11 @@ import {
 import { navigationLinks } from "./Navbar"
 import CloudPlayer from "./CloudPlayer"
 import LyricBar from "./LyricBar"
-import PaperMonitor, { SidebarPreview } from "./PaperMonitor"
+import { SidebarPreview } from "./PaperMonitor"
 import ProfileActions from "./ProfileActions"
 import { ToastProvider } from "./ToastProvider"
 import HomeSpectralCanvas from "./HomeSpectralCanvas"
 import { useHomeProjectState } from "./HomeProjectNavigation"
-import type { PaperReport } from "../lib/papers"
 import styles from "./HomeScene.module.css"
 import projectsPreview from "../public/page-previews/projects.webp"
 import animePreview from "../public/page-previews/anime.webp"
@@ -59,20 +58,20 @@ const rails = [
   {
     side: "right",
     entries: [
-      { id: "papers", name: "论文", href: null, icon: BookOpen, preview: null },
+      {
+        id: "papers",
+        name: "论文",
+        href: "/papers",
+        icon: BookOpen,
+        preview: "/profile-studio.png",
+      },
       ...pageEntries.slice(4),
       { id: "contact", name: "联系", href: null, icon: Mail, preview: null },
     ],
   },
 ]
 
-export default function HomeScene({
-  reports,
-  blogHref,
-}: {
-  reports: PaperReport[]
-  blogHref: string
-}) {
+export default function HomeScene({ blogHref }: { blogHref: string }) {
   const [open, setOpen] = useState<string | null>(null)
   const [draggingMusic, setDraggingMusic] = useState(false)
   const navigation = useHomeProjectState()
@@ -253,9 +252,8 @@ export default function HomeScene({
                       className={styles.preview}
                       data-home-preview={id}
                       data-open={expanded}
-                      // Keep the native paper dialogs outside inert/aria-hidden trees.
-                      inert={id !== "papers" && !expanded}
-                      aria-hidden={id !== "papers" && !expanded ? true : undefined}
+                      inert={!expanded}
+                      aria-hidden={!expanded ? true : undefined}
                       onPointerDownCapture={(event) => {
                         if (
                           (event.target as Element).closest(
@@ -284,16 +282,6 @@ export default function HomeScene({
                         >
                           <SidebarPreview src={preview} alt={`${name}页面预览`} />
                         </Link>
-                      ) : id === "papers" ? (
-                        <PaperMonitor
-                          initialReports={reports}
-                          compact
-                          active={expanded}
-                          onIssueClose={() => {
-                            pinned.current = false
-                            scheduleClose("papers")
-                          }}
-                        />
                       ) : (
                         <div className={styles.contactPanel} data-edge-summary>
                           <ProfileActions />
