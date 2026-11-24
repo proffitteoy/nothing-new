@@ -4,7 +4,32 @@ title: 窗边研究小屋：实现与验证
 
 # 窗边研究小屋
 
-## 原房间后侧直接落地窗与原项目取景（2026-11-24）
+## 恢复原首页与清空窗前（2026-11-24）
+
+开场以 `c966422` 的浅木大窗首页为基线，恢复完整原室内照片、湖景取景、侧栏与音乐。撤销 #118 用自制超广角窗前取景替换首页的做法。项目页继续使用原宽／窄桌面机位、47° FOV 和 0.05/35 裁剪面；中段及自由查看的远裁剪设为 700，保留窗外远景。
+
+共享场景只加载一套 `study.glb`，不加房子外景、连接房间或镜像工作台。蓝色阅读椅与落地灯合并在 `room` 网格中，只筛掉它们的三角形索引；在建立 BVH 前执行，桌面、原木地板、热点及模型节点身份保持不变。GLB 文件未重写，独立项目页路径仍使用完整原模型。
+
+首页静止时，同一个 renderer 输出原合成器。任意非零滚动位置都停止整屏首页合成器，窗框／墙面按独立 alpha 层投影到后侧，窗外只绘制一份不透明摄影场景。远岸和水平水面共享边界，使用原谱场公式与水色；原图外的视野由特征配准的周边补图提供。上滑仅在原房间内后退与转身，下滑通过同一窗洞前进；URL 切换继续保留同一场景和相机。
+
+验证入口：
+
+```powershell
+npm test
+npm run lint
+npm run build -- --webpack
+python scripts/projects-preview.py --url http://localhost:3185 --connection-only --browser 'C:\Program Files\Google\Chrome\Application\chrome.exe' --output .sync/tmp-unified-world/restored-home-production
+```
+
+自动化除端点外，还检查 ±0.01、±0.03、±0.06、转身、穿窗和湖面等中间位置：同一画布保留，原整屏首页程序不再绘制，并保存实际截图。首页 GPU 与原公式逐通道对照，项目端点与同尺寸原独立 RoomScene 对照；几何测试检查移除椅灯、保留桌面、水平水面和远岸接缝。
+
+本轮 Node 22.23.4 下 148 项测试、TypeScript 与 247 页生产构建通过，ESLint 0 错误／3 条既有警告。生产 Chrome 的 26 组连接检查通过，页面异常为 0。首页 1440×900 的原公式像素对照最大通道差为 1、平均差约 0.00009；项目 1430×900 的原独立画布对照差异为 0。报告及中段截图保存在 `.sync/tmp-unified-world/restored-home-production/`。本地音轨延长至 120 秒，防止完整路径检查尚未结束时夹具自然播完；播放状态和同一 audio 身份断言保持不变。
+
+当前截图：[原首页](../images/unified-world/window.png)、[后退](../images/unified-world/backtrack.png)、[转身](../images/unified-world/turn.png)、[项目页](../images/unified-world/desk.png)、[穿窗初段](../images/unified-world/window-departure.png)、[湖面](../images/unified-world/lake.png)。
+
+水体保留摄影倒影，周边与山体是有限深度近似，不能称为完整地形或真实反射模拟。音乐验证使用本地音轨，不代表外部服务验收。Safari、真实手机、人工视觉验收与生产发布均不包含在本轮自动检查中。
+
+## 历史：原房间后侧直接落地窗与原项目取景（2026-11-24）
 
 落地窗直接位于原 `study.glb` 地板的后侧边界 `z=2.4`，宽 4.44m、高 3.15m，下沿到地面。删除 #116 仍保留的近 6m 地面、灰色侧墙、天花和连接段。整个房间仍只有原模型和一套家具，后侧只补四条细窗框与窗外景观。
 

@@ -1,7 +1,7 @@
 import { SPECTRAL_DIRECTION_GLSL } from "./spectralField"
 
-// Reuse the original lake, cloud, branch and spectral-water formulas inside the
-// actual rear glazing. The photographed room layer is disabled at runtime.
+// Original homepage composition from before the spatial transition changes.
+// The unified scene reuses these formulas for its calibrated world surfaces.
 export const HOME_WINDOW_FRAGMENT = `
 precision highp float;
 in vec2 homeUv;
