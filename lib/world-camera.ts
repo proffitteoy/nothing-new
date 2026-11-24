@@ -5,7 +5,8 @@ export const DESK_POSITION = new THREE.Vector3(-0.62, 1.9, 2.72)
 export const DESK_TARGET = new THREE.Vector3(0.08, 1.06, -0.5)
 export const HOME_POSITION = new THREE.Vector3(0, 1.92, 0.5)
 export const HOME_TARGET = new THREE.Vector3(0, 1.92, 2.4)
-export const REAR_WINDOW_Z = 2.4
+// Join the actual side-wall ends (z=1.85), inside the existing floor footprint.
+export const REAR_WINDOW_Z = 1.85
 export const HOME_FOV = 47
 
 const roomPoints = [
@@ -30,16 +31,14 @@ const matrix = new THREE.Matrix4(),
   up = new THREE.Vector3(0, 1, 0)
 const orientation = (position: THREE.Vector3, target: THREE.Vector3) =>
   new THREE.Quaternion().setFromRotationMatrix(matrix.lookAt(position, target, up))
-const roomDirections = roomPoints.map((point, i) =>
-  orientation(point, i < 3 ? HOME_TARGET : DESK_TARGET),
-)
+const homeDirection = orientation(HOME_POSITION, HOME_TARGET)
+const deskDirection = orientation(DESK_POSITION, DESK_TARGET)
 const portraitDirection = orientation(new THREE.Vector3(-0.75, 2.3, 4.8), DESK_TARGET)
-const lakeDirections = lakePoints.map((point, i) =>
-  orientation(
-    point,
-    i === 0 ? HOME_TARGET : new THREE.Vector3(point.x, point.y - 0.05 * i, point.z + 2),
-  ),
-)
+const lakeDirection = orientation(lakePoints[5], new THREE.Vector3(0, 0.22, 24))
+const ease = (value: number) => {
+  const t = THREE.MathUtils.clamp(value, 0, 1)
+  return t * t * t * (t * (t * 6 - 15) + 10)
+}
 
 // Back away from the actual rear glazing, turn inside the original room, then
 // back through that same opening to the unchanged project camera.
@@ -55,14 +54,12 @@ export function directWorldCamera(camera: THREE.PerspectiveCamera, progress: num
   }
   const curve = room ? roomCurve : lakeCurve
   curve.getPoint(t, camera.position)
-  const directions = room ? roomDirections : lakeDirections
-  const segment = t * (directions.length - 1)
-  const index = Math.min(directions.length - 2, Math.floor(segment))
-  const blend = segment - index
+  // One turn with continuous angular velocity/acceleration, rather than five
+  // independently eased turns which stop at every spline control point.
   camera.quaternion.slerpQuaternions(
-    directions[index],
-    directions[index + 1],
-    blend * blend * (3 - 2 * blend),
+    homeDirection,
+    room ? deskDirection : lakeDirection,
+    room ? ease((t - 0.28) / 0.62) : ease(t),
   )
   if (room && camera.aspect < 1) {
     const portrait = THREE.MathUtils.smoothstep(t, 0.8, 1)
