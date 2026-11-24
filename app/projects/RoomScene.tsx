@@ -11,7 +11,7 @@ import { lifeObjects, projects, roomTargets, type RoomTarget } from "./projects"
 import styles from "./room.module.css"
 import { useHomeProjectState } from "../../components/HomeProjectNavigation"
 import { buildCabinWorld } from "../../lib/cabin-world"
-import { directWorldCamera, DESK_TARGET, PROJECT_TRANSFORM } from "../../lib/world-camera"
+import { directWorldCamera, DESK_TARGET } from "../../lib/world-camera"
 import { SPECTRAL_PLAYBACK_RATE } from "../../components/field/spectralField"
 
 export type RoomSceneProps = {
@@ -128,7 +128,6 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
     const nodeGeometry = new THREE.SphereGeometry(0.004, 8, 6)
     const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0xafd9e9, toneMapped: false })
     const signalNodes = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, 7)
-    if (unified) signalNodes.applyMatrix4(PROJECT_TRANSFORM)
     const nodePoints = [
       [-0.45, 0.09],
       [-0.5, 0.14],
@@ -206,10 +205,6 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       // Human-scale view: eyes above the desktop, looking slightly down into the room.
       camera.position.set(portrait ? -0.75 : -0.62, portrait ? 2.3 : 1.9, portrait ? 4.8 : 2.72)
       controls.target.set(0.08, 1.06, -0.5)
-      if (unified) {
-        camera.position.applyMatrix4(PROJECT_TRANSFORM)
-        controls.target.applyMatrix4(PROJECT_TRANSFORM)
-      }
       controls.update()
     }
 
@@ -227,6 +222,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
 
     function selectableMeshes() {
       return meshes.filter((mesh) => {
+        if (mesh.name === "original-home-window") return false
         for (let node: THREE.Object3D | null = mesh; node; node = node.parent)
           if (!node.visible) return false
         return !(mesh.material instanceof THREE.MeshBasicMaterial) || mesh.material.opacity > 0.5
@@ -364,9 +360,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       homeLook.lerp(homePointer, -Math.expm1(-10 * dt))
       world?.update(navigationRef.current.progress.current, visibleTime, homeLook)
       let changing = false
-      const wallCamera = unified
-        ? camera.position.clone().applyMatrix4(PROJECT_TRANSFORM.clone().invert())
-        : camera.position
+      const wallCamera = camera.position
       for (const wall of walls) {
         const outside = wallCamera[wall.axis] * wall.sign > (wall.axis === "x" ? 1.95 : 1.5)
         const goal = outside ? 0 : 1
@@ -592,7 +586,6 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
           world.resize(host.clientWidth, host.clientHeight)
           world.update(navigationRef.current.progress.current, visibleTime, homeLook, false)
           worldTime = world.time
-          model.applyMatrix4(PROJECT_TRANSFORM)
         }
         if (disposed) {
           disposeModel(scene)

@@ -1,7 +1,7 @@
 import * as THREE from "three"
 import { Reflector } from "three/addons/objects/Reflector.js"
-import { HOME_POSITION, HOME_TARGET } from "./world-camera"
-import { homeWindowProjection, homeWindowLook } from "./home-scene"
+import { HOME_POSITION, HOME_TARGET, REAR_WINDOW_Z } from "./world-camera"
+import { homeWindowLook } from "./home-scene"
 import { HOME_WINDOW_FRAGMENT } from "../components/field/homeWindowShader"
 import { SPECTRAL_DIRECTION_GLSL, SPECTRAL_PLAYBACK_RATE } from "../components/field/spectralField"
 
@@ -11,11 +11,12 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   scene.add(world)
   const outside = new THREE.Group()
   outside.name = "lake-environment"
+  outside.rotation.y = Math.PI
   world.add(outside)
   const interior = new THREE.Group()
-  interior.name = "home-room-interior"
+  interior.name = "rear-floor-window"
   world.add(interior)
-  const plaster = new THREE.MeshLambertMaterial({ color: 0xbfc2bf })
+  const frame = new THREE.MeshBasicMaterial({ color: 0x9c866e, toneMapped: false })
   const earth = new THREE.MeshLambertMaterial({ color: 0x788474 })
   const shore = new THREE.MeshLambertMaterial({ color: 0x9b9d90 })
   const box = (
@@ -31,25 +32,11 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     parent.add(mesh)
     return mesh
   }
-  // Complete only the rear of the existing room. No second model or desk.
-  const rearPlaster = new THREE.MeshBasicMaterial({ color: 0xb5b6b1, toneMapped: false })
-  const homeBack = new THREE.Group()
-  homeBack.name = "rear-floor-window"
-  interior.add(homeBack)
-  const fills = ["left", "right", "top", "bottom"].map((side) =>
-    box("home-window-wall-" + side, [1, 1, 0.035], [0, 0, -3.165], rearPlaster, homeBack),
-  )
-  box(
-    "interior-floor-extension",
-    [5.06, 0.015, 5.95],
-    [-1.3, 0.005, -0.175],
-    new THREE.MeshBasicMaterial({ color: 0x898e8f, toneMapped: false }),
-    interior,
-  )
-  box("interior-left-return", [0.1, 3.15, 5.95], [-3.83, 1.575, -0.175], plaster, interior)
-  box("interior-right-return", [0.1, 3.15, 5.95], [1.23, 1.575, -0.175], plaster, interior)
-  box("interior-side-return", [0.62, 3.15, 0.1], [0.92, 1.575, 2.8], plaster, interior)
-  box("interior-ceiling", [5.06, 0.06, 5.95], [-1.3, 3.18, -0.175], plaster, interior)
+  // The rear glazing meets the shipped floor directly. No added room or hall.
+  for (const x of [-2.22, 2.22])
+    box("rear-window-jamb", [0.045, 3.15, 0.006], [x, 1.575, REAR_WINDOW_Z], frame, interior)
+  for (const y of [0.0225, 3.1275])
+    box("rear-window-rail", [4.44, 0.045, 0.006], [0, y, REAR_WINDOW_Z], frame, interior)
   const homeUniforms = {
     uLake: { value: null as THREE.Texture | null },
     uRoom: { value: null as THREE.Texture | null },
@@ -66,10 +53,9 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     uTime: { value: 0 },
     uWorldTime: { value: 0 },
     uAmbientBlend: { value: 0 },
-    uInteriorOpacity: { value: 1 },
+    uInteriorOpacity: { value: 0 },
     uReveal: { value: 0 },
     uWindowCrop: { value: 0 },
-    uAtRest: { value: true },
     uEffects: { value: new THREE.Vector4(1, 0, 1, 1) },
   }
   const surface = new THREE.Mesh(
@@ -81,9 +67,9 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
       depthWrite: false,
       toneMapped: false,
       vertexShader: `precision highp float;
-      uniform mat4 projectionMatrix,modelViewMatrix; uniform bool uAtRest;
+      uniform mat4 projectionMatrix,modelViewMatrix;
       in vec3 position; in vec2 uv; out vec2 homeUv;
-      void main(){homeUv=uv;gl_Position=uAtRest?vec4(uv*2.-1.,0.,1.):projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+      void main(){homeUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
       fragmentShader: HOME_WINDOW_FRAGMENT,
     }),
   )
@@ -95,40 +81,25 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   referenceHome.position.copy(HOME_POSITION)
   referenceHome.lookAt(HOME_TARGET)
   referenceHome.updateMatrixWorld()
-  const direction = new THREE.Vector3()
-  referenceHome.getWorldDirection(direction)
-  surface.position.copy(HOME_POSITION).addScaledVector(direction, 2.8)
-  surface.quaternion.copy(referenceHome.quaternion)
+  surface.position.set(0, 1.575, REAR_WINDOW_Z + 0.004)
+  surface.rotation.y = Math.PI
+  surface.scale.set(4.44, 3.15, 1)
   let width = 1,
-    height = 1,
-    homeProjection = homeWindowProjection(1, 1)
+    height = 1
   const resize = (w: number, h: number) => {
     width = w
     height = h
-    homeProjection = homeWindowProjection(w, h)
-    const fullHeight = 2 * 2.8 * Math.tan((47 * Math.PI) / 360)
-    surface.scale.set((fullHeight * w) / h, fullHeight, 1)
-    homeUniforms.uSize.value.set(w, h)
-    const r = homeProjection.room,
-      l = homeProjection.lake
-    homeUniforms.uRoomRect.value.set(r.x, r.y, r.width, r.height)
-    homeUniforms.uLakeRect.value.set(l.x, l.y, l.width, l.height)
-    const worldW = surface.scale.x,
-      worldH = surface.scale.y
-    const left = HOME_POSITION.x + ((r.x + r.width * 0.04) / w - 0.5) * worldW
-    const right = HOME_POSITION.x + ((r.x + r.width * 0.96) / w - 0.5) * worldW
-    const bottom = HOME_POSITION.y + (0.5 - (r.y + r.height * 0.84) / h) * worldH
-    const top = HOME_POSITION.y + (0.5 - (r.y + r.height * 0.025) / h) * worldH
-    const edgeLeft = -3.83,
-      edgeRight = 1.23
-    fills[0].scale.set(Math.max(0.001, left - edgeLeft), 3.2, 1)
-    fills[0].position.set((left + edgeLeft) / 2, 1.6, surface.position.z - 0.02)
-    fills[1].scale.set(Math.max(0.001, edgeRight - right), 3.2, 1)
-    fills[1].position.set((right + edgeRight) / 2, 1.6, surface.position.z - 0.02)
-    fills[2].scale.set(5.06, Math.max(0.001, 3.2 - top), 1)
-    fills[2].position.set(-1.3, (3.2 + top) / 2, surface.position.z - 0.02)
-    fills[3].scale.set(5.06, Math.max(0.001, bottom), 1)
-    fills[3].position.set(-1.3, bottom / 2, surface.position.z - 0.02)
+    // Texture coordinates belong to the full floor-to-ceiling opening.
+    const pictureHeight = (1440 * 3.15) / 4.44
+    const scale = Math.max(1440 / 1672, pictureHeight / 877)
+    homeUniforms.uSize.value.set(1440, pictureHeight)
+    homeUniforms.uRoomRect.value.set(0, 0, 1440, pictureHeight)
+    homeUniforms.uLakeRect.value.set(
+      (1440 - 1672 * scale) / 2,
+      (pictureHeight - 877 * scale) / 2,
+      1672 * scale,
+      877 * scale,
+    )
   }
   box("near-ground", [600, 0.2, 600], [0, -0.27, 297.5], earth)
   for (const sign of [-1, 1]) {
@@ -159,7 +130,7 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     photograph: { value: null as THREE.Texture | null },
     projection: { value: projection },
     horizonBias: {
-      value: 0.375 - (new THREE.Vector3(HOME_POSITION.x, 0, -180).project(reference).y * 0.5 + 0.5),
+      value: 0.375 - (new THREE.Vector3(HOME_POSITION.x, 0, 180).project(reference).y * 0.5 + 0.5),
     },
     time: { value: 0 },
   }
@@ -314,19 +285,16 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   }
   resize(1, 1)
   const update = (progress: number, seconds: number, pointer: THREE.Vector2, publish = true) => {
-    homeUniforms.uAtRest.value = progress === 0
     homeUniforms.uTime.value = seconds * SPECTRAL_PLAYBACK_RATE
     homeUniforms.uWorldTime.value = seconds
     homeUniforms.uAmbientBlend.value = Math.min(1, seconds / 1.2)
     homeUniforms.uReveal.value = THREE.MathUtils.smoothstep(progress, 0.04, 0.18)
-    homeUniforms.uWindowCrop.value = THREE.MathUtils.smoothstep(-progress, 0.015, 0.08)
-    const look = homeWindowLook(pointer.x, pointer.y, homeProjection.opening.height)
+    const look = homeWindowLook(pointer.x, pointer.y, (1440 * 3.15) / 4.44)
     homeUniforms.uLook.value.set(look.x, look.y)
-    surface.material.depthTest = progress !== 0
     surface.visible = true
-    interior.visible = progress < 0
+    interior.visible = true
     outside.visible = progress > 0
-    model.visible = progress < 0
+    model.visible = progress <= 0
     scene.background = progress === -1 ? null : new THREE.Color(progress > 0 ? 0xcbdce5 : 0xdfe4e6)
     const stage =
       publish && typeof document !== "undefined"

@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 import { createHash } from "node:crypto"
 import { HOME_WINDOW_FRAGMENT } from "./homeWindowShader"
 
-test("resting home keeps the pre-113 composition and water/cloud/branch/light formulas", () => {
+test("rear glazing retains the original lake and environmental shader formulas", () => {
   // This digest comes from c966422's original homepage shader, with version and
   // blank lines removed. Transition-only alpha controls must not alter its RGB.
   const resting = HOME_WINDOW_FRAGMENT.replace("uniform float uReveal;", "")

@@ -918,6 +918,10 @@
   --muted: var(--site-muted);
   --ink: var(--site-ink);
   --accent: var(--site-accent);
+  --surface: var(--site-surface);
+  --line: var(--site-line);
+  --ui-font: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--ui-font);
 }
 .page[data-unified="true"] {
   pointer-events: none;

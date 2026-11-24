@@ -427,7 +427,6 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
             style={{
               position: "sticky",
               top: 0,
-              width: "100vw",
               height: "100dvh",
               isolation: "isolate",
             }}

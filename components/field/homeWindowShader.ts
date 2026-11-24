@@ -1,7 +1,7 @@
 import { SPECTRAL_DIRECTION_GLSL } from "./spectralField"
 
-// Preserve the pre-#113 home composition and object effects. Only the exterior
-// alpha opens during the existing forward journey; the resting image is unchanged.
+// Reuse the original lake, cloud, branch and spectral-water formulas inside the
+// actual rear glazing. The photographed room layer is disabled at runtime.
 export const HOME_WINDOW_FRAGMENT = `
 precision highp float;
 in vec2 homeUv;

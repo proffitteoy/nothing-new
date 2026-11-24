@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs"
 import * as THREE from "three"
 import { Reflector } from "three/addons/objects/Reflector.js"
 import { buildCabinWorld } from "./cabin-world"
-import { directWorldCamera, HOME_POSITION, PROJECT_TRANSFORM } from "./world-camera"
+import { directWorldCamera, HOME_POSITION, REAR_WINDOW_Z } from "./world-camera"
 
 test("home and projects share one physical room and one set of workstation objects", async () => {
   const bytes = readFileSync(new URL("../public/projects-room/study.glb", import.meta.url))
@@ -55,8 +55,7 @@ test("home and projects share one physical room and one set of workstation objec
   }
   model.updateMatrixWorld(true)
   const wall = model.getObjectByName("wall_back")!
-  const ray = new THREE.Raycaster(HOME_POSITION, new THREE.Vector3(0, 0, -1), 0, 3)
-  assert.ok(ray.intersectObject(wall).length > 0, "original sky panel/mullion blocks passage")
+  const ray = new THREE.Raycaster()
   const originalIndex = (wall as THREE.Mesh).geometry.index!.count
 
   const scene = new THREE.Scene()
@@ -88,10 +87,20 @@ test("home and projects share one physical room and one set of workstation objec
     world.update(progress, 0, new THREE.Vector2(), false)
     assert.ok(model.visible, "the same room stays present throughout the turn")
     assert.ok(scene.getObjectByName("original-home-window")!.visible)
-    assert.ok(scene.getObjectByName("home-room-interior")!.visible)
+    assert.ok(scene.getObjectByName("rear-floor-window")!.visible)
   }
   assert.equal(scene.getObjectByName("cabin-pitched-roof"), undefined)
-  model.applyMatrix4(PROJECT_TRANSFORM)
+  assert.ok(
+    model.matrix.equals(new THREE.Matrix4()),
+    "the project model stays in its original coordinates",
+  )
+  for (const name of [
+    "interior-floor-extension",
+    "interior-left-return",
+    "interior-right-return",
+    "interior-ceiling",
+  ])
+    assert.equal(scene.getObjectByName(name), undefined, "no hall or added room")
   scene.updateMatrixWorld(true)
   const lake = scene.getObjectByName("lake-water") as Reflector
   assert.ok(lake instanceof Reflector)
@@ -100,12 +109,12 @@ test("home and projects share one physical room and one set of workstation objec
   assert.equal("photograph" in (lake.material as THREE.ShaderMaterial).uniforms, false)
   const camera = new THREE.PerspectiveCamera()
   const rearWindow = scene.getObjectByName("original-home-window")!
-  directWorldCamera(camera, -1)
-  const deskDirection = camera.getWorldDirection(new THREE.Vector3())
-  camera.lookAt(rearWindow.position)
+  assert.equal(rearWindow.scale.x, 4.44)
+  assert.equal(rearWindow.scale.y, 3.15)
+  assert.ok(Math.abs(rearWindow.position.z - REAR_WINDOW_Z) < 0.05)
   assert.ok(
-    camera.getWorldDirection(new THREE.Vector3()).dot(deskDirection) < -0.9,
-    "looking back from the desk finds the original home window in this room",
+    Math.abs(rearWindow.position.y - rearWindow.scale.y / 2) < 1e-8,
+    "glazing reaches the floor",
   )
   for (const sign of [-1]) {
     const previous = HOME_POSITION.clone()
