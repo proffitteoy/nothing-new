@@ -127,7 +127,7 @@ def navigation_checks(browser):
         page.wait_for_function("document.documentElement.classList.contains('splash-seen')", timeout=30000)
         page.wait_for_selector('[data-world-canvas][data-home-artwork=ready]', state='attached', timeout=60000)
         for method in ['text', 'preview', 'keyboard']:
-            for entry in ['projects', 'anime', 'chatter', 'blog', 'friends', 'about']:
+            for entry in ['projects', 'anime', 'chatter', 'blog', 'papers', 'friends', 'about']:
                 trigger = page.locator(f'[data-edge-trigger="{entry}"]')
                 assert trigger.evaluate('el => el.tagName') == 'A'
                 destination = trigger.get_attribute('href')
@@ -146,17 +146,23 @@ def navigation_checks(browser):
                 page.wait_for_url(args.url + destination)
                 page.wait_for_timeout(350)
                 assert page.url == args.url + destination, (method, entry, page.url)
+                if entry == 'papers':
+                    expect(page.get_by_role('button', name='TDA 周报', exact=True)).to_have_attribute('aria-pressed', 'true')
+                    expect(page.locator('dialog[open]')).to_have_count(0)
                 if entry == 'projects':
                     expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'room')
                     page.get_by_role('button', name='返回窗前', exact=True).click()
                 else:
                     expect(page.locator('[data-home-project-track]')).to_have_count(0)
-                    page.locator('header a[href="/"]').click()
+                    if entry == 'papers':
+                        page.go_back()
+                    else:
+                        page.locator('header a[href="/"]').click()
                 page.wait_for_url(args.url + '/')
                 expect(page.locator('#app-scroll-root')).to_have_attribute('data-home-project-stage', 'window')
                 page.wait_for_selector('[data-world-canvas][data-home-artwork=ready]', state='attached', timeout=60000)
                 results.append(f'{"reduced" if reduced else "motion"}/{method}/{entry}')
-        for entry in ['papers', 'contact']:
+        for entry in ['contact']:
             trigger = page.locator(f'[data-edge-trigger="{entry}"]')
             assert trigger.evaluate('el => el.tagName') == 'BUTTON'
             trigger.click()
