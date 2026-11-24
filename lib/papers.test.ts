@@ -15,6 +15,8 @@ describe("TDA report publishing", () => {
     )
     assert.match(reports[0].papers[0].html, /独立学术评价/)
     assert.equal(reports[0].papers[0].priority, "高")
+    assert.deepEqual(reports[0].papers[0].authors, ["Junyan Chu", "Shizuo Kaji", "Meiyan Kang"])
+    assert.equal(reports[0].papers[0].year, "2026")
     assert.equal(reports[0].papers[0].url, "https://arxiv.org/abs/2610.36843")
     assert.match(reports[1].papers[2].title, /^Spectral Braids/)
     assert.match(reports[1].conclusion, /综合判断/)
@@ -25,10 +27,11 @@ describe("TDA report publishing", () => {
       {
         path: "reports/2026-11-02.md",
         markdown:
-          "# TDA 每周新论文报告｜2026-11-02\n\n导读\n\n### 1. Test\n\n**摘要** $H_1$\n\n<script>alert(1)</script>\n\n[unsafe](javascript:alert%281%29)\n\n## 综合判断\n\n结语",
+          "# TDA 每周新论文报告｜2026-11-02\n\n导读\n\n### 1. Test\n\n**摘要** $H_1$\n\n作者研究一个问题。\n\n<script>alert(1)</script>\n\n[unsafe](javascript:alert%281%29)\n\n## 综合判断\n\n结语",
       },
     ])
     assert.match(report.papers[0].html, /class="katex"/)
+    assert.deepEqual(report.papers[0].authors, [])
     assert.match(report.papers[0].html, /<strong>摘要<\/strong>/)
     assert.doesNotMatch(report.papers[0].html, /<script|href="javascript:/)
     assert.match(report.introduction, /导读/)

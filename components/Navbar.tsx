@@ -26,6 +26,7 @@ export const navigationLinks = [
   { name: "番剧", href: "/anime" },
   { name: "杂谈", href: "/chatter" },
   { name: "笔记", href: "/blog" },
+  { name: "论文", href: "/papers" },
   { name: "友链", href: "/friends" },
   { name: "关于", href: "/about" },
 ]

@@ -7,6 +7,7 @@ tsconfig.tsbuildinfo
 .quartz-cache
 private/
 .sync/obsidian-sync-state.json
+.sync/zotero-sync-decisions.json
 .sync/tmp-*/
 .codex/
 /.worktrees/
