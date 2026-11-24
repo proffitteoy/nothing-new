@@ -46,12 +46,14 @@ const pagePreviews = [
   friendsPreview,
   aboutPreview,
 ]
-const pageEntries = navigationLinks.map((link, index) => ({
-  ...link,
-  id: link.href.slice(1),
-  icon: navigationIcons[index],
-  preview: pagePreviews[index],
-}))
+const pageEntries = navigationLinks
+  .filter((link) => link.href !== "/papers")
+  .map((link, index) => ({
+    ...link,
+    id: link.href.slice(1),
+    icon: navigationIcons[index],
+    preview: pagePreviews[index],
+  }))
 const rails = [
   { side: "left", entries: pageEntries.slice(0, 4) },
   {

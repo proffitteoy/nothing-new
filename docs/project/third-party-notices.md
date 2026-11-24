@@ -44,6 +44,15 @@ title: 第三方代码与授权说明
 - 本仓库使用位置：`quartz/`、`quartz.config.ts`、`components/notes/` 及 `lib/notes/` 内容渲染代码
 - MIT 文本：`docs/licenses/Quartz-MIT.txt`
 
+## MmzMing 文件夹关系图
+
+- 来源：[MmzMing/my-blog](https://github.com/MmzMing/my-blog)，经本站友链的[图谱页](https://tblog.mmzhiku.xyz/categories/)定位。
+- 固定版本：`524fd989bd332c7480033aef6983f8423ced63cc`，上游 `src/utils/graph/` 与图谱数据类型。
+- 授权：MIT；原许可保留 saicaca、CuteLeaf 署名，图谱实现归属 MmzMing。
+- 使用位置：`app/papers/graph/`，由 `PaperFolderGraph.tsx` 接入 Zotero 文件夹和已读论文。
+- 修改：移除 Astro／Swup 导航，接入本站论文预览与固定色板；适配真实文件夹层级、分支框选、标签字号及文字避让。不复制原站文章或图片。
+- 许可文本：`docs/licenses/MmzMing-Graph-MIT.txt`。
+
 ## Mineradio 音乐链路与历史粒子视觉
 
 - 来源：`XxHuberrr/Mineradio`
@@ -62,4 +71,4 @@ title: 第三方代码与授权说明
 - 当前使用位置：`components/ChatterBoard.tsx`；历史关于页活动热力图已在三章节重构中删除
 - 修改说明：杂谈页保留搜索与封面卡片的交互思路，并将卡片精简为封面和标题；历史活动热力图曾借鉴其布局表现。未复制上游个人内容与图片，退役实现的来源与授权记录继续保留。
 
-上述改编内容仅可用于非商业用途，使用与再发布时需保留原作者、上游链接、修改说明和 CC BY-NC 4.0 许可声明。
+本节 XHBlogs 改编内容仅可用于非商业用途，使用与再发布时需保留原作者、上游链接、修改说明和 CC BY-NC 4.0 许可声明。

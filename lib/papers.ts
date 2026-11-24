@@ -14,7 +14,14 @@ export type PaperReport = {
   date: string
   introduction: string
   conclusion: string
-  papers: { title: string; priority: string; url: string | null; html: string }[]
+  papers: {
+    title: string
+    priority: string
+    url: string | null
+    html: string
+    authors?: string[]
+    year?: string
+  }[]
 }
 
 const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath)
@@ -107,11 +114,24 @@ export async function compilePaperReports(payload: unknown): Promise<PaperReport
             visit({ type: "root", children: paper.children } as Root, "link", (node) => {
               if (!url && /^https:\/\/arxiv\.org\/abs\//.test(node.url)) url = node.url
             })
+            if (!url) {
+              visit({ type: "root", children: paper.children } as Root, "link", (node) => {
+                if (!url && /^https:\/\/(?:dx\.)?doi\.org\//.test(node.url)) url = node.url
+              })
+            }
             return {
               title: paper.title,
               priority: /阅读优先级[：:\s]*([^。；;\n]+)/.exec(text)?.[1]?.trim() ?? "",
               url,
               html: await render(paper.children),
+              authors:
+                /作者[：:]\s*([^。\n]+)/
+                  .exec(text)?.[1]
+                  ?.trim()
+                  .split(/[、；;]/)
+                  .map((author) => author.trim())
+                  .filter(Boolean) ?? [],
+              year: /首次提交[：:\s]*(\d{4})/.exec(text)?.[1] ?? "",
             }
           }),
         ),

@@ -528,6 +528,9 @@ async function buildArtifact(
       published: toIsoString(fileData.dates?.published),
     },
     tags: fileData.frontmatter?.tags ?? [],
+    paperRefs: [fileData.frontmatter?.paper_refs ?? []]
+      .flat()
+      .filter((ref): ref is string => typeof ref === "string"),
     toc: fileData.toc ?? [],
     backlinks: references.backlinks,
     links: references.links,

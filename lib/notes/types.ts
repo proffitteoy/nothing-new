@@ -42,6 +42,7 @@ export type NoteArtifact = {
     published?: string
   }
   tags: string[]
+  paperRefs?: string[]
   toc: NoteTocEntry[]
   backlinks: NoteReference[]
   links: NoteReference[]

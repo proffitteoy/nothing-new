@@ -72,6 +72,7 @@ async function loadConfig(configPath) {
     excludeFile,
     stateFile,
     reviewPatterns,
+    publicPdfFiles: (rawConfig.publicPdfFiles ?? []).map(toPosix),
     chatterRoots: normalizeRootPaths(rawConfig.chatterRoots ?? ["misc"]),
     defaultIgnores: normalizeGlobPatterns(
       rawConfig.defaultIgnores ?? [".obsidian/**", "**/.obsidian/**"],
@@ -539,9 +540,7 @@ async function readState(filePath) {
             ]),
           )
         : {},
-    protectedFiles: Array.isArray(state.protectedFiles)
-      ? state.protectedFiles.map(toPosix)
-      : [],
+    protectedFiles: Array.isArray(state.protectedFiles) ? state.protectedFiles.map(toPosix) : [],
   }
 }
 
@@ -609,6 +608,10 @@ function matchesRule(relativePath, entry) {
 
 async function registerDesiredFile(config, desiredFiles, relativePath, options = {}) {
   const normalized = toPosix(relativePath)
+  if (normalized.toLowerCase().endsWith(".pdf") && !config.publicPdfFiles.includes(normalized)) {
+    console.log(`[obsidian-sync] PDF 未获单独公开批准，跳过：${normalized}`)
+    return
+  }
   const sourcePath = path.resolve(config.sourceRoot, normalized)
   const targetPath = path.resolve(config.targetRoot, normalized)
 

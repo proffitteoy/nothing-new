@@ -1,6 +1,7 @@
 "use client"
 
 import Image, { type ImageProps } from "next/image"
+import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { ArrowLeft, ArrowUpRight, ChevronDown, X } from "lucide-react"
 import type { PaperReport } from "../lib/papers"
@@ -190,6 +191,9 @@ export default function PaperMonitor({
           <header className={styles.windowHeader}>
             <div>
               <h2 id="tda-issue-title">TDA 论文周报</h2>
+              <Link href="/papers" className={styles.source}>
+                浏览完整论文库 <ArrowUpRight size={14} aria-hidden />
+              </Link>
             </div>
             <button
               type="button"

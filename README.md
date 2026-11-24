@@ -31,6 +31,7 @@
 | 番剧 | [<code>/anime</code>](https://nothing-new.cn/anime)       | 从 Bangumi 同步收藏，并按观看状态与评分归档              |
 | 杂谈 | [<code>/chatter</code>](https://nothing-new.cn/chatter)   | 杂谈卡片与项目文件夹按最后修改时间混排展示               |
 | 笔记 | [<code>/blog</code>](https://nothing-new.cn/blog)         | Quartz 增强的目录、全文搜索、KaTeX、代码高亮与反向链接   |
+| 论文 | [<code>/papers</code>](https://nothing-new.cn/papers)     | Zotero 书目、阅读状态、公开笔记关联与 TDA 历期周报       |
 | 友链 | [<code>/friends</code>](https://nothing-new.cn/friends)   | 朋友站点与独立博客入口                                   |
 | 关于 | [<code>/about</code>](https://nothing-new.cn/about)       | 个人介绍、技术足迹与站点信息                             |
 
@@ -63,7 +64,7 @@
 - **桌面文字可读性**：清理重复标签、常驻操作教程和技术错误详情，逐组件改善字号与局部阅读面；文章、个人介绍、项目描述及素材保留原样。笔记目录的自动摘要复用构建后的公式渲染，显式作者摘要与旧产物保持兼容，见[文字与文案约定](docs/project/blue-theme.md#桌面文字与文案2026-11-16)。
 - **界面与场景**：不按时间、系统配色或历史缓存切换外观；首页默认用单一 WebGL2 合成器处理水面局部采样，减少动态或无 WebGL 时回退完整静态房间。当前约定见[全站配色规范](docs/project/blue-theme.md)，旧天体与显示开关仅保留[历史设计记录](docs/project/home-mode-panels.md)。
 - **导航与侧栏**：首页左右各四入口，六个页面入口支持点击文字或截图直接跳转，悬停展开当前页面预览；论文和联系保留点击固定，论文保留两层阅读。标签固定，预览向内展开；内页导航及手机圆盘见[导航视觉更新与验收](docs/project/navigation-renewal.md)。
-- **TDA 文献雷达**：首页保留周报封面入口，进入后可选期并展开论文；监控仓库的 Action 将完整周报推送至博客，无需每周重新部署。配置见 [TDA 论文周报](docs/project/tda-paper-monitor.md)。
+- **论文库与 TDA 文献雷达**：`/papers` 默认展示周报，已读论文按 Zotero 文件夹关系图与目录浏览，并在详情中展示关联公开笔记，支持搜索与历期阅读。图谱来源及索引流程见[论文系统](docs/project/paper-library.md)。首页保留周报封面，监控仓库继续动态推送，无需每周重新部署，配置见[周报上传说明](docs/project/tda-paper-monitor.md)。
 - **首页音乐控制**：播放、切歌和进度常驻下方，歌词位于控件上方。[接口、隔离预览与验证边界](docs/project/home-music-renewal.md)。
 - **音乐播放**：桌面首页显示底部控件或首次打开项目页耳机面板时加载歌单，不自动播放；加载后由根 Provider/audio 保留跨页状态，首次加载、空歌单及失败均有反馈，支持重试。
 - **同一房间的窗前与桌前视角**：桌面首页保留浅木观景窗与原有环境动态；窗户位于工作间后方，上滑后退到桌前并转身，看向同一张工作台，URL 切换保留场景。模型失败时保留静态图和可读项目目录，详见[室内后退转场](docs/project/projects-room.md#同一房间的窗前与桌前视角2026-11-24)。项目内容由本地数据维护，番剧页保留快照与 API 回退。
@@ -126,6 +127,9 @@ Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Tok
 | <code>npm run notes:build</code>         | 只生成笔记、搜索索引与静态资源             |
 | <code>npm run sync:obsidian:dry</code>   | 预览 Obsidian 同步，不写入文件             |
 | <code>npm run sync:obsidian:check</code> | 检查是否存在未同步变化                     |
+| <code>npm run sync:zotero</code>         | 同步获批 Collection 的公开书目与阅读标签   |
+| <code>npm run sync:zotero:dry</code>     | 预览论文同步，不写快照                     |
+| <code>npm run sync:zotero:check</code>   | 检查论文快照是否需要更新                   |
 | <code>npm run sync:obsidian</code>       | 审阅并同步获准公开的内容，同时补全杂谈封面 |
 | <code>npm run covers:check</code>        | 检查杂谈封面分配是否稳定                   |
 | <code>npm run images:dry</code>          | 盘点将同步到 Blob 的站点图片               |

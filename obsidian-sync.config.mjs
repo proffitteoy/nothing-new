@@ -4,13 +4,10 @@ export default {
   includeFile: ".sync/obsidian-sync.include.txt",
   excludeFile: ".sync/obsidian-sync.exclude.txt",
   stateFile: ".sync/obsidian-sync-state.json",
+  // PDFs need separate publication approval, even when their note is public.
+  publicPdfFiles: [],
   reviewPatterns: ["**/*.md"],
-  defaultIgnores: [
-    ".obsidian/**",
-    "**/.obsidian/**",
-    "笔记共享vault/**",
-    "**/笔记共享vault/**",
-  ],
+  defaultIgnores: [".obsidian/**", "**/.obsidian/**", "笔记共享vault/**", "**/笔记共享vault/**"],
   extraIncludes: [
     // 默认按字面路径处理；只有带 glob: 前缀时才按通配符处理。
     // "math/新文章.md",

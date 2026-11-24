@@ -110,10 +110,13 @@ glob: misc/private/**
 一篇已经批准发布的 Markdown 笔记，在同步时会自动带上它引用到的本地附件，例如：
 
 - `png/jpg/gif/svg/webp`
-- `pdf`
 - 其他带扩展名的本地文件
 
 这样你通常只需要对“笔记”做一次决定，不需要再为同一篇笔记里的图片逐个确认。
+
+PDF 默认不复制，即使被 include/glob 直接选中也会跳过。确认具备公开授权并决定发布后，将相对 Vault 根目录的精确路径加入 `obsidian-sync.config.mjs` 的 `publicPdfFiles`；仍须通过原有 include／笔记引用和 exclude 规则。此限制避免公开笔记意外带上传论文全文，不会自动扫描或删除历史非托管附件。
+
+已发布笔记可通过正文 Zotero／arXiv／DOI 链接或独立映射关联到 `/papers`，不需要迁移正文或补写笔记。完整规则见[论文库与 TDA 周报](./paper-library.md)。
 
 ## 删除行为
 

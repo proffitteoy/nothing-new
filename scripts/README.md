@@ -21,6 +21,7 @@
 - assign-chatter-covers.mjs：为 content/misc/ 杂谈分配并固定封面；正文有图片时使用第一张，否则从 public/chatter-covers/ 补充分配。
 - `sync-image-assets.mjs`：把站点头像、背景、杂谈封面与构建后的 Quartz 文章图片增量同步到私有 Vercel Blob。
 - `obsidian-sync.mjs`：把 Obsidian 源目录中的已批准内容同步到 `content/`。
+- `zotero-sync.mjs`：从获批 Zotero Collections 和启用的未分类入口读取书目、文件夹层级与阅读状态，原子更新 `data/paper-library.json`；`--dry-run`／`--check` 不写文件，`--review` 把逐篇决定写入本地 `.sync/zotero-sync-decisions.json`。不修改 Zotero、不复制 PDF、笔记或批注。配置和上线流程见[论文系统](../docs/project/paper-library.md)。
 - `../同步博客.bat`：Windows 双击入口，等价于在根目录运行 `npm.cmd run sync:obsidian`。
 - `../审阅未决笔记.bat`：Windows 双击入口，等价于在根目录运行 `npm.cmd run sync:obsidian:review`。
 - `../上传.bat`：旧的一键提交/推送入口，会执行 `git add .`、`git commit`、`git push origin main`，使用前先检查变更。

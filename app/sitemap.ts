@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/projects",
     "/anime",
     "/chatter",
+    "/papers",
     "/friends",
     "/about",
     ...manifest.folders.blog,
