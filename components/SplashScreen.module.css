@@ -1,0 +1,145 @@
+.opening {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #f7f9fb;
+  color: #30576b;
+  opacity: 1;
+  transition: opacity 750ms ease-in-out;
+}
+.opening[data-opening-mode="static"] {
+  transition-duration: 150ms;
+}
+:global(html[data-startup-phase="exiting"]) .opening {
+  opacity: 0;
+}
+.plate {
+  width: 90vw;
+  max-height: 68dvh;
+  overflow: visible;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+}
+.plate path {
+  vector-effect: non-scaling-stroke;
+}
+.ridge {
+  stroke-width: 1.25;
+  opacity: 0.82;
+}
+.fold {
+  stroke-width: 0.7;
+  opacity: 0.64;
+}
+.shore {
+  stroke-width: 0.95;
+  opacity: 0.7;
+}
+.water {
+  stroke-width: 0.6;
+  opacity: 0.32;
+}
+.reflection {
+  opacity: 0.34;
+}
+.colour {
+  stroke: none;
+}
+.signature {
+  position: absolute;
+  left: 7vw;
+  bottom: max(15dvh, 90px);
+  margin: 0;
+  font-family: "Songti SC", "SimSun", serif;
+  font-size: clamp(14px, 1.25vw, 19px);
+  letter-spacing: 0.2em;
+}
+.actions {
+  position: fixed;
+  inset-inline: 0;
+  bottom: max(30px, 5dvh);
+  z-index: 100001;
+  display: flex;
+  justify-content: center;
+  color: #36556a;
+}
+.actions button {
+  padding: 10px 14px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  background: #f7f9fbe6;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  cursor: pointer;
+}
+.actions button:focus-visible {
+  outline: 2px solid #30576b;
+  outline-offset: 4px;
+}
+.opening[data-opening-mode="animated"] .colour,
+.opening[data-opening-mode="animated"] .reflection {
+  opacity: 0;
+}
+.opening[data-opening-mode="animated"] .fold {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.opening[data-opening-mode="animated"][data-started] .plate {
+  animation: arrive 250ms ease-out both;
+}
+.opening[data-opening-mode="animated"][data-started] .fold {
+  animation: draw 600ms 250ms ease-in-out both;
+}
+.opening[data-opening-mode="animated"][data-started] .colour {
+  animation: colour 550ms 850ms ease-in-out both;
+}
+.opening[data-opening-mode="animated"][data-started] .reflection {
+  animation: reflect 550ms 850ms ease-out both;
+}
+@keyframes arrive {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes colour {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes reflect {
+  to {
+    opacity: 0.34;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .opening {
+    transition-duration: 150ms;
+  }
+  .opening .plate,
+  .opening .fold,
+  .opening .colour,
+  .opening .reflection {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+  .opening .colour {
+    opacity: 1;
+  }
+  .opening .reflection {
+    opacity: 0.34;
+  }
+}

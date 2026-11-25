@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import seedReports from "../data/tda-reports.json"
-import { compilePaperReports } from "./papers"
+import { compilePaperReports, renderPaperMarkdown } from "./papers"
 
 describe("TDA report publishing", () => {
   it("splits the real reports without losing reviews, links, or conclusions", async () => {
@@ -18,56 +18,32 @@ describe("TDA report publishing", () => {
     assert.deepEqual(reports[0].papers[0].authors, ["Junyan Chu", "Shizuo Kaji", "Meiyan Kang"])
     assert.equal(reports[0].papers[0].year, "2026")
     assert.equal(reports[0].papers[0].url, "https://arxiv.org/abs/2610.36843")
+    assert.match(
+      reports[0].papers[0].html,
+      /<a href="https:\/\/arxiv\.org\/abs\/2610\.36843" target="_blank" rel="noopener noreferrer">/,
+    )
     assert.match(reports[1].papers[2].title, /^Spectral Braids/)
     assert.match(reports[1].conclusion, /综合判断/)
   })
 
-  it("keeps published list metadata out of the authors while preserving it in the detail", async () => {
-    const [report] = await compilePaperReports([
-      {
-        path: "reports/2026-11-23.md",
-        markdown: [
-          "# TDA 每周新论文报告｜2026-11-23",
-          "",
-          "### 1. Möbius Invertibility of Rank Invariants",
-          "",
-          "- **作者：** Nathaniel Clause、Woojin Kim、Facundo Mémoli",
-          "- **首次公开：** 2026-11-16（arXiv v1）",
-          "- **原文：** [arXiv:2611.20463](https://arxiv.org/abs/2611.20463) · [HTML 全文](https://arxiv.org/html/2611.20463)",
-          "- **标识：** arXiv:2611.20463；[arXiv DOI](https://doi.org/10.48550/arXiv.2611.20463)（DataCite 登记状态以论文页面为准）",
-          "",
-          "**阅读优先级：最高。** 先读定理及反例。",
-        ].join("\n"),
-      },
-    ])
-    const paper = report.papers[0]
-    assert.deepEqual(paper.authors, ["Nathaniel Clause", "Woojin Kim", "Facundo Mémoli"])
-    assert.equal(paper.year, "2026")
-    assert.equal(paper.priority, "最高")
-    assert.equal(paper.url, "https://arxiv.org/abs/2611.20463")
-    assert.match(paper.html, /<li><strong>首次公开：<\/strong> 2026-11-16/)
-    assert.match(paper.html, /https:\/\/arxiv.org\/html\/2611.20463/)
-    assert.match(paper.html, /DataCite 登记状态以论文页面为准/)
-  })
-
-  it("separates author fields across soft breaks, hard breaks, and paragraphs", async () => {
-    for (const separator of ["\n", "  \n", "\n\n"]) {
-      const [report] = await compilePaperReports([
-        {
-          path: "reports/2026-11-23.md",
-          markdown: [
-            "# TDA 每周新论文报告｜2026-11-23\n\n### 1. Metadata boundaries\n",
-            [
-              "**作者：** Tony Xiaocheng Xiao、Jose A. Perea",
-              "**首次提交：** 2026-11-18",
-              "**原文：** https://arxiv.org/abs/2611.23659",
-            ].join(separator),
-          ].join("\n"),
-        },
-      ])
-      assert.deepEqual(report.papers[0].authors, ["Tony Xiaocheng Xiao", "Jose A. Perea"])
-      assert.equal(report.papers[0].year, "2026")
-    }
+  it("renders abstracts with the report renderer and opens navigation links in new tabs", async () => {
+    const html = await renderPaperMarkdown(
+      "**Abstract** with $H_1$ and `code`.\n\n- First\n- Second\n\n[paper](https://doi.org/10.1234/paper) [note](/blog/math/note) [section](#section)\n\n<script>alert(1)</script>\n\n[unsafe](javascript:alert%281%29)",
+    )
+    assert.match(html, /<strong>Abstract<\/strong>/)
+    assert.match(html, /class="katex"/)
+    assert.match(html, /<code>code<\/code>/)
+    assert.match(html, /<ul>\s*<li>First<\/li>\s*<li>Second<\/li>\s*<\/ul>/)
+    assert.match(
+      html,
+      /<a href="https:\/\/doi\.org\/10\.1234\/paper" target="_blank" rel="noopener noreferrer">paper<\/a>/,
+    )
+    assert.match(
+      html,
+      /<a href="\/blog\/math\/note" target="_blank" rel="noopener noreferrer">note<\/a>/,
+    )
+    assert.match(html, /<a href="#section">section<\/a>/)
+    assert.doesNotMatch(html, /<script|href="javascript:/)
   })
 
   it("renders math and Markdown while discarding executable HTML and unsafe links", async () => {

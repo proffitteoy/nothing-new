@@ -158,6 +158,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
     let model: THREE.Group | null = null
     let disposed = false
     let ready = false
+    let reportedReady = false
     let frame = 0
     let lastFrame = 0
     let animateUntil = 0
@@ -418,6 +419,10 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       if (model && ready) {
         model.updateMatrixWorld(true)
         renderer.render(scene, camera)
+        if (!reportedReady) {
+          reportedReady = true
+          latest.current.onReady()
+        }
         updateLabels()
         // Standard DOM diagnostics; no global debug API or persistent counters.
         canvas!.dataset.triangles = String(renderer.info.render.triangles)
@@ -662,10 +667,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
         if (disposed) return
         ready = true
         update()
-        // Keep the poster until the first actual draw, not merely the download.
-        requestAnimationFrame(() => {
-          if (!disposed) latest.current.onReady()
-        })
+        // The render callback reports readiness after its first successful draw.
       })
       .catch((error: unknown) => {
         if (!disposed) {

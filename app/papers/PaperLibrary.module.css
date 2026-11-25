@@ -22,15 +22,17 @@ main.page {
   content: "";
   position: absolute;
   inset: -24px;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
-  background: linear-gradient(90deg, rgb(255 255 255 / 26%) 60%, rgb(255 255 255 / 36%));
+  background: rgb(255 255 255 / 75%);
   mask-image:
     linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent),
     linear-gradient(180deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
   mask-composite: intersect;
 }
 .catalogue {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -567,13 +569,6 @@ main.page {
   font-family: var(--paper-serif);
   font-size: 21px;
   font-weight: 500;
-}
-.abstract {
-  white-space: pre-line;
-  font-family: var(--paper-serif);
-  font-size: 16px;
-  line-height: 1.85;
-  overflow-wrap: anywhere;
 }
 .note + .note {
   margin-top: 20px;

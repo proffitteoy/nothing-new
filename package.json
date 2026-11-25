@@ -37,6 +37,7 @@
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
     "test": "tsx --test",
+    "test:opening": "node scripts/opening-preview.mjs",
     "test:navigation": "python scripts/navigation-preview.py --stage after --check-only",
     "test:papers": "python scripts/paper-monitor-preview.py --stage after --check-only",
     "test:friends": "python scripts/friends-preview.py",
