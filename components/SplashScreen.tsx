@@ -5,6 +5,7 @@ import { getImageProps } from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { navigationLinks } from "./Navbar"
 import { loadAnimeSnapshot } from "../lib/anime/client"
+import { loadPaperReports } from "../lib/paper-reports-client"
 import { preloadRoomAssets } from "../app/projects/room-preload"
 import { isMobileHomeClient } from "../lib/home-scene"
 import landscape from "../public/home-window/convict-lake-day-study.webp"
@@ -164,7 +165,13 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       cover.srcset = props.srcSet ?? ""
       cover.src = props.src
       try {
-        await Promise.allSettled([routes, preloadRoomAssets(), loadAnimeSnapshot(), cover.decode()])
+        await Promise.allSettled([
+          routes,
+          preloadRoomAssets(),
+          loadAnimeSnapshot(),
+          loadPaperReports(),
+          cover.decode(),
+        ])
       } finally {
         noteStyle.remove()
       }
@@ -199,10 +206,8 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       !matchMedia("(prefers-reduced-motion: reduce)").matches &&
       !constrained
 
-    const preloads = Promise.allSettled([
-      warm(),
-      Promise.race([critical(), sleep(4000, signal)]),
-    ]).catch(() => {})
+    const entryReady = Promise.race([critical(), sleep(4000, signal)])
+    const preloads = Promise.allSettled([warm(), entryReady])
 
     if (homeEntry) {
       queueMicrotask(() => {
@@ -251,7 +256,10 @@ export default function SplashScreen({ blogHref }: { blogHref: string }) {
       })
       // Non-home and accessibility fallbacks stay short; preload work may
       // continue without blocking the site.
-      void Promise.race([preloads, sleep(2500, signal)])
+      void Promise.race([
+        entryPath.current === "/papers" ? entryReady : preloads,
+        sleep(2500, signal),
+      ])
         .then(() => {
           if (!signal.aborted) finish()
         })

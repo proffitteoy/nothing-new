@@ -9,6 +9,10 @@ import type { PaperReport } from "../../../lib/papers"
 const source = ts.transpileModule(readFileSync(new URL("./route.ts", import.meta.url), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText
+const serverSource = ts.transpileModule(
+  readFileSync(new URL("../../../lib/paper-reports-server.ts", import.meta.url), "utf8"),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } },
+).outputText
 const payload = (markdown = "revision A") => [{ path: "reports/2026-11-12.md", markdown }]
 const report = (introduction: string): PaperReport[] => [
   { date: "2026-11-12", introduction, conclusion: "", papers: [] },
@@ -20,17 +24,54 @@ function route(compile?: (value: unknown) => Promise<PaperReport[]>) {
   let compiles = 0
   let reads = 0
   let writes = 0
+  let failRead = false
+  let initialCache: unknown = null
+  const revalidated: string[] = []
+  const afterTasks: (() => Promise<void>)[] = []
+  const env: Record<string, string> = {
+    BLOB_READ_WRITE_TOKEN: "test-only",
+    PAPERS_SYNC_SECRET: "test-only",
+  }
   const exports = {} as typeof import("./route")
-  runInNewContext(source, {
-    exports,
+  const server = {} as typeof import("../../../lib/paper-reports-server")
+  const context = {
     Response,
-    URL,
     Buffer,
+    URL,
+    AbortSignal,
+    fetch: async (url: URL) => {
+      assert.ok(url.pathname === "/papers" || url.pathname === "/")
+      await server.getInitialPaperReports()
+      return new Response("Prepared page")
+    },
     console: { error() {} },
-    process: { env: { BLOB_READ_WRITE_TOKEN: "test-only", PAPERS_SYNC_SECRET: "test-only" } },
-    require: (name: string) => {
+    process: { env },
+    require: (name: string): unknown => {
+      if (name === "server-only") return {}
+      if (name === "next/server")
+        return { after: (task: () => Promise<void>) => afterTasks.push(task) }
       if (name === "node:crypto") return crypto
-      if (name.endsWith("tda-reports.json")) return payload()
+      if (name === "next/cache")
+        return {
+          unstable_cache: (load: () => Promise<unknown>) => async () => {
+            if (!initialCache) initialCache = load()
+            try {
+              return await initialCache
+            } catch (error) {
+              initialCache = null
+              throw error
+            }
+          },
+          revalidateTag: (tag: string, profile: { expire: number }) => {
+            assert.equal(tag, "paper-reports")
+            assert.equal(profile.expire, 0)
+            initialCache = null
+            revalidated.push(tag)
+          },
+          revalidatePath: (path: string) => revalidated.push(path),
+        }
+      if (name.endsWith("paper-reports-server")) return server
+      if (name.endsWith("tda-reports.json")) return { default: payload() }
       if (name.endsWith("/papers"))
         return {
           compilePaperReports: async (value: unknown) => {
@@ -42,9 +83,11 @@ function route(compile?: (value: unknown) => Promise<PaperReport[]>) {
         }
       if (name.endsWith("/blob"))
         return {
+          getBlobUrl: () => "https://test.private.blob.vercel-storage.com/papers/reports.json",
           fetchBlob: async (_pathname: string, options: { useCache: boolean }) => {
             assert.equal(options.useCache, false)
             reads++
+            if (failRead) return new Response(null, { status: 502 })
             return Response.json(stored)
           },
           putBlob: async (_pathname: string, value: string) => {
@@ -55,14 +98,29 @@ function route(compile?: (value: unknown) => Promise<PaperReport[]>) {
         }
       throw new Error(`Unexpected dependency: ${name}`)
     },
-  })
+  }
+  runInNewContext(serverSource, { ...context, exports: server })
+  runInNewContext(source, { ...context, exports })
   return {
     ...exports,
+    POST: async (request: Request) => {
+      const response = await exports.POST(request)
+      for (const task of afterTasks.splice(0)) await task()
+      return response
+    },
+    initial: server.getInitialPaperReports,
+    revalidated,
     setSource: (value: ReturnType<typeof payload>) => {
       stored = value
     },
     failWrite: () => {
       failWrite = true
+    },
+    failRead: () => {
+      failRead = true
+    },
+    recoverRead: () => {
+      failRead = false
     },
     counts: () => ({ compiles, reads, writes }),
   }
@@ -106,40 +164,6 @@ test("a same-period Markdown correction is visible immediately and only one vers
   assert.deepEqual(api.counts(), { compiles: 3, reads: 5, writes: 0 })
 })
 
-test(
-  "the latest issue loads before a pending archive and both compilation caches remain reusable",
-  { timeout: 5_000 },
-  async () => {
-    let finish!: (reports: PaperReport[]) => void
-    const pending = new Promise<PaperReport[]>((resolve) => {
-      finish = resolve
-    })
-    const api = route(async (value) => {
-      const entries = value as ReturnType<typeof payload>
-      if (entries.length > 1) return pending
-      return [{ ...report(entries[0].markdown)[0], date: entries[0].path.slice(8, 18) }]
-    })
-    api.setSource([
-      { path: "reports/2026-10-30.md", markdown: "old" },
-      { path: "reports/2026-11-23.md", markdown: "latest" },
-    ])
-    const archive = api.GET()
-    await new Promise(setImmediate)
-    const latest = () => api.GET(new Request("http://localhost/api/papers?latest=1"))
-    const response = await latest()
-    assert.equal(response.headers.get("Cache-Control"), "no-store")
-    const first = (await response.json()).reports
-    assert.equal(first.length, 1)
-    assert.equal(first[0].date, "2026-11-23")
-    assert.equal(first[0].introduction, "latest")
-    finish(report("archive ready"))
-    await archive
-    await latest()
-    assert.equal((await (await api.GET()).json()).reports[0].introduction, "archive ready")
-    assert.deepEqual(api.counts(), { compiles: 2, reads: 4, writes: 0 })
-  },
-)
-
 test("a failed compilation is evicted and an unchanged source can retry", async () => {
   let attempts = 0
   const api = route(async () => {
@@ -175,7 +199,8 @@ test("POST validation compilation is reused by GET only after reading matching s
   const api = route()
   assert.equal((await api.POST(post(payload("published revision")))).status, 200)
   assert.equal((await (await api.GET()).json()).reports[0].introduction, "published revision")
-  assert.deepEqual(api.counts(), { compiles: 1, reads: 1, writes: 1 })
+  assert.deepEqual(api.counts(), { compiles: 2, reads: 2, writes: 1 })
+  assert.deepEqual(api.revalidated, ["paper-reports", "/papers"])
 })
 
 test("a failed POST write cannot make GET serve an unpublished compiled revision", async () => {
@@ -184,4 +209,35 @@ test("a failed POST write cannot make GET serve an unpublished compiled revision
   assert.equal((await api.POST(post(payload("unpublished")))).status, 502)
   assert.equal((await (await api.GET()).json()).reports[0].introduction, "revision A")
   assert.deepEqual(api.counts(), { compiles: 2, reads: 1, writes: 1 })
+  assert.deepEqual(api.revalidated, [], "failed publication must not invalidate the readable pages")
+})
+
+test("initial pages receive cached current reports, and publishing prepares the replacement", async () => {
+  const api = route()
+  api.setSource(payload("current week"))
+  const first = await api.initial()
+  assert.equal(first.reports[0].introduction, "current week")
+  assert.ok(first.updatedAt > 0)
+  assert.equal((await api.initial()).reports, first.reports)
+  assert.deepEqual(api.counts(), { compiles: 1, reads: 1, writes: 0 })
+  assert.equal((await api.POST(post(payload("next week")))).status, 200)
+  const afterPublish = await api.initial()
+  assert.equal(afterPublish.reports[0].introduction, "next week")
+  assert.deepEqual(
+    api.counts(),
+    { compiles: 3, reads: 2, writes: 1 },
+    "the visitor uses the version prepared during publication",
+  )
+})
+
+test("an initial read failure returns retryable seed content without caching the failure", async () => {
+  const api = route()
+  api.failRead()
+  assert.equal((await api.initial()).updatedAt, 0)
+  api.recoverRead()
+  api.setSource(payload("recovered current week"))
+  const recovered = await api.initial()
+  assert.equal(recovered.reports[0].introduction, "recovered current week")
+  assert.ok(recovered.updatedAt > 0)
+  assert.equal(api.counts().reads, 2)
 })

@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import PaperLibrary from "./PaperLibrary"
 import snapshot from "@/data/paper-library.json"
 import noteLinks from "@/data/paper-note-links.json"
-import seedReports from "@/data/tda-reports.json"
-import { compilePaperReports, renderPaperMarkdown } from "@/lib/papers"
+import { renderPaperMarkdown } from "@/lib/papers"
+import { getInitialPaperReports } from "@/lib/paper-reports-server"
 import { publicPaperNote, type ZoteroPaper } from "@/lib/paper-library"
 import { getSectionNotes } from "@/lib/notes/server"
 import { siteConfig } from "@/siteConfig"
@@ -14,9 +14,11 @@ export const metadata: Metadata = {
   alternates: { canonical: "/papers" },
 }
 
+export const revalidate = 60
+
 export default async function PapersPage() {
-  const [reports, blog, chatter, papers] = await Promise.all([
-    compilePaperReports(seedReports),
+  const [initial, blog, chatter, papers] = await Promise.all([
+    getInitialPaperReports(),
     getSectionNotes("blog"),
     getSectionNotes("chatter"),
     Promise.all(
@@ -34,7 +36,8 @@ export default async function PapersPage() {
     <PaperLibrary
       papers={papers as ZoteroPaper[]}
       collections={snapshot.collections}
-      initialReports={reports}
+      initialReports={initial.reports}
+      initialReportsUpdatedAt={initial.updatedAt}
       notes={linkedNotes}
       noteLinks={noteLinks}
     />
