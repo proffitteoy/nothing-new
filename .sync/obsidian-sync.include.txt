@@ -186,3 +186,13 @@ reverse/Reversing-x64Elf-100.md
 misc/什么是好的研究.md
 misc/我们应该对未来说些什么？.md
 misc/math4ai.md
+paper/A Classification of Self-Maps of Generalized Grassmannians.md
+paper/An Almost Flat Spin Manifold Bounds.md
+paper/Linear Circle Quotients of Products of Odd-Dimensional Spheres Classification and Geometric Applications.md
+paper/Negatively curved bundles in the Igusa stable range.md
+paper/On negatively curved bundles with hyperbolic fibers outside the Igusa stable range.md
+paper/REDUCED CHARACTERISTIC NUMBER CRITERIA FOR Tk- AND  (Z2)k-EQUIVARIANT BORDISMS.md
+paper/Riemannian manifolds with entire Grauert tube are rationally elliptic.md
+paper/Some Questions Related to Free-by-Cyclic Groups and Tubular Groups.md
+paper/Topological Obstructions to Geometric Positivity and Negativity on Calabi-Yau Manifolds.md
+paper/Topology-enhanced machine learning for speech signal processing.md

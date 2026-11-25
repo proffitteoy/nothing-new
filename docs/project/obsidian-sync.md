@@ -115,6 +115,10 @@ glob: misc/private/**
 
 这样你通常只需要对“笔记”做一次决定，不需要再为同一篇笔记里的图片逐个确认。
 
+## paper 目录的现有阅读笔记
+
+2026-11-25，已将 `E:/math/paper/` 中现有的 10 篇阅读笔记逐篇加入 `.sync/obsidian-sync.include.txt`，并在 `data/paper-note-links.json` 用 Zotero 条目 ID 建立显式对应。源笔记正文、文件名和 Frontmatter 保持原样；其中 `An Almost Flat Spin Manifold Bounds.md` 的正文讨论 Spinᶜ，对应 Zotero 的 `An Almost Flat Spinᶜ Manifold Bounds`。这些笔记沿用公开目录规则生成 `/chatter/paper/...`，并在对应论文详情中展示。后续修改源笔记后，运行 `npm.cmd run sync:obsidian`，再构建／部署即可更新正文。新笔记仍先经过现有发布审阅，并通过正文文献链接或独立映射关联；本次清单没有自动批准整个目录的未来文件。
+
 ## 删除行为
 
 同步脚本会记录“哪些文件由同步系统接管过”。
