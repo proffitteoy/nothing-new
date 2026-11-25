@@ -11,6 +11,7 @@ export type ZoteroPaper = {
   arxiv: string | null
   url: string | null
   abstract: string
+  abstractHtml?: string
   collections: { id: string; name: string; parentId?: string | null }[]
   readingStatus: "read" | "reading" | null
   updatedAt: string

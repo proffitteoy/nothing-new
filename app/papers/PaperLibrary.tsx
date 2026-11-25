@@ -138,6 +138,10 @@ export default function PaperLibrary({
     if (!selected) return
     const element = dialog.current
     element?.showModal()
+    element?.querySelectorAll<HTMLAnchorElement>('a[href]:not([href^="#"])').forEach((link) => {
+      link.target = "_blank"
+      link.rel = "noopener noreferrer"
+    })
     const roots = [document.body, document.getElementById("app-scroll-root")].filter(
       (item): item is HTMLElement => !!item,
     )
@@ -378,7 +382,7 @@ export default function PaperLibrary({
                     className={reading.source}
                     href={selected.paper.url}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   >
                     阅读原文 <ArrowUpRight size={14} aria-hidden />
                   </a>
@@ -386,7 +390,14 @@ export default function PaperLibrary({
                 {selected.paper.abstract && (
                   <section className={styles.previewSection}>
                     <h3>摘要</h3>
-                    <p className={styles.abstract}>{selected.paper.abstract}</p>
+                    {selected.paper.abstractHtml ? (
+                      <div
+                        className={reading.prose}
+                        dangerouslySetInnerHTML={{ __html: selected.paper.abstractHtml }}
+                      />
+                    ) : (
+                      <p className={reading.prose}>{selected.paper.abstract}</p>
+                    )}
                   </section>
                 )}
                 {selected.paper.notes.length > 0 && (
@@ -394,7 +405,11 @@ export default function PaperLibrary({
                     <h3>个人阅读笔记</h3>
                     {selected.paper.notes.map((note) => (
                       <div key={note.route} className={styles.note}>
-                        <Link href={encodeURI(note.route)} onClick={close}>
+                        <Link
+                          href={encodeURI(note.route)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           {note.title}
                           <ArrowUpRight size={14} aria-hidden />
                         </Link>
