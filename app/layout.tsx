@@ -33,7 +33,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             __html: `
               html.splash-seen [data-startup-overlay] { display: none; }
               html[data-startup-entry="page"] [data-startup-loading] { display: none; }
-              html:not(.splash-seen) [data-site-ui] { opacity: 0; visibility: hidden; pointer-events: none; }
+              html:not(.splash-seen):not([data-startup-phase="exiting"]) [data-site-ui] { opacity: 0; visibility: hidden; pointer-events: none; }
+              html[data-startup-phase="exiting"] [data-site-ui] { pointer-events: none; }
             `,
           }}
         />
@@ -44,8 +45,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               // Decide before hydration so subpage refreshes never show the home opening.
               document.documentElement.dataset.startupEntry = location.pathname === '/' ? 'home' : 'page';
               document.documentElement.dataset.startupPhase = location.pathname === '/' ? 'loading' : 'preparing';
-              // Global 22s fail-open if hydration or iframe loading fails. Alpha completion reveals immediately.
-              window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 22000);
+              // Last-resort fail-open if hydration or startup fails, including an interrupted crossfade.
+              window.setTimeout(function () { if (document.documentElement.classList.contains('splash-seen')) return; document.querySelectorAll('[data-startup-inert]').forEach(function (element) { element.inert = false; element.removeAttribute('data-startup-inert'); }); document.documentElement.classList.add('splash-seen'); document.documentElement.dataset.startupPhase = 'ready'; window.dispatchEvent(new Event('site-startup-phase')); }, 22000);
             `,
           }}
         />

@@ -60,3 +60,20 @@ npm run images:check
 ## 首页动态回归
 
 生产预览运行后，用 `python scripts/home-scene-preview.py --mode coupled-window --url http://127.0.0.1:3196 --output .sync/tmp-coupled-window` 检查实际室内/湖水合成、零响应与前后帧、预览不遮入口、指针、论文阅读、唯一音乐和静态退化。默认模式为 `coupled-window`；旧静态/光雾模式仅为历史实验。依赖 Playwright、Pillow 和已安装 Chrome；输出目录会写截图、视频和 JSON，音乐/周报是本地夹具，不发布夹具，也不验证外部服务可用性。当前验证边界见 [首页说明](../docs/project/home-scene.md)。
+
+## 首页开场验收
+
+`opening-preview.mjs` 检查当前山湖图版的真实播放与交接：四种桌面尺寸、冷／热缓存、慢网、图片延迟／失败／重试、无 WebGL、跳过、减少动态、Save-Data／2G、SPA 取消与返回、手机分流、无 JavaScript。只写 `--output` 下的截图、WebM 和 JSON，不修改站点内容或线上状态；默认目录 `.sync/tmp-opening-rewrite/` 已忽略。音乐、番剧和论文 API 使用本地空响应，真实首页素材与模型照常加载。
+
+需要 Node 22、Playwright 和本机 Chrome；Playwright 是可选验收工具，不加入生产依赖。已有工具运行时可将 `PLAYWRIGHT_MODULE` 设为其 ESM 入口的绝对路径或 file URL。也可以安装到本地忽略目录：
+
+```powershell
+npm.cmd install --prefix .sync/tmp-opening-tools --no-save playwright
+$env:PLAYWRIGHT_MODULE = (Resolve-Path .sync/tmp-opening-tools/node_modules/playwright/index.mjs).Path
+$env:PLAYWRIGHT_BROWSERS_PATH = (Resolve-Path .sync/tmp-opening-tools).Path
+node .sync/tmp-opening-tools/node_modules/playwright/cli.js install ffmpeg
+# 另一个终端运行 npm run start -- --port 3178 后：
+npm.cmd run test:opening -- --url http://127.0.0.1:3178
+```
+
+`--browser` 可指定 Chrome 可执行文件；`--output` 指定证据目录；`--help` 查看参数。报告同时保留首帧、开始退场、可交互时刻、帧间隔与长任务，不能把 2.4 秒展示预算等同于真实启动总耗时，或把帧间隔分位数等同于全程无掉帧。生产首屏就绪的定义见 [全站启动](../docs/project/site-startup.md)。
