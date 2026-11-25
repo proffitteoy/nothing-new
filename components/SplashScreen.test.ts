@@ -140,6 +140,8 @@ async function startup(
       if (name === "next/image") return { getImageProps: () => ({ props: {} }) }
       if (name.endsWith("Navbar")) return { navigationLinks: [] }
       if (name.endsWith("home-scene")) return { isMobileHomeClient: () => !!options.mobile }
+      if (name.endsWith("paper-reports-client"))
+        return { loadPaperReports: () => new Promise(() => {}) }
       if (name.endsWith("anime/client")) return { loadAnimeSnapshot: () => new Promise(() => {}) }
       if (name.endsWith("room-preload")) return { preloadRoomAssets: () => new Promise(() => {}) }
       if (name.endsWith(".webp")) return { __esModule: true, default: { src: "/lake.webp" } }
@@ -594,4 +596,11 @@ test("completed Alpha mesh covers the guarded viewBox including all four borders
       )
     }
   }
+})
+
+test("papers reveal while unrelated resource preloads remain pending", async () => {
+  const h = await startup({ path: "/papers" })
+  await h.advance(0)
+  assert.equal(h.dataset.startupPhase, "ready")
+  h.cleanup()
 })

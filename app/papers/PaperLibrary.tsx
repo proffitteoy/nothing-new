@@ -10,6 +10,7 @@ import {
   type ZoteroPaper,
 } from "@/lib/paper-library"
 import type { PaperReport } from "@/lib/papers"
+import { getCachedPaperReports, loadPaperReports } from "@/lib/paper-reports-client"
 import reading from "@/components/PaperMonitor.module.css"
 import styles from "./PaperLibrary.module.css"
 import PaperFolderGraph from "./PaperFolderGraph"
@@ -37,21 +38,23 @@ export default function PaperLibrary({
   papers,
   collections,
   initialReports,
+  initialReportsUpdatedAt = 0,
   notes,
   noteLinks,
 }: {
   papers: ZoteroPaper[]
   collections: ZoteroPaper["collections"]
   initialReports: PaperReport[]
+  initialReportsUpdatedAt?: number
   notes: PublicPaperNote[]
   noteLinks: Record<string, string[]>
 }) {
-  const [reports, setReports] = useState<PaperReport[]>([])
-  const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState("正在加载最新周报…")
+  const [reports, setReports] = useState(initialReports)
+  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState("")
   const [tab, setTab] = useState("weekly")
   const [query, setQuery] = useState("")
-  const [date, setDate] = useState("")
+  const [date, setDate] = useState(initialReports[0]?.date ?? "")
   const [limit, setLimit] = useState(30)
   // Freeze the preview and its report versions until it closes, even during a refresh.
   const [selected, setSelected] = useState<{
@@ -97,42 +100,42 @@ export default function PaperLibrary({
     )
 
   useEffect(() => {
-    const controller = new AbortController()
-    const load = async (url: string) => {
-      const response = await fetch(url, { cache: "no-store", signal: controller.signal })
-      if (!response.ok) throw new Error("Reports unavailable")
-      const data = (await response.json()) as { reports: PaperReport[] }
-      controller.signal.throwIfAborted()
-      if (!data.reports?.length) throw new Error("No reports")
-      setReports(data.reports)
+    let subscribed = true
+    const applyReports = (nextReports: PaperReport[]) => {
+      if (!subscribed) return
+      setReports(nextReports)
       setDate((current) =>
-        chosenDate.current && data.reports.some((report) => report.date === current)
+        chosenDate.current && nextReports.some((report) => report.date === current)
           ? current
-          : data.reports[0].date,
+          : nextReports[0].date,
       )
     }
+    const latest = loadPaperReports(initialReports, initialReportsUpdatedAt)
     void (async () => {
       try {
-        await load("/api/papers?latest=1")
+        const cached = getCachedPaperReports()
+        if (cached) applyReports(cached)
+        applyReports(await latest)
+        if (!subscribed) return
         setLoading(false)
         setStatus("")
       } catch {
-        if (!controller.signal.aborted) {
-          setReports(initialReports)
-          setDate(initialReports[0]?.date ?? "")
+        if (subscribed) {
           setLoading(false)
           setStatus("周报更新暂不可用，正在展示已保存的内容。")
         }
         return
       }
       try {
-        await load("/api/papers")
+        applyReports(await loadPaperReports(undefined, 0, "all"))
       } catch {
-        if (!controller.signal.aborted) setStatus("往期周报暂不可用，正在展示最新一期。")
+        if (subscribed) setStatus("往期周报暂不可用，正在展示最新一期。")
       }
     })()
-    return () => controller.abort()
-  }, [initialReports])
+    return () => {
+      subscribed = false
+    }
+  }, [initialReports, initialReportsUpdatedAt])
 
   useEffect(() => {
     if (!selected) return
