@@ -191,7 +191,12 @@ export default function PaperMonitor({
           <header className={styles.windowHeader}>
             <div>
               <h2 id="tda-issue-title">TDA 论文周报</h2>
-              <Link href="/papers" className={styles.source}>
+              <Link
+                href="/papers"
+                className={styles.source}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 浏览完整论文库 <ArrowUpRight size={14} aria-hidden />
               </Link>
             </div>
@@ -322,7 +327,12 @@ export default function PaperMonitor({
                 </h2>
                 <div className={styles.prose} dangerouslySetInnerHTML={{ __html: paper.html }} />
                 {paper.url && (
-                  <a className={styles.source} href={paper.url} target="_blank" rel="noreferrer">
+                  <a
+                    className={styles.source}
+                    href={paper.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     阅读原文 <ArrowUpRight size={14} aria-hidden />
                   </a>
                 )}

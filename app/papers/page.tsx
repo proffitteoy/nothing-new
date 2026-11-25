@@ -3,7 +3,7 @@ import PaperLibrary from "./PaperLibrary"
 import snapshot from "@/data/paper-library.json"
 import noteLinks from "@/data/paper-note-links.json"
 import seedReports from "@/data/tda-reports.json"
-import { compilePaperReports } from "@/lib/papers"
+import { compilePaperReports, renderPaperMarkdown } from "@/lib/papers"
 import { publicPaperNote, type ZoteroPaper } from "@/lib/paper-library"
 import { getSectionNotes } from "@/lib/notes/server"
 import { siteConfig } from "@/siteConfig"
@@ -15,10 +15,16 @@ export const metadata: Metadata = {
 }
 
 export default async function PapersPage() {
-  const [reports, blog, chatter] = await Promise.all([
+  const [reports, blog, chatter, papers] = await Promise.all([
     compilePaperReports(seedReports),
     getSectionNotes("blog"),
     getSectionNotes("chatter"),
+    Promise.all(
+      snapshot.papers.map(async (paper) => ({
+        ...paper,
+        abstractHtml: paper.abstract ? await renderPaperMarkdown(paper.abstract) : "",
+      })),
+    ),
   ])
   const mappedPaths = new Set(Object.values(noteLinks as Record<string, string[]>).flat())
   const linkedNotes = [...blog, ...chatter]
@@ -26,7 +32,7 @@ export default async function PapersPage() {
     .filter((note) => note.refs.length > 0 || mappedPaths.has(note.sourcePath))
   return (
     <PaperLibrary
-      papers={snapshot.papers as ZoteroPaper[]}
+      papers={papers as ZoteroPaper[]}
       collections={snapshot.collections}
       initialReports={reports}
       notes={linkedNotes}

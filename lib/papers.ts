@@ -40,6 +40,11 @@ const renderer = unified()
           delete node.properties[key]
         }
       }
+      const href = node.properties.href
+      if (node.tagName === "a" && typeof href === "string" && !href.startsWith("#")) {
+        node.properties.target = "_blank"
+        node.properties.rel = ["noopener", "noreferrer"]
+      }
     })
   })
   .use(rehypeKatex)
@@ -48,6 +53,10 @@ const renderer = unified()
 async function render(children: RootContent[]) {
   const html = await renderer.run({ type: "root", children } as Root)
   return renderer.stringify(html)
+}
+
+export async function renderPaperMarkdown(markdown: string): Promise<string> {
+  return render(parser.parse(markdown).children)
 }
 
 export async function compilePaperReports(payload: unknown): Promise<PaperReport[]> {

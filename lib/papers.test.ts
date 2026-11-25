@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import seedReports from "../data/tda-reports.json"
-import { compilePaperReports } from "./papers"
+import { compilePaperReports, renderPaperMarkdown } from "./papers"
 
 describe("TDA report publishing", () => {
   it("splits the real reports without losing reviews, links, or conclusions", async () => {
@@ -18,8 +18,32 @@ describe("TDA report publishing", () => {
     assert.deepEqual(reports[0].papers[0].authors, ["Junyan Chu", "Shizuo Kaji", "Meiyan Kang"])
     assert.equal(reports[0].papers[0].year, "2026")
     assert.equal(reports[0].papers[0].url, "https://arxiv.org/abs/2610.36843")
+    assert.match(
+      reports[0].papers[0].html,
+      /<a href="https:\/\/arxiv\.org\/abs\/2610\.36843" target="_blank" rel="noopener noreferrer">/,
+    )
     assert.match(reports[1].papers[2].title, /^Spectral Braids/)
     assert.match(reports[1].conclusion, /综合判断/)
+  })
+
+  it("renders abstracts with the report renderer and opens navigation links in new tabs", async () => {
+    const html = await renderPaperMarkdown(
+      "**Abstract** with $H_1$ and `code`.\n\n- First\n- Second\n\n[paper](https://doi.org/10.1234/paper) [note](/blog/math/note) [section](#section)\n\n<script>alert(1)</script>\n\n[unsafe](javascript:alert%281%29)",
+    )
+    assert.match(html, /<strong>Abstract<\/strong>/)
+    assert.match(html, /class="katex"/)
+    assert.match(html, /<code>code<\/code>/)
+    assert.match(html, /<ul>\s*<li>First<\/li>\s*<li>Second<\/li>\s*<\/ul>/)
+    assert.match(
+      html,
+      /<a href="https:\/\/doi\.org\/10\.1234\/paper" target="_blank" rel="noopener noreferrer">paper<\/a>/,
+    )
+    assert.match(
+      html,
+      /<a href="\/blog\/math\/note" target="_blank" rel="noopener noreferrer">note<\/a>/,
+    )
+    assert.match(html, /<a href="#section">section<\/a>/)
+    assert.doesNotMatch(html, /<script|href="javascript:/)
   })
 
   it("renders math and Markdown while discarding executable HTML and unsafe links", async () => {

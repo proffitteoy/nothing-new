@@ -568,13 +568,6 @@ main.page {
   font-size: 21px;
   font-weight: 500;
 }
-.abstract {
-  white-space: pre-line;
-  font-family: var(--paper-serif);
-  font-size: 16px;
-  line-height: 1.85;
-  overflow-wrap: anywhere;
-}
 .note + .note {
   margin-top: 20px;
 }
