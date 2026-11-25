@@ -110,6 +110,15 @@ export async function compilePaperReports(payload: unknown): Promise<PaperReport
         papers: await Promise.all(
           papers.map(async (paper) => {
             const text = paper.children.map((node) => toString(node)).join("\n")
+            const metadata: string[] = []
+            visit({ type: "root", children: paper.children } as Root, "paragraph", (node) => {
+              metadata.push(
+                node.children
+                  .map((child) => (child.type === "break" ? "\n" : toString(child)))
+                  .join(""),
+              )
+            })
+            const fields = metadata.join("\n")
             let url: string | null = null
             visit({ type: "root", children: paper.children } as Root, "link", (node) => {
               if (!url && /^https:\/\/arxiv\.org\/abs\//.test(node.url)) url = node.url
@@ -125,13 +134,13 @@ export async function compilePaperReports(payload: unknown): Promise<PaperReport
               url,
               html: await render(paper.children),
               authors:
-                /作者[：:]\s*([^。\n]+)/
-                  .exec(text)?.[1]
+                /^[\t ]*作者[：:][\t ]*([^。\n]+)/m
+                  .exec(fields)?.[1]
                   ?.trim()
                   .split(/[、；;]/)
                   .map((author) => author.trim())
                   .filter(Boolean) ?? [],
-              year: /首次提交[：:\s]*(\d{4})/.exec(text)?.[1] ?? "",
+              year: /首次(?:公开|提交)[：:\s]*(\d{4})/.exec(fields)?.[1] ?? "",
             }
           }),
         ),

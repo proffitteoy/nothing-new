@@ -22,6 +22,54 @@ describe("TDA report publishing", () => {
     assert.match(reports[1].conclusion, /综合判断/)
   })
 
+  it("keeps published list metadata out of the authors while preserving it in the detail", async () => {
+    const [report] = await compilePaperReports([
+      {
+        path: "reports/2026-11-23.md",
+        markdown: [
+          "# TDA 每周新论文报告｜2026-11-23",
+          "",
+          "### 1. Möbius Invertibility of Rank Invariants",
+          "",
+          "- **作者：** Nathaniel Clause、Woojin Kim、Facundo Mémoli",
+          "- **首次公开：** 2026-11-16（arXiv v1）",
+          "- **原文：** [arXiv:2611.20463](https://arxiv.org/abs/2611.20463) · [HTML 全文](https://arxiv.org/html/2611.20463)",
+          "- **标识：** arXiv:2611.20463；[arXiv DOI](https://doi.org/10.48550/arXiv.2611.20463)（DataCite 登记状态以论文页面为准）",
+          "",
+          "**阅读优先级：最高。** 先读定理及反例。",
+        ].join("\n"),
+      },
+    ])
+    const paper = report.papers[0]
+    assert.deepEqual(paper.authors, ["Nathaniel Clause", "Woojin Kim", "Facundo Mémoli"])
+    assert.equal(paper.year, "2026")
+    assert.equal(paper.priority, "最高")
+    assert.equal(paper.url, "https://arxiv.org/abs/2611.20463")
+    assert.match(paper.html, /<li><strong>首次公开：<\/strong> 2026-11-16/)
+    assert.match(paper.html, /https:\/\/arxiv.org\/html\/2611.20463/)
+    assert.match(paper.html, /DataCite 登记状态以论文页面为准/)
+  })
+
+  it("separates author fields across soft breaks, hard breaks, and paragraphs", async () => {
+    for (const separator of ["\n", "  \n", "\n\n"]) {
+      const [report] = await compilePaperReports([
+        {
+          path: "reports/2026-11-23.md",
+          markdown: [
+            "# TDA 每周新论文报告｜2026-11-23\n\n### 1. Metadata boundaries\n",
+            [
+              "**作者：** Tony Xiaocheng Xiao、Jose A. Perea",
+              "**首次提交：** 2026-11-18",
+              "**原文：** https://arxiv.org/abs/2611.23659",
+            ].join(separator),
+          ].join("\n"),
+        },
+      ])
+      assert.deepEqual(report.papers[0].authors, ["Tony Xiaocheng Xiao", "Jose A. Perea"])
+      assert.equal(report.papers[0].year, "2026")
+    }
+  })
+
   it("renders math and Markdown while discarding executable HTML and unsafe links", async () => {
     const [report] = await compilePaperReports([
       {
