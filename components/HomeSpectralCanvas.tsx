@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { homeWindowProjection, HOME_ROOM } from "../lib/home-scene"
 import { useHomeProjectState } from "./HomeProjectNavigation"
 import landscape from "../public/home-window/convict-lake-day-study.webp"
@@ -20,6 +20,25 @@ declare global {
 export default function HomeSpectralCanvas() {
   const { enabled, sceneStatus } = useHomeProjectState()
   const artwork = useRef<HTMLDivElement>(null)
+  const [posterStatus, setPosterStatus] = useState("loading")
+  const [retry, setRetry] = useState(0)
+  useEffect(() => {
+    let active = true
+    const images = Array.from(artwork.current?.querySelectorAll("img") ?? [])
+    // The poster may be hidden by the startup CSS. Visibility is not evidence
+    // that its two images have downloaded or decoded.
+    void Promise.all(images.map((image) => image.decode())).then(
+      () => {
+        if (active && images.length === 2) setPosterStatus("ready")
+      },
+      () => {
+        if (active) setPosterStatus("error")
+      },
+    )
+    return () => {
+      active = false
+    }
+  }, [retry])
   useEffect(() => {
     const stage = artwork.current?.closest<HTMLElement>("[data-home-scene]")
     if (!stage) return
@@ -51,13 +70,19 @@ export default function HomeSpectralCanvas() {
       ref={artwork}
       className={styles.poster}
       hidden={enabled && sceneStatus === "ready"}
-      data-home-artwork={sceneStatus === "error" ? "error" : "ready"}
-      data-home-artwork-kind="static-fallback"
+      data-home-artwork={
+        sceneStatus === "ready" || posterStatus === "ready"
+          ? "ready"
+          : sceneStatus === "error" && posterStatus === "error"
+            ? "error"
+            : "loading"
+      }
+      data-home-artwork-kind={sceneStatus === "ready" ? "scene" : "static-fallback"}
     >
       <div className={styles.windowViewport} data-home-viewport>
         <Image
           className={styles.landscapeImage}
-          src={landscape}
+          src={retry ? { ...landscape, src: `${landscape.src}?retry=${retry}` } : landscape}
           alt="蓝天下的雪山与湖水"
           preload
           unoptimized
@@ -67,13 +92,27 @@ export default function HomeSpectralCanvas() {
       <Image
         className={styles.roomImage}
         data-home-room
-        src={room}
+        src={retry ? { ...room, src: `${room.src}?retry=${retry}` } : room}
         alt="从明亮室内透过浅木观景窗望向山湖"
         fill
         preload
         unoptimized
         sizes="100vw"
       />
+      {posterStatus === "error" && (
+        <div className={styles.artworkError} role="status">
+          暂时无法显示窗景。
+          <button
+            type="button"
+            onClick={() => {
+              setPosterStatus("loading")
+              setRetry((value) => value + 1)
+            }}
+          >
+            重新加载图片
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -81,10 +81,6 @@
   opacity: 0;
 }
 .artworkError {
-  display: none;
-}
-.poster[data-home-artwork="error"] .artworkError {
-  display: block;
   position: absolute;
   top: 40%;
   left: 25%;
@@ -93,6 +89,12 @@
   color: #172b43;
   background: #f4f8fbe6;
   padding: 12px;
+  pointer-events: auto;
+}
+.artworkError button {
+  margin-inline-start: 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .rail {
   position: absolute;
