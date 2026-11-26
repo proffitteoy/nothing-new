@@ -31,11 +31,13 @@
 	"durable_objects": {
         "bindings": [
             { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
-            { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+            { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" },
+            { "name": "SITE_RUNTIME", "class_name": "SiteRuntime" }
         ]
     },
     "migrations": [
-        { "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] }
+        { "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] },
+        { "tag": "v2", "new_sqlite_classes": ["SiteRuntime"] }
     ],
 	"images": {
 		// Enable image optimization
@@ -57,7 +59,8 @@
 		"durable_objects": {
 			"bindings": [
 				{ "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
-				{ "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+				{ "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" },
+				{ "name": "SITE_RUNTIME", "class_name": "SiteRuntime" }
 			]
 		},
 		"images": { "binding": "IMAGES" }

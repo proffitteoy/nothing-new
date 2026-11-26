@@ -20,7 +20,7 @@
 私有 tda-paper-monitor/reports/YYYY-MM-DD.md
   → Send TDA report / sync-blog（与邮件独立）
   → POST BLOG_SYNC_URL（正式 Cloudflare Worker 的 /api/papers）
-  → Cloudflare SITE_CONTENT KV / papers/reports.json
+  → Cloudflare SITE_RUNTIME SQLite / papers/reports.json
   → GET /api/papers → /papers 周报视图
 ```
 
@@ -28,13 +28,13 @@ Action 在每次正常报告 push、补发请求或手动运行时，同步最�
 
 ## 一次性配置与启用
 
-1. 先部署博客端代码。Cloudflare 绑定独立的 `SITE_CONTENT` KV；旧 Vercel 部署保留私有 Blob 配置作为回退。
+1. 先部署博客端代码。Cloudflare 绑定 `SITE_RUNTIME` SQLite，`SITE_CONTENT` KV 为只读存量回退；旧 Vercel 保留原私有 Blob。
 2. 生成随机共享密钥，在博客 Cloudflare Secrets 中设置 `PAPERS_SYNC_SECRET`，在监控仓库 Actions secret 中设置相同值的 `BLOG_SYNC_SECRET`。密钥不能带 `NEXT_PUBLIC_` 前缀，也不要提交到源码或日志。
 3. 重新部署博客以应用环境变量。在监控仓库合入 `scripts/sync_blog.py`、`tests/test_sync_blog.py` 和 workflow 中的 `sync-blog` job。
 4. 设置监控仓库 Actions variable `BLOG_SYNC_ENABLED=true`，并将 `BLOG_SYNC_URL` 显式指向正式 Worker 的 `https://nothing-new.84025375.workers.dev/api/papers`，与域名切换独立。原默认地址仍为 `https://nothing-new.cn/api/papers`；使用无跳转的 HTTPS 最终地址。
 5. 手动运行原工作流并填写已有报告路径；首次验证勾选 `sync_only`，避免重复发邮件。正常运行时两个 job 并行，博客成功时日志显示 `Blog synchronized: N reports`。验证 `/api/papers` 的最新日期，再刷新首页检查。
 
-不再需要每周重新部署博客。网页在打开时检查已发布快照，已经打开的页面刷新后获取新内容。同步在存储写入成功后才返回成功。接口保留 `no-store`；Vercel 读取绕过 Blob 对象缓存，Cloudflare KV 的跨地区可见性可能延迟约一分钟或更久。不自动轮播，不打断阅读。
+不再需要每周重新部署博客。网页在打开时检查已发布快照，已经打开的页面刷新后获取新内容。同步在存储写入成功后才返回成功。接口保留 `no-store`；Vercel 读取绕过 Blob 对象缓存，Cloudflare SQLite 写入在事务提交后可被后续读取，新内容不依赖 KV 的跨地区传播。不自动轮播，不打断阅读。
 
 论文页先请求 `GET /api/papers?latest=1`，按报告路径日期倒序选择并只编译最新一期；收到内容后立即展示，再请求 `GET /api/papers` 加载完整往期。等待最新一期时不先显示旧种子稿，往期失败时保留最新一期。
 
