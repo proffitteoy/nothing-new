@@ -17,3 +17,7 @@ docs/product-design-audit/*.log
 
 # Local navigation visual acceptance screenshots (do not commit binary captures)
 /docs/images/navigation-renewal/
+
+/.open-next/
+/.wrangler/
+.dev.vars*

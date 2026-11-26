@@ -42,7 +42,9 @@
     "test:papers": "python scripts/paper-monitor-preview.py --stage after --check-only",
     "test:friends": "python scripts/friends-preview.py",
     "test:projects": "python scripts/projects-preview.py",
-    "test:chatter": "python scripts/chatter-preview.py"
+    "test:chatter": "python scripts/chatter-preview.py",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare preview"
   },
   "engines": {
     "node": "22.x",
@@ -78,7 +80,7 @@
     "mdast-util-to-hast": "^13.2.0",
     "mdast-util-to-string": "^4.0.0",
     "minimatch": "^10.1.1",
-    "next": "16.2.1",
+    "next": "16.4.5",
     "pretty-time": "^1.1.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -110,6 +112,7 @@
     "yargs": "^18.0.0"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "1.20.19",
     "@tailwindcss/postcss": "^4",
     "@types/d3": "^7.4.3",
     "@types/hast": "^3.0.4",
@@ -126,6 +129,7 @@
     "prettier": "^3.6.2",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "4.168.0"
   }
 }
