@@ -6,7 +6,7 @@ const isCloudflareBuild =
 const nextConfig: NextConfig = {
   // Keep public site-owned images on the static/CDN path, regardless of Blob credentials.
   // Private Blob remains in use for the anime snapshot and cover APIs.
-  // Workers Builds runs Next before Wrangler's skipNextBuild hook.
+  // Workers Builds packages OpenNext after Next; both paths need standalone output.
   output: isCloudflareBuild || process.env.HOSTING_STANDALONE === "1" ? "standalone" : undefined,
   // Blob's Node HTTP client compiles WASM; Workers must use the SDK's native fetch shim.
   turbopack: isCloudflareBuild
