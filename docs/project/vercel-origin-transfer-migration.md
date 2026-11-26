@@ -7,7 +7,7 @@
 ### 构建与数据链路
 
 - Node 22、Next.js 16.4.5、OpenNext 1.20.19；Workers Builds 运行 `npm run build`，其 `postbuild` 以 `--skipNextBuild` 生成 OpenNext 产物；正式 Wrangler 命令会先委托 OpenNext，不能仅依赖部署阶段的 build hook。OpenNext 已设置 standalone 标识时跳过重复打包。Cloudflare 构建必须输出 standalone，关于页 Markdown 与 Quartz JSON 随 Worker 打包，支持空缓存渲染。
-- `NEXT_INC_CACHE_KV` 仅存适配器缓存；`SITE_CONTENT` 单独存 `papers/reports.json`、番剧快照、封面与 manifest。生产与分支预览各使用独立 KV，Durable Objects 由平台隔离，重验证经当前部署的 `ctx.exports` 调用。
+- 免费 Worker 入口将 Next.js 请求转到 `SiteRuntime` SQLite Durable Object，使用每请求 30 秒 CPU 预算。OpenNext 缓存与新增内容按键写入独立 SQLite 对象；`SITE_CONTENT` KV 仅只读回退已迁移的周报、番剧与封面。自定义缓存不再批量预填充 KV。生产与分支预览由平台隔离 Durable Objects，存量 KV 也分别绑定，重验证经当前部署的 `ctx.exports` 调用。
 - Obsidian 的 `E:/math` 按现有审阅范围单向发布到 `content/`，Zotero 本地 API 导出获批书目到 `data/paper-library.json`，均随 Git 构建发布。迁移不需要为作者电脑配置云端访问密钥，也不修改 Zotero 阅读标签。
 - 周报生产者仍为私有 `tda-paper-monitor` 的 `Send TDA report / sync-blog`。`BLOG_SYNC_URL` 显式指向 `https://nothing-new.84025375.workers.dev/api/papers`，`BLOG_SYNC_SECRET` 与 Worker 的 `PAPERS_SYNC_SECRET` 配对；用 `sync_only=true` 验收，邮件 job 应跳过。
 - Worker Secrets 为 `BANGUMI_ACCESS_TOKEN`、`PAPERS_SYNC_SECRET`、`ANIME_SYNC_SECRET`、`CRON_SECRET`。旧 Vercel 部署保留原私有 Blob 配置；Cloudflare 已有内容 KV，不依赖 Vercel OIDC 或 Blob Token。
@@ -25,11 +25,11 @@
 
 合入后核对该提交的 Workers Builds，验证正式 Worker 的页面、周报上传、番剧同步、封面、Cron 注册，以及生产者的 sync-only Action。不要把旧提交的构建绿灯当成新代码验收。
 
-正式域名 `nothing-new.cn` 当前仍由阿里云 `dns3.hichina.com` / `dns4.hichina.com` 解析至 Vercel。当前 Cloudflare OAuth 授权创建 Zone 返回 403，缺少 `com.cloudflare.api.account.zone.create` 权限；没有修改原 DNS 或名称服务器。域名接入须先在 Cloudflare 添加免费 Zone，完整保留邮件与其他现有 DNS 记录，再根据实际分配的名称服务器修改阿里云 NS；证书与 Worker 自定义域名就绪后才能确认切流完成。不能只复制网站 A 记录而漏掉周报发信所需记录。
+用户已创建 `nothing-new.cn` 免费 Zone，并将阿里云 NS 从 `dns3.hichina.com` / `dns4.hichina.com` 改成 `salvador.ns.cloudflare.com` / `wally.ns.cloudflare.com`，Cloudflare 已标记 active。NS 接入与网站 Worker 绑定须分别验收；根域及 `www` 应绑定 `nothing-new` 后验证 HTTPS、页面及实际后端。当前 OAuth 无 DNS API 权限，邮件记录通过新旧权威 NS 逐项核对：MX、SPF、DMARC 已匹配，自动扫描遗漏的 `resend._domainkey` TXT 须补入。不能把主页 200 或 MX 正确视为邮件发送已验证。
 
-KV 跨地区可见性可能延迟约一分钟或更久，同请求快照校验只读取本请求成功写入。迁移后仍需观察缓存后台再生及偶发平台 5xx；预览曾出现未取得确切错误码的 503，后续完整业务验收及 16 次论文页请求均成功，不能据此断言已确定根因。
+后续正式 Tail 已取得明确证据：论文页触发 `exceededCpu`，缓存出现 `KV put() limit exceeded for the day`。用户选择保持免费，故新增 SQLite 运行层，而非付费提额。存储写入使用事务，删除 tombstone 防止旧 KV 内容重新出现；每个请求创建独立上下文，避免 DurableObjectState 的生命周期扩大请求内缓存。仍须验证冷缓存、后台再生及真实同步，并留意免费 DO 的每日请求、运行时长、读写和总存储上限。
 
-回滚时保留 Vercel 生产部署和原 Blob，恢复原 DNS 后，将生产者的 URL 与配对 Secret 一起切回 Vercel，并按需恢复旧 cron、停用 Cloudflare cron，避免两端重复调度。切回前把 KV 中迁移后新增的周报、番剧版本同步到回退存储并校验，旧 Blob 不会自动获得 Cloudflare 的后续写入。
+回滚时保留 Vercel 生产部署和原 Blob，恢复原 DNS 后，将生产者的 URL 与配对 Secret 一起切回 Vercel，并按需恢复旧 cron、停用 Cloudflare cron，避免两端重复调度。切回前把 SQLite 中迁移后新增的周报、番剧版本同步到回退存储并校验，旧 Blob 不会自动获得 Cloudflare 的后续写入。
 
 ## 2026-11-05 历史应急预案
 
