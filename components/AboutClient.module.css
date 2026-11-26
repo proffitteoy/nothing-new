@@ -91,7 +91,7 @@
 .indexButton:hover,
 .indexButton[aria-current="location"] {
   color: var(--about-ink);
-  background: color-mix(in srgb, var(--about-accent) 7%, transparent);
+  background: var(--core-selected);
 }
 
 .indexButton[aria-current="location"]::before {
@@ -223,7 +223,7 @@
   text-decoration-color: var(--about-accent);
   text-underline-offset: 5px;
 }
-.prose a:hover { text-decoration-color: var(--about-detail); }
+.prose a:hover { text-decoration-color: var(--core-hover); }
 .prose blockquote {
   margin: 24px 0;
   padding: 8px 20px;
@@ -354,15 +354,6 @@
   }
 }
 
-.indexButton[aria-current="location"] {
-  color: var(--core-selected-ink);
-  background: var(--core-selected);
-}
-.indexButton:hover { color: var(--core-hover); background: var(--core-soft-hover); }
-.indexNumber, .eyebrow, .sectionHeader :is(h1, h2, h3),
-.prose :is(h1, h2, h3, h4) { color: var(--page-heading); }
-.prose li::marker { color: var(--page-heading); }
-.prose a { color: var(--core-accent); text-decoration-color: currentColor; }
-.prose a:hover { color: var(--core-hover); text-decoration-color: currentColor; }
-.prose blockquote { background: var(--page-soft); border-color: var(--page-heading); }
-.prose :not(pre) > code { color: var(--page-ink); background: var(--code-inline-bg); }
+.eyebrow, .indexNumber, .sectionHeader :is(h1, h2, h3), .prose :is(h1, h2, h3, h4) { color: var(--page-heading); }
+.prose a { color: var(--core-accent); }
+.prose blockquote { border-left-color: var(--page-heading); }

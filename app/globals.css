@@ -49,8 +49,8 @@
 }
 
 ::selection {
-  color: var(--core-on-accent);
-  background: var(--core-accent);
+  color: var(--site-ink);
+  background: var(--core-selected);
 }
 
 /* 2. 基础环境与性能优化 */
@@ -61,6 +61,7 @@
 
   body {
     font-family: var(--font-serif);
+    @apply transition-colors duration-1000;
     color: var(--site-ink);
     background: var(--site-bg);
     -webkit-font-smoothing: antialiased;

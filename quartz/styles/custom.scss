@@ -149,22 +149,11 @@ a.internal.tag-link::before {
   --dark: var(--page-ink);
   --secondary: var(--core-accent);
   --tertiary: var(--core-hover);
-  --highlight: var(--core-soft);
+  --highlight: var(--core-selected);
   --textHighlight: var(--core-selected);
 }
-.quartz-note {
-  color: var(--page-ink);
-
-  article.popover-hint {
-    :is(h1, h2, h3, h4, h5, h6) { color: var(--page-heading); }
-    a:not(.tag-link) {
-      color: var(--core-accent);
-      text-decoration: underline;
-      text-underline-offset: 0.18em;
-    }
-    a:not(.tag-link):hover { color: var(--core-hover); }
-    blockquote { border-color: var(--page-heading); }
-    :not(pre) > code { color: var(--page-ink); background-color: var(--code-inline-bg); }
-    .katex { color: var(--page-ink); }
-  }
+.quartz-note article.popover-hint {
+  :is(h1, h2, h3, h4, h5, h6) { color: var(--page-heading); }
+  blockquote { border-left-color: var(--page-heading); }
+  .katex { color: var(--page-ink); }
 }

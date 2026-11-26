@@ -6,7 +6,7 @@
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 18px;
   color: var(--core-ink);
-  background: var(--core-elevated);
+  background: var(--core-surface);
   backdrop-filter: blur(18px) saturate(120%);
   box-shadow: 0 12px 40px rgba(23, 50, 79, 0.13);
   font-family: var(--font-geist-sans, sans-serif);
@@ -175,14 +175,12 @@
 }
 .primaryControl:hover {
   background: var(--core-hover);
-}
-.primaryControl:active {
-  background: var(--core-pressed);
+  opacity: 0.85;
 }
 .control:focus-visible,
 .retry:focus-visible,
 .seek:focus-visible {
-  outline: 2px solid var(--core-focus);
+  outline: 2px solid var(--core-accent);
   outline-offset: 3px;
 }
 .emptyState {
@@ -271,7 +269,3 @@
     transition: none;
   }
 }
-
-.control:hover:not(.primaryControl), .retry:hover { color: var(--core-hover); background: var(--core-soft-hover); }
-.lyricBar { color: var(--core-ink); background: var(--core-elevated); }
-.lyric { text-shadow: none; }

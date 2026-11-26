@@ -617,11 +617,6 @@
   }
 }
 
-.windowEyebrow, .issueDate { color: var(--page-heading); }
-.window :is(h1, h2, h3), .prose :is(h1, h2, h3, h4) { color: var(--page-heading); }
-.prose a, .backButton, .source { color: var(--core-accent); text-decoration: underline; }
-.prose a:hover, .backButton:hover, .source:hover { color: var(--core-hover); }
-.iconButton:hover { color: var(--core-hover); background: var(--core-soft-hover); }
+.windowEyebrow, .issueDate, .paperTitle, .prose :is(h1, h2, h3, h4) { color: var(--page-heading); }
+.prose blockquote { border-left-color: var(--page-heading); }
 .issue select { color: var(--core-ink); background: var(--core-surface); border-color: var(--core-border); }
-.prose blockquote { border-left-color: var(--page-heading); background: var(--page-soft); color: var(--page-ink); }
-.prose :not(pre) > code { color: var(--page-ink); background: var(--code-inline-bg); }

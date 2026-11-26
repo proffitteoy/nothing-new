@@ -219,8 +219,6 @@ export function readTheme(surface: HTMLElement): ThemeColors {
     // Only the node and text outlines use this color; the canvas stays transparent.
     surface: getCssVariable(style, "--tag-graph-outline"),
     accent: getCssVariable(style, "--tag-graph-accent") || text,
-    line: getCssVariable(style, "--tag-graph-line") || text,
-    dim: getCssVariable(style, "--tag-graph-dim") || "#F0F1EF",
     text,
     muted: getCssVariable(style, "--tag-graph-muted") || text,
     nodes: nodes.length > 0 ? nodes : [text],

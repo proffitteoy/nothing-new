@@ -316,7 +316,7 @@
   padding: 8px;
   border: 1px solid rgb(255 255 255 / 90%);
   border-radius: 7px;
-  background: var(--page-surface);
+  background: rgb(255 255 255 / 60%);
   backdrop-filter: blur(20px) saturate(115%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 35%);
 }
@@ -362,8 +362,8 @@
   background: var(--site-violet);
 }
 .windowDots i:nth-child(3) {
-  border-color: var(--page-ornament);
-  background: var(--page-ornament);
+  border-color: var(--page-decoration);
+  background: var(--page-decoration);
 }
 .previewHeader button {
   display: flex;
@@ -583,28 +583,6 @@
   .list { grid-template-columns: 1fr; }
 }
 
-.intro h1, .sectionHeading h2, .friendRow h3, .eyebrow { color: var(--page-heading); }
-.eyebrow, .subtitle, .sectionHeading, .friendRow, .application {
-  background: var(--page-surface);
-}
-.friendRow:hover, .friendRow:focus-within {
-  background: var(--page-surface);
-  border-color: var(--core-accent);
-}
-.friendRow:has(.preview) { background: var(--page-surface); }
-.avatar { color: var(--page-heading); background: var(--page-soft); }
-.previewToggle[aria-expanded="true"] {
-  color: var(--core-selected-ink);
-  background: var(--core-selected);
-}
-.applyLink:hover { color: var(--core-on-accent); background: var(--core-hover); }
-.back button, .format textarea {
-  background: var(--core-surface);
-  color: var(--core-ink);
-  border-color: var(--core-border);
-}
-.previewError { color: var(--status-error-fg); background: var(--status-error-bg); }
-.copyStatus[data-copy-status="copied"] { color: var(--status-success-fg); }
-.copyStatus[data-copy-status="error"] { color: var(--status-error-fg); }
-.formatHeading button:not(:disabled):hover, .previewHeader button:hover { color: var(--core-hover); }
-.previewFooter a, .textLink { color: var(--core-accent); text-decoration: underline; }
+.eyebrow, .intro h1, .sectionHeading h2, .sectionHeading h2 span, .avatar { color: var(--page-heading); }
+.applyLink:hover { background: var(--core-hover); }
+.previewError { color: var(--status-error-fg); }

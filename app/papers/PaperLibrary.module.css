@@ -11,7 +11,7 @@ main.page {
   overflow: visible;
   background: transparent;
   color: var(--site-ink);
-  text-shadow: none;
+  text-shadow: 0 1px 2px rgb(255 255 255 / 60%);
 }
 /* A feathered wash quiets the artwork without enclosing the page in a card. */
 .page::before {
@@ -20,7 +20,7 @@ main.page {
   inset: -24px;
   z-index: 0;
   pointer-events: none;
-  background: var(--page-surface);
+  background: color-mix(in srgb, var(--page-surface) 75%, transparent);
   mask-image:
     linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent),
     linear-gradient(180deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
@@ -272,12 +272,10 @@ main.page {
   isolation: isolate;
 }
 .graphSurface {
-  --tag-graph-outline: var(--core-surface);
+  --tag-graph-outline: var(--page-surface);
   --tag-graph-accent: var(--core-accent);
-  --tag-graph-line: var(--core-border);
-  --tag-graph-dim: #F0F1EF;
   --tag-graph-text: var(--site-ink);
-  --tag-graph-muted: var(--core-muted);
+  --tag-graph-muted: var(--site-muted);
   --tag-graph-node-1: #4266cf;
   --tag-graph-node-2: #805ac8;
   --tag-graph-node-3: #146d64;
@@ -322,7 +320,7 @@ main.page {
   padding: 10px 12px;
   border: 1px solid var(--site-line);
   border-radius: 4px;
-  background: var(--core-elevated);
+  background: var(--core-surface);
   box-shadow: 0 4px 16px rgb(30 45 75 / 10%);
   color: var(--site-ink);
   pointer-events: none;
@@ -771,27 +769,8 @@ main.page {
   }
 }
 
-.catalogue { background: var(--page-surface); }
 .issueHeading h2, .paperTitle, .previewTitle, .previewSection h3 { color: var(--page-heading); }
-.tabs button[aria-pressed="true"], .issues button[aria-pressed="true"],
-.folderName[aria-pressed="true"], .allFolders[aria-pressed="true"] {
-  color: var(--core-selected-ink);
-  background: var(--core-selected);
-}
-.tabs button:hover, .issues button:hover, .entry:hover, .folderName:hover,
-.allFolders:hover, .folderPaperList > button:hover {
-  background: var(--core-soft-hover);
-}
-.search { color: var(--core-muted); background: var(--core-surface); }
+.search { color: var(--core-muted); }
 .search input { color: var(--core-ink); }
-.search input::placeholder { color: var(--core-muted); opacity: 1; }
-.search:focus-within { outline: 2px solid var(--core-focus); outline-offset: 2px; }
-.badges .read { color: var(--status-success-fg); background: var(--status-success-bg); }
-.badges .reading { color: var(--status-info-fg); background: var(--status-info-bg); }
-.badges .noted { color: var(--status-noted-fg); background: var(--status-noted-bg); }
-.graphTooltip { border-color: var(--core-border); }
-.graphControls button:hover { color: var(--core-hover); background: var(--core-soft-hover); }
-.more { color: var(--core-accent); background: var(--core-surface); border-color: var(--core-border); }
-.more:hover { color: var(--core-hover); background: var(--core-soft-hover); }
-.noteBody :global(.callout) { border-left-color: var(--page-heading); background: var(--page-soft); }
-.status { color: var(--status-warning-fg); background: var(--status-warning-bg); }
+.search input::placeholder { color: var(--core-muted); }
+.noteBody :global(.callout) { border-left-color: var(--page-heading); }

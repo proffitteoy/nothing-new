@@ -113,8 +113,6 @@ export interface SceneLink extends SimulationLinkDatum<SceneNode> {
 
 export type ThemeColors = {
   accent: string
-  line: string
-  dim: string
   surface: string
   text: string
   muted: string

@@ -84,7 +84,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                       style={{ paddingLeft: entry.depth * 12 }}
                     >
                       <a
-                        className="text-[var(--core-accent)] hover:text-[var(--core-hover)]"
+                        className="text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                         href={`#${entry.slug}`}
                       >
                         {entry.text}
@@ -119,7 +119,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   {note.backlinks.map((backlink) => (
                     <li key={backlink.route}>
                       <Link
-                        className="text-sm text-[var(--core-accent)] hover:text-[var(--core-hover)]"
+                        className="text-sm text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                         href={backlink.route}
                       >
                         {backlink.title}
@@ -149,7 +149,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                         style={{ paddingLeft: entry.depth * 10 }}
                       >
                         <a
-                          className="text-sm leading-6 text-[var(--core-accent)] hover:text-[var(--core-hover)]"
+                          className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                           href={`#${entry.slug}`}
                         >
                           {entry.text}
@@ -176,7 +176,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                     {note.backlinks.map((backlink) => (
                       <li key={backlink.route}>
                         <Link
-                          className="text-sm leading-6 text-[var(--core-accent)] hover:text-[var(--core-hover)]"
+                          className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                           href={backlink.route}
                         >
                           {backlink.title}

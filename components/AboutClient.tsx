@@ -6,7 +6,6 @@ import WebsiteSection from "./about/WebsiteSection"
 import EngineeringSection from "./about/EngineeringSection"
 import ResearchSection from "./about/ResearchSection"
 import styles from "./AboutClient.module.css"
-import { SitePalettePicker } from "./SitePalette"
 
 type SectionId = "website" | "engineering" | "research"
 
@@ -113,7 +112,6 @@ export default function AboutClient({
 
         <div className={styles.sections}>
           <WebsiteSection html={websiteHtml} />
-          <SitePalettePicker />
           <EngineeringSection html={engineeringHtml} />
           <ResearchSection html={researchHtml} />
         </div>

@@ -12,8 +12,8 @@
   --surface: var(--site-surface);
   --line: var(--site-line);
   --accent: var(--site-accent);
-  --wash: var(--core-soft);
-  --pink: var(--page-deco);
+  --wash: var(--site-wash);
+  --pink: var(--page-heading);
   --ui-font: "Inter", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --title-font: "Newsreader", var(--font-serif);
   position: relative;
@@ -938,27 +938,8 @@
   display: none;
 }
 
-.heading h1, .directoryBody h2, .panel h2, .category {
-  color: var(--page-heading);
-}
-.tags li { color: var(--page-heading); background: var(--page-soft); }
+.heading h1, .directoryBody h2, .panel h2, .category, .tags li { color: var(--page-heading); }
 .sceneTools button[aria-pressed="true"] {
-  color: var(--core-selected-ink);
   background: var(--core-selected);
-  box-shadow: inset 0 -2px var(--core-accent);
-}
-.directoryToggle, .close, .iconButton, .sceneTools {
-  color: var(--core-ink);
-  background: var(--core-surface);
-}
-.directoryToggle:hover, .close:hover, .iconButton:hover, .primaryLink:hover {
-  color: var(--core-hover);
-  background: var(--core-soft-hover);
-  border-color: var(--core-hover);
-}
-.primaryLink { color: var(--core-accent); }
-.hotspot[data-active="true"] .dot {
-  color: var(--core-selected-ink);
-  background: var(--core-selected);
-  border-color: var(--core-accent);
+  color: var(--core-accent);
 }
