@@ -67,7 +67,7 @@ function ExplorerNode({ node, currentPath }: { node: NoteTreeNode; currentPath: 
         aria-current={active ? "page" : undefined}
         className={`flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[13px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] md:text-sm md:leading-6 ${
           active
-            ? "bg-[var(--core-selected)] font-bold text-[var(--core-selected-ink)]"
+            ? "bg-[var(--core-selected)] font-bold text-[var(--core-accent)]"
             : "text-[var(--site-muted)] hover:bg-[var(--site-accent)]/8 hover:text-[var(--site-accent)]"
         }`}
       >

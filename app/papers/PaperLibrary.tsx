@@ -23,7 +23,7 @@ function Badges({ paper }: { paper: LibraryPaper }) {
           <Check size={12} aria-hidden /> 已读
         </span>
       )}
-      {paper.readingStatus === "reading" && <span className={styles.reading}>阅读中</span>}
+      {paper.readingStatus === "reading" && <span className={styles.read}>阅读中</span>}
       {!!paper.notes.length && (
         <span className={styles.noted}>
           <BookOpen size={12} aria-hidden /> 有笔记

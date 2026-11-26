@@ -1,6 +1,6 @@
 .mark {
-  --euler-bridge-ink: var(--core-accent);
-  --euler-bridge-bronze: var(--core-hover);
+  --euler-bridge-ink: var(--core-ink);
+  --euler-bridge-bronze: var(--core-accent);
   display: block;
   flex-shrink: 0;
 }

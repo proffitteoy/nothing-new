@@ -35,10 +35,10 @@ export default function NoteCollectionPage({
       <link rel="stylesheet" href="/quartz-assets/note.css" precedence="default" />
       <PageTransition>
         <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-12 pt-24 sm:px-6 lg:px-10">
-          <header className="relative overflow-hidden rounded-[2rem] border border-[var(--site-line)] bg-[var(--page-surface)] p-6 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.55)] backdrop-blur-xl md:bg-[var(--site-surface)] md:p-9">
+          <header className="relative overflow-hidden rounded-[2rem] border border-[var(--site-line)] bg-[var(--page-surface)]/50 p-6 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.55)] backdrop-blur-xl md:bg-[var(--site-surface)] md:p-9">
             <div
               aria-hidden="true"
-              className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-[var(--page-deco)]/20 blur-3xl"
+              className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-[var(--page-decoration)]/15 blur-3xl"
             />
             <div className="relative">
               <h1 className="text-4xl font-black tracking-[-0.05em] text-[var(--page-heading)] md:text-5xl">
@@ -80,7 +80,7 @@ export default function NoteCollectionPage({
                   <li key={note.route}>
                     <Link
                       href={note.route}
-                      className="group flex h-full min-h-56 flex-col rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--page-surface)] p-5 shadow-[0_18px_55px_-38px_rgba(15,23,42,0.5)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[var(--site-accent)] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] motion-reduce:transform-none sm:p-6 md:bg-[var(--site-surface)]"
+                      className="group flex h-full min-h-56 flex-col rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--page-surface)]/50 p-5 shadow-[0_18px_55px_-38px_rgba(15,23,42,0.5)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[var(--site-accent)] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] motion-reduce:transform-none sm:p-6 md:bg-[var(--site-surface)]"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <BookOpenText
@@ -111,7 +111,7 @@ export default function NoteCollectionPage({
                           {note.tags.slice(0, 3).map((tag) => (
                             <li
                               key={tag}
-                              className="inline-flex items-center gap-0.5 rounded-full bg-[var(--page-soft)] px-2.5 py-1 text-[10px] font-medium text-[var(--page-heading)] md:text-xs"
+                              className="inline-flex items-center gap-0.5 rounded-full bg-[var(--site-recess)] px-2.5 py-1 text-[10px] font-medium text-[var(--site-muted)] md:text-xs"
                             >
                               <Hash className="h-2.5 w-2.5" aria-hidden="true" />
                               {tag}
@@ -129,7 +129,7 @@ export default function NoteCollectionPage({
               })}
             </ul>
           ) : (
-            <div className="mt-5 rounded-3xl border border-dashed border-[var(--page-line)] bg-[var(--page-surface)] p-10 text-center text-sm font-medium text-[var(--page-muted)] backdrop-blur">
+            <div className="mt-5 rounded-3xl border border-dashed border-[var(--page-line)]/80 bg-[var(--page-surface)]/35 p-10 text-center text-sm font-medium text-[var(--page-muted)] backdrop-blur">
               这个文件夹暂时没有公开笔记。
             </div>
           )}

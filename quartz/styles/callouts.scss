@@ -174,13 +174,11 @@
   }
 }
 
-/* Ordinary mathematical callouts use the local reading tint. */
+/* Existing callouts only: page structure and fixed status colors. */
 .quartz-note .callout[data-callout] {
   --color: var(--page-heading);
   --border: var(--page-line);
   --bg: var(--page-soft);
-  border-left: 2px solid var(--color);
-  color: var(--page-ink);
 }
 .quartz-note .callout:is([data-callout="warning"], [data-callout="caution"]) {
   --color: var(--status-warning-fg);
@@ -198,4 +196,3 @@
   --color: var(--status-info-fg);
   --bg: var(--status-info-bg);
 }
-.quartz-note .callout-content { color: var(--page-ink); }

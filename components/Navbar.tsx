@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useLayoutEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
+import { pagePaletteForPath } from "../lib/site-palette"
 import {
   motion,
   AnimatePresence,
@@ -34,6 +35,9 @@ export const navigationLinks = [
 export default function Navbar({ blogHref = "/blog" }: { blogHref?: string }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+  useLayoutEffect(() => {
+    document.documentElement.dataset.pagePalette = pagePaletteForPath(pathname)
+  }, [pathname])
   const reducedMotion = useReducedMotion()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)

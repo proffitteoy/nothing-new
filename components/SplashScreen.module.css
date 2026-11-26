@@ -66,13 +66,13 @@
   z-index: 100001;
   display: flex;
   justify-content: center;
-  color: var(--core-ink);
+  color: var(--core-accent);
 }
 .actions button {
   padding: 10px 14px;
   font-size: 14px;
   letter-spacing: 0.12em;
-  background: var(--core-surface);
+  background: color-mix(in srgb, var(--core-surface) 90%, transparent);
   border: 0;
   text-decoration: underline;
   text-underline-offset: 5px;
@@ -143,8 +143,3 @@
     opacity: 0.34;
   }
 }
-
-.signature { color: var(--core-ink); }
-.actions button { color: var(--core-accent); }
-.actions button:hover { color: var(--core-hover); }
-.actions button:active { color: var(--core-pressed); }

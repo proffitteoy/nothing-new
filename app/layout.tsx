@@ -3,7 +3,6 @@ import { getBlogEntryRoute } from "../lib/notes/server"
 import type { Metadata } from "next"
 import "./globals.css"
 import { paletteBootstrap } from "../lib/site-palette"
-import { SitePaletteRuntime } from "../components/SitePalette"
 import { MusicProvider } from "../components/MusicProvider"
 import { siteConfig } from "../siteConfig"
 import BackgroundSlider from "../components/BackgroundSlider"
@@ -88,8 +87,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         </noscript>
       </head>
 
-      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative bg-[var(--site-bg)] font-serif">
-        <SitePaletteRuntime />
+      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-[var(--site-bg)] font-serif">
         <SplashScreen blogHref={blogHref} />
 
         <MusicProvider>

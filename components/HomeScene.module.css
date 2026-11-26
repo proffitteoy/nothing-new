@@ -3,7 +3,7 @@
   --scene-muted: var(--core-muted);
   --scene-accent: var(--site-accent);
   --scene-line: var(--core-line);
-  --scene-surface: var(--core-elevated);
+  --scene-surface: var(--core-surface);
   --edge-width: clamp(184px, 18.3vw, 264px);
   --tab-height: clamp(58px, 11dvh, 104px);
   --edge-gap: clamp(6px, 1.2dvh, 12px);
@@ -166,7 +166,7 @@
 .tab:focus-visible,
 .tab[aria-expanded="true"] {
   color: var(--core-hover);
-  background: var(--core-soft-hover);
+  background: color-mix(in srgb, var(--core-selected) 45%, transparent);
 }
 .preview {
   position: absolute;
@@ -260,7 +260,7 @@
   border: 1px solid var(--core-line);
   border-radius: 3px;
   color: var(--core-ink) !important;
-  background: var(--core-elevated);
+  background: color-mix(in srgb, var(--core-surface) 94%, transparent);
   font-size: 14px;
 }
 .lyrics p {
@@ -316,7 +316,7 @@
     font-size: 13px;
     gap: 8px;
     border-radius: 2px;
-    background: var(--core-elevated);
+    background: color-mix(in srgb, var(--core-surface) 94%, transparent);
   }
 }
 @media (max-height: 600px) {
@@ -347,8 +347,3 @@
     animation: none !important;
   }
 }
-
-.tab[aria-expanded="true"] { color: var(--core-selected-ink); background: var(--core-selected); }
-.tab:active { color: var(--core-pressed); }
-.contactPanel { color: var(--core-ink); }
-.contactPanel a { color: var(--core-accent); }

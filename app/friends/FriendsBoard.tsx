@@ -391,7 +391,7 @@ export default function FriendsBoard() {
               spellCheck={false}
               aria-describedby="friend-copy-status"
             />
-            <p id="friend-copy-status" role="status" data-copy-status={copyStatus} className={styles.copyStatus}>
+            <p id="friend-copy-status" role="status" className={styles.copyStatus}>
               {copyStatus === "error"
                 ? "未能复制，已选中名片内容，请手动复制。"
                 : copyStatus === "copied"
