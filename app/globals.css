@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./site-palettes.css";
 
 /* Window & Formula: cool neutral reading layers, lake-blue structure, restrained cherry accents. */
 @theme {
@@ -45,24 +46,11 @@
 
 :root {
   color-scheme: light;
-  --site-bg: #f2f5fa;
-  --site-surface: #eef2f6;
-  --site-recess: #e4ebf2;
-  --site-ink: #1e2226;
-  --site-muted: #5c646d;
-  --site-accent: #1e5b73;
-  --site-pink: #c85a7c;
-  --site-detail: #913450;
-  --site-violet: #6a5882;
-  --site-mint: #26714f;
-  --site-line: #ced7e0;
-  --site-glass: rgb(242 245 250 / 94%);
-  --site-wash: rgb(242 245 250 / 10%);
 }
 
 ::selection {
-  color: var(--site-ink);
-  background: color-mix(in srgb, var(--site-accent) 24%, var(--site-surface));
+  color: var(--core-on-accent);
+  background: var(--core-accent);
 }
 
 /* 2. 基础环境与性能优化 */
@@ -73,7 +61,6 @@
 
   body {
     font-family: var(--font-serif);
-    @apply transition-colors duration-1000;
     color: var(--site-ink);
     background: var(--site-bg);
     -webkit-font-smoothing: antialiased;

@@ -31,10 +31,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -50, scale: 0.9 }}
             className={`fixed top-20 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-xl border
-              ${toastMsg.type === "success" ? "bg-teal-700/95 border-teal-500 text-white" : ""}
-              ${toastMsg.type === "warning" ? "bg-violet-700/95 border-violet-500 text-white" : ""}
-              ${toastMsg.type === "error" ? "bg-rose-700/95 border-rose-500 text-white" : ""}
-              ${toastMsg.type === "info" ? "bg-blue-500/90 border-blue-400 text-white" : ""}
+              ${toastMsg.type === "success" ? "bg-[var(--status-success-bg)] border-[var(--status-success-fg)] text-[var(--status-success-fg)]" : ""}
+              ${toastMsg.type === "warning" ? "bg-[var(--status-warning-bg)] border-[var(--status-warning-fg)] text-[var(--status-warning-fg)]" : ""}
+              ${toastMsg.type === "error" ? "bg-[var(--status-error-bg)] border-[var(--status-error-fg)] text-[var(--status-error-fg)]" : ""}
+              ${toastMsg.type === "info" ? "bg-[var(--status-info-bg)] border-[var(--status-info-fg)] text-[var(--status-info-fg)]" : ""}
             `}
           >
             <span className="font-bold text-sm">{toastMsg.text}</span>

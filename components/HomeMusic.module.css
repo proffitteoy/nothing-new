@@ -5,8 +5,8 @@
   padding: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 18px;
-  color: var(--scene-ink, var(--site-ink));
-  background: var(--scene-surface, var(--site-surface));
+  color: var(--core-ink);
+  background: var(--core-elevated);
   backdrop-filter: blur(18px) saturate(120%);
   box-shadow: 0 12px 40px rgba(23, 50, 79, 0.13);
   font-family: var(--font-geist-sans, sans-serif);
@@ -92,7 +92,7 @@
 .eyebrow {
   display: inline-block;
   margin-bottom: 3px;
-  color: var(--site-violet);
+  color: var(--core-accent);
   font-size: 0.62rem;
   font-weight: 650;
   letter-spacing: 0.1em;
@@ -130,7 +130,7 @@
   min-width: 0;
   height: 24px;
   margin: 0;
-  accent-color: var(--site-detail);
+  accent-color: var(--core-accent);
   cursor: pointer;
 }
 .seek:disabled {
@@ -160,7 +160,7 @@
 }
 .control:hover,
 .retry:hover {
-  background: color-mix(in srgb, var(--site-violet) 12%, transparent);
+  background: color-mix(in srgb, var(--core-accent) 12%, transparent);
 }
 .control:active,
 .retry:active {
@@ -169,18 +169,20 @@
 .primaryControl {
   width: 48px;
   height: 48px;
-  background: var(--site-violet);
-  color: var(--site-surface);
+  background: var(--core-accent);
+  color: var(--core-on-accent);
   box-shadow: none;
 }
 .primaryControl:hover {
-  background: var(--site-violet);
-  opacity: 0.85;
+  background: var(--core-hover);
+}
+.primaryControl:active {
+  background: var(--core-pressed);
 }
 .control:focus-visible,
 .retry:focus-visible,
 .seek:focus-visible {
-  outline: 2px solid currentColor;
+  outline: 2px solid var(--core-focus);
   outline-offset: 3px;
 }
 .emptyState {
@@ -236,7 +238,7 @@
 }
 @media (min-width: 768px) {
   .artist {
-    color: var(--scene-muted, var(--site-muted));
+    color: var(--core-muted);
     font-size: 0.8125rem;
     opacity: 1;
   }
@@ -269,3 +271,7 @@
     transition: none;
   }
 }
+
+.control:hover:not(.primaryControl), .retry:hover { color: var(--core-hover); background: var(--core-soft-hover); }
+.lyricBar { color: var(--core-ink); background: var(--core-elevated); }
+.lyric { text-shadow: none; }

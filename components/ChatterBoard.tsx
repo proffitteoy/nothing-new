@@ -50,7 +50,7 @@ export default function ChatterBoard({ items }: { items: ChatterItem[] }) {
   }, [items, searchQuery])
 
   return (
-    <main className={styles.board} aria-labelledby="chatter-title">
+    <main data-page-palette="chatter" className={styles.board} aria-labelledby="chatter-title">
       <h1 id="chatter-title" className="sr-only">杂谈</h1>
       <div data-field-obstacle className={styles.compactSearch}>
         <div className={styles.search} role="search" aria-label="杂谈搜索">

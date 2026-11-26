@@ -432,3 +432,20 @@
   .compactSearch { margin-bottom: 18px; }
   .compactSearch .search { width: 100%; }
 }
+
+.title, .eyebrow { color: var(--page-heading); }
+.subtitle, .toolbar { background: var(--page-surface); }
+.search, .compactSearch .search {
+  background: var(--core-surface);
+  border-color: var(--core-border);
+  color: var(--core-muted);
+}
+.search input { color: var(--core-ink); }
+.search input::placeholder { color: var(--core-muted); opacity: 1; }
+.search:focus-within { border-color: var(--core-focus); }
+.search button:hover { color: var(--core-hover); }
+.folderTag { background: rgb(8 12 22 / 76%); padding: 2px 5px; }
+.caption { background: rgb(8 12 22 / 76%); color: #FFFFFF; }
+.caption .meta { color: #EEF0F4; }
+.placeholder { color: var(--page-heading); }
+.empty { background: var(--page-surface); }

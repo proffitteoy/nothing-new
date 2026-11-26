@@ -22,7 +22,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
   const manifest = await getNoteManifest()
 
   return (
-    <div className="note-native-shell relative isolate min-h-screen overflow-x-clip bg-transparent pb-20 text-[var(--site-ink)]">
+    <div data-page-palette={note.section} className="note-native-shell relative isolate min-h-screen overflow-x-clip bg-transparent pb-20 text-[var(--site-ink)]">
       <link rel="stylesheet" href="/quartz-assets/note.css" precedence="default" />
       <PageTransition>
         <main className="mx-auto grid w-full max-w-[94rem] grid-cols-1 gap-5 px-4 pt-24 sm:px-6 lg:grid-cols-[14rem_minmax(0,1fr)_12rem] lg:px-8 xl:grid-cols-[17rem_minmax(0,1fr)_15rem] xl:gap-6">
@@ -51,7 +51,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   </span>
                 )}
               </div>
-              <h1 className="mt-5 break-words font-serif text-3xl font-black leading-tight tracking-[-0.035em] text-[var(--site-ink)] sm:text-4xl">
+              <h1 className="mt-5 break-words font-serif text-3xl font-black leading-tight tracking-[-0.035em] text-[var(--page-heading)] sm:text-4xl">
                 {note.title}
               </h1>
               {note.tags.length > 0 && (
@@ -59,7 +59,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   {note.tags.map((tag) => (
                     <li
                       key={tag}
-                      className="inline-flex items-center gap-1 rounded-full border border-violet-200/70 bg-violet-50/80 px-3 py-1.5 text-[11px] font-bold text-violet-800 md:text-xs"
+                      className="inline-flex items-center gap-1 rounded-full border border-[var(--page-line)] bg-[var(--page-soft)] px-3 py-1.5 text-[11px] font-bold text-[var(--page-heading)] md:text-xs"
                     >
                       <Hash className="h-3 w-3" aria-hidden="true" />
                       {tag}
@@ -84,7 +84,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                       style={{ paddingLeft: entry.depth * 12 }}
                     >
                       <a
-                        className="text-[var(--site-muted)] hover:text-[var(--site-accent)]"
+                        className="text-[var(--core-accent)] hover:text-[var(--core-hover)]"
                         href={`#${entry.slug}`}
                       >
                         {entry.text}
@@ -119,7 +119,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                   {note.backlinks.map((backlink) => (
                     <li key={backlink.route}>
                       <Link
-                        className="text-sm text-[var(--site-muted)] hover:text-[var(--site-accent)]"
+                        className="text-sm text-[var(--core-accent)] hover:text-[var(--core-hover)]"
                         href={backlink.route}
                       >
                         {backlink.title}
@@ -149,7 +149,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                         style={{ paddingLeft: entry.depth * 10 }}
                       >
                         <a
-                          className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
+                          className="text-sm leading-6 text-[var(--core-accent)] hover:text-[var(--core-hover)]"
                           href={`#${entry.slug}`}
                         >
                           {entry.text}
@@ -176,7 +176,7 @@ export default async function NoteShell({ note }: { note: NoteArtifact }) {
                     {note.backlinks.map((backlink) => (
                       <li key={backlink.route}>
                         <Link
-                          className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
+                          className="text-sm leading-6 text-[var(--core-accent)] hover:text-[var(--core-hover)]"
                           href={backlink.route}
                         >
                           {backlink.title}

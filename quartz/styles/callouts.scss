@@ -173,3 +173,29 @@
     font-weight: $semiBoldWeight;
   }
 }
+
+/* Ordinary mathematical callouts use the local reading tint. */
+.quartz-note .callout[data-callout] {
+  --color: var(--page-heading);
+  --border: var(--page-line);
+  --bg: var(--page-soft);
+  border-left: 2px solid var(--color);
+  color: var(--page-ink);
+}
+.quartz-note .callout:is([data-callout="warning"], [data-callout="caution"]) {
+  --color: var(--status-warning-fg);
+  --bg: var(--status-warning-bg);
+}
+.quartz-note .callout:is([data-callout="failure"], [data-callout="danger"], [data-callout="bug"], [data-callout="error"]) {
+  --color: var(--status-error-fg);
+  --bg: var(--status-error-bg);
+}
+.quartz-note .callout[data-callout="success"] {
+  --color: var(--status-success-fg);
+  --bg: var(--status-success-bg);
+}
+.quartz-note .callout[data-callout="info"] {
+  --color: var(--status-info-fg);
+  --bg: var(--status-info-bg);
+}
+.quartz-note .callout-content { color: var(--page-ink); }

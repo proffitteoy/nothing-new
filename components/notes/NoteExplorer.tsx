@@ -67,7 +67,7 @@ function ExplorerNode({ node, currentPath }: { node: NoteTreeNode; currentPath: 
         aria-current={active ? "page" : undefined}
         className={`flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[13px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-accent)] md:text-sm md:leading-6 ${
           active
-            ? "bg-[var(--site-accent)]/12 font-bold text-[var(--site-accent)]"
+            ? "bg-[var(--core-selected)] font-bold text-[var(--core-selected-ink)]"
             : "text-[var(--site-muted)] hover:bg-[var(--site-accent)]/8 hover:text-[var(--site-accent)]"
         }`}
       >
@@ -198,7 +198,7 @@ function ExplorerPanel({
           onChange={(event) => void handleQuery(event.target.value)}
           placeholder={`搜索${sectionTitle}`}
           autoComplete="off"
-          className="h-10 w-full rounded-lg border border-[var(--site-line)] bg-[var(--site-recess)] pl-9 pr-3 text-sm text-[var(--site-ink)] outline-none transition-colors placeholder:text-[var(--site-muted)] focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)]/20"
+          className="h-10 w-full rounded-lg border border-[var(--core-border)] bg-[var(--core-surface)] pl-9 pr-3 text-sm text-[var(--core-ink)] outline-none transition-colors placeholder:text-[var(--core-muted)] focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)]/20"
         />
       </label>
 

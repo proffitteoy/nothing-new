@@ -231,7 +231,7 @@ export default function FriendsBoard() {
   )
 
   return (
-    <main className={styles.board}>
+    <main data-page-palette="friends" className={styles.board}>
       <div className={styles.inner}>
         <section aria-label="友链名录">
           <ol className={styles.list}>
@@ -391,7 +391,7 @@ export default function FriendsBoard() {
               spellCheck={false}
               aria-describedby="friend-copy-status"
             />
-            <p id="friend-copy-status" role="status" className={styles.copyStatus}>
+            <p id="friend-copy-status" role="status" data-copy-status={copyStatus} className={styles.copyStatus}>
               {copyStatus === "error"
                 ? "未能复制，已选中名片内容，请手动复制。"
                 : copyStatus === "copied"

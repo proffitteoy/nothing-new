@@ -342,7 +342,7 @@
 /* Keep shared navigation readable above the about backdrop. */
 :global(body):has(.page) :global(header:has(nav[aria-label="主导航"])),
 :global(body):has(.page) :global([data-site-ui]:has(> button[aria-controls="mobile-nav-wheel"])) {
-  --journal-paper: var(--site-surface);
+  --journal-paper: var(--core-surface);
 }
 :global(body):has(.page) :global(header:has(nav[aria-label="主导航"])) {
   background: color-mix(in srgb, var(--journal-paper) 96%, transparent);
@@ -353,3 +353,16 @@
     height: calc(100% - 72px);
   }
 }
+
+.indexButton[aria-current="location"] {
+  color: var(--core-selected-ink);
+  background: var(--core-selected);
+}
+.indexButton:hover { color: var(--core-hover); background: var(--core-soft-hover); }
+.indexNumber, .eyebrow, .sectionHeader :is(h1, h2, h3),
+.prose :is(h1, h2, h3, h4) { color: var(--page-heading); }
+.prose li::marker { color: var(--page-heading); }
+.prose a { color: var(--core-accent); text-decoration-color: currentColor; }
+.prose a:hover { color: var(--core-hover); text-decoration-color: currentColor; }
+.prose blockquote { background: var(--page-soft); border-color: var(--page-heading); }
+.prose :not(pre) > code { color: var(--page-ink); background: var(--code-inline-bg); }
