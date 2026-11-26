@@ -196,7 +196,9 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 
 Vercel 仍受支持。导入仓库后保持 Root Directory 为仓库根目录，使用 <code>npm run build</code>，Node.js 版本选择 <code>22.x</code>。公开图片直接由静态文件服务分发，保留 <code>/avatar</code>、<code>/avatar.jpg</code>、杂谈封面及 Quartz 附件的原有 URL；构建不再自动上传 Blob。动漫快照、动漫封面和 TDA 论文周报仍使用私有 Blob。友链头像等第三方图片仍使用各自来源。如需番剧页面，再配置 <code>BANGUMI_ACCESS_TOKEN</code>。自托管 Docker 预案与正式切流/备案条件见 [迁移预案](docs/project/vercel-origin-transfer-migration.md)。
 
-Cloudflare Workers 使用 Node.js <code>22.x</code>，先运行 <code>npm run cf:build</code>，再运行 <code>npm run cf:deploy</code>。后者先将预渲染缓存写入 <code>NEXT_INC_CACHE_KV</code>，再发布 Worker。<code>wrangler.jsonc</code> 的 Worker 名称和自引用均为 <code>nothing-new</code>，KV 命名空间属于当前账号；迁移到其他账号时须先创建新命名空间并替换 ID。缓存使用 KV 与 SQLite Durable Objects，无需开通 R2；KV 为最终一致存储，发布与更新受 KV 配额约束。
+Cloudflare Workers 使用 Node.js <code>22.x</code>，先运行 <code>npm run cf:build</code>，再运行 <code>npm run cf:deploy</code>。后者先将预渲染缓存写入 <code>NEXT_INC_CACHE_KV</code>，再发布 Worker。<code>wrangler.jsonc</code> 的 Worker 名称为 <code>nothing-new</code>，KV 命名空间属于当前账号；迁移到其他账号时须先创建新命名空间并替换 ID。缓存使用 KV 与 SQLite Durable Objects，无需开通 R2；KV 为最终一致存储，发布与更新受 KV 配额约束。
+
+Workers Builds 的分支命令 <code>wrangler preview</code> 使用 <code>previews</code> 中独立的 KV，两个 Durable Objects 由平台按 Preview 隔离。<code>cloudflare-worker.mjs</code> 通过 <code>ctx.exports</code> 为 OpenNext 提供同一部署内的自引用，缓存重验证会留在当前 Preview。Wrangler 仅将 <code>.quartz-cache/next/\*_/_.json</code> 作为附加模块装入虚拟文件系统，供空缓存渲染及后台再生读取。其他账号需同时替换正式及预览 KV 的 ID；相关约束见 [Preview 资源与隔离](https://developers.cloudflare.com/workers/previews/resources/)。
 
 Cloudflare 运行时需要以 Secrets 配置实际使用的 <code>BANGUMI_ACCESS_TOKEN</code>、<code>BANGUMI_USERNAME</code>、<code>BLOB_READ_WRITE_TOKEN</code> 及各同步密钥；Vercel OIDC 不会自动转移。应用内容仍使用既有 Blob，KV 仅承载适配器缓存。正式域名及每天 03:00 UTC 的动漫同步调度需在切流时另行接管，确保只有一个定时写者；仓库中的 Vercel Cron 不会自动在 Cloudflare 运行。
 

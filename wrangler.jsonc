@@ -1,22 +1,21 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
+	"main": "cloudflare-worker.mjs",
 	"name": "nothing-new",
 	"workers_dev": true,
 	"compatibility_date": "2026-11-26",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	// Node's virtual filesystem needs these generated note files on cache misses.
+	"find_additional_modules": true,
+	"rules": [
+		{ "type": "Text", "globs": [".quartz-cache/next/**/*.json"], "fallthrough": false },
+		{ "type": "Data", "globs": [], "fallthrough": false },
+		{ "type": "CompiledWasm", "globs": [], "fallthrough": false }
+	],
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
 	},
-	"services": [
-		{
-			// Self-reference service binding, the service name must match the worker name
-			// see https://opennext.js.org/cloudflare/caching
-			"binding": "WORKER_SELF_REFERENCE",
-			"service": "nothing-new"
-		}
-	],
 	"kv_namespaces": [
 		// OpenNext incremental cache; no R2 activation is required.
 		{
@@ -33,9 +32,24 @@
     "migrations": [
         { "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] }
     ],
-    "images": {
+	"images": {
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
+	},
+	"previews": {
+		"kv_namespaces": [
+			{
+				"binding": "NEXT_INC_CACHE_KV",
+				"id": "0a0a19b39d1341d6bd73f67c8feb0b14"
+			}
+		],
+		"durable_objects": {
+			"bindings": [
+				{ "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
+				{ "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+			]
+		},
+		"images": { "binding": "IMAGES" }
 	}
 }
