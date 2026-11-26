@@ -6,7 +6,7 @@
 
 ### 构建与数据链路
 
-- Node 22、Next.js 16.4.5、OpenNext 1.20.19；Workers Builds 先运行 `npm run build`，Wrangler 再以 `--skipNextBuild` 打包。Cloudflare 构建必须输出 standalone，关于页 Markdown 与 Quartz JSON 随 Worker 打包，支持空缓存渲染。
+- Node 22、Next.js 16.4.5、OpenNext 1.20.19；Workers Builds 运行 `npm run build`，其 `postbuild` 以 `--skipNextBuild` 生成 OpenNext 产物；正式 Wrangler 命令会先委托 OpenNext，不能仅依赖部署阶段的 build hook。OpenNext 已设置 standalone 标识时跳过重复打包。Cloudflare 构建必须输出 standalone，关于页 Markdown 与 Quartz JSON 随 Worker 打包，支持空缓存渲染。
 - `NEXT_INC_CACHE_KV` 仅存适配器缓存；`SITE_CONTENT` 单独存 `papers/reports.json`、番剧快照、封面与 manifest。生产与分支预览各使用独立 KV，Durable Objects 由平台隔离，重验证经当前部署的 `ctx.exports` 调用。
 - Obsidian 的 `E:/math` 按现有审阅范围单向发布到 `content/`，Zotero 本地 API 导出获批书目到 `data/paper-library.json`，均随 Git 构建发布。迁移不需要为作者电脑配置云端访问密钥，也不修改 Zotero 阅读标签。
 - 周报生产者仍为私有 `tda-paper-monitor` 的 `Send TDA report / sync-blog`。`BLOG_SYNC_URL` 显式指向 `https://nothing-new.84025375.workers.dev/api/papers`，`BLOG_SYNC_SECRET` 与 Worker 的 `PAPERS_SYNC_SECRET` 配对；用 `sync_only=true` 验收，邮件 job 应跳过。

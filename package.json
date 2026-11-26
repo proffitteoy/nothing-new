@@ -15,6 +15,7 @@
     "notes:build": "node quartz/bootstrap-cli.mjs build",
     "dev": "npm run notes:build && next dev",
     "build": "npm run notes:build && next build",
+    "postbuild": "node -e \"if (process.env.WORKERS_CI && process.env.NEXT_PRIVATE_STANDALONE !== 'true') require('node:child_process').execSync('npm run cf:build -- --skipNextBuild', { stdio: 'inherit' })\"",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
