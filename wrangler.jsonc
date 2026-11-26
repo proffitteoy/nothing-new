@@ -2,6 +2,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
 	"name": "nothing-new",
+	"workers_dev": true,
 	"compatibility_date": "2026-11-26",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	"assets": {
@@ -16,15 +17,11 @@
 			"service": "nothing-new"
 		}
 	],
-	"r2_buckets": [
-		// Use R2 incremental cache
-		// See https://opennext.js.org/cloudflare/caching
+	"kv_namespaces": [
+		// OpenNext incremental cache; no R2 activation is required.
 		{
-			"binding": "NEXT_INC_CACHE_R2_BUCKET",
-			// Create the bucket before deploying
-			// You can change the bucket name if you want
-			// See https://developers.cloudflare.com/workers/wrangler/commands/#r2-bucket-create
-			"bucket_name": "nothing-new-preview-opennext-cache"
+			"binding": "NEXT_INC_CACHE_KV",
+			"id": "84f589d3b15b493eb48655b6cc55a022"
 		}
 	],
 	"durable_objects": {
