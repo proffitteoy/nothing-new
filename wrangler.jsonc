@@ -1,6 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": "cloudflare-worker.mjs",
+	"build": { "command": "npm run cf:build -- --skipNextBuild" },
 	"name": "nothing-new",
 	"workers_dev": true,
 	"compatibility_date": "2026-11-26",
