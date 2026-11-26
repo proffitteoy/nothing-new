@@ -145,6 +145,7 @@ export default function ProjectsBoard() {
 
   return (
     <main
+      data-page-palette="projects"
       className={styles.page}
       data-unified={linkedNavigation}
       data-project-navigation-blocked={panelOpen || (linkedNavigation && rotationEnabled)}

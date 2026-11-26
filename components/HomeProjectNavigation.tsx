@@ -453,7 +453,8 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
                   left: 24,
                   zIndex: 30,
                   padding: 16,
-                  background: "var(--site-surface)",
+                  color: "var(--status-error-fg)",
+                  background: "var(--status-error-bg)",
                 }}
                 role="status"
               >
@@ -489,7 +490,7 @@ export default function HomeProjectNavigator({ children }: { children: ReactNode
                     display: "grid",
                     gap: 8,
                     padding: 12,
-                    background: "var(--site-surface)",
+                    background: "var(--core-elevated)",
                   }}
                   aria-label="场景快速导航"
                 >

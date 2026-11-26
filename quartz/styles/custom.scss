@@ -76,9 +76,9 @@
   }
 
   > :is(h1, h2) {
-    color: var(--secondary);
+    color: var(--page-heading, var(--secondary));
     padding-bottom: 0.3rem;
-    border-bottom: 1px solid var(--secondary);
+    border-bottom: 1px solid var(--page-line, var(--lightgray));
   }
 
   > :first-child {
@@ -138,4 +138,33 @@ a.internal.tag-link {
 
 a.internal.tag-link::before {
   margin-right: 0.08rem;
+}
+
+.note-native-shell,
+.note-card-excerpt {
+  --light: var(--page-surface);
+  --lightgray: var(--page-line);
+  --gray: var(--page-muted);
+  --darkgray: var(--page-ink);
+  --dark: var(--page-ink);
+  --secondary: var(--core-accent);
+  --tertiary: var(--core-hover);
+  --highlight: var(--core-soft);
+  --textHighlight: var(--core-selected);
+}
+.quartz-note {
+  color: var(--page-ink);
+
+  article.popover-hint {
+    :is(h1, h2, h3, h4, h5, h6) { color: var(--page-heading); }
+    a:not(.tag-link) {
+      color: var(--core-accent);
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
+    a:not(.tag-link):hover { color: var(--core-hover); }
+    blockquote { border-color: var(--page-heading); }
+    :not(pre) > code { color: var(--page-ink); background-color: var(--code-inline-bg); }
+    .katex { color: var(--page-ink); }
+  }
 }

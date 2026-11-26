@@ -181,9 +181,9 @@ export function createRenderer(
           context.lineTo(p.x, p.y)
         }
       }
-      context.strokeStyle = nodeColor(a, theme)
+      context.strokeStyle = lit ? theme.accent : theme.line
       context.globalAlpha = (hasFocus ? (lit ? 0.78 : 0.05) : 0.34) * grow
-      context.lineWidth = (1 + (link.value / scene.maxLinkValue) * 1.5) / transform.k
+      context.lineWidth = ((lit ? 2 : 1) + (link.value / scene.maxLinkValue) * 1.5) / transform.k
       context.stroke()
 
       if (!particlesOn || link.kind === "post-heading") continue
@@ -198,7 +198,7 @@ export function createRenderer(
         const p = curvePoint({ x: ax, y: ay }, control, { x: bx, y: by }, progress)
         context.beginPath()
         context.arc(p.x, p.y, (lit ? 2.5 : 1.7) / transform.k, 0, TWO_PI)
-        context.fillStyle = nodeColor(a, theme)
+        context.fillStyle = lit ? theme.accent : theme.line
         context.globalAlpha = (hasFocus ? (lit ? 0.95 : 0.08) : 0.6) * grow
         context.fill()
         particles++
@@ -225,9 +225,10 @@ export function createRenderer(
 
       context.beginPath()
       context.arc(x, y, r, 0, TWO_PI)
-      context.fillStyle = color
+      const dimmed = focusAlpha(node) < 0.2
+      context.fillStyle = dimmed ? theme.dim : color
       context.globalAlpha =
-        TIER_ALPHA[node.tier] * focusAlpha(node) * easeOutCubic(clamp(node.reveal * 2, 0, 1))
+        (dimmed ? 1 : TIER_ALPHA[node.tier]) * easeOutCubic(clamp(node.reveal * 2, 0, 1))
       context.fill()
 
       // 分类节点加 surface 色描边，形成「挖空」的层次感
@@ -238,13 +239,22 @@ export function createRenderer(
         context.stroke()
       }
 
-      // 选中环
+      if (dimmed) {
+        context.lineWidth = 1 / transform.k
+        context.strokeStyle = theme.line
+        context.stroke()
+      }
+
+      // 选中环保留类别填充色，并使用当前公共配色。
       if (node.selected) {
         context.beginPath()
         context.arc(x, y, r + 4 / transform.k, 0, TWO_PI)
-        context.strokeStyle = color
-        context.lineWidth = 2 / transform.k
+        context.strokeStyle = theme.surface
+        context.lineWidth = 5 / transform.k
         context.globalAlpha = 1
+        context.stroke()
+        context.strokeStyle = theme.accent
+        context.lineWidth = 2 / transform.k
         context.stroke()
       }
     }
@@ -320,14 +330,14 @@ export function createRenderer(
         )
         if (node !== anchor && !available) continue
         const alpha = focused ? 1 : isCategory ? 0.95 : 0.9
-        const dim = focusAlpha(node) * easeOutCubic(node.reveal)
+        const dim = easeOutCubic(node.reveal)
 
         context.strokeStyle = theme.surface
         context.lineWidth = (isCategory ? 5 : 4) / transform.k
         context.globalAlpha = alpha * dim * 0.75
         context.strokeText(text, x, ty)
 
-        context.fillStyle = isCategory ? nodeColor(node, theme) : focused ? theme.text : theme.muted
+        context.fillStyle = focused || isCategory ? theme.text : theme.muted
         context.globalAlpha = alpha * dim
         context.fillText(text, x, ty)
       }

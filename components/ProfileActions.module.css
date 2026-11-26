@@ -31,3 +31,7 @@
   outline: 2px solid currentColor;
   outline-offset: 3px;
 }
+
+.action:hover { color: var(--core-hover); background: var(--core-soft-hover); }
+.action:active { color: var(--core-pressed); }
+.action:focus-visible { outline-color: var(--core-focus); }

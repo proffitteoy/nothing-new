@@ -132,7 +132,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
   }, [hashTarget])
 
   return (
-    <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-20 pt-28 sm:px-6 lg:px-10">
+    <main data-page-palette="anime" className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-20 pt-28 sm:px-6 lg:px-10">
       <section id="watching" aria-labelledby="watching-title" className="scroll-mt-24">
         <SectionHeading
           id="watching-title"
@@ -168,7 +168,7 @@ function AnimeShelfContent({ snapshot }: { snapshot: AnimeSnapshot }) {
               return (
                 <section key={groupId} aria-labelledby={groupId}>
                   <div className="mb-4 flex items-center gap-3">
-                    <h3 id={groupId} className="text-lg font-black text-[var(--site-ink)]">
+                    <h3 id={groupId} className="anime-section-heading text-lg font-black">
                       {group.score === null ? "未评分" : `${group.score} 分`}
                     </h3>
                     <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-[var(--site-line)] to-transparent" />
@@ -214,7 +214,7 @@ function SectionHeading({
       className="mb-5 flex items-end gap-3 px-1"
     >
       <div>
-        <h2 id={id} className="flex items-center gap-2 text-2xl font-black text-[var(--site-ink)]">
+        <h2 id={id} className="anime-section-heading flex items-center gap-2 text-2xl font-black">
           <Icon className="h-5 w-5 text-[var(--site-accent)]" aria-hidden="true" />
           {title}
         </h2>
@@ -257,14 +257,14 @@ function AnimeGrid({
               <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-white/20 opacity-70 transition-opacity group-hover:opacity-40" />
               <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20 sm:rounded-2xl" />
               {showRating && (
-                <span className="absolute right-2 top-2 text-[11px] font-black text-white [text-shadow:0_1px_5px_rgba(0,0,0,0.95)] sm:right-2.5 sm:top-2.5 sm:text-xs">
+                <span className="absolute right-2 top-2 text-[11px] font-black bg-slate-950/80 px-1 text-white [text-shadow:0_1px_5px_rgba(0,0,0,0.95)] sm:right-2.5 sm:top-2.5 sm:text-xs">
                   {anime.score === undefined ? "未评" : `${anime.score} 分`}
                 </span>
               )}
             </span>
             <span
               title={title}
-              className="mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-[var(--site-ink)] transition-colors group-hover:text-[var(--site-accent)] sm:mt-2.5 sm:text-xs sm:leading-5 md:line-clamp-3 md:text-sm md:font-semibold md:leading-6"
+              className="anime-title-strip mt-2 block line-clamp-2 text-center text-[10px] font-black leading-4 text-[var(--site-ink)] transition-colors group-hover:text-[var(--site-accent)] sm:mt-2.5 sm:text-xs sm:leading-5 md:line-clamp-3 md:text-sm md:font-semibold md:leading-6"
             >
               {title}
             </span>
@@ -304,7 +304,7 @@ function LoadMoreControl({
         data-field-obstacle
         type="button"
         onClick={onLoadMore}
-        className="relative inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-surface)] px-5 py-3 text-xs font-black text-[var(--site-ink)] shadow-lg transition hover:-translate-y-0.5 hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+        className="relative inline-flex items-center gap-2 rounded-full border border-[var(--core-border)] bg-[var(--core-surface)] px-5 py-3 text-xs font-black text-[var(--site-ink)] shadow-lg transition hover:-translate-y-0.5 hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
       >
         <ChevronDown className="h-4 w-4 animate-bounce" aria-hidden="true" />
         继续展开 · 还有 {remaining} 部
@@ -323,7 +323,7 @@ function ShelfState({
   action?: () => void
 }) {
   return (
-    <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
+    <main data-page-palette="anime" className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
       <div
         data-field-obstacle
         className="mt-8 rounded-[1.75rem] border border-[var(--site-line)] bg-[var(--site-surface)] px-6 py-16 text-center shadow-xl"
@@ -337,7 +337,7 @@ function ShelfState({
           <button
             type="button"
             onClick={action}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--site-line)] bg-[var(--site-recess)] px-4 py-2.5 text-xs font-black text-[var(--site-ink)] shadow-md transition hover:text-[var(--site-accent)]"
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--core-border)] bg-[var(--core-surface)] px-4 py-2.5 text-xs font-black text-[var(--site-ink)] shadow-md transition hover:text-[var(--site-accent)]"
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             重试

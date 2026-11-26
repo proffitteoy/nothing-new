@@ -609,7 +609,7 @@ export function mountKnowledgeGraph(
   })
   themeObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["class", "data-theme"],
+    attributeFilter: ["class", "data-theme", "data-core-palette", "data-page-palette"],
   })
 
   const visibilityObserver = new IntersectionObserver((entries) => {

@@ -149,6 +149,7 @@ export default function HomeScene({ blogHref }: { blogHref: string }) {
       <main
         ref={root}
         className={styles.scene}
+        data-page-palette="home"
         data-home-scene
         data-unified={navigation.enabled}
         data-home-music-dragging={draggingMusic}

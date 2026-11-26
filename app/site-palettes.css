@@ -1,0 +1,244 @@
+/* Independent page and session-scoped interaction palettes. */
+:root {
+  --core-surface: #FCFCFA;
+  --core-elevated: #FFFEFC;
+  --core-ink: #30353A;
+  --core-muted: #626A70;
+  --core-border: #7A838B;
+  --core-line: #D8DADC;
+  --core-disabled-bg: #ECEEEB;
+  --core-disabled-ink: #697168;
+  --core-disabled-border: #91988E;
+  --core-on-accent: #FFFFFF;
+  --core-focus-gap: #FFFEFC;
+  --status-success-fg: #245C3B;
+  --status-success-bg: #EAF4ED;
+  --status-warning-fg: #7A4B00;
+  --status-warning-bg: #FFF4CE;
+  --status-error-fg: #B3261E;
+  --status-error-bg: #FDECEA;
+  --status-info-fg: #245A8D;
+  --status-info-bg: #EAF2FA;
+  --status-noted-fg: #6A5882;
+  --status-noted-bg: #F0EEF0;
+  --page-ink: #30353A;
+  --code-inline-bg: #EEF0ED;
+}
+
+:root, html[data-core-palette="blue"] {
+  --core-accent: #2F509B;
+  --core-hover: #294688;
+  --core-pressed: #233C74;
+  --core-soft: #ECEEF2;
+  --core-soft-hover: #E3E7EF;
+  --core-selected: #DBE0EB;
+  --core-selected-ink: #294688;
+  --core-focus: #2F509B;
+}
+
+html[data-core-palette="forest"] {
+  --core-accent: #356B43;
+  --core-hover: #2E5D3A;
+  --core-pressed: #274F32;
+  --core-soft: #ECF0EB;
+  --core-soft-hover: #E4EBE4;
+  --core-selected: #DCE5DD;
+  --core-selected-ink: #2E5D3A;
+  --core-focus: #356B43;
+}
+
+html[data-core-palette="rose"] {
+  --core-accent: #94506A;
+  --core-hover: #7A4056;
+  --core-pressed: #663447;
+  --core-soft: #F4EEEE;
+  --core-soft-hover: #F0E7E9;
+  --core-selected: #EBE0E3;
+  --core-selected-ink: #7A4056;
+  --core-focus: #94506A;
+}
+
+html[data-core-palette="violet"] {
+  --core-accent: #6C527F;
+  --core-hover: #594369;
+  --core-pressed: #493657;
+  --core-soft: #F0EEF0;
+  --core-soft-hover: #EBE8EB;
+  --core-selected: #E5E1E6;
+  --core-selected-ink: #594369;
+  --core-focus: #6C527F;
+}
+
+:root, [data-page-palette="home"] {
+  --page-canvas: #E9E7E0;
+  --page-surface: #FCFCFA;
+  --page-muted: #566278;
+  --page-heading: #31446C;
+  --page-soft: #E3EAF4;
+  --page-muted-on-soft: #566278;
+  --page-line: #D4DCE7;
+  --page-deco: #CDC8E6;
+  --page-ornament: #9DBFEB;
+}
+
+[data-page-palette="projects"] {
+  --page-canvas: #F1F6F1;
+  --page-surface: #FBFEFC;
+  --page-muted: #526D70;
+  --page-heading: #245B63;
+  --page-soft: #EAF4EF;
+  --page-muted-on-soft: #526D70;
+  --page-line: #CEDFDB;
+  --page-deco: #92C2A6;
+  --page-ornament: #ACEEFE;
+}
+
+[data-page-palette="anime"] {
+  --page-canvas: #F0EEF5;
+  --page-surface: #FAF9FC;
+  --page-muted: #6B6278;
+  --page-heading: #4C435A;
+  --page-soft: #E9E3F2;
+  --page-muted-on-soft: #685F75;
+  --page-line: #D8D2E3;
+  --page-deco: #ACBCE9;
+  --page-ornament: #F2EDD4;
+}
+
+[data-page-palette="chatter"] {
+  --page-canvas: #F5F0EB;
+  --page-surface: #FFFCF8;
+  --page-muted: #74636B;
+  --page-heading: #754C5F;
+  --page-soft: #F0E4E8;
+  --page-muted-on-soft: #705F67;
+  --page-line: #E1D3D8;
+  --page-deco: #EAD2B6;
+  --page-ornament: #DFC4CD;
+}
+
+[data-page-palette="blog"] {
+  --page-canvas: #F9F7EE;
+  --page-surface: #FFFDF5;
+  --page-muted: #64705C;
+  --page-heading: #314C35;
+  --page-soft: #E8EED9;
+  --page-muted-on-soft: #5C6855;
+  --page-line: #D6DDC8;
+  --page-deco: #A6DC93;
+  --page-ornament: #BDDD43;
+}
+
+[data-page-palette="papers"] {
+  --page-canvas: #E9E7E0;
+  --page-surface: #FCFCFA;
+  --page-muted: #566278;
+  --page-heading: #384B61;
+  --page-soft: #EDF0F4;
+  --page-muted-on-soft: #566278;
+  --page-line: #D4DCE7;
+  --page-deco: #DDD9E3;
+  --page-ornament: #A7C3D4;
+}
+
+[data-page-palette="friends"] {
+  --page-canvas: #F7F1E8;
+  --page-surface: #FFFCF7;
+  --page-muted: #735F51;
+  --page-heading: #75452B;
+  --page-soft: #FAEDDC;
+  --page-muted-on-soft: #735F51;
+  --page-line: #E6D5C3;
+  --page-deco: #FACE7A;
+  --page-ornament: #F9C79A;
+}
+
+[data-page-palette="about"] {
+  --page-canvas: #F1F3EE;
+  --page-surface: #FCFCF7;
+  --page-muted: #5F6B62;
+  --page-heading: #3E5B54;
+  --page-soft: #ECF0EC;
+  --page-muted-on-soft: #5F6B62;
+  --page-line: #D4DED6;
+  --page-deco: #DFC4CD;
+  --page-ornament: #CBD8D5;
+}
+
+/* Compatibility aliases are recomputed inside each local page scope. */
+:root,
+[data-page-palette] {
+  --site-bg: var(--page-canvas);
+  --site-surface: var(--page-surface);
+  --site-recess: var(--page-soft);
+  --site-ink: var(--page-ink);
+  --site-muted: var(--page-muted);
+  --site-accent: var(--core-accent);
+  --site-pink: var(--core-soft);
+  --site-detail: var(--page-heading);
+  --site-violet: var(--status-noted-fg);
+  --site-mint: var(--status-success-fg);
+  --site-line: var(--page-line);
+  --site-glass: var(--page-surface);
+  --site-wash: color-mix(in srgb, var(--page-canvas) 10%, transparent);
+}
+
+html {
+  background-color: var(--page-canvas);
+  accent-color: var(--core-accent);
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--core-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--core-focus-gap);
+}
+:where(button, input, select, textarea):disabled {
+  color: var(--core-disabled-ink);
+  background-color: var(--core-disabled-bg);
+  border-color: var(--core-disabled-border);
+  cursor: not-allowed;
+}
+:where(input, textarea)[aria-invalid="true"] { border-color: var(--status-error-fg); }
+
+.site-palette-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 16px;
+  padding: 12px;
+  border-top: 1px solid var(--core-line);
+  color: var(--core-ink);
+  background: var(--core-surface);
+  font-size: 13px;
+}
+.site-palette-picker select {
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 1px solid var(--core-border);
+  border-radius: 4px;
+  color: var(--core-ink);
+  background: var(--core-elevated);
+}
+.site-palette-picker button,
+[data-home-project-controls] :is(button, summary, a) {
+  color: var(--core-accent);
+  background: var(--core-surface);
+  padding: 6px 10px;
+}
+.site-palette-picker button:hover,
+[data-home-project-controls] :is(button, summary, a):hover {
+  color: var(--core-hover);
+  background: var(--core-soft-hover);
+}
+.anime-section-heading {
+  color: var(--page-heading);
+  background: var(--page-surface);
+  width: fit-content;
+  padding: 3px 8px;
+}
+.anime-title-strip {
+  background: var(--page-surface);
+  padding-inline: 4px;
+}

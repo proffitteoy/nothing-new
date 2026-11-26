@@ -1,7 +1,7 @@
 export default function AnimeLoading() {
   return (
     <div className="min-h-screen pb-20">
-      <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
+      <main data-page-palette="anime" className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-20 sm:px-6 lg:px-10">
         <div
           data-field-obstacle
           className="h-56 animate-pulse rounded-[2rem] border border-[var(--site-line)] bg-[var(--site-surface)] shadow-xl"

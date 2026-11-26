@@ -23,7 +23,7 @@ function Badges({ paper }: { paper: LibraryPaper }) {
           <Check size={12} aria-hidden /> 已读
         </span>
       )}
-      {paper.readingStatus === "reading" && <span className={styles.read}>阅读中</span>}
+      {paper.readingStatus === "reading" && <span className={styles.reading}>阅读中</span>}
       {!!paper.notes.length && (
         <span className={styles.noted}>
           <BookOpen size={12} aria-hidden /> 有笔记
@@ -177,7 +177,7 @@ export default function PaperLibrary({
   }
 
   return (
-    <main className={`${reading.panel} ${styles.page}`}>
+    <main data-page-palette="papers" className={`${reading.panel} ${styles.page}`}>
       <h1 className="sr-only">论文</h1>
       <section className={styles.catalogue} aria-label="论文目录" data-field-obstacle>
         <div className={styles.toolbar}>

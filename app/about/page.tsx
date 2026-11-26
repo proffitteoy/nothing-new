@@ -54,7 +54,7 @@ export default async function AboutPage() {
   ])
 
   return (
-    <div className={styles.page}>
+    <div data-page-palette="about" className={styles.page}>
       <PageTransition>
         <main className={styles.main}>
           <AboutClient
