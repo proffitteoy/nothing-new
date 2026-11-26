@@ -6,10 +6,10 @@
 	"workers_dev": true,
 	"compatibility_date": "2026-11-26",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-	// Node's virtual filesystem needs these generated note files on cache misses.
+	// Node's virtual filesystem needs notes and About sources on cache misses.
 	"find_additional_modules": true,
 	"rules": [
-		{ "type": "Text", "globs": [".quartz-cache/next/**/*.json"], "fallthrough": false },
+		{ "type": "Text", "globs": [".quartz-cache/next/**/*.json", "app/about/*.md"], "fallthrough": false },
 		{ "type": "Data", "globs": [], "fallthrough": false },
 		{ "type": "CompiledWasm", "globs": [], "fallthrough": false }
 	],

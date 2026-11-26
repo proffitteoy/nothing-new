@@ -1,9 +1,17 @@
 import type { NextConfig } from "next"
 
+const isCloudflareBuild =
+  Boolean(process.env.WORKERS_CI) || process.env.NEXT_PRIVATE_STANDALONE === "true"
+
 const nextConfig: NextConfig = {
   // Keep public site-owned images on the static/CDN path, regardless of Blob credentials.
   // Private Blob remains in use for the anime snapshot and cover APIs.
-  output: process.env.HOSTING_STANDALONE === "1" ? "standalone" : undefined,
+  // Workers Builds runs Next before Wrangler's skipNextBuild hook.
+  output: isCloudflareBuild || process.env.HOSTING_STANDALONE === "1" ? "standalone" : undefined,
+  // Blob's Node HTTP client compiles WASM; Workers must use the SDK's native fetch shim.
+  turbopack: isCloudflareBuild
+    ? { resolveAlias: { undici: "./node_modules/@vercel/blob/dist/undici-browser.js" } }
+    : undefined,
   async rewrites() {
     return [{ source: "/avatar", destination: "/avatar.jpg" }]
   },
