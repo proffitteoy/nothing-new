@@ -2,7 +2,7 @@ import "server-only"
 
 import { createHash } from "node:crypto"
 import { unstable_cache } from "next/cache"
-import { fetchBlob, getBlobUrl } from "./blob"
+import { fetchBlob, getBlobUrl, hasBlobStorage } from "./blob"
 import { compilePaperReports } from "./papers"
 import seedReports from "../data/tda-reports.json"
 
@@ -37,10 +37,7 @@ export function compilePaperSnapshot(source: unknown, scope: "all" | "latest" = 
 
 export async function readPaperReports(scope: "all" | "latest" = "all") {
   let source: unknown = seedReports
-  if (
-    process.env.BLOB_READ_WRITE_TOKEN ||
-    (process.env.BLOB_STORE_ID && process.env.VERCEL_OIDC_TOKEN)
-  ) {
+  if (hasBlobStorage()) {
     const response = await fetchBlob(PAPER_REPORTS_PATH, { useCache: false })
     if (response.ok) source = await response.json()
     else if (response.status !== 404) throw new Error(`Blob returned ${response.status}`)
@@ -50,9 +47,7 @@ export async function readPaperReports(scope: "all" | "latest" = "all") {
 
 export async function getInitialPaperReports() {
   try {
-    const configured =
-      process.env.BLOB_READ_WRITE_TOKEN ||
-      (process.env.BLOB_STORE_ID && process.env.VERCEL_OIDC_TOKEN)
+    const configured = hasBlobStorage()
     const scope = configured ? getBlobUrl(PAPER_REPORTS_PATH) : "seed"
     // This project uses the route-cache model, without Cache Components.
     // Include the source store so builds for different environments cannot share its reports.

@@ -202,7 +202,11 @@ Workers Builds 先执行 <code>npm run build</code>；检测到 <code>WORKERS_CI
 
 Cloudflare 的 Turbopack 构建将 Blob SDK 的 <code>undici</code> 解析到 SDK 自带的原生 <code>fetch</code> 实现，避免 Worker 启动时触发被禁止的动态 WASM 编译；本地 <code>cf:build</code> 通过 OpenNext 的 standalone 构建标识启用相同配置。Wrangler 将 <code>.quartz-cache/next</code> 中的 JSON 及 <code>app/about</code> 的三份 Markdown 作为文本模块装入虚拟文件系统，支持空缓存渲染及后台再生。旧头像地址 <code>/avatar</code> 由 Worker 入口转交 <code>ASSETS</code> 读取 <code>/avatar.jpg</code>，并保留原缓存头。
 
-Cloudflare 运行时需要以 Secrets 配置实际使用的 <code>BANGUMI_ACCESS_TOKEN</code>、<code>BANGUMI_USERNAME</code>、<code>BLOB_READ_WRITE_TOKEN</code> 及各同步密钥；Vercel OIDC 不会自动转移。应用内容仍使用既有 Blob，KV 仅承载适配器缓存。正式域名及每天 03:00 UTC 的动漫同步调度需在切流时另行接管，确保只有一个定时写者；仓库中的 Vercel Cron 不会自动在 Cloudflare 运行。
+Cloudflare 的 <code>SITE_CONTENT</code> KV 保存动态周报、番剧快照与封面，独立于 OpenNext 缓存；生产及预览使用不同命名空间。原有内容路径、上传接口、ETag 和不可变快照规则保留。KV 跨地区更新可能延迟约一分钟或更久；同一请求内的快照校验读取本次成功写入，失败写入不发布新指针。Vercel 部署仍使用原私有 Blob，作为迁移回退。
+
+运行时以 Secrets 配置 <code>BANGUMI_ACCESS_TOKEN</code>、<code>PAPERS_SYNC_SECRET</code>、<code>ANIME_SYNC_SECRET</code> 和 <code>CRON_SECRET</code>；Cloudflare 不需要原 Blob 令牌。论文监控仓库的 <code>BLOG_SYNC_SECRET</code> 与站点的 <code>PAPERS_SYNC_SECRET</code> 配对，<code>BLOG_SYNC_URL</code> 指向正式 Worker 的 <code>/api/papers</code>。每天 03:00 UTC 的动漫同步由 Worker 的 <code>scheduled</code> 入口调用现有认证接口；上线时停用原 Vercel Cron，避免重复调度。
+
+Obsidian 仍从本地 <code>E:/math</code> 按既有审阅规则发布到 <code>content/</code>；Zotero 仍通过本地 API 导出获批书目到 <code>data/paper-library.json</code>。两者随 Git 构建发布，不向 Cloudflare 连接作者电脑，也不需要新增云端访问密钥。
 
 部署前建议运行：
 

@@ -22,6 +22,10 @@
 		{
 			"binding": "NEXT_INC_CACHE_KV",
 			"id": "84f589d3b15b493eb48655b6cc55a022"
+		},
+		{
+			"binding": "SITE_CONTENT",
+			"id": "5a43f11ca93e4716b213676c090a68ca"
 		}
 	],
 	"durable_objects": {
@@ -38,11 +42,16 @@
 		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
 	},
+	"triggers": { "crons": ["0 3 * * *"] },
 	"previews": {
 		"kv_namespaces": [
 			{
 				"binding": "NEXT_INC_CACHE_KV",
 				"id": "0a0a19b39d1341d6bd73f67c8feb0b14"
+			},
+			{
+				"binding": "SITE_CONTENT",
+				"id": "aa87e880f7e3487197f9e74f2e316f18"
 			}
 		],
 		"durable_objects": {

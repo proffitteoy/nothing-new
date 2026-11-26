@@ -15,6 +15,17 @@ export class DOQueueHandler extends OpenNextDOQueueHandler {
 }
 
 export default class CloudflareWorker extends WorkerEntrypoint {
+  async scheduled() {
+    if (!this.env.CRON_SECRET) throw new Error("Anime cron secret is not configured")
+    const response = await this.fetch(
+      new Request("https://nothing-new.cn/api/anime/sync", {
+        headers: { Authorization: `Bearer ${this.env.CRON_SECRET}` },
+      }),
+    )
+    if (!response.ok) throw new Error(`Anime cron returned ${response.status}`)
+    await response.arrayBuffer()
+  }
+
   async fetch(request) {
     const url = new URL(request.url)
     // OpenNext does not apply Next rewrites when resolving a static asset.

@@ -1,11 +1,33 @@
 import "server-only"
 
+import { createHash } from "node:crypto"
+import { getCloudflareContext } from "@opennextjs/cloudflare"
 import { get as getVercelBlob } from "@vercel/blob"
 
 const VERCEL_BLOB_API = "https://vercel.com/api/blob/"
 const VERCEL_BLOB_API_VERSION = "12"
 const BLOB_ACCESS = "private" as const
 const BLOB_RETRY_DELAYS_MS = [0, 500, 1_500] as const
+const writtenBlobs = new WeakMap<object, Map<string, Response>>()
+
+function getContentKV() {
+  try {
+    const { env, ctx } = getCloudflareContext()
+    const kv = (env as CloudflareEnv & { SITE_CONTENT?: CloudflareEnv["NEXT_INC_CACHE_KV"] })
+      .SITE_CONTENT
+    return kv ? { kv, ctx } : null
+  } catch {
+    return null
+  }
+}
+
+export function hasBlobStorage() {
+  return Boolean(
+    getContentKV() ||
+      process.env.BLOB_READ_WRITE_TOKEN ||
+      (process.env.BLOB_STORE_ID && process.env.VERCEL_OIDC_TOKEN),
+  )
+}
 
 type BlobPutResult = {
   url: string
@@ -65,6 +87,7 @@ export function getBlobUrl(pathname: string) {
     .split("/")
     .map((segment) => encodeURIComponent(segment))
     .join("/")
+  if (getContentKV()) return `cloudflare-kv://SITE_CONTENT/${encodedPath}`
   const { storeId } = getBlobAuth()
   return `https://${storeId}.${BLOB_ACCESS}.blob.vercel-storage.com/${encodedPath}`
 }
@@ -78,6 +101,35 @@ export async function putBlob(
     allowOverwrite?: boolean
   },
 ): Promise<BlobPutResult> {
+  const content = getContentKV()
+  if (content) {
+    const key = cleanBlobPath(pathname)
+    if (!options.allowOverwrite && (await content.kv.get(key)) !== null) {
+      throw new Error(`Content already exists: ${key}`)
+    }
+    const bytes = typeof body === "string" ? body : new Uint8Array(body)
+    const etag = `"${createHash("sha256").update(bytes).digest("hex")}"`
+    const metadata = {
+      contentType: options.contentType,
+      etag,
+      cacheControlMaxAge: options.cacheControlMaxAge,
+    }
+    await content.kv.put(key, body, { metadata })
+    // KV is eventually consistent. Snapshot verification must read this request's own write.
+    let written = writtenBlobs.get(content.ctx)
+    if (!written) writtenBlobs.set(content.ctx, (written = new Map()))
+    written.set(
+      key,
+      new Response(body, {
+        headers: {
+          "Content-Type": options.contentType,
+          ETag: etag,
+          "Cache-Control": `private, max-age=${options.cacheControlMaxAge}`,
+        },
+      }),
+    )
+    return { url: getBlobUrl(key), pathname: key, contentType: options.contentType, etag }
+  }
   const { token, storeId } = getBlobAuth()
   const url = new URL(VERCEL_BLOB_API)
   url.searchParams.set("pathname", cleanBlobPath(pathname))
@@ -131,6 +183,30 @@ export async function fetchBlob(
   pathname: string,
   options: { ifNoneMatch?: string; useCache?: boolean } = {},
 ) {
+  const content = getContentKV()
+  if (content) {
+    const key = cleanBlobPath(pathname)
+    let response = writtenBlobs.get(content.ctx)?.get(key)?.clone()
+    if (!response) {
+      const stored = await content.kv.getWithMetadata<{
+        contentType: string
+        etag: string
+        cacheControlMaxAge: number
+      }>(key, { type: "arrayBuffer", cacheTtl: 60 })
+      if (stored.value === null) return new Response(null, { status: 404 })
+      response = new Response(stored.value, {
+        headers: {
+          "Content-Type": stored.metadata?.contentType ?? "application/octet-stream",
+          ETag: stored.metadata?.etag ?? "",
+          "Cache-Control": `private, max-age=${stored.metadata?.cacheControlMaxAge ?? 0}`,
+        },
+      })
+    }
+    if (options.ifNoneMatch && options.ifNoneMatch === response.headers.get("etag")) {
+      return new Response(null, { status: 304, headers: response.headers })
+    }
+    return response
+  }
   const auth = getBlobAuth()
   const credentials =
     auth.kind === "oidc" ? { oidcToken: auth.token, storeId: auth.storeId } : { token: auth.token }
