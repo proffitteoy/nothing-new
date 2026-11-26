@@ -1,4 +1,37 @@
-# Vercel 流量止损与自托管迁移预案（2026-11-05）
+# Vercel 流量止损与 Cloudflare 迁移记录
+
+## Cloudflare 迁移（2026-11-26）
+
+当前迁移目标为 Cloudflare Workers。下面的 Docker 自托管方案保留为历史应急预案，不是本次部署步骤。
+
+### 构建与数据链路
+
+- Node 22、Next.js 16.4.5、OpenNext 1.20.19；Workers Builds 先运行 `npm run build`，Wrangler 再以 `--skipNextBuild` 打包。Cloudflare 构建必须输出 standalone，关于页 Markdown 与 Quartz JSON 随 Worker 打包，支持空缓存渲染。
+- `NEXT_INC_CACHE_KV` 仅存适配器缓存；`SITE_CONTENT` 单独存 `papers/reports.json`、番剧快照、封面与 manifest。生产与分支预览各使用独立 KV，Durable Objects 由平台隔离，重验证经当前部署的 `ctx.exports` 调用。
+- Obsidian 的 `E:/math` 按现有审阅范围单向发布到 `content/`，Zotero 本地 API 导出获批书目到 `data/paper-library.json`，均随 Git 构建发布。迁移不需要为作者电脑配置云端访问密钥，也不修改 Zotero 阅读标签。
+- 周报生产者仍为私有 `tda-paper-monitor` 的 `Send TDA report / sync-blog`。`BLOG_SYNC_URL` 显式指向 `https://nothing-new.84025375.workers.dev/api/papers`，`BLOG_SYNC_SECRET` 与 Worker 的 `PAPERS_SYNC_SECRET` 配对；用 `sync_only=true` 验收，邮件 job 应跳过。
+- Worker Secrets 为 `BANGUMI_ACCESS_TOKEN`、`PAPERS_SYNC_SECRET`、`ANIME_SYNC_SECRET`、`CRON_SECRET`。旧 Vercel 部署保留原私有 Blob 配置；Cloudflare 已有内容 KV，不依赖 Vercel OIDC 或 Blob Token。
+- 每天 03:00 UTC（北京时间 11:00）的番剧同步由 `scheduled` 入口直接调用本 Worker 的认证接口，不经域名 DNS。对应移除 `vercel.json` 的旧 cron，确保正式调度只有一处。
+
+### 已完成的迁移验收
+
+- 从原站导出五期周报、285 条番剧及 284 张封面，初始共 288 个键、97,174,040 字节；源数据逐项校验 SHA256，生产与预览 KV 的初始键元数据哈希均匹配。原 Blob 保留，未删除。
+- 隔离 Cloudflare 预览实测最新周报 `2026-11-23`、五期归档、论文页首屏、285 条快照及不可变版本哈希；三个封面抽样验证字节哈希与 304，番剧 API 明确使用 `snapshot`。
+- 错误凭据上传返回 401，正确凭据可上传五期周报。真实认证番剧同步成功，285 条记录，封面复用 285、失败 0。
+- 完整构建、类型检查、相关 ESLint / Prettier 与差异检查通过。11 个存储和周报测试通过；全套 168/169 通过，唯一失败是与 `origin/main` 相同的 `SplashScreen.test.ts` 启动脚本文本断言。
+- 主目录 Obsidian、Zotero 同步均已 dry-run；未额外发布本地笔记或书目变化。
+
+### 正式发布与域名切换
+
+合入后核对该提交的 Workers Builds，验证正式 Worker 的页面、周报上传、番剧同步、封面、Cron 注册，以及生产者的 sync-only Action。不要把旧提交的构建绿灯当成新代码验收。
+
+正式域名 `nothing-new.cn` 当前仍由阿里云 `dns3.hichina.com` / `dns4.hichina.com` 解析至 Vercel。当前 Cloudflare OAuth 授权创建 Zone 返回 403，缺少 `com.cloudflare.api.account.zone.create` 权限；没有修改原 DNS 或名称服务器。域名接入须先在 Cloudflare 添加免费 Zone，完整保留邮件与其他现有 DNS 记录，再根据实际分配的名称服务器修改阿里云 NS；证书与 Worker 自定义域名就绪后才能确认切流完成。不能只复制网站 A 记录而漏掉周报发信所需记录。
+
+KV 跨地区可见性可能延迟约一分钟或更久，同请求快照校验只读取本请求成功写入。迁移后仍需观察缓存后台再生及偶发平台 5xx；预览曾出现未取得确切错误码的 503，后续完整业务验收及 16 次论文页请求均成功，不能据此断言已确定根因。
+
+回滚时保留 Vercel 生产部署和原 Blob，恢复原 DNS 后，将生产者的 URL 与配对 Secret 一起切回 Vercel，并按需恢复旧 cron、停用 Cloudflare cron，避免两端重复调度。切回前把 KV 中迁移后新增的周报、番剧版本同步到回退存储并校验，旧 Blob 不会自动获得 Cloudflare 的后续写入。
+
+## 2026-11-05 历史应急预案
 
 ## 现状与原则
 

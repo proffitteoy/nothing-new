@@ -83,6 +83,8 @@ function route(compile?: (value: unknown) => Promise<PaperReport[]>) {
         }
       if (name.endsWith("/blob"))
         return {
+          hasBlobStorage: () =>
+            Boolean(env.BLOB_READ_WRITE_TOKEN || (env.BLOB_STORE_ID && env.VERCEL_OIDC_TOKEN)),
           getBlobUrl: () => "https://test.private.blob.vercel-storage.com/papers/reports.json",
           fetchBlob: async (_pathname: string, options: { useCache: boolean }) => {
             assert.equal(options.useCache, false)
