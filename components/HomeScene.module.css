@@ -22,6 +22,12 @@
   outline: 2px solid var(--site-accent);
   outline-offset: 4px;
 }
+/* The live scene paints this content into the wood material. These same native
+   elements retain focus, links and range input on the projected surface. */
+.scene[data-home-surface="material"] [data-home-ink] {
+  opacity: 0;
+  transform-origin: 0 0;
+}
 .poster,
 .sceneSurface {
   position: absolute;

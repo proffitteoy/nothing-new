@@ -35,7 +35,310 @@ export function clearRearWindow(model: THREE.Group) {
   geometry.computeBoundingSphere()
 }
 
-export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
+// Draw the existing accessible controls into the architectural material. There
+// is no visible DOM panel or extra coplanar mesh above the wooden surface.
+function createWindowInk(reference: THREE.PerspectiveCamera, invalidate: () => void) {
+  const canvas = document.createElement("canvas")
+  canvas.width = 2048
+  canvas.height = Math.round((canvas.width * HOME_ROOM.height) / HOME_ROOM.width)
+  const context = canvas.getContext("2d")!
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.generateMipmaps = false
+  texture.minFilter = THREE.LinearFilter
+  const ray = new THREE.Raycaster()
+  const plane = new THREE.Plane()
+  const screen = new THREE.Vector2()
+  const anchors = new Map<HTMLElement, { box: DOMRect; corners: THREE.Vector3[] }>()
+  let stage: HTMLElement | null = null
+  let dirty = true
+  let disposed = false
+  let width = 0
+  let height = 0
+  let revision = 0
+  let layout = ""
+  const changed = () => {
+    if (disposed) return
+    dirty = true
+    invalidate()
+  }
+  const observer = new MutationObserver(changed)
+  const events = ["input", "focusin", "focusout", "pointerover", "pointerout", "load"]
+  void document.fonts.ready.then(changed)
+
+  function detach() {
+    observer.disconnect()
+    for (const event of events) stage?.removeEventListener(event, changed, true)
+    if (stage) delete stage.dataset.homeSurface
+    for (const element of anchors.keys()) {
+      element.style.removeProperty("transform")
+      element.style.removeProperty("pointer-events")
+      element.inert = false
+    }
+    anchors.clear()
+  }
+
+  function draw(root: HTMLElement) {
+    // Only draw the ink: the actual wood, its depth and lighting stay in the
+    // architecture shader. Respect the DOM's font metrics and clipping.
+    const nodes = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    while (nodes.nextNode()) {
+      const node = nodes.currentNode as Text
+      const parent = node.parentElement!
+      if (!node.textContent?.trim() || parent.closest("svg")) continue
+      const style = getComputedStyle(parent)
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      const box = range.getBoundingClientRect()
+      if (!box.width || !box.height) continue
+      context.save()
+      for (let clip: HTMLElement | null = parent; clip; clip = clip.parentElement) {
+        const css = getComputedStyle(clip)
+        if (css.overflow === "hidden") {
+          const rect = clip.getBoundingClientRect()
+          context.beginPath()
+          context.rect(rect.x, rect.y, rect.width, rect.height)
+          context.clip()
+        }
+        if (clip === root) break
+      }
+      context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+      context.fillStyle = style.color
+      context.textBaseline = "middle"
+      context.letterSpacing = style.letterSpacing
+      if (style.writingMode === "vertical-rl") {
+        for (let i = 0; i < node.length; i++) {
+          range.setStart(node, i)
+          range.setEnd(node, i + 1)
+          const char = range.getBoundingClientRect()
+          context.fillText(node.data[i], char.x, char.y + char.height / 2)
+        }
+      } else {
+        let text = node.data
+        const available = parent.clientWidth
+        if (style.textOverflow === "ellipsis" && context.measureText(text).width > available) {
+          while (text.length && context.measureText(text + "…").width > available)
+            text = text.slice(0, -1)
+          text += "…"
+        }
+        context.fillText(text, box.x, box.y + box.height / 2)
+      }
+      context.restore()
+    }
+    for (const svg of root.querySelectorAll("svg")) {
+      const box = svg.getBoundingClientRect()
+      context.save()
+      context.translate(box.x, box.y)
+      context.scale(box.width / 24, box.height / 24)
+      context.strokeStyle = getComputedStyle(svg).color
+      context.lineWidth = Number(svg.getAttribute("stroke-width") ?? 2)
+      context.lineCap = "round"
+      context.lineJoin = "round"
+      for (const shape of svg.children) {
+        const n = (name: string) => Number(shape.getAttribute(name) ?? 0)
+        context.beginPath()
+        if (shape.tagName === "path") {
+          context.stroke(new Path2D(shape.getAttribute("d") ?? ""))
+          continue
+        }
+        if (shape.tagName === "circle") context.arc(n("cx"), n("cy"), n("r"), 0, Math.PI * 2)
+        if (shape.tagName === "rect") context.rect(n("x"), n("y"), n("width"), n("height"))
+        if (shape.tagName === "line") {
+          context.moveTo(n("x1"), n("y1"))
+          context.lineTo(n("x2"), n("y2"))
+        }
+        if (shape.tagName === "polyline" || shape.tagName === "polygon") {
+          const points = (shape.getAttribute("points") ?? "").trim().split(/[ ,]+/).map(Number)
+          for (let i = 0; i < points.length; i += 2)
+            if (i === 0) context.moveTo(points[i], points[i + 1])
+            else context.lineTo(points[i], points[i + 1])
+          if (shape.tagName === "polygon") context.closePath()
+        }
+        context.stroke()
+      }
+      context.restore()
+    }
+    for (const input of root.querySelectorAll<HTMLInputElement>('input[type="range"]')) {
+      const box = input.getBoundingClientRect()
+      const progress =
+        (Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min))
+      context.save()
+      context.strokeStyle = getComputedStyle(input).color
+      context.fillStyle = context.strokeStyle
+      context.lineWidth = 2
+      context.globalAlpha = input.disabled ? 0.25 : 0.7
+      context.beginPath()
+      context.moveTo(box.x + 4, box.y + box.height / 2)
+      context.lineTo(box.right - 4, box.y + box.height / 2)
+      context.stroke()
+      context.beginPath()
+      context.arc(
+        box.x + 4 + progress * (box.width - 8),
+        box.y + box.height / 2,
+        3.5,
+        0,
+        Math.PI * 2,
+      )
+      context.fill()
+      context.restore()
+    }
+    for (const image of root.querySelectorAll("img")) {
+      if (!image.complete || !image.naturalWidth) continue
+      // Never taint the material canvas with an unqualified external image.
+      if (image.crossOrigin !== "anonymous" && new URL(image.currentSrc).origin !== location.origin)
+        continue
+      const box = image.getBoundingClientRect()
+      context.save()
+      context.beginPath()
+      context.ellipse(
+        box.x + box.width / 2,
+        box.y + box.height / 2,
+        box.width / 2,
+        box.height / 2,
+        0,
+        0,
+        Math.PI * 2,
+      )
+      context.clip()
+      context.drawImage(image, box.x, box.y, box.width, box.height)
+      context.restore()
+    }
+    const focus = root.matches(":focus-visible")
+      ? root
+      : root.querySelector<HTMLElement>(":focus-visible")
+    if (focus) {
+      const box = focus.getBoundingClientRect()
+      context.strokeStyle = getComputedStyle(focus).color
+      context.lineWidth = 1
+      context.setLineDash([3, 3])
+      context.strokeRect(box.x - 2, box.y - 2, box.width + 4, box.height + 4)
+      context.setLineDash([])
+    }
+  }
+
+  function update(
+    nextStage: HTMLElement | null,
+    surface: THREE.Mesh,
+    camera: THREE.PerspectiveCamera,
+    unoccluded?: (point: THREE.Vector3) => boolean,
+  ) {
+    if (stage !== nextStage) {
+      detach()
+      stage = nextStage
+      dirty = true
+      if (stage) {
+        observer.observe(stage, {
+          subtree: true,
+          childList: true,
+          characterData: true,
+          attributes: true,
+          attributeFilter: [
+            "aria-label",
+            "aria-expanded",
+            "aria-busy",
+            "hidden",
+            "title",
+            "src",
+            "value",
+          ],
+        })
+        for (const event of events) stage.addEventListener(event, changed, true)
+      }
+    }
+    if (!stage) return
+    if (
+      width !== stage.clientWidth ||
+      height !== stage.clientHeight ||
+      layout !== stage.style.cssText
+    )
+      dirty = true
+    if (dirty) {
+      layout = stage.style.cssText
+      width = stage.clientWidth
+      height = stage.clientHeight
+      const view = homeWindowProjection(width, height)
+      const elements = Array.from(stage.querySelectorAll<HTMLElement>("[data-home-ink]"))
+      for (const element of anchors.keys()) element.style.removeProperty("transform")
+      anchors.clear()
+      context.setTransform(1, 0, 0, 1, 0, 0)
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      const scale = canvas.width / view.room.width
+      context.setTransform(scale, 0, 0, scale, -view.room.x * scale, -view.room.y * scale)
+      surface.updateMatrixWorld(true)
+      for (const element of elements) {
+        const box = element.getBoundingClientRect()
+        if (!box.width || !box.height) continue
+        draw(element)
+        screen.set(
+          (2 * (box.x + box.width / 2)) / width - 1,
+          1 - (2 * (box.y + box.height / 2)) / height,
+        )
+        ray.setFromCamera(screen, reference)
+        const hit = ray.intersectObject(surface)[0]
+        if (!hit?.face) continue
+        plane.setFromNormalAndCoplanarPoint(
+          hit.face.normal.clone().transformDirection(surface.matrixWorld),
+          hit.point,
+        )
+        const corners = [
+          [box.left, box.top],
+          [box.right, box.top],
+          [box.right, box.bottom],
+          [box.left, box.bottom],
+        ].map(([x, y]) => {
+          screen.set((2 * x) / width - 1, 1 - (2 * y) / height)
+          ray.setFromCamera(screen, reference)
+          return ray.ray.intersectPlane(plane, new THREE.Vector3())!
+        })
+        anchors.set(element, { box, corners })
+      }
+      texture.needsUpdate = true
+      stage.dataset.homeSurface = "material"
+      stage.dataset.homeInkRevision = String(++revision)
+      dirty = false
+    }
+    // Invisible native hit areas share the material's projective map. They
+    // retain real links, keyboard focus and the browser's native range drag.
+    for (const [element, { box, corners }] of anchors) {
+      const points = corners.map((corner) => corner.clone().project(camera))
+      const visible =
+        points.every((point) => point.z > -1 && point.z < 1) &&
+        camera.position.z < REAR_WINDOW_Z &&
+        (!unoccluded || unoccluded(corners[0].clone().add(corners[2]).multiplyScalar(0.5)))
+      element.inert = !visible
+      element.style.pointerEvents = visible ? "" : "none"
+      if (!visible) continue
+      const [a, b, c, d] = points.map((point) => ({
+        x: ((point.x + 1) * width) / 2,
+        y: ((1 - point.y) * height) / 2,
+      }))
+      const dx1 = b.x - c.x,
+        dx2 = d.x - c.x,
+        dx3 = a.x - b.x + c.x - d.x
+      const dy1 = b.y - c.y,
+        dy2 = d.y - c.y,
+        dy3 = a.y - b.y + c.y - d.y
+      const denominator = dx1 * dy2 - dx2 * dy1
+      const g = Math.abs(denominator) < 1e-8 ? 0 : (dx3 * dy2 - dx2 * dy3) / denominator
+      const h = Math.abs(denominator) < 1e-8 ? 0 : (dx1 * dy3 - dx3 * dy1) / denominator
+      element.style.transform = `matrix3d(${(b.x - a.x + g * (b.x - box.x)) / box.width},${(b.y - a.y + g * (b.y - box.y)) / box.width},0,${g / box.width},${(d.x - a.x + h * (d.x - box.x)) / box.height},${(d.y - a.y + h * (d.y - box.y)) / box.height},0,${h / box.height},0,0,1,0,${a.x - box.x},${a.y - box.y},0,1)`
+    }
+  }
+  return {
+    texture,
+    update,
+    refresh: changed,
+    dispose: () => {
+      disposed = true
+      detach()
+    },
+  }
+}
+
+export async function buildCabinWorld(
+  scene: THREE.Scene,
+  model: THREE.Group,
+  invalidate = () => {},
+) {
   const world = new THREE.Group()
   world.name = "home-interior-world"
   scene.add(world)
@@ -87,6 +390,10 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   reference.position.copy(HOME_POSITION)
   reference.lookAt(HOME_TARGET)
   reference.updateMatrixWorld(true)
+  const ink = typeof document === "undefined" ? null : createWindowInk(reference, invalidate)
+  // Geometry-only callers do not need a browser canvas.
+  const inkTexture = ink?.texture ?? new THREE.DataTexture(new Uint8Array(4), 1, 1)
+  inkTexture.needsUpdate = true
   const projection = new THREE.Matrix4()
   const vertexShader = `precision highp float;
     uniform mat4 modelMatrix, viewMatrix, projectionMatrix, homeProjection;
@@ -107,15 +414,25 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
   )
   const roomMaterial = new THREE.RawShaderMaterial({
     glslVersion: THREE.GLSL3,
-    uniforms: { ...homeUniforms, homeProjection: { value: projection } },
+    uniforms: {
+      ...homeUniforms,
+      homeProjection: { value: projection },
+      uWindowInk: { value: inkTexture },
+    },
     vertexShader: projectedVertex,
     fragmentShader: projectedFragment
+      .replace(
+        "uniform sampler2D uRoom;",
+        "uniform sampler2D uRoom;\nuniform sampler2D uWindowInk;",
+      )
       .replace(
         "  interior.a*=uInteriorOpacity;",
         `
         float photoCoverage=rise(-.02,0.,r.x)*(1.-rise(1.,1.02,r.x))
           *rise(-.02,0.,r.y)*(1.-rise(.94,.98,r.y));
-        interior=mix(vec4(.77,.78,.76,1.),interior,photoCoverage);`,
+        interior=mix(vec4(.77,.78,.76,1.),interior,photoCoverage);
+        vec4 ink=texture(uWindowInk,vec2(r.x,1.-r.y));
+        interior.rgb=mix(interior.rgb,interior.rgb*ink.rgb,ink.a*.9);`,
       )
       .replace(
         "if(interior.a>.99999){ colour=vec4(interior.rgb,wallAlpha); return; }",
@@ -357,8 +674,9 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
       mesh.geometry.setIndex(indices)
       mesh.geometry.computeBoundingSphere()
     }
+    ink?.refresh()
   }
-  const loaded = new Set<THREE.Texture>()
+  const loaded = new Set<THREE.Texture>([inkTexture])
   let failed = false
   const names = [
     "uLake",
@@ -397,6 +715,7 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
       }),
     )
   } catch (error) {
+    ink?.dispose()
     failed = true
     world.traverse((object) => {
       if (object instanceof THREE.Mesh) {
@@ -416,6 +735,7 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     pointer: THREE.Vector2,
     publish = true,
     camera?: THREE.PerspectiveCamera,
+    unoccluded?: (point: THREE.Vector3) => boolean,
   ) => {
     homeUniforms.uTime.value = seconds * SPECTRAL_PLAYBACK_RATE
     homeUniforms.uWorldTime.value = seconds
@@ -431,6 +751,7 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
       publish && typeof document !== "undefined"
         ? document.querySelector<HTMLElement>("[data-home-scene]")
         : null
+    if (publish && camera) ink?.update(stage, roomSurface, camera, unoccluded)
     if (stage) {
       stage.dataset.homeRendering = "dynamic"
       stage.dataset.homeAmbientBlend = homeUniforms.uAmbientBlend.value.toFixed(3)
@@ -444,5 +765,5 @@ export async function buildCabinWorld(scene: THREE.Scene, model: THREE.Group) {
     }
     return { width, height }
   }
-  return { time: homeUniforms.uTime, resize, update }
+  return { time: homeUniforms.uTime, resize, update, dispose: () => ink?.dispose() }
 }

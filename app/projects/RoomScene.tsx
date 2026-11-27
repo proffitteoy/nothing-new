@@ -376,7 +376,18 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
             .multiplyScalar(weight),
         )
       }
-      world?.update(navigationRef.current.progress.current, visibleTime, homeLook, true, camera)
+      world?.update(
+        navigationRef.current.progress.current,
+        visibleTime,
+        homeLook,
+        true,
+        camera,
+        (point) => {
+          ray.set(camera.position, point.clone().sub(camera.position).normalize())
+          const hit = closestHit()
+          return !hit || hit.distance >= camera.position.distanceTo(point) - 0.004
+        },
+      )
       let changing = false
       const wallCamera = camera.position
       for (const wall of walls) {
@@ -579,6 +590,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       clearTimeout(idleTimer)
       cancelAnimationFrame(frame)
       frame = 0
+      world?.dispose()
       latest.current.onError()
     }
     function change() {
@@ -611,12 +623,13 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
         for (const [mesh, tree] of room.trees) hitTrees.set(mesh, tree)
         scene.add(model)
         if (unified) {
-          world = await buildCabinWorld(scene, model)
+          world = await buildCabinWorld(scene, model, schedule)
           world.resize(host.clientWidth, host.clientHeight)
           world.update(navigationRef.current.progress.current, visibleTime, homeLook, false, camera)
           worldTime = world.time
         }
         if (disposed) {
+          world?.dispose()
           disposeModel(scene)
           return
         }
@@ -681,6 +694,7 @@ export const UnifiedScene = memo(function UnifiedScene(props: RoomSceneProps) {
       clearTimeout(idleTimer)
       cancelAnimationFrame(frame)
       observer.disconnect()
+      world?.dispose()
       controls.removeEventListener("change", change)
       controls.dispose()
       controller.current = null
