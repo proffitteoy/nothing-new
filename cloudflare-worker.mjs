@@ -59,6 +59,25 @@ export class SiteRuntime extends DurableObject {
       NEXT_INC_CACHE_KV: runtimeStorage(this.env, "cache"),
       SITE_CONTENT: runtimeStorage(this.env, "content", this.env.SITE_CONTENT),
     }
+    const url = new URL(request.url)
+    if (url.pathname === "/_next/image" || url.pathname === "/_next/image/") {
+      // OpenNext reads relative image sources from ASSETS, but mirrored covers are routes.
+      // Wrap only optimizer requests so the source route keeps the real static binding.
+      env.ASSETS = {
+        fetch: (input, init) => {
+          const source = new Request(input, init)
+          const sourceURL = new URL(source.url)
+          if (
+            sourceURL.origin === url.origin &&
+            (sourceURL.pathname.startsWith("/anime/blob/covers/") ||
+              sourceURL.pathname.startsWith("/assets/"))
+          ) {
+            return ctx.exports.default.fetch(source)
+          }
+          return this.env.ASSETS.fetch(source)
+        },
+      }
+    }
     return worker.fetch(request, withSelfReference(env, ctx), ctx)
   }
 

@@ -142,6 +142,72 @@ test("Free runtime executes Next inside a Durable Object and stores cache withou
   assert.deepEqual(app.metrics(), { legacyReads: 0, legacyWrites: 0 })
 })
 
+test("image optimizer reads dynamic sources within the same deployment without wrapping their ASSETS", async () => {
+  const app = runtime()
+  const staticReads = []
+  app.env.ASSETS = {
+    async fetch(request) {
+      staticReads.push(new URL(request.url).pathname)
+      return new Response("static image")
+    },
+  }
+  app.setHandler(async (request, env) => {
+    const url = new URL(request.url)
+    if (url.pathname.startsWith("/_next/image")) {
+      const source = new URL(url.searchParams.get("url"), url)
+      return env.ASSETS.fetch(url.pathname.endsWith("/") ? new Request(source) : source)
+    }
+    assert.equal(env.ASSETS, app.env.ASSETS)
+    if (url.pathname.startsWith("/assets/")) {
+      return env.ASSETS.fetch(new Request(new URL("/avatar.jpg", url)))
+    }
+    return new Response("stored cover", { headers: { "Content-Type": "image/jpeg" } })
+  })
+  const cover = "/anime/blob/covers/123-abcdef123456.jpg"
+  for (const optimizer of ["/_next/image", "/_next/image/"]) {
+    const result = await app.entry.fetch(
+      new Request(`https://preview.test${optimizer}?url=${encodeURIComponent(cover)}`),
+    )
+    assert.equal(await result.text(), "stored cover")
+    assert.equal(result.headers.get("content-type"), "image/jpeg")
+  }
+  const legacy = await app.entry.fetch(
+    new Request("https://preview.test/_next/image?url=%2Fassets%2Favatar.jpg"),
+  )
+  assert.equal(await legacy.text(), "static image")
+  assert.deepEqual(staticReads, ["/avatar.jpg"])
+  assert.equal(app.states.has(`request:${cover}`), true)
+  assert.equal(app.states.has("request:/assets/avatar.jpg"), true)
+  assert.equal(new Set(app.contexts).size, app.contexts.length)
+})
+
+test("optimizer keeps static images and unrelated or cross-origin paths on the real ASSETS binding", async () => {
+  const app = runtime()
+  const sources = []
+  app.env.ASSETS = {
+    async fetch(request) {
+      sources.push(request.url)
+      return new Response("static binding")
+    },
+  }
+  app.setHandler((request, env) =>
+    env.ASSETS.fetch(new URL(new URL(request.url).searchParams.get("url"), request.url)),
+  )
+  for (const path of [
+    "/avatar.jpg",
+    "/api/papers",
+    "/anime/blob/snapshots/abcdef123456.json",
+    "https://other.test/anime/blob/covers/123-abcdef123456.jpg",
+  ]) {
+    const response = await app.entry.fetch(
+      new Request(`https://preview.test/_next/image?url=${encodeURIComponent(path)}`),
+    )
+    assert.equal(await response.text(), "static binding")
+    assert.equal(sources.at(-1), new URL(path, "https://preview.test").href)
+  }
+  assert.deepEqual([...app.states.keys()], ["request:/_next/image"])
+})
+
 test("content reads legacy KV, then shares new binary data and metadata across request actors", async () => {
   const app = runtime()
   app.legacy.set("cover", { value: new Uint8Array([1, 2, 3]).buffer, metadata: { type: "old" } })

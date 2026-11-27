@@ -40,7 +40,7 @@ npm run covers:check
 
 运行 npm run sync:obsidian 时，会在同步成功后自动补全杂谈封面。已经分配且没有重复的目录封面保持不变；新文章、正文新增首图、失效封面和可被新图片消除的重复封面才会更新。分配结果写入各篇 Markdown 的顶部 frontmatter。图片数量不足时允许保留重复，后续向封面目录加入新图片再运行即可逐步替换。covers:dry 只预览变化，covers:check 只检查当前分配。
 
-`npm run build` 依次执行 Quartz 内容构建和 Next 生产构建，不会自动运行 images:sync。公开站点图片使用 `public/` 和构建附件的静态/CDN 分发。`images:sync` 作为显式历史维护入口保留：配置 Blob 时仅上传内容哈希变化的图片并更新 `images/manifest.json`。images:dry 可在无 Blob 配置时盘点范围，images:check 需要 Blob 凭据且只检查、不写入。
+`npm run build` 依次执行 Quartz 内容构建和 Next 生产构建；Workers Builds 还会在 `postbuild` 打包 OpenNext。构建不上传图片或写入远端数据。公开站点图片使用 `public/` 和构建附件的静态/CDN 分发；番剧快照、镜像封面和周报使用 Cloudflare 的 `SITE_CONTENT` 绑定。旧 `sync-image-assets.mjs` 及 `images:*` 命令已退役，不能再用于上传到旧库。
 
 `npm run build` 依次构建 Quartz 内容和 Next.js 生产版本；公开图片随构建产物静态分发，不再同步到外部对象存储。旧 `/assets/**` 兼容路由优先读取 Cloudflare 存量 `images/*`，找不到时读取构建中的同路径静态图片；`/avatar` 继续走 `/avatar.jpg`。
 

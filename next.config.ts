@@ -45,6 +45,7 @@ const nextConfig: NextConfig = {
       { pathname: "/chatter-covers/**", search: "" },
       { pathname: "/quartz-assets/content/**", search: "" },
       { pathname: "/anime/blob/covers/**", search: "" },
+      { pathname: "/assets/**", search: "" },
     ],
     remotePatterns: [
       {
