@@ -36,6 +36,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               html[data-startup-entry="page"] [data-startup-loading] { display: none; }
               html:not(.splash-seen):not([data-startup-phase="exiting"]) [data-site-ui] { opacity: 0; visibility: hidden; pointer-events: none; }
               html[data-startup-phase="exiting"] [data-site-ui] { pointer-events: none; }
+              html:not(.splash-seen) :is([data-home-rail], [data-home-sill], [data-home-project-controls]) { visibility: hidden; }
             `,
           }}
         />

@@ -3,9 +3,13 @@ import { readFileSync } from "node:fs"
 import { runInNewContext } from "node:vm"
 import { test } from "node:test"
 import ts from "typescript"
+import { HOME_ROOM, homeOpeningRevealPath, homeWindowProjection } from "../lib/home-scene"
 
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8")
 const splash = readFileSync(new URL("./SplashScreen.tsx", import.meta.url), "utf8")
+const contours: typeof import("../data/opening-contours.json") = JSON.parse(
+  readFileSync(new URL("../data/opening-contours.json", import.meta.url), "utf8"),
+)
 const compiled = ts.transpileModule(splash, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -39,6 +43,7 @@ async function startup(
     saveData?: boolean
     artwork?: string
     seen?: boolean
+    missingSvg?: boolean
   } = {},
 ) {
   let now = 0,
@@ -59,7 +64,10 @@ async function startup(
     setAttribute: (name: string) => attributes.add(name),
     removeAttribute: (name: string) => attributes.delete(name),
   }
-  const surface = { dataset: {} as Record<string, string>, querySelector: () => ({}) }
+  const surface = {
+    dataset: {} as Record<string, string>,
+    querySelector: () => (options.missingSvg ? null : { setAttribute() {} }),
+  }
   const refs: { current: unknown }[] = [],
     states: unknown[] = []
   let effects: (() => void | (() => void))[] = []
@@ -73,6 +81,8 @@ async function startup(
     AbortController,
     Promise,
     Event,
+    innerWidth: 1440,
+    innerHeight: 900,
     queueMicrotask: (callback: () => void) => callback(),
     setTimeout: setTimer,
     clearTimeout: (key: number) => timers.delete(key),
@@ -139,13 +149,20 @@ async function startup(
         return { useRouter: () => ({ prefetch() {} }), usePathname: () => route }
       if (name === "next/image") return { getImageProps: () => ({ props: {} }) }
       if (name.endsWith("Navbar")) return { navigationLinks: [] }
-      if (name.endsWith("home-scene")) return { isMobileHomeClient: () => !!options.mobile }
+      if (name.endsWith("home-scene"))
+        return {
+          isMobileHomeClient: () => !!options.mobile,
+          homeOpeningRevealPath,
+          homeWindowProjection,
+          HOME_ROOM,
+        }
       if (name.endsWith("paper-reports-client"))
         return { loadPaperReports: () => new Promise(() => {}) }
       if (name.endsWith("anime/client")) return { loadAnimeSnapshot: () => new Promise(() => {}) }
       if (name.endsWith("room-preload")) return { preloadRoomAssets: () => new Promise(() => {}) }
       if (name.endsWith(".webp")) return { __esModule: true, default: { src: "/lake.webp" } }
       if (name.endsWith(".css")) return { __esModule: true, default: {} }
+      if (name.endsWith("opening-contours.json")) return { __esModule: true, default: contours }
       throw new Error(`Unexpected dependency ${name}`)
     },
   })
@@ -195,9 +212,9 @@ async function startup(
 
 test("home keeps the complete 2.4s presentation even when ready immediately", async () => {
   const h = await startup()
-  await h.advance(1649)
+  await h.advance(849)
   assert.equal(h.dataset.startupPhase, "loading")
-  await h.advance(1650)
+  await h.advance(850)
   assert.equal(h.dataset.startupPhase, "exiting")
   assert.equal(h.ui.inert, true)
   assert.equal(h.classes.has("splash-seen"), false)
@@ -217,7 +234,7 @@ test("home waits for usable artwork independently of stalled background preloads
   h.home.dataset.homeArtwork = "ready"
   await h.advance(2050)
   assert.equal(h.dataset.startupPhase, "exiting")
-  await h.advance(2800)
+  await h.advance(3600)
   assert.equal(h.dataset.startupPhase, "ready")
   h.cleanup()
 })
@@ -225,15 +242,24 @@ test("home waits for usable artwork independently of stalled background preloads
 test("missing and failed artwork both fail open by 4.75s", async () => {
   for (const artwork of ["loading", "error"]) {
     const h = await startup({ artwork })
-    await h.advance(3999)
+    await h.advance(3199)
     assert.equal(h.dataset.startupPhase, "loading")
-    await h.advance(4000)
+    await h.advance(3200)
     assert.equal(h.dataset.startupPhase, "exiting")
     await h.advance(4750)
     assert.equal(h.dataset.startupPhase, "ready")
     assert.equal(h.timers.size, 0)
     h.cleanup()
   }
+})
+
+test("a missing SVG cannot prevent the independent 4.75s fail-open", async () => {
+  const h = await startup({ missingSvg: true })
+  await h.advance(4750)
+  assert.equal(h.dataset.startupPhase, "ready")
+  assert.equal(h.frames.size, 0)
+  assert.equal(h.timers.size, 0)
+  h.cleanup()
 })
 
 test("skip works on the first frame and midway through the crossfade", async () => {
@@ -310,8 +336,12 @@ test("the pre-hydration watchdog releases input even if the crossfade is interru
   )
   let bootstrap = ""
   const visit = (node: ts.Node) => {
-    if (ts.isNoSubstitutionTemplateLiteral(node) && node.text.includes("dataset.startupEntry ="))
-      bootstrap = node.text
+    const text = ts.isNoSubstitutionTemplateLiteral(node)
+      ? node.text
+      : ts.isTemplateExpression(node)
+        ? node.head.text + node.templateSpans.map((span) => span.literal.text).join("")
+        : ""
+    if (text.includes("dataset.startupEntry =")) bootstrap = text
     ts.forEachChild(node, visit)
   }
   visit(tree)
