@@ -19,7 +19,6 @@
 - `navigation-preview.py`：使用可选的 Python Playwright 截取八个栏目，并检查桌面／手机导航；运行 `npm run test:navigation` 前先按[导航验收说明](../docs/project/navigation-renewal.md)安装浏览器依赖。仅在本地写入已被 Git 忽略的 `docs/images/navigation-renewal/` 截图，不改业务数据或线上环境。
 
 - assign-chatter-covers.mjs：为 content/misc/ 杂谈分配并固定封面；正文有图片时使用第一张，否则从 public/chatter-covers/ 补充分配。
-- `sync-image-assets.mjs`：把站点头像、背景、杂谈封面与构建后的 Quartz 文章图片增量同步到私有 Vercel Blob。
 - `obsidian-sync.mjs`：把 Obsidian 源目录中的已批准内容同步到 `content/`。
 - `zotero-sync.mjs`：从获批 Zotero Collections 和启用的未分类入口读取书目、文件夹层级与阅读状态，原子更新 `data/paper-library.json`；`--dry-run`／`--check` 不写文件，`--review` 把逐篇决定写入本地 `.sync/zotero-sync-decisions.json`。不修改 Zotero、不复制 PDF、笔记或批注。配置和上线流程见[论文系统](../docs/project/paper-library.md)。
 - `../同步博客.bat`：Windows 双击入口，等价于在根目录运行 `npm.cmd run sync:obsidian`。
@@ -37,21 +36,19 @@ npm run sync:obsidian:review:all
 npm run covers:assign
 npm run covers:dry
 npm run covers:check
-npm run images:sync
-npm run images:dry
-npm run images:check
 ```
 
 运行 npm run sync:obsidian 时，会在同步成功后自动补全杂谈封面。已经分配且没有重复的目录封面保持不变；新文章、正文新增首图、失效封面和可被新图片消除的重复封面才会更新。分配结果写入各篇 Markdown 的顶部 frontmatter。图片数量不足时允许保留重复，后续向封面目录加入新图片再运行即可逐步替换。covers:dry 只预览变化，covers:check 只检查当前分配。
 
 `npm run build` 依次执行 Quartz 内容构建和 Next 生产构建，不会自动运行 images:sync。公开站点图片使用 `public/` 和构建附件的静态/CDN 分发。`images:sync` 作为显式历史维护入口保留：配置 Blob 时仅上传内容哈希变化的图片并更新 `images/manifest.json`。images:dry 可在无 Blob 配置时盘点范围，images:check 需要 Blob 凭据且只检查、不写入。
 
+`npm run build` 依次构建 Quartz 内容和 Next.js 生产版本；公开图片随构建产物静态分发，不再同步到外部对象存储。旧 `/assets/**` 兼容路由优先读取 Cloudflare 存量 `images/*`，找不到时读取构建中的同路径静态图片；`/avatar` 继续走 `/avatar.jpg`。
+
 `npm run notes:build` 固定输出 `.quartz-cache/next/` 与 `public/quartz-assets/`。已取消无实际输出作用的 `-o/--output` 参数；`--directory`、`--verbose` 和 `--concurrency` 继续可用。
 
 ## 维护约定
 
 - covers:assign 会按需修改 content/misc 下 Markdown 的 cover 字段；封面池只读取 public/chatter-covers/，不会复制或改动图片。
-- images:sync 会写入私有 Blob，但不会修改或删除本地图片；`/assets/**` 保留历史兼容路由，不能理解为所有旧图片 URL 都有 rewrite。`/avatar` 仍重写至 `/avatar.jpg`。
 - 新增跨平台脚本放在 `scripts/` 根下，并在 `package.json` 暴露 npm 命令。
 - 常用 Windows 双击包装脚本保留在仓库根目录，减少路径和编码问题。
 - 脚本如果会写入 `content/`、`.sync/` 或 git 状态，文档里必须说明副作用。

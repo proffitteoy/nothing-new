@@ -4,14 +4,9 @@ const isCloudflareBuild =
   Boolean(process.env.WORKERS_CI) || process.env.NEXT_PRIVATE_STANDALONE === "true"
 
 const nextConfig: NextConfig = {
-  // Keep public site-owned images on the static/CDN path, regardless of Blob credentials.
-  // Private Blob remains in use for the anime snapshot and cover APIs.
+  // Site-owned images remain on the static/CDN path.
   // Workers Builds packages OpenNext after Next; both paths need standalone output.
   output: isCloudflareBuild || process.env.HOSTING_STANDALONE === "1" ? "standalone" : undefined,
-  // Blob's Node HTTP client compiles WASM; Workers must use the SDK's native fetch shim.
-  turbopack: isCloudflareBuild
-    ? { resolveAlias: { undici: "./node_modules/@vercel/blob/dist/undici-browser.js" } }
-    : undefined,
   async rewrites() {
     return [{ source: "/avatar", destination: "/avatar.jpg" }]
   },
@@ -34,7 +29,6 @@ const nextConfig: NextConfig = {
     formats: ["image/webp"],
     qualities: [75, 85],
     // Site-owned covers and content-addressed anime images change infrequently.
-    // Vercel recommends 31 days to reduce revalidation transformations.
     minimumCacheTTL: 2_678_400,
     // Match actual 128px avatars, 170px anime covers, ~390px cards, and
     // ~896px hero images while avoiding unnecessary transformation widths.
@@ -62,11 +56,6 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "lain.bgm.tv",
         pathname: "/pic/cover/**",
-      },
-      {
-        protocol: "https",
-        hostname: "**.public.blob.vercel-storage.com",
-        pathname: "/anime/covers/**",
       },
     ],
   },

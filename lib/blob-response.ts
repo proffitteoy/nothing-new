@@ -19,7 +19,6 @@ export function buildBlobResponse(upstream: Response, cachePolicy: BlobCachePoli
   const headers = new Headers({
     "Cache-Control": cachePolicy.browser,
     "CDN-Cache-Control": cachePolicy.cdn,
-    "Vercel-CDN-Cache-Control": cachePolicy.cdn,
     "X-Content-Type-Options": "nosniff",
   })
   for (const name of ["content-type", "content-length", "etag", "last-modified"]) {

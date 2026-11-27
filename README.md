@@ -71,18 +71,18 @@
 - **杂谈杂志排版**：不对称图版、完整封面标题和搜索导航，见[杂谈验收](docs/project/chatter-magazine.md)。
 - **双内容分区**：<code>content/math/</code> 生成笔记，<code>content/misc/</code> 生成普通杂谈卡片，其余公开顶层目录在杂谈页显示为带图片的项目文件夹封面。
 - **Quartz 增强渲染**：保留目录、搜索、公式、代码高亮、内部链接、反向链接和附件处理；页面布局由 Next.js 提供，仅保留笔记正文所需的 Quartz 样式。
-- **公开图片静态分发**：站点背景、头像、杂谈封面与 Quartz 文章图片直接由构建产物及 CDN 提供。私有 Blob 仅保留动漫快照/封面、论文周报等动态数据；如需维护历史 Blob 图片，显式运行 `npm run images:sync`。
+- **公开图片静态分发**：站点背景、头像、杂谈封面与 Quartz 文章图片直接由构建产物及 CDN 提供。动漫快照、封面和论文周报使用 Cloudflare 内容存储，不上传到外部图片库。
 - **可审阅的发布流程**：Obsidian 同步先判断哪些笔记允许公开，再单向写入 <code>content/</code>；杂谈封面会被固定到 frontmatter，保证后续构建稳定。
 
 ## 技术栈
 
-| 层级       | 技术                                              |
-| ---------- | ------------------------------------------------- |
-| Web        | Next.js 16、React 19、TypeScript、Tailwind CSS 4  |
-| 动效与场景 | Framer Motion、Three.js、WebGL2、Canvas 2D        |
-| 内容处理   | Quartz、Markdown、KaTeX、Shiki、FlexSearch        |
-| 数据来源   | 本地 TypeScript 数据、Bangumi API、网易云音乐接口 |
-| 工程化     | ESLint、Prettier、Node.js Test Runner、Vercel     |
+| 层级       | 技术                                                      |
+| ---------- | --------------------------------------------------------- |
+| Web        | Next.js 16、React 19、TypeScript、Tailwind CSS 4          |
+| 动效与场景 | Framer Motion、Three.js、WebGL2、Canvas 2D                |
+| 内容处理   | Quartz、Markdown、KaTeX、Shiki、FlexSearch                |
+| 数据来源   | 本地 TypeScript 数据、Bangumi API、网易云音乐接口         |
+| 工程化     | ESLint、Prettier、Node.js Test Runner、Cloudflare Workers |
 
 ## 快速开始
 
@@ -100,7 +100,7 @@ npm run dev
 
 打开 <http://localhost:3000>。<code>dev</code> 会先编译 <code>content/</code>，因此首次启动会比普通 Next.js 项目稍慢。
 
-未配置 Blob 时，本地开发会继续读取 <code>public/</code> 中的图片。若要加载番剧收藏或检查 Blob 同步状态，再复制环境变量示例并填写对应配置：
+普通 Next.js 本地开发运行静态图片与种子周报，不连接生产内容存储。若要直接读取 Bangumi 番剧收藏，复制环境变量示例并配置：
 
 ```powershell
 Copy-Item .env.example .env.local
@@ -110,7 +110,7 @@ Copy-Item .env.example .env.local
 BANGUMI_ACCESS_TOKEN=your_token_here
 ```
 
-Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Token 时，其余页面仍可正常运行，番剧页会显示配置提示。
+Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Token 时，其余页面仍可正常运行，番剧页会显示配置提示。验证内容读写应使用 Cloudflare Workers 预览与独立测试数据，不要绑定到生产存储。
 
 > Windows PowerShell 如果阻止执行 <code>npm.ps1</code>，请将命令中的 <code>npm</code> 换成 <code>npm.cmd</code>，例如 <code>npm.cmd run dev</code>。
 
@@ -132,9 +132,6 @@ Token 只在服务端读取，不要添加 `NEXT_PUBLIC_` 前缀。未配置 Tok
 | <code>npm run sync:zotero:check</code>   | 检查论文快照是否需要更新                   |
 | <code>npm run sync:obsidian</code>       | 审阅并同步获准公开的内容，同时补全杂谈封面 |
 | <code>npm run covers:check</code>        | 检查杂谈封面分配是否稳定                   |
-| <code>npm run images:dry</code>          | 盘点将同步到 Blob 的站点图片               |
-| <code>npm run images:sync</code>         | 把有变化的站点图片增量同步到 Blob          |
-| <code>npm run images:check</code>        | 检查本地图片与 Blob 清单是否一致           |
 
 ## 内容维护
 
@@ -194,17 +191,15 @@ Obsidian Vault -> 公开内容审阅 -> content/ -> Quartz 构建 -> Next.js
 
 ## 部署
 
-Vercel 仍受支持。导入仓库后保持 Root Directory 为仓库根目录，使用 <code>npm run build</code>，Node.js 版本选择 <code>22.x</code>。公开图片直接由静态文件服务分发，保留 <code>/avatar</code>、<code>/avatar.jpg</code>、杂谈封面及 Quartz 附件的原有 URL；构建不再自动上传 Blob。动漫快照、动漫封面和 TDA 论文周报仍使用私有 Blob。友链头像等第三方图片仍使用各自来源。如需番剧页面，再配置 <code>BANGUMI_ACCESS_TOKEN</code>。自托管 Docker 预案与正式切流/备案条件见 [迁移预案](docs/project/vercel-origin-transfer-migration.md)。
-
-Cloudflare Workers 使用 Node.js <code>22.x</code>，先运行 <code>npm run cf:build</code>，再运行 <code>npm run cf:deploy</code>。后者发布 Worker；自定义 SQLite 缓存不需要批量预填充 KV。<code>wrangler.jsonc</code> 的 Worker 名称为 <code>nothing-new</code>，KV 命名空间属于当前账号；迁移到其他账号时须先创建新命名空间并替换 ID。Next.js 运行及可变缓存使用 SQLite Durable Objects，无需开通 R2 或 Workers Paid。免费方案仍受每日请求、运行时长和 SQLite 读写额度约束。
+Cloudflare Workers 使用 Node.js <code>22.x</code>，先运行 <code>npm run cf:build</code>，再运行 <code>npm run cf:deploy</code>。后者发布 Worker；自定义 SQLite 缓存不需要批量预填充 KV。<code>wrangler.jsonc</code> 的 Worker 名称为 <code>nothing-new</code>，KV 命名空间属于当前账号；迁移到其他账号时须先创建新命名空间并替换 ID。Next.js 运行及可变缓存使用 SQLite Durable Objects，无需开通 R2 或 Workers Paid。免费方案仍受每日请求、运行时长和 SQLite 读写额度约束。旧部署退役与存量核验见[迁移记录](docs/project/vercel-origin-transfer-migration.md)。
 
 Workers Builds 执行 <code>npm run build</code> 时，Next.js 生成 <code>standalone</code> 产物，<code>postbuild</code> 随后通过 <code>--skipNextBuild</code> 生成 OpenNext 入口。Wrangler 的正式部署会先委托 OpenNext，因此不能只依赖部署阶段的 build hook；Preview 仍可使用该 hook。OpenNext 自行调用 Next 构建时，<code>NEXT_PRIVATE_STANDALONE</code> 标识会跳过 postbuild 的重复打包，避免递归。非 Workers 构建不会触发此打包。验收须从缺少 OpenNext 产物的状态运行普通构建。分支命令 <code>wrangler preview</code> 使用 <code>previews</code> 中独立的 KV，Durable Objects 由平台按 Preview 隔离。<code>cloudflare-worker.mjs</code> 通过 <code>ctx.exports</code> 为 OpenNext 提供同一部署内的自引用，缓存重验证会留在当前 Preview。其他账号需同时替换正式及预览 KV 的 ID；相关约束见 [Preview 资源与隔离](https://developers.cloudflare.com/workers/previews/resources/)。
 
-Cloudflare 的 Turbopack 构建将 Blob SDK 的 <code>undici</code> 解析到 SDK 自带的原生 <code>fetch</code> 实现，避免 Worker 启动时触发被禁止的动态 WASM 编译；本地 <code>cf:build</code> 通过 OpenNext 的 standalone 构建标识启用相同配置。Wrangler 将 <code>.quartz-cache/next</code> 中的 JSON 及 <code>app/about</code> 的三份 Markdown 作为文本模块装入虚拟文件系统，支持空缓存渲染及后台再生。旧头像地址 <code>/avatar</code> 由 Worker 入口转交 <code>ASSETS</code> 读取 <code>/avatar.jpg</code>，并保留原缓存头。
+Wrangler 将 <code>.quartz-cache/next</code> 中的 JSON 及 <code>app/about</code> 的三份 Markdown 作为文本模块装入虚拟文件系统，支持空缓存渲染及后台再生。旧头像地址 <code>/avatar</code> 由 Worker 入口转交 <code>ASSETS</code> 读取 <code>/avatar.jpg</code>，并保留原缓存头。
 
-Cloudflare 的 <code>SiteRuntime</code> 使用免费 SQLite Durable Object 的每请求 30 秒 CPU 预算处理 Next.js，入口 Worker 负责转发。OpenNext 缓存和内容的新写入通过同一接口落到 SQLite；<code>SITE_CONTENT</code> KV 保留存量周报、番剧与封面作为只读回退，生产及预览隔离，不重复复制全部图片。每个存储键独立定位，2 MiB 分块写入和删除均由事务提交，保留原路径、ETag / 304、不可变快照与失败不发布规则。请求上下文每次新建，写入可见性不会跨请求泄漏。Vercel 继续使用原私有 Blob，回滚前须同步迁移后新增的数据。
+Cloudflare 的 <code>SiteRuntime</code> 使用免费 SQLite Durable Object 的每请求 30 秒 CPU 预算处理 Next.js，入口 Worker 负责转发。OpenNext 缓存和内容的新写入通过同一接口落到 SQLite；<code>SITE_CONTENT</code> KV 保留存量周报、番剧与封面作为只读回退，生产及预览隔离，不重复复制全部图片。每个存储键独立定位，2 MiB 分块写入和删除均由事务提交，保留原路径、ETag / 304、不可变快照与失败不发布规则。请求上下文每次新建，写入可见性不会跨请求泄漏。动态路由不依赖旧对象存储，`/anime/blob/**` 保持原 URL。
 
-运行时以 Secrets 配置 <code>BANGUMI_ACCESS_TOKEN</code>、<code>PAPERS_SYNC_SECRET</code>、<code>ANIME_SYNC_SECRET</code> 和 <code>CRON_SECRET</code>；Cloudflare 不需要原 Blob 令牌。论文监控仓库的 <code>BLOG_SYNC_SECRET</code> 与站点的 <code>PAPERS_SYNC_SECRET</code> 配对，<code>BLOG_SYNC_URL</code> 指向正式 Worker 的 <code>/api/papers</code>。每天 03:00 UTC 的动漫同步由 Worker 的 <code>scheduled</code> 入口调用现有认证接口；上线时停用原 Vercel Cron，避免重复调度。
+运行时配置服务端 <code>BANGUMI_USERNAME</code>（如需指定账户），并以 Secrets 配置 <code>BANGUMI_ACCESS_TOKEN</code>、<code>PAPERS_SYNC_SECRET</code>、<code>ANIME_SYNC_SECRET</code> 和 <code>CRON_SECRET</code>。论文监控仓库的 <code>BLOG_SYNC_SECRET</code> 与站点的 <code>PAPERS_SYNC_SECRET</code> 配对，<code>BLOG_SYNC_URL</code> 指向正式 Worker 的 <code>/api/papers</code>。每天 03:00 UTC 的动漫同步由 Worker 的 <code>scheduled</code> 入口调用现有认证接口。
 
 Obsidian 仍从本地 <code>E:/math</code> 按既有审阅规则发布到 <code>content/</code>；Zotero 仍通过本地 API 导出获批书目到 <code>data/paper-library.json</code>。两者随 Git 构建发布，不向 Cloudflare 连接作者电脑，也不需要新增云端访问密钥。
 

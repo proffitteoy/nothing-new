@@ -29,7 +29,6 @@ function route(compile?: (value: unknown) => Promise<PaperReport[]>) {
   const revalidated: string[] = []
   const afterTasks: (() => Promise<void>)[] = []
   const env: Record<string, string> = {
-    BLOB_READ_WRITE_TOKEN: "test-only",
     PAPERS_SYNC_SECRET: "test-only",
   }
   const exports = {} as typeof import("./route")
@@ -83,11 +82,10 @@ function route(compile?: (value: unknown) => Promise<PaperReport[]>) {
         }
       if (name.endsWith("/blob"))
         return {
-          hasBlobStorage: () =>
-            Boolean(env.BLOB_READ_WRITE_TOKEN || (env.BLOB_STORE_ID && env.VERCEL_OIDC_TOKEN)),
-          getBlobUrl: () => "https://test.private.blob.vercel-storage.com/papers/reports.json",
-          fetchBlob: async (_pathname: string, options: { useCache: boolean }) => {
-            assert.equal(options.useCache, false)
+          hasBlobStorage: () => true,
+          getBlobUrl: () => "cloudflare-kv://SITE_CONTENT/papers/reports.json",
+          fetchBlob: async (pathname: string) => {
+            assert.equal(pathname, "papers/reports.json")
             reads++
             if (failRead) return new Response(null, { status: 502 })
             return Response.json(stored)
@@ -134,7 +132,7 @@ const post = (value: unknown) =>
     body: JSON.stringify(value),
   })
 
-test("concurrent GETs share compilation but each reads the latest Blob and returns no-store", async () => {
+test("concurrent GETs share compilation but each reads the latest site content and returns no-store", async () => {
   let finish!: (reports: PaperReport[]) => void
   const pending = new Promise<PaperReport[]>((resolve) => {
     finish = resolve

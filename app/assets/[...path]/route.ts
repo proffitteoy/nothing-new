@@ -1,3 +1,4 @@
+import { getCloudflareContext } from "@opennextjs/cloudflare"
 import { fetchBlob } from "../../../lib/blob"
 import { buildBlobResponse, SITE_IMAGE_CACHE_POLICY } from "../../../lib/blob-response"
 
@@ -31,6 +32,22 @@ function isAllowedImagePath(pathname: string) {
   )
 }
 
+async function fetchStaticImage(request: Request, path: string[]): Promise<Response> {
+  const { env } = getCloudflareContext()
+  const assets = (env as CloudflareEnv & { ASSETS?: { fetch: typeof fetch } }).ASSETS
+  if (!assets) return new Response(null, { status: 404 })
+
+  const url = new URL("/" + path.map(encodeURIComponent).join("/"), request.url)
+  const headers = new Headers()
+  const validator = request.headers.get("if-none-match")
+  if (validator) headers.set("If-None-Match", validator)
+  const response = await assets.fetch(new Request(url, { headers }))
+  if (response.ok && !response.headers.get("content-type")?.startsWith("image/")) {
+    return new Response(null, { status: 404 })
+  }
+  return response
+}
+
 export async function GET(request: Request, context: RouteContext) {
   const { path } = await context.params
   const relativePath = path.join("/")
@@ -42,7 +59,9 @@ export async function GET(request: Request, context: RouteContext) {
     const upstream = await fetchBlob(`images/${relativePath}`, {
       ifNoneMatch: request.headers.get("if-none-match") ?? undefined,
     })
-    return buildBlobResponse(upstream, SITE_IMAGE_CACHE_POLICY)
+    // Current public bundles cover the same paths without depending on the old image store.
+    const resource = upstream.status === 404 ? await fetchStaticImage(request, path) : upstream
+    return buildBlobResponse(resource, SITE_IMAGE_CACHE_POLICY)
   } catch (error) {
     console.error(
       "[assets/blob] image read failed:",

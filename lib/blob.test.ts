@@ -9,13 +9,12 @@ const source = ts.transpileModule(readFileSync(new URL("./blob.ts", import.meta.
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText
 
-function storage(cloudflare = true) {
+function storage(binding: "present" | "missing" | "no-context" = "present") {
   const committed = new Map<string, { value: ArrayBuffer; metadata: Record<string, unknown> }>()
   const pending = new Map<string, { value: ArrayBuffer; metadata: Record<string, unknown> }>()
   const env: Record<string, string> = {}
   let ctx = {}
   let failPut = false
-  let sdkReads = 0
   const kv = {
     get: async (key: string) => committed.get(key)?.value ?? null,
     getWithMetadata: async (key: string, options: { cacheTtl: number }) => {
@@ -38,8 +37,6 @@ function storage(cloudflare = true) {
     Buffer,
     Response,
     Headers,
-    URL,
-    AbortSignal,
     Uint8Array,
     process: { env },
     require: (name: string) => {
@@ -48,18 +45,8 @@ function storage(cloudflare = true) {
       if (name === "@opennextjs/cloudflare")
         return {
           getCloudflareContext() {
-            if (!cloudflare) throw new Error("No Cloudflare context")
-            return { env: { SITE_CONTENT: kv }, ctx }
-          },
-        }
-      if (name === "@vercel/blob")
-        return {
-          get: async (_path: string, options: { access: string; useCache: boolean }) => {
-            sdkReads++
-            assert.equal(options.access, "private")
-            assert.equal(options.useCache, false)
-            const response = Response.json({ provider: "vercel" })
-            return { stream: response.body, headers: response.headers, blob: {}, statusCode: 200 }
+            if (binding === "no-context") throw new Error("No Cloudflare context")
+            return { env: binding === "present" ? { SITE_CONTENT: kv } : {}, ctx }
           },
         }
       throw new Error(`Unexpected dependency: ${name}`)
@@ -77,7 +64,6 @@ function storage(cloudflare = true) {
     failWrites: () => {
       failPut = true
     },
-    sdkReads: () => sdkReads,
   }
 }
 
@@ -133,17 +119,27 @@ test("KV preserves binary covers and conditional responses, and rejects failed o
   assert.equal((await api.fetchBlob("failed.json")).status, 404)
 })
 
-test("Node and Vercel keep the existing private Blob path", async () => {
-  const api = storage(false)
-  assert.equal(api.hasBlobStorage(), false)
-  api.env.BLOB_READ_WRITE_TOKEN = "vercel_blob_rw_teststore_synthetic"
-  assert.equal(api.hasBlobStorage(), true)
+test("A missing Worker binding does not use stale legacy credentials", async () => {
+  for (const binding of ["missing", "no-context"] as const) {
+    const api = storage(binding)
+    api.env.BLOB_READ_WRITE_TOKEN = "vercel_blob_rw_teststore_synthetic"
+    api.env.BLOB_STORE_ID = "teststore"
+    api.env.VERCEL_OIDC_TOKEN = "synthetic"
+    assert.equal(api.hasBlobStorage(), false)
+    await assert.rejects(api.fetchBlob("papers/reports.json"), /SITE_CONTENT storage is not bound/)
+    await assert.rejects(
+      api.putBlob("papers/reports.json", "{}", {
+        contentType: "application/json",
+        cacheControlMaxAge: 60,
+      }),
+      /SITE_CONTENT storage is not bound/,
+    )
+  }
+})
+
+test("Storage identity keeps names and escaped segments in the Cloudflare namespace", () => {
   assert.equal(
-    api.getBlobUrl("papers/reports.json"),
-    "https://teststore.private.blob.vercel-storage.com/papers/reports.json",
+    storage().getBlobUrl("/anime/covers/a b#c.png"),
+    "cloudflare-kv://SITE_CONTENT/anime/covers/a%20b%23c.png",
   )
-  assert.deepEqual(await (await api.fetchBlob("papers/reports.json", { useCache: false })).json(), {
-    provider: "vercel",
-  })
-  assert.equal(api.sdkReads(), 1)
 })
