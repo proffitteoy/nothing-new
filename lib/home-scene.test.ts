@@ -125,8 +125,17 @@ test("room aperture and exterior share one measured projection with sufficient c
     [1280, 800],
     [1024, 768],
     [640, 720],
+    [1920, 800],
+    [2560, 1080],
+    [1280, 600],
   ]) {
     const { room, opening, lake } = homeWindowProjection(width, height)
+    const scale = room.width / HOME_ROOM.width
+    const [frameX, frameY, frameWidth, frameHeight] = HOME_ROOM.frame
+    assert.ok(room.y + frameY * scale >= 24 - 1e-8, "top frame keeps visible wall above it")
+    assert.ok(room.x + frameX * scale >= 16 - 1e-8, "left frame stays in the viewport")
+    assert.ok(room.x + (frameX + frameWidth) * scale <= width - 16 + 1e-8)
+    assert.ok(room.y + (frameY + frameHeight) * scale <= height - 56 + 1e-8)
     assert.ok(Math.abs(room.width / room.height - HOME_ROOM.width / HOME_ROOM.height) < 1e-10)
     if (width >= 1024) assert.ok(opening.x >= 44 && opening.x + opening.width <= width - 44)
     assert.ok(

@@ -305,8 +305,8 @@ export default function HomeScene({ blogHref }: { blogHref: string }) {
                 if ((event.target as Element).closest('input[type="range"]')) setDraggingMusic(true)
               }}
             >
-              <LyricBar className={styles.lyrics} />
               <CloudPlayer dock className={styles.sillPlayer} />
+              <LyricBar className={styles.lyrics} />
             </div>
             <a
               className={styles.artCredit}
