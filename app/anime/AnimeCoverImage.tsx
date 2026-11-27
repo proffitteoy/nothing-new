@@ -16,11 +16,13 @@ export default function AnimeCoverImage({
   nearViewportMarginPx: number
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const [unoptimizedSrc, setUnoptimizedSrc] = useState<string | null>(null)
   const { elementRef, shouldLoad } = useNearViewport<HTMLSpanElement>(
     immediate,
     nearViewportMarginPx,
   )
   const failed = failedSrc === src
+  const unoptimized = unoptimizedSrc === src
 
   if (!src || failed) {
     return (
@@ -35,13 +37,20 @@ export default function AnimeCoverImage({
       {shouldLoad && (
         <Image
           src={src}
+          unoptimized={unoptimized}
           alt={alt}
           fill
           sizes="(max-width: 639px) 24vw, (max-width: 1023px) 19vw, 170px"
           loading={immediate ? "eager" : "lazy"}
           decoding="async"
           referrerPolicy="no-referrer"
-          onError={() => setFailedSrc(src)}
+          onError={() => {
+            if (!unoptimized && src.startsWith("/anime/blob/covers/")) {
+              setUnoptimizedSrc(src)
+            } else {
+              setFailedSrc(src)
+            }
+          }}
           className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
         />
       )}

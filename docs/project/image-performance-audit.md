@@ -1,6 +1,12 @@
 # 生产图片加载策略
 
-网站保留浏览器 native 网络调度、Next Image、Vercel Blob 与现有 CDN 缓存链路，不使用自定义下载队列、分层 residual 或客户端解码器。未获得足以替换 native 的收益，因此已移除图片实验组件、查询参数、环境变量、测量脚本及聚合结果；历史研究可从 Git 历史恢复。
+网站保留浏览器 native 网络调度、Next Image 与 Cloudflare Images / CDN 缓存链路，不使用自定义下载队列、分层 residual 或客户端解码器。公开图片来自构建静态资源，番剧镜像来自 Cloudflare 内容存储；历史研究可从 Git 历史恢复。
+
+## Cloudflare 动态封面（2026-11-27）
+
+OpenNext 对 `/_next/image` 的相对源默认读取 `ASSETS`，而 `/anime/blob/covers/**` 是动态路由，不能按静态文件读取。Worker 仅在优化请求内适配 `ASSETS.fetch`：同源番剧封面及旧 `/assets/**` 经当前部署的 `ctx.exports` 读取，源路由仍使用真实静态绑定并保留原有路径校验。其余静态图片维持原读取方式，避免跨域回源及自递归。
+
+番剧封面优化失败后尝试同源镜像原图，原图也失败才显示占位；更换封面 URL 会恢复优化。首屏预算与懒加载规则保持不变。发布验收要检查实际优化响应和滚动后的图片解码，不能仅以原图 200 判定成功。
 
 ## 列表图片
 
@@ -20,20 +26,20 @@
 
 ## 格式与缓存
 
-继续使用 Next Image 的 AVIF / WebP 协商及现有尺寸、质量和缓存配置。没有部署全量预生成、第三方镜像或自定义格式；也不以实验结果宣称生产 LCP 已提升。
+继续使用 Next Image 的 WebP 协商及现有尺寸、质量和缓存配置。没有部署全量预生成、第三方镜像或自定义格式；也不以实验结果宣称生产 LCP 已提升。
 
 ## 维护验证
 
 修改生产图片链路后执行完整测试、TypeScript、定向 ESLint、格式检查和 `git diff --check`。无上传副作用的构建使用：
 
 ```powershell
-npm.cmd run notes:build
-npx.cmd next build
+npm.cmd run build
+npm.cmd run cf:build -- --skipNextBuild
 ```
 
-`npm run build` 会执行图片同步，不能用于只读构建验证。`images:dry` 只盘点范围；`images:check` 需要 Blob 凭据且不会写入。
+构建不上传图片或写入远端数据。旧 `images:*` Blob 上传命令已退役。Workers Builds 设置 `WORKERS_CI` 后会自动在 `postbuild` 打包 OpenNext；本地分步构建使用上述两个命令。
 
-本次收尾的本地运行时为 Node 24；项目和 Vercel 要求 Node 22，两者构建证据需分开。浏览器回归关注近视口挂载、锚点跳转、加载失败、图片比例和 preload 数量；本地回归不等同于部署后的冷缓存性能采样。
+当前项目与 Cloudflare 构建使用 Node 22。浏览器回归关注近视口挂载、锚点跳转、加载失败、图片比例和 preload 数量；本地回归不等同于部署后的冷缓存性能采样。
 
 ### 2026-09-22 收尾验证
 
