@@ -12,8 +12,6 @@ services:
       NODE_ENV: production
       PORT: "3000"
       HOSTNAME: 0.0.0.0
-      # External hosting cannot rely on Vercel's runtime OIDC injection.
-      BLOB_READ_WRITE_TOKEN: ${BLOB_READ_WRITE_TOKEN:-}
       BANGUMI_USERNAME: ${BANGUMI_USERNAME:-}
       BANGUMI_ACCESS_TOKEN: ${BANGUMI_ACCESS_TOKEN:-}
       ANIME_SYNC_SECRET: ${ANIME_SYNC_SECRET:-}

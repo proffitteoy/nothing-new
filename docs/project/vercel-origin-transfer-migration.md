@@ -2,7 +2,7 @@
 
 ## Cloudflare 迁移（2026-11-26）
 
-当前迁移目标为 Cloudflare Workers。下面的 Docker 自托管方案保留为历史应急预案，不是本次部署步骤。
+现行部署为 Cloudflare Workers。下面的 Docker 自托管方案保留为历史应急预案，不是本次部署或可直接执行的回退步骤。
 
 ### 构建与数据链路
 
@@ -10,8 +10,8 @@
 - 免费 Worker 入口将 Next.js 请求转到 `SiteRuntime` SQLite Durable Object，使用每请求 30 秒 CPU 预算。OpenNext 缓存与新增内容按键写入独立 SQLite 对象；`SITE_CONTENT` KV 仅只读回退已迁移的周报、番剧与封面。自定义缓存不再批量预填充 KV。生产与分支预览由平台隔离 Durable Objects，存量 KV 也分别绑定，重验证经当前部署的 `ctx.exports` 调用。
 - Obsidian 的 `E:/math` 按现有审阅范围单向发布到 `content/`，Zotero 本地 API 导出获批书目到 `data/paper-library.json`，均随 Git 构建发布。迁移不需要为作者电脑配置云端访问密钥，也不修改 Zotero 阅读标签。
 - 周报生产者仍为私有 `tda-paper-monitor` 的 `Send TDA report / sync-blog`。`BLOG_SYNC_URL` 显式指向 `https://nothing-new.84025375.workers.dev/api/papers`，`BLOG_SYNC_SECRET` 与 Worker 的 `PAPERS_SYNC_SECRET` 配对；用 `sync_only=true` 验收，邮件 job 应跳过。
-- Worker Secrets 为 `BANGUMI_ACCESS_TOKEN`、`PAPERS_SYNC_SECRET`、`ANIME_SYNC_SECRET`、`CRON_SECRET`。旧 Vercel 部署保留原私有 Blob 配置；Cloudflare 已有内容 KV，不依赖 Vercel OIDC 或 Blob Token。
-- 每天 03:00 UTC（北京时间 11:00）的番剧同步由 `scheduled` 入口直接调用本 Worker 的认证接口，不经域名 DNS。对应移除 `vercel.json` 的旧 cron，确保正式调度只有一处。
+- Worker Secrets 为 `BANGUMI_ACCESS_TOKEN`、`PAPERS_SYNC_SECRET`、`ANIME_SYNC_SECRET`、`CRON_SECRET`。Cloudflare 已有内容 KV，不依赖 Vercel OIDC 或 Blob Token。
+- 每天 03:00 UTC（北京时间 11:00）的番剧同步由 `scheduled` 入口直接调用本 Worker 的认证接口，不经域名 DNS。旧部署配置已从仓库退役，正式调度只保留此处。
 
 ### 已完成的迁移验收
 
@@ -29,7 +29,12 @@
 
 后续正式 Tail 已取得明确证据：论文页触发 `exceededCpu`，缓存出现 `KV put() limit exceeded for the day`。用户选择保持免费，故新增 SQLite 运行层，而非付费提额。存储写入使用事务，删除 tombstone 防止旧 KV 内容重新出现；每个请求创建独立上下文，避免 DurableObjectState 的生命周期扩大请求内缓存。仍须验证冷缓存、后台再生及真实同步，并留意免费 DO 的每日请求、运行时长、读写和总存储上限。
 
-回滚时保留 Vercel 生产部署和原 Blob，恢复原 DNS 后，将生产者的 URL 与配对 Secret 一起切回 Vercel，并按需恢复旧 cron、停用 Cloudflare cron，避免两端重复调度。切回前把 SQLite 中迁移后新增的周报、番剧版本同步到回退存储并校验，旧 Blob 不会自动获得 Cloudflare 的后续写入。
+### 旧部署退役和数据保留
+
+- 旧 Vercel 项目已退役，不能通过切回旧 DNS 回滚。需要回滚代码时在 Cloudflare 选择一个已验证版本，并保留现有 SQLite 与 KV 绑定；不覆盖迁移后新增的数据。
+- 仓库移除 Vercel 部署配置、运行时 SDK 和写入旧图片库的命令。稳定的 `/anime/blob/**`、`/assets/**` 路由及 `SITE_CONTENT` 存储键名保持不变；后者优先读取 Cloudflare 已有的历史 `images/*`，找不到时使用构建中的同路径静态图片，不会向旧站补取。公开图片仍由静态构建产物分发。
+- 删除旧 Blob 前，先核实其是否为独立或共享存储；只读列出对象并离线导出需要保留的对象及元数据。按路径和字节 SHA-256 核对迁移清单，确认旧库中独有的有效内容已备份或迁移、外部消费者均已切走，并对正式 Cloudflare 验收番剧指针、快照、封面和周报。最初的 288 键核验记录并不证明覆盖旧库所有对象。
+- 不把令牌写入仓库、聊天或日志。数据退役不在应用代码更新里执行；未核验备份或依赖之前不删除存储或吊销令牌。
 
 ## 2026-11-05 历史应急预案
 

@@ -27,7 +27,7 @@ async function fetchSnapshot(signal: AbortSignal) {
   } catch (error) {
     if (signal.aborted) throw error
     console.warn(
-      "[AnimeShelf] snapshot load failed, falling back to the Vercel API:",
+      "[AnimeShelf] snapshot load failed, falling back to the anime API:",
       error instanceof Error ? error.message : "unknown error",
     )
   }

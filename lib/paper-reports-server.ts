@@ -9,7 +9,7 @@ import seedReports from "../data/tda-reports.json"
 export const PAPER_REPORTS_PATH = "papers/reports.json"
 export const PAPER_REPORTS_TAG = "paper-reports"
 
-// Keep latest-first compilation independent from the archive. Every API GET still reads Blob.
+// Keep latest-first compilation independent from the archive. Every API GET still reads site content.
 const compiledSnapshots: Partial<
   Record<
     "all" | "latest",
@@ -38,9 +38,10 @@ export function compilePaperSnapshot(source: unknown, scope: "all" | "latest" = 
 export async function readPaperReports(scope: "all" | "latest" = "all") {
   let source: unknown = seedReports
   if (hasBlobStorage()) {
-    const response = await fetchBlob(PAPER_REPORTS_PATH, { useCache: false })
+    const response = await fetchBlob(PAPER_REPORTS_PATH)
     if (response.ok) source = await response.json()
-    else if (response.status !== 404) throw new Error(`Blob returned ${response.status}`)
+    else if (response.status !== 404)
+      throw new Error(`Site content storage returned ${response.status}`)
   }
   return compilePaperSnapshot(source, scope)
 }

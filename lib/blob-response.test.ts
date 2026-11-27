@@ -4,7 +4,7 @@ import { describe, it } from "node:test"
 import { buildBlobResponse, SITE_IMAGE_CACHE_POLICY } from "./blob-response"
 
 describe("private Blob proxy responses", () => {
-  it("preserves validators and separates browser from Vercel CDN caching", () => {
+  it("preserves validators and separates browser from CDN caching", () => {
     const response = buildBlobResponse(
       new Response("image", {
         headers: { "Content-Type": "image/png", ETag: '"asset-v1"' },
@@ -15,7 +15,7 @@ describe("private Blob proxy responses", () => {
     assert.equal(response.status, 200)
     assert.equal(response.headers.get("etag"), '"asset-v1"')
     assert.equal(response.headers.get("cache-control"), SITE_IMAGE_CACHE_POLICY.browser)
-    assert.equal(response.headers.get("vercel-cdn-cache-control"), SITE_IMAGE_CACHE_POLICY.cdn)
+    assert.equal(response.headers.get("cdn-cache-control"), SITE_IMAGE_CACHE_POLICY.cdn)
   })
 
   it("returns an empty 304 with the same validator and cache policy", () => {
