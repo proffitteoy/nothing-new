@@ -105,6 +105,7 @@ export function isMobileHomeClient() {
 export const HOME_ROOM = {
   width: 1585,
   height: 992,
+  frame: [95, 43, 1397, 753],
   opening: [197, 126, 1193, 611],
   sillCenterY: 775,
 } as const
@@ -150,11 +151,16 @@ export function homeOpeningRevealPath(progress: number, ridge: readonly number[]
 }
 
 export function homeWindowProjection(width: number, height: number) {
-  const scale = Math.max(width / HOME_ROOM.width, height / HOME_ROOM.height)
-  // Keep the architecture proportional at every viewport, including narrow desktops.
+  const [frameX, frameY, frameWidth, frameHeight] = HOME_ROOM.frame
+  // Keep a little wall above the complete frame, even on short or wide desktops.
+  const scale = Math.min(
+    Math.max(width / HOME_ROOM.width, height / HOME_ROOM.height),
+    Math.max(1, width - 32) / frameWidth,
+    Math.max(1, height - 80) / frameHeight,
+  )
   const room = {
-    x: (width - HOME_ROOM.width * scale) / 2,
-    y: (height - HOME_ROOM.height * scale) / 2,
+    x: width / 2 - (frameX + frameWidth / 2) * scale,
+    y: Math.max((height - HOME_ROOM.height * scale) / 2, 24 - frameY * scale),
     width: HOME_ROOM.width * scale,
     height: HOME_ROOM.height * scale,
   }

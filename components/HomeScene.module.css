@@ -7,8 +7,10 @@
   --edge-width: clamp(184px, 18.3vw, 264px);
   --tab-height: clamp(58px, 11dvh, 104px);
   --edge-gap: clamp(6px, 1.2dvh, 12px);
+  --rail-width: 56px;
   position: fixed;
   inset: 0;
+  width: var(--home-viewport-width, 100%);
   isolation: isolate;
   overflow: hidden;
   color: var(--site-ink);
@@ -20,6 +22,12 @@
   outline: 2px solid var(--site-accent);
   outline-offset: 4px;
 }
+/* The live scene paints this content into the wood material. These same native
+   elements retain focus, links and range input on the projected surface. */
+.scene[data-home-surface="material"] [data-home-ink] {
+  opacity: 0;
+  transform-origin: 0 0;
+}
 .poster,
 .sceneSurface {
   position: absolute;
@@ -30,6 +38,7 @@
 }
 .poster {
   z-index: 0;
+  background: #c4c7c2;
 }
 .scene[data-unified="true"] {
   z-index: 2;
@@ -40,7 +49,12 @@
   display: none;
 }
 .roomImage {
-  object-fit: cover;
+  position: absolute;
+  left: var(--room-x, 0px);
+  top: var(--room-y, 0px);
+  width: var(--room-width, 100%);
+  height: var(--room-height, 100%);
+  max-width: none;
 }
 .windowViewport {
   position: absolute;
@@ -96,26 +110,26 @@
     )
   );
   display: grid;
-  grid-template-columns: 56px;
+  grid-template-columns: var(--rail-width);
   grid-auto-rows: var(--tab-height);
   gap: var(--edge-gap);
-  width: 56px;
+  width: var(--rail-width);
   pointer-events: none;
 }
 .left {
-  left: var(--left-rail, 0px);
+  left: calc(var(--left-rail, 28px) - var(--rail-width) / 2);
 }
 .right {
-  right: var(--right-rail, 0px);
+  right: calc(var(--right-rail, 28px) - var(--rail-width) / 2);
 }
 .edge {
   position: relative;
-  width: 56px;
+  width: var(--rail-width);
   height: var(--tab-height);
   pointer-events: none;
 }
 .edge[data-open="true"] {
-  width: calc(var(--edge-width) + 56px);
+  width: calc(var(--edge-width) + var(--rail-width));
   z-index: 8;
 }
 .right .edge {
@@ -130,7 +144,7 @@
   position: absolute;
   top: 0;
   z-index: 2;
-  width: 56px;
+  width: var(--rail-width);
   height: var(--tab-height);
   padding: 0;
   border: 0;
@@ -176,10 +190,10 @@
   pointer-events: none;
 }
 .left .preview {
-  left: 66px;
+  left: calc(var(--rail-width) + 10px);
 }
 .right .preview {
-  right: 66px;
+  right: calc(var(--rail-width) + 10px);
 }
 .preview[data-open="true"] {
   pointer-events: auto;
@@ -239,6 +253,7 @@
   letter-spacing: 0.12em;
 }
 .musicDock .sillPlayer {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -246,21 +261,33 @@
   backdrop-filter: none;
   box-shadow: none;
 }
+.musicDock .sillPlayer > div:has(input[type="range"]) {
+  grid-column: 3;
+  grid-row: 1;
+}
+.musicDock .sillPlayer > div:has([role="status"]) {
+  display: flex;
+  align-items: center;
+}
 .sillPlayer h2,
 .sillPlayer p {
   text-shadow: none;
 }
+.sillPlayer button {
+  color: var(--core-ink);
+  background: transparent;
+  box-shadow: none;
+}
+.sillPlayer button:hover {
+  color: var(--core-hover);
+  background: color-mix(in srgb, var(--core-selected) 45%, transparent);
+}
 .lyrics {
   --music-lyric-inset: 0px;
-  --music-lyric-bottom: calc(100% + 4px);
-  padding: 4px 12px;
-  inline-size: fit-content;
-  max-inline-size: 100%;
-  margin-inline-start: auto;
-  border: 1px solid var(--core-line);
-  border-radius: 3px;
+  --music-lyric-bottom: auto;
+  top: calc(100% + 8px);
+  padding: 4px 0;
   color: var(--core-ink) !important;
-  background: color-mix(in srgb, var(--core-surface) 94%, transparent);
   font-size: 14px;
 }
 .lyrics p {
@@ -283,31 +310,14 @@
   color-scheme: light;
 }
 @media (max-width: 1100px) {
-  .rail {
-    grid-template-columns: 44px;
-    width: 44px;
-  }
-  .edge,
-  .tab {
-    width: 44px;
-  }
-  .edge[data-open="true"] {
-    width: calc(var(--edge-width) + 44px);
-  }
-  .left .preview {
-    left: 54px;
-  }
-  .right .preview {
-    right: 54px;
+  .scene {
+    --rail-width: 44px;
   }
 }
 @media (max-width: 900px) {
   .scene {
     --tab-height: clamp(56px, 10dvh, 80px);
     --edge-gap: 6px;
-  }
-  .musicDock {
-    top: calc(var(--music-y, 78.1dvh) + 10px);
   }
   .signature {
     display: none;
@@ -316,7 +326,6 @@
     font-size: 13px;
     gap: 8px;
     border-radius: 2px;
-    background: color-mix(in srgb, var(--core-surface) 94%, transparent);
   }
 }
 @media (max-height: 600px) {
@@ -328,14 +337,7 @@
     font-size: 13px;
     gap: 3px;
   }
-  .musicDock {
-    top: calc(var(--music-y, 78.1dvh) + 6px);
-  }
-  .signature {
-    display: none;
-  }
   .lyrics {
-    --music-lyric-bottom: calc(100% + 0px);
     font-size: 12px;
   }
 }

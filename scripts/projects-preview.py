@@ -242,6 +242,7 @@ def check_world_materials(page):
                 const program=g.getParameter(g.CURRENT_PROGRAM);
                 const source=g.getAttachedShaders(program).map(s=>g.getShaderSource(s)).join(' ');
                 draws.push({architecture:source.includes('photoCoverage'),water:source.includes('sqrt(9.81*k)'),
+                    surfaceInk:source.includes('uniform sampler2D uWindowInk'),
                     screenOverlay:source.includes('void shadeHome()'),
                     depthTest:g.isEnabled(g.DEPTH_TEST),depthWrite:g.getParameter(g.DEPTH_WRITEMASK),
                     worldProjection:source.includes('projectionMatrix*viewMatrix*world')});
@@ -253,7 +254,7 @@ def check_world_materials(page):
         const sample=()=>{if(++frames<30)requestAnimationFrame(sample);else{g.drawElements=original;resolve(draws);}};
         requestAnimationFrame(sample);
     })""")
-    assert any(d['architecture'] and d['worldProjection'] and d['depthTest'] and d['depthWrite'] for d in result), result
+    assert any(d['architecture'] and d['surfaceInk'] and d['worldProjection'] and d['depthTest'] and d['depthWrite'] for d in result), result
     assert any(d['water'] for d in result), result
     assert not any(d['screenOverlay'] for d in result), result
     (args.output/'world-materials.json').write_text(json.dumps(result,indent=2),encoding='utf8')
@@ -295,6 +296,34 @@ def connection_checks(browser):
     at_home_eye(page)
     check_world_materials(page)
     results.append('home/world-geometry/depth/planar-reflection')
+    expect(page.locator('[data-home-scene]')).to_have_attribute('data-home-surface', 'material')
+    assert page.locator('[data-home-ink]').evaluate_all("els=>els.length===10&&els.every(el=>getComputedStyle(el).opacity==='0')")
+    trigger = page.locator('[data-edge-trigger="projects"]')
+    original_box = trigger.bounding_box()
+    page.mouse.move(1100, 240)
+    page.wait_for_timeout(600)
+    moved_box = trigger.bounding_box()
+    assert abs(moved_box['x'] - original_box['x']) + abs(moved_box['y'] - original_box['y']) > .1
+    assert trigger.evaluate("el=>el.style.transform.startsWith('matrix3d(')&&!el.inert")
+    page.mouse.move(720, 450)
+    results.append('home/material-ink/native-hit-areas-follow-physical-camera')
+    for width, height in [(1024, 768), (2560, 1080), (800, 720), (1440, 900)]:
+        page.set_viewport_size({'width': width, 'height': height})
+        page.mouse.move(width / 2, height / 2)
+        page.wait_for_function("""() => {
+            const stage=document.querySelector('[data-home-scene]');
+            const canvas=document.querySelector('[data-world-canvas]');
+            return stage.clientWidth===canvas.clientWidth && [...stage.querySelectorAll('[data-edge-trigger]')].every(el=>{
+                const r=el.getBoundingClientRect();
+                return !el.inert && r.left>=0 && r.right<=stage.clientWidth && r.width>=43 && r.width<=57;
+            });
+        }""")
+        assert page.locator('[data-home-music] h2').evaluate("""el => {
+            const stage=document.querySelector('[data-home-scene]'), css=getComputedStyle(stage);
+            const range=document.createRange(); range.selectNodeContents(el);
+            return range.getBoundingClientRect().top >= parseFloat(css.getPropertyValue('--view-y')) + parseFloat(css.getPropertyValue('--view-height'));
+        }"""), 'The track title must be on the sill material, outside the transparent aperture'
+    results.append('home/material-hit-areas-resize-with-architecture')
     # Small departures exposed the old double-landscape crossfade. Inspect the
     # actual rendered program at these positions, not just the two endpoints.
     for value in [-.01, -.03, -.06, -.2, -.45, .01, .03, .06, .12, .25, .5, .75, 1, 0]:

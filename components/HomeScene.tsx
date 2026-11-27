@@ -176,6 +176,7 @@ export default function HomeScene({ blogHref }: { blogHref: string }) {
                 const triggerProps = {
                   className: styles.tab,
                   "data-edge-trigger": id,
+                  "data-home-ink": "navigation",
                   "aria-expanded": expanded,
                   "aria-controls": `home-${id}-panel`,
                   onPointerEnter: (event: ReactPointerEvent<HTMLElement>) => {
@@ -295,18 +296,19 @@ export default function HomeScene({ blogHref }: { blogHref: string }) {
             </nav>
           ))}
           <div className={styles.windowSill} data-home-sill>
-            <p className={styles.signature} aria-hidden="true">
+            <p className={styles.signature} data-home-ink="signature" aria-hidden="true">
               阿の宝藏之地
             </p>
             <div
               className={styles.musicDock}
               data-home-music
+              data-home-ink="music"
               onPointerDownCapture={(event) => {
                 if ((event.target as Element).closest('input[type="range"]')) setDraggingMusic(true)
               }}
             >
-              <LyricBar className={styles.lyrics} />
               <CloudPlayer dock className={styles.sillPlayer} />
+              <LyricBar className={styles.lyrics} />
             </div>
             <a
               className={styles.artCredit}

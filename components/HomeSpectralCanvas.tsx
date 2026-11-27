@@ -42,8 +42,12 @@ export default function HomeSpectralCanvas() {
   useEffect(() => {
     const stage = artwork.current?.closest<HTMLElement>("[data-home-scene]")
     if (!stage) return
+    const viewport = document.getElementById("app-scroll-root")
     const resize = () => {
-      const view = homeWindowProjection(innerWidth, innerHeight)
+      const width = viewport?.clientWidth ?? innerWidth
+      const height = viewport?.clientHeight ?? innerHeight
+      const view = homeWindowProjection(width, height)
+      stage.style.setProperty("--home-viewport-width", `${width}px`)
       stage.style.setProperty("--room-x", `${view.room.x}px`)
       stage.style.setProperty("--room-y", `${view.room.y}px`)
       stage.style.setProperty("--room-width", `${view.room.width}px`)
@@ -52,6 +56,17 @@ export default function HomeSpectralCanvas() {
       stage.style.setProperty("--view-y", `${view.opening.y}px`)
       stage.style.setProperty("--view-width", `${view.opening.width}px`)
       stage.style.setProperty("--view-height", `${view.opening.height}px`)
+      const frameScale = view.room.width / HOME_ROOM.width
+      const [frameX, , frameWidth] = HOME_ROOM.frame
+      const [openingX, , openingWidth] = HOME_ROOM.opening
+      stage.style.setProperty(
+        "--left-rail",
+        `${view.room.x + ((frameX + openingX) / 2) * frameScale}px`,
+      )
+      stage.style.setProperty(
+        "--right-rail",
+        `${width - (view.room.x + ((frameX + frameWidth + openingX + openingWidth) / 2) * frameScale)}px`,
+      )
       stage.style.setProperty("--lake-x", `${view.lake.x - view.opening.x}px`)
       stage.style.setProperty("--lake-y", `${view.lake.y - view.opening.y}px`)
       stage.style.setProperty("--lake-width", `${view.lake.width}px`)
@@ -62,8 +77,13 @@ export default function HomeSpectralCanvas() {
       )
     }
     resize()
+    const observer = new ResizeObserver(resize)
+    if (viewport) observer.observe(viewport)
     window.addEventListener("resize", resize)
-    return () => window.removeEventListener("resize", resize)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener("resize", resize)
+    }
   }, [])
   return (
     <div
@@ -94,7 +114,6 @@ export default function HomeSpectralCanvas() {
         data-home-room
         src={retry ? { ...room, src: `${room.src}?retry=${retry}` } : room}
         alt="从明亮室内透过浅木观景窗望向山湖"
-        fill
         preload
         unoptimized
         sizes="100vw"
