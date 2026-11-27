@@ -110,6 +110,45 @@ export const HOME_ROOM = {
 } as const
 export const HOME_LAKE = { width: 1672, height: 877 } as const
 
+// Source-image coordinates: grow a valley-centred opening along the ridge,
+// advancing into the mountain/lake before opening the sky above it.
+export function homeOpeningRevealPath(progress: number, ridge: readonly number[][]) {
+  const p = Math.max(0, Math.min(1, progress))
+  const smooth = (t: number) => t * t * (3 - 2 * t)
+  const center = HOME_LAKE.width / 2
+  const halfWidth = 8 + HOME_LAKE.width * 0.59 * smooth(p)
+  const left = Math.max(-48, center - halfWidth)
+  const right = Math.min(HOME_LAKE.width + 48, center + halfWidth)
+  const late = Math.max(0, (p - 0.65) / 0.35)
+  const down = 820 * p ** 1.55 + 520 * smooth(late)
+  const up = 540 * Math.max(0, (p - 0.35) / 0.65) ** 1.8
+  const ridgeAt = (x: number) => {
+    if (x <= ridge[0][0]) return ridge[0][1]
+    for (let i = 1; i < ridge.length; i++) {
+      const [a, b] = [ridge[i - 1], ridge[i]]
+      if (x <= b[0]) return a[1] + ((x - a[0]) / (b[0] - a[0])) * (b[1] - a[1])
+    }
+    return ridge[ridge.length - 1][1]
+  }
+  const xs = [
+    ...new Set([
+      left,
+      right,
+      ...ridge.map(([x]) => x).filter((x) => x > left && x < right),
+      ...Array.from({ length: 71 }, (_, i) => i * 24).filter((x) => x > left && x < right),
+    ]),
+  ].sort((a, b) => a - b)
+  const top: number[][] = [],
+    bottom: number[][] = []
+  for (const x of xs) {
+    const spread = Math.sqrt(Math.max(0, 1 - ((x - center) / halfWidth) ** 2))
+    const base = ridgeAt(x) + 24
+    top.push([x, Math.max(-48, base - up * spread)])
+    bottom.push([x, Math.min(HOME_LAKE.height + 48, base + down * spread)])
+  }
+  return `M${[...top, ...bottom.reverse()].map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(" L")} Z`
+}
+
 export function homeWindowProjection(width: number, height: number) {
   const scale = Math.max(width / HOME_ROOM.width, height / HOME_ROOM.height)
   // Keep the architecture proportional at every viewport, including narrow desktops.
