@@ -163,27 +163,62 @@ async function visit(
     await page.goto(new URL(route, values.url).href, { waitUntil: "domcontentloaded" })
     if (frames) {
       await page.waitForFunction(() => performance.getEntriesByName("site:opening").length)
-      for (const at of [0, 250, 850, 1450, 1950]) {
+      for (const at of [0, 250, 750, 1400, 1950]) {
         await page.waitForFunction(
           (at) =>
             performance.now() - performance.getEntriesByName("site:opening")[0].startTime >= at,
           at,
         )
         await page.screenshot({ path: path.join(output, `${name}-${at}.png`) })
-        if (
-          at === 1950 &&
-          (await page.locator("html").getAttribute("data-startup-phase")) === "exiting"
-        )
-          assert.ok(
-            await page
-              .locator("[data-site-ui]")
-              .evaluateAll((elements) =>
-                elements.every(
+        if (at === 1400) {
+          const layout = await page.evaluate(() => {
+            const overlay = document.querySelector("[data-startup-loading]")
+            const clip = overlay.querySelector("[data-opening-window]"),
+              host = document.querySelector("[data-home-scene]")
+            const css = getComputedStyle(host)
+            const signature = overlay.querySelector("p").getBoundingClientRect(),
+              original = document.querySelector("[data-home-sill] p").getBoundingClientRect()
+            return {
+              clip: ["x", "y", "width", "height"].map((name) => Number(clip.getAttribute(name))),
+              expected: ["--view-x", "--view-y", "--view-width", "--view-height"].map((name) =>
+                parseFloat(css.getPropertyValue(name)),
+              ),
+              images: overlay.querySelectorAll("img,image").length,
+              ellipseCount: overlay.querySelectorAll("ellipse").length,
+              ridgeWave: overlay.querySelector("[data-opening-wash]")?.tagName.toLowerCase(),
+              sameRidgeProjection:
+                overlay
+                  .querySelector("[data-opening-wash]")
+                  ?.parentElement.getAttribute("transform") ===
+                overlay.querySelector("[data-opening-lake]")?.getAttribute("transform"),
+              signature: signature.toJSON(),
+              original: original.toJSON(),
+              markers: overlay.querySelectorAll("[data-opening-ridge]").length,
+              interactionLocked:
+                document.documentElement.dataset.startupPhase !== "exiting" ||
+                [...document.querySelectorAll("[data-site-ui]")].every(
                   (element) => element.inert || element.closest("[data-startup-inert]"),
                 ),
-              ),
-            "background input is locked during crossfade",
+            }
+          })
+          assert.equal(layout.images, 0, "intro colour comes from the existing scene")
+          assert.equal(layout.markers, 1)
+          assert.equal(layout.ellipseCount, 0, "opening follows the ridge rather than an ellipse")
+          assert.equal(layout.ridgeWave, "path")
+          assert.ok(layout.sameRidgeProjection, "wave and ridge share the same source projection")
+          layout.clip.forEach((value, i) =>
+            assert.ok(Math.abs(value - layout.expected[i]) < 2, "same window projection"),
           )
+          assert.ok(
+            Math.abs(layout.signature.x - layout.original.x) < 2,
+            "signature keeps its final horizontal position",
+          )
+          assert.ok(
+            Math.abs(layout.signature.y - layout.original.y) < 2,
+            "signature keeps its final vertical position",
+          )
+          assert.ok(layout.interactionLocked)
+        }
       }
     }
     await verify(page, context)
@@ -228,7 +263,7 @@ async function visit(
       !reduced &&
       !saveData &&
       !twoG &&
-      name !== "skip" &&
+      !name.startsWith("skip") &&
       name !== "route-cancel"
     ) {
       assert.ok(metrics.presentationMs >= 2350, "normal opening keeps the full presentation")
@@ -257,12 +292,14 @@ async function visit(
 
 try {
   for (const [width, height] of [
+    [1586, 992],
     [1440, 900],
     [1920, 1080],
     [1280, 800],
     [1024, 768],
+    [1024, 480],
   ])
-    await visit(`cold-${width}`, { width, height, frames: true, video: width === 1440 })
+    await visit(`cold-${width}x${height}`, { width, height, frames: true, video: width === 1440 })
   await visit("warm-reload", {}, async (page) => {
     await page.waitForFunction(() => document.documentElement.classList.contains("splash-seen"))
     await page.reload({ waitUntil: "domcontentloaded" })
@@ -316,6 +353,16 @@ try {
       ),
     )
   })
+  await visit("skip-keyboard", {}, async (page) => {
+    await page.keyboard.press("Tab")
+    assert.ok(
+      await page
+        .getByRole("button", { name: "跳过开场" })
+        .evaluate((button) => button === document.activeElement),
+    )
+    await page.keyboard.press("Enter")
+    await page.waitForFunction(() => document.documentElement.classList.contains("splash-seen"))
+  })
   for (const [name, options] of [
     ["reduced-motion", { reduced: true }],
     ["save-data", { saveData: true }],
@@ -343,7 +390,7 @@ try {
     assert.equal(await page.evaluate(() => performance.getEntriesByName("site:opening").length), 1)
   })
   await visit("direct-inner-page", { route: "/about" })
-  await visit("mobile-redirect", { mobile: true }, async (page) => {
+  await visit("mobile-redirect", { width: 390, height: 844, mobile: true }, async (page) => {
     await page.waitForURL("**/blog/**")
   })
   await visit("no-javascript", { javascript: false }, async (page) => {

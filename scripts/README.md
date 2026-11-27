@@ -60,7 +60,7 @@ npm run covers:check
 
 ## 首页开场验收
 
-`opening-preview.mjs` 检查当前山湖图版的真实播放与交接：四种桌面尺寸、冷／热缓存、慢网、图片延迟／失败／重试、无 WebGL、跳过、减少动态、Save-Data／2G、SPA 取消与返回、手机分流、无 JavaScript。只写 `--output` 下的截图、WebM 和 JSON，不修改站点内容或线上状态；默认目录 `.sync/tmp-opening-rewrite/` 已忽略。音乐、番剧和论文 API 使用本地空响应，真实首页素材与模型照常加载。
+`opening-preview.mjs` 检查当前同场显景开场的真实播放与交接：参考尺寸与五种桌面尺寸、窗口配准与署名不跳动、冷／热缓存、慢网、图片延迟／失败／重试、无 WebGL、鼠标／键盘跳过、减少动态、Save-Data／2G、SPA 取消与返回、手机分流、无 JavaScript。只写 `--output` 下的截图、WebM 和 JSON，不修改站点内容或线上状态；默认目录 `.sync/tmp-opening-rewrite/` 已忽略。音乐、番剧和论文 API 使用本地空响应，真实首页素材与模型照常加载。
 
 需要 Node 22、Playwright 和本机 Chrome；Playwright 是可选验收工具，不加入生产依赖。已有工具运行时可将 `PLAYWRIGHT_MODULE` 设为其 ESM 入口的绝对路径或 file URL。也可以安装到本地忽略目录：
 
