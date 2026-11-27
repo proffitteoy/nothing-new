@@ -4,6 +4,7 @@ import {
   createHomeVisitClock,
   homeCycleAt,
   homeImageRect,
+  homeOpeningRevealPath,
   HOME_PERSON,
   homeProjectProgress,
   homeProjectScroll,
@@ -144,4 +145,54 @@ test("room aperture and exterior share one measured projection with sufficient c
         assert.ok(lake.y + lake.height - look.y > opening.y + opening.height)
       }
   }
+})
+
+test("the opening grows below the ridge into the lake before the sky, without closing again", () => {
+  const ridge = [
+    [0, 282],
+    [420, 240],
+    [836, 404],
+    [1250, 280],
+    [1672, 180],
+  ]
+  const polygon = (progress: number) =>
+    homeOpeningRevealPath(progress, ridge)
+      .slice(1, -2)
+      .split(" L")
+      .map((pair) => pair.split(" ").map(Number))
+  const inside = (points: number[][], x: number, y: number) => {
+    let hit = false
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const a = points[i],
+        b = points[j]
+      if (a[1] > y !== b[1] > y && x < ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1]) + a[0])
+        hit = !hit
+    }
+    return hit
+  }
+  assert.equal(inside(polygon(0), 836, 444), false)
+  assert.equal(inside(polygon(0.12), 836, 444), true, "start just below the valley ridge")
+  assert.equal(
+    inside(polygon(0.3), 836, 364),
+    false,
+    "sky stays covered while the lower slope opens",
+  )
+  assert.equal(inside(polygon(0.3), 836, 520), true)
+  assert.equal(inside(polygon(0.5), 836, 364), false, "sky opens after the lower half has spread")
+  assert.equal(inside(polygon(0.5), 500, 300), true, "the wave follows the higher left ridge")
+  assert.equal(inside(polygon(0.5), 500, 600), false, "outer lower boundary still forms a U")
+  assert.equal(inside(polygon(0.5), 836, 650), true)
+  const stages = [0.12, 0.25, 0.4, 0.55, 0.7, 0.85, 1].map(polygon)
+  for (let x = 80; x <= 1600; x += 80)
+    for (let y = 60; y <= 820; y += 40) {
+      let revealed = false
+      for (const points of stages) {
+        const visible = inside(points, x, y)
+        if (revealed) assert.equal(visible, true, "revealed scenery never closes again")
+        revealed ||= visible
+      }
+      assert.equal(inside(stages.at(-1)!, x, y), true, "final opening covers the window")
+    }
+  assert.equal(homeOpeningRevealPath(-1, ridge), homeOpeningRevealPath(0, ridge))
+  assert.equal(homeOpeningRevealPath(2, ridge), homeOpeningRevealPath(1, ridge))
 })
