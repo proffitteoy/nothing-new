@@ -68,25 +68,25 @@ def material(name, color, roughness=.6):
     return m
 
 
-wood = material("Oiled walnut", (.115, .064, .033), .38)
-oak = material("Natural oak floor", (.38, .29, .20), .62)
-cream = material("Powder coated warm white", (.72, .72, .69), .45)
-paper = material("Off-white paper", (.82, .82, .76), .87)
+wood = material("Oiled walnut", (.145, .105, .078), .48)
+oak = material("Pale oak floor", (.40, .37, .32), .72)
+cream = material("Powder coated chalk white", (.76, .80, .83), .55)
+paper = material("Neutral white paper", (.86, .87, .86), .87)
 ink = material("Charcoal anodized aluminium", (.019, .023, .028), .36)
 rubber = material("Black rubber and mesh", (.014, .016, .019), .86)
-blue = material("Indigo cloth", (.10, .15, .25), .76)
+blue = material("Slate blue cloth", (.13, .19, .235), .86)
 blue_light = material("Cool screen white", (.45, .63, .76), .48)
 pink = material("Muted terracotta", (.38, .17, .105), .68)
-wall = material("Mineral white plaster", (.68, .67, .62), .91)
+wall = material("Mineral white plaster", (.78, .81, .84), .91)
 glass = material("Overcast blue outside", (.59, .72, .79), .7)
-gold = material("Brushed champagne metal", (.32, .27, .18), .35)
+gold = material("Brushed aluminium", (.28, .30, .33), .45)
 graphite = material("Whiteboard marker", (.06, .085, .12), .8)
 screen_white = material("LCD white", (.52, .59, .64), .45)
 screen_dark = material("LCD charcoal", (.008, .014, .023), .45)
 
-key_ivory = material("Warm ivory PBT", (.761, .738, .651), .72)
+key_ivory = material("Chalk grey PBT", (.75, .78, .80), .72)
 key_dark = material("Laptop key ABS", (.0144, .0212, .0296), .68)
-page_edge = material("Uncoated page edges", (.70, .675, .59), .93)
+page_edge = material("Uncoated page edges", (.76, .77, .75), .93)
 # Fine page strata are colour variation, not thousands of extra mesh slivers.
 n, l = page_edge.node_tree.nodes, page_edge.node_tree.links
 wave = n.new("ShaderNodeTexWave")
@@ -94,8 +94,8 @@ wave.wave_type, wave.bands_direction = "BANDS", "Z"
 wave.inputs["Scale"].default_value = 350
 wave.inputs["Distortion"].default_value = 1.2
 mix = n.new("ShaderNodeMixRGB")
-mix.inputs[1].default_value = (.57, .55, .48, 1)
-mix.inputs[2].default_value = (.78, .75, .66, 1)
+mix.inputs[1].default_value = (.64, .65, .63, 1)
+mix.inputs[2].default_value = (.83, .84, .81, 1)
 l.new(wave.outputs["Color"], mix.inputs[0])
 l.new(mix.outputs[0], n.get("Principled BSDF").inputs["Base Color"])
 
@@ -135,6 +135,25 @@ for mat, scale, strength in [(wood, (2, 95, 5), .42), (oak, (3, 100, 6), .19),
     mix.blend_type = "MULTIPLY"
     mix.inputs[0].default_value = strength
     mix.inputs[1].default_value = mat.diffuse_color
+    if mat == oak:
+        # Keep the floor continuous. Submillimetre bevels otherwise become noisy
+        # UV islands and dotted geometry edges in the browser's distant view.
+        rotate = n.new("ShaderNodeVectorRotate")
+        rotate.rotation_type = "AXIS_ANGLE"
+        rotate.inputs["Angle"].default_value = math.pi/2
+        l.new(coords.outputs["Object"], rotate.inputs["Vector"])
+        boards = n.new("ShaderNodeTexBrick")
+        boards.offset, boards.offset_frequency = 1/3, 1
+        boards.inputs["Scale"].default_value = 1
+        boards.inputs["Brick Width"].default_value = 1.5
+        boards.inputs["Row Height"].default_value = .18
+        boards.inputs["Mortar Size"].default_value = .001
+        boards.inputs["Mortar Smooth"].default_value = .1
+        boards.inputs["Color1"].default_value = mat.diffuse_color
+        boards.inputs["Color2"].default_value = (.39, .36, .31, 1)
+        boards.inputs["Mortar"].default_value = (.34, .32, .29, 1)
+        l.new(rotate.outputs["Vector"], boards.inputs["Vector"])
+        l.new(boards.outputs["Color"], mix.inputs[1])
     l.new(tex.outputs["Fac"], mix.inputs[2])
     l.new(mix.outputs[0], n.get("Principled BSDF").inputs["Base Color"])
 
@@ -316,15 +335,24 @@ def monitor(name, pos, width, height, surface, tilt):
     transform_objects(groups[current][start:],(x,y,z),tilt,"X")
 
 
-# Full-size interior; floor has no raised display plinth or rounded carpet.
-for i in range(18):
-    box("Oak plank", (-2.125+i*.25, -.15, -.022), (.248, 4.5, .04), oak, .001)
+# Staggered board joints are baked into one continuous floor, without thin edge meshes.
+box("Pale oak floor", (0, -.15, -.022), (4.5, 4.5, .04), oak, 0)
 current = "wall_back"
-# Broad continuous wall, with a real window opening above the left-hand monitor.
-box("Back wall lower", (0, 1.65, .64), (7, .12, 1.28), wall, .002)
-box("Back wall upper", (0, 1.65, 2.90), (7, .12, .70), wall, .002)
-box("Back wall left", (-2.60, 1.65, 1.92), (1.80, .12, 1.28), wall, .002)
-box("Back wall right", (1.55, 1.65, 1.92), (3.90, .12, 1.28), wall, .002)
+# A single manifold wall around the existing opening: no bevels between wall panels.
+outline = [(-3.5, 0), (3.5, 0), (3.5, 3.25), (-3.5, 3.25),
+           (-1.70, 1.28), (-.28, 1.28), (-.28, 2.56), (-1.70, 2.56)]
+vertices = [(x, y, z) for y in [1.59, 1.71] for x, z in outline]
+faces = []
+for i in range(4):
+    j = (i+1) % 4
+    faces.extend([(i, j, j+4, i+4), (i+8, i+12, j+12, j+8),
+                  (i, i+8, j+8, j), (i+4, j+4, j+12, i+12)])
+mesh = bpy.data.meshes.new("Continuous window wall")
+mesh.from_pydata(vertices, [], faces)
+mesh.update()
+back_wall = bpy.data.objects.new("Continuous window wall", mesh)
+bpy.context.collection.objects.link(back_wall)
+finish(back_wall, "Continuous window wall", wall)
 for x in [-1.70, -.99, -.28]:
     box("Rear window mullion", (x,1.64,1.92), (.025,.06,1.30), ink, .001)
 for z in [1.28,2.56]:
@@ -435,17 +463,17 @@ ball("Lamp hinge",(-1.10,.84,1.055),.017,ink)
 box("Lamp head",(-.81,.77,1.30),(.26,.055,.026),ink,.005)
 box("Lamp diffuser",(-.81,.77,1.282),(.22,.040,.003),paper,.002)
 
-# Chair pulled to the left, leaving the desk and papers in the opening view.
-cx,cy=-1.15,-.48
+# Pull the chair beside the desk; its back no longer dominates the foreground.
+cx,cy=-1.46,-.18
 cylinder("Chair lift",(cx,cy,.29),.025,.35,ink)
 for i in range(5):
     a=i*math.tau/5
     end=(cx+math.cos(a)*.30,cy+math.sin(a)*.30,.07)
     line("Chair leg",[(cx,cy,.15),end],ink,.012)
     cylinder("Chair caster",end,.031,.041,rubber,16,(math.pi/2,0,a))
-box("Chair cushion",(cx,cy,.455),(.46,.44,.065),rubber,.025)
-box("Chair back frame",(cx,cy-.20,.72),(.44,.035,.48),ink,.018,rot=(.13,0,-.15))
-box("Chair upholstered back",(cx,cy-.18,.72),(.404,.030,.44),rubber,.020,rot=(.13,0,-.15))
+box("Chair cushion",(cx,cy,.455),(.46,.44,.065),blue,.025)
+box("Chair back frame",(cx,cy-.20,.665),(.44,.028,.37),ink,.018,rot=(.13,0,-.15))
+box("Chair upholstered back",(cx,cy-.18,.665),(.404,.030,.34),blue,.025,rot=(.13,0,-.15))
 for x in [cx-.25,cx+.25]:
     line("Chair arm support",[(x,cy,.45),(x,cy,.635)],ink,.01)
     box("Chair armrest",(x,cy+.01,.64),(.048,.24,.024),rubber,.008)
@@ -565,14 +593,14 @@ for row in range(3):
             volume(17+row*6+i,(-1.96,cursor+thickness/2,.093+row*.40),thickness,.242,.255+(i%3)*.026,angle=90,lean=-7 if i==5 else 0)
             cursor+=thickness+.003
 # Right-hand drawers and corkboard, visible from oblique and rear angles.
-box("Side cabinet body",(1.73,-.27,.405),(.62,.64,.79),cream,.005)
-box("Side cabinet top",(1.73,-.27,.810),(.65,.67,.027),wood,.004)
+box("Side cabinet body",(1.73,.33,.405),(.62,.64,.79),cream,.005)
+box("Side cabinet top",(1.73,.33,.810),(.65,.67,.027),wood,.004)
 for z in [.20,.44,.68]:
-    box("Drawer front",(1.73,-.598,z),(.575,.012,.219),cream,.003)
-    line("Drawer pull",[(1.65,-.615,z+.022),(1.81,-.615,z+.022)],ink,.005)
-volume(35,(1.70,-.26,.824),.034,.24,.29,angle=7,stacked=True)
+    box("Drawer front",(1.73,.002,z),(.575,.012,.219),cream,.003)
+    line("Drawer pull",[(1.65,-.015,z+.022),(1.81,-.015,z+.022)],ink,.005)
+volume(35,(1.70,.34,.824),.034,.24,.29,angle=7,stacked=True)
 for i in range(3):
-    box("Loose reading paper",(1.69,-.26,.860+i*.0008),(.26,.20,.00065),paper,.0002,rot=(0,0,.10))
+    box("Loose reading paper",(1.69,.34,.860+i*.0008),(.26,.20,.00065),paper,.0002,rot=(0,0,.10))
 current="wall_right"
 # A low side partition keeps the opening view light; the near side fades on orbit.
 box("Right wall",(2.22,-.12,1.5),(.12,3.54,3),wall,.002)
@@ -646,14 +674,14 @@ def area(name,pos,power,color,size,target):
     return o
 
 
-key=area("Window daylight",(-1.00,1.51,2.05),100,(1,.93,.83),1.25,(-.2,.0,.5))
-fill=area("Room bounce",(0,-1.5,2.7),45,(1,.91,.78),2.5,(0,.5,.7))
+key=area("Window daylight",(-1.00,1.51,2.05),140,(1,.98,.94),1.25,(-.2,.0,.5))
+fill=area("Room bounce",(0,-1.5,2.7),90,(.91,.95,1),2.5,(0,.5,.7))
 lamp=area("Task lamp",(-.81,.77,1.268),1,(1,.72,.43),.20,(-.30,.26,.74))
 screen=area("Screen spill",(-.45,.60,1.06),.35,(.57,.73,1),.48,(-.4,.1,.74))
 scene.world.use_nodes=True
 world=scene.world.node_tree.nodes.get("Background")
-world.inputs["Color"].default_value=(.67,.76,.90,1)
-world.inputs["Strength"].default_value=.17
+world.inputs["Color"].default_value=(.76,.83,.94,1)
+world.inputs["Strength"].default_value=.30
 # Emissive glazing and displays retain a little self-light in the dark bake.
 for mat,power in [(glass,.85),(blue_light,.25),(screen_white,.50),(screen_dark,1.5)]:
     bsdf=mat.node_tree.nodes.get("Principled BSDF")
@@ -701,12 +729,12 @@ for o in meshes: o.hide_render=True
 originals=list(bpy.data.materials)
 atlases={}
 for name,night in [("day",False),("night",True)]:
-    key.data.energy=14 if night else 100
-    key.data.color=(.44,.59,1) if night else (1,.93,.83)
-    fill.data.energy=6 if night else 45
+    key.data.energy=14 if night else 140
+    key.data.color=(.44,.59,1) if night else (1,.98,.94)
+    fill.data.energy=6 if night else 90
     lamp.data.energy=8 if night else 1
     screen.data.energy=1.5 if night else .35
-    world.inputs["Strength"].default_value=.025 if night else .17
+    world.inputs["Strength"].default_value=.025 if night else .30
     atlas=bpy.data.images.new("Study "+name+" light bake",width=3072,height=3072)
     for mat in originals:
         if not mat.use_nodes: continue
