@@ -17,15 +17,10 @@ export const siteConfig = {
   // 2. 头像设置 (支持网络链接，或将图片放入 public 文件夹后使用 "/me.jpg")
   avatarUrl: "/avatar",
 
-  // 3. 全站背景：只保留一个背景源，首页、普通页面、博客和杂谈统一使用
-  useGradient: false,
-  themeColors: ["#4266cf", "#805ac8", "#ce4a83", "#168579"], // 蓝色为主，紫／玫红／青绿点缀
-  backgroundImage: "/background.png",
-
-  // 4. 文章默认封面图 (当 Markdown 没写 cover 时显示)
+  // 3. 文章默认封面图 (当 Markdown 没写 cover 时显示)
   defaultPostCover: "https://bu.dusays.com/2026/03/24/69c1e38b346cb.jpg",
 
-  // 5. 歌单与社交链接
+  // 4. 歌单与社交链接
   cloudMusicIds: [
     "3313005946",
     "761594",

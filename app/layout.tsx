@@ -97,7 +97,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             className="flex-1 flex flex-col transition-opacity duration-1000"
           >
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-              {!siteConfig.useGradient && <BackgroundSlider />}
+              <BackgroundSlider />
             </div>
 
             <Navbar blogHref={blogHref} />
