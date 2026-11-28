@@ -230,7 +230,7 @@ if (process.argv.includes("--surfaces")) {
     const labelSize = key.label.length > 3 ? 11 : key.label.length > 1 ? 14 : 24
     place(
       key.surface,
-      rect(0, 0, 64, 64, key.laptop ? "#202830" : "#e2dfd3") +
+      rect(0, 0, 64, 64, key.laptop ? "#202830" : "#dfe5e9") +
         text(
           8,
           29,
