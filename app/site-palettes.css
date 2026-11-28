@@ -1,9 +1,16 @@
-/* Content palettes and session-scoped interactive colors.
- * Based on the supplied blue, green, violet, rose, cyan and orange swatches.
+/* Home keeps its scene palette and session-scoped controls.
+ * Inner pages use the approved cyan-led mesh over neutral white reading surfaces.
  * No beige, cream, ivory or yellow-tinted surfaces.
  * Only color tokens: this file must not define layout or add UI.
  */
 :root {
+  --inner-page-background:
+    radial-gradient(ellipse 86% 118% at 4% 96%,rgba(126,219,204,.76) 0%,rgba(126,219,204,.52) 26%,rgba(126,219,204,0) 76%),
+    radial-gradient(ellipse 95% 80% at 74% -12%,rgba(142,202,244,.58) 0%,rgba(142,202,244,0) 80%),
+    radial-gradient(ellipse 76% 90% at 110% 64%,rgba(180,155,250,.57) 0%,rgba(180,155,250,0) 72%),
+    radial-gradient(ellipse 42% 80% at 112% 12%,rgba(239,159,206,.35) 0%,rgba(239,159,206,0) 75%),
+    radial-gradient(ellipse 90% 95% at 46% 58%,rgba(127,168,255,.24) 0%,rgba(127,168,255,0) 76%),
+    linear-gradient(#f5f7ff,#f5f7ff);
   --core-surface: #FFFFFF;
   --core-ink: #30353A;
   --core-muted: #626A70;
@@ -60,74 +67,28 @@ html[data-core-palette="violet"] {
   --page-decoration: #70A0DF;
 }
 
-[data-page-palette="projects"] {
-  --page-canvas: #E9F7F3;
-  --page-surface: #F8FEFC;
-  --page-muted: #466763;
-  --page-heading: #245B63;
-  --page-soft: #DFF1EB;
-  --page-line: #C7E2D9;
-  --page-decoration: #6FC8CA;
-}
-
-[data-page-palette="anime"] {
-  --page-canvas: #F0ECF6;
-  --page-surface: #FAF8FD;
-  --page-muted: #63586F;
-  --page-heading: #4C435A;
-  --page-soft: #E9E2F2;
-  --page-line: #D7CCE4;
-  --page-decoration: #B7ABD4;
-}
-
-[data-page-palette="chatter"] {
-  --page-canvas: #F8EDF1;
-  --page-surface: #FFFBFD;
-  --page-muted: #6F5963;
-  --page-heading: #754C5F;
-  --page-soft: #F0E4E8;
-  --page-line: #E1CDD7;
-  --page-decoration: #DFC4CD;
-}
-
-[data-page-palette="blog"] {
-  --page-canvas: #EBF5EC;
-  --page-surface: #F8FCF8;
-  --page-muted: #526750;
-  --page-heading: #314C35;
-  --page-soft: #E0EFE0;
-  --page-line: #CBDFCB;
-  --page-decoration: #A6DC93;
-}
-
-[data-page-palette="papers"] {
-  --page-canvas: #ECF2F8;
-  --page-surface: #F8FBFF;
-  --page-muted: #53657A;
-  --page-heading: #384B61;
-  --page-soft: #E1EAF4;
-  --page-line: #CBD8E7;
-  --page-decoration: #A7C3D4;
-}
-
-[data-page-palette="friends"] {
-  --page-canvas: #F3F4F7;
+/* Override the session accent at the root and at local page scopes, so
+ * navigation, content and embedded previews use the same inner-page palette.
+ */
+html:not([data-page-palette="home"]),
+[data-page-palette]:not([data-page-palette="home"]) {
+  --core-surface: #FFFFFF;
+  --core-ink: #30353A;
+  --core-muted: #626A70;
+  --core-line: #D8DADC;
+  --core-border: #7A838B;
+  --core-accent: #245B63;
+  --core-hover: #194B53;
+  --core-pressed: #173E45;
+  --core-selected: #DFF1EB;
+  --page-canvas: #F5F7FF;
   --page-surface: #FFFFFF;
-  --page-muted: #5C626C;
-  --page-heading: #A14713;
+  --page-ink: #30353A;
+  --page-muted: #626A70;
+  --page-heading: #30353A;
   --page-soft: #E8EBF1;
-  --page-line: #D6DAE2;
-  --page-decoration: #FC8C3A;
-}
-
-[data-page-palette="about"] {
-  --page-canvas: #E9F4F0;
-  --page-surface: #F8FCFA;
-  --page-muted: #50665F;
-  --page-heading: #3E5B54;
-  --page-soft: #DFECE7;
-  --page-line: #CBD8D5;
-  --page-decoration: #92C2A6;
+  --page-line: #D8DADC;
+  --page-decoration: #6FC8CA;
 }
 
 /* Existing components consume these aliases; local scene roots can override
