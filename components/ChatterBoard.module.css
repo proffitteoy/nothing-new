@@ -211,12 +211,13 @@
   align-self: end;
   min-width: 0;
   padding: 64px 24px 24px;
+  background: linear-gradient(180deg, transparent, rgb(8 12 22 / 90%) 48px);
 }
 .meta {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
-  color: var(--site-ink);
+  color: #eef0f4;
   font-size: 10px;
   line-height: 1.7;
   font-variant-numeric: tabular-nums;
@@ -290,7 +291,7 @@
   cursor: pointer;
 }
 @media (min-width: 768px) {
-  /* Editorial controls stay open against the shared illustration. */
+  /* Editorial controls stay open against the shared backdrop. */
   .headingRow,
   .search,
   .toolbar {
@@ -317,11 +318,7 @@
   .cover::after {
     background: linear-gradient(180deg, transparent 42%, rgb(8 12 22 / 78%) 100%);
   }
-  .caption {
-    background: linear-gradient(180deg, transparent, rgb(8 12 22 / 90%) 48px);
-  }
   .meta {
-    color: #eef0f4;
     font-size: 12px;
   }
   .folderTag {
